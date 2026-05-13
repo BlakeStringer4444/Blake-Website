@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLAKE STRINGER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --lime:    #D4FF1A;
+  --purple:  #9933FF;
+  --purple2: #7700DD;
+  --black:   #0a0a0a;
+  --offwhite:#f5f5f0;
+  --mid:     #1a1a1a;
+  --muted:   #3a3a3a;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html, body {
+  min-height: 100vh;
+  background: var(--lime);
+  font-family: 'Inter', sans-serif;
+  color: var(--black);
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.35;
+}
+
+/* ── PURPLE ACCENT LINE TOP ── */
+.top-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--purple);
+}
+
+/* ── HEADER ── */
+header {
+  padding: 36px 32px 28px;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0;
+  width: 120px; height: 3px;
+  background: var(--purple);
+}
+
+.header-left {}
+
+.site-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 9vw, 96px);
+  letter-spacing: 4px;
+  line-height: 0.9;
+  color: var(--purple);
+  text-transform: uppercase;
+}
+
+.site-tagline {
+  margin-top: 8px;
+  font-size: clamp(10px, 2vw, 13px);
+  letter-spacing: 3px;
+  color: var(--black);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.header-badge {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--black);
+  background: var(--lime);
+  padding: 4px 10px;
+  font-weight: 500;
+}
+
+.header-location {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(0,0,0,0.5);
+  text-transform: uppercase;
+}
+
+/* ── LAYOUT ── */
+.site-wrap {
+  display: flex;
+  min-height: calc(100vh - 200px);
+}
+
+/* ── VERTICAL TABS (sidebar) ── */
+.tab-sidebar {
+  width: 72px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--lime);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  position: relative;
+  transition: background 0.2s;
+  user-select: none;
+  padding: 0;
+}
+
+.tab-btn:last-child { border-bottom: none; }
+
+.tab-btn:hover:not(.active) {
+  background: rgba(0,0,0,0.06);
+}
+
+.tab-btn.active {
+  background: var(--purple);
+}
+
+.tab-btn.active .tab-text {
+  color: var(--lime);
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  right: -4px; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 32px;
+  background: var(--black);
+}
+
+.tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.45);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.tab-num {
+  position: absolute;
+  bottom: 8px;
+  font-size: 7px;
+  color: rgba(0,0,0,0.25);
+  letter-spacing: 1px;
+}
+
+.tab-btn.active .tab-num { color: var(--lime); opacity: 0.6; }
+
+/* ── MAIN CONTENT ── */
+.main-content {
+  flex: 1;
+  padding: 40px 48px 60px;
+  max-width: 900px;
+}
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 4px;
+  color: var(--purple);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--purple);
+  padding-bottom: 6px;
+  margin-bottom: 24px;
+}
+
+.section-sublabel {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(0,0,0,0.45);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  margin-top: 28px;
+}
+
+/* ── PHOTO + BIO ROW ── */
+.about-top {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.photo-frame {
+  width: 140px;
+  height: 170px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.08);
+  border: 2px solid var(--purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(0,0,0,0.35);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.8;
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-frame img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.photo-frame::after {
+  content: '';
+  position: absolute; inset: 0;
+  box-shadow: inset 0 0 20px rgba(128,0,255,0.15);
+  pointer-events: none;
+}
+
+.about-bio {
+  flex: 1;
+  min-width: 220px;
+}
+
+.about-bio p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: rgba(0,0,0,0.75);
+  margin-bottom: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+}
+
+/* ── FIELDS ── */
+.field {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.fk {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  text-transform: uppercase;
+  min-width: 100px;
+  padding-top: 2px;
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+
+.fv {
+  font-size: 14px;
+  color: var(--black);
+  flex: 1;
+  line-height: 1.6;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+/* ── CONTACT FIELDS ── */
+.cfield {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px dashed rgba(0,0,0,0.15);
+  padding: 10px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ck {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  text-transform: uppercase;
+  min-width: 100px;
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+
+.cv {
+  font-size: 14px;
+  color: var(--black);
+  font-family: 'Inter', sans-serif;
+}
+
+.cv a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.15s;
+}
+.cv a:hover {
+  color: var(--purple);
+}
+
+/* ── CV CREDIT ROW ── */
+.credit {
+  display: flex;
+  flex-direction: column;
+  border-left: 3px solid var(--purple);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: rgba(0,0,0,0.05);
+  gap: 3px;
+}
+
+.credit-head {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.credit-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--black);
+  text-transform: uppercase;
+}
+
+.credit-role {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  text-transform: uppercase;
+}
+
+.credit-date {
+  font-size: 11px;
+  color: rgba(0,0,0,0.5);
+  letter-spacing: 1px;
+  background: rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.15);
+  padding: 2px 8px;
+  align-self: flex-start;
+}
+
+.credit-org {
+  font-size: 11px;
+  color: rgba(0,0,0,0.45);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+}
+
+.credit-desc {
+  font-size: 13px;
+  color: rgba(0,0,0,0.6);
+  line-height: 1.7;
+  margin-top: 4px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+}
+
+/* ── TAG ── */
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--purple);
+  border: 1px solid var(--purple);
+  padding: 2px 6px;
+  text-transform: uppercase;
+  margin-right: 4px;
+  margin-top: 6px;
+}
+
+.tag-lime {
+  color: var(--black);
+  border-color: var(--black);
+}
+
+/* ── SKILLS ── */
+.skill-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.skill-name {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--black);
+  min-width: 140px;
+}
+
+.skill-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(0,0,0,0.12);
+  border: 1px solid rgba(0,0,0,0.2);
+  max-width: 200px;
+  position: relative;
+}
+
+.skill-fill {
+  height: 100%;
+  background: var(--purple);
+  width: 0;
+  transition: width 1s cubic-bezier(0.2, 0, 0.3, 1);
+}
+
+.skill-pct {
+  font-size: 11px;
+  color: rgba(0,0,0,0.4);
+  min-width: 32px;
+}
+
+/* ── CNOTE ── */
+.cnote {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #555;
+  border: 1px solid #222;
+  border-left: 3px solid var(--lime);
+  padding: 12px 14px;
+  line-height: 1.9;
+  letter-spacing: 1px;
+}
+
+@keyframes blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
+.blink { animation: blink 1.1s step-end infinite; color: var(--lime); }
+
+/* ── CV TABLE ── */
+.cv-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+.cv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  min-width: 700px;
+}
+
+.cv-table thead tr {
+  background: var(--purple);
+}
+
+.cv-table thead th {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lime);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cv-table tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  transition: background 0.15s;
+}
+
+.cv-table tbody tr:nth-child(even) {
+  background: rgba(0,0,0,0.04);
+}
+
+.cv-table tbody tr:hover {
+  background: rgba(128,0,255,0.08);
+}
+
+.cv-table tbody td {
+  padding: 9px 12px;
+  color: var(--black);
+  line-height: 1.4;
+  vertical-align: top;
+  font-family: 'Inter', sans-serif;
+}
+
+.cv-table tbody td:first-child {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--purple);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.cv-table tbody td:nth-child(2) {
+  font-weight: 500;
+}
+
+.award-win {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--black);
+  background: var(--purple);
+  color: var(--lime);
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.award-nom {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  border: 1px solid var(--purple);
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+/* ── MUSIC FOLLOW LINK ── */
+.music-follow {
+  margin-bottom: 24px;
+}
+
+.follow-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lime);
+  background: var(--purple);
+  padding: 10px 18px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.follow-link:hover {
+  background: var(--purple2);
+  transform: translateY(-1px);
+}
+
+/* ── ALBUM GRID ── */
+.album-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.album-card {
+  background: rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.12);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.album-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.album-art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0,0,0,0.1);
+}
+
+.album-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.album-card:hover .album-art img {
+  transform: scale(1.03);
+}
+
+.album-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(153,51,255,0.08);
+  border-bottom: 2px solid rgba(153,51,255,0.2);
+}
+
+.album-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  color: rgba(153,51,255,0.25);
+  line-height: 1;
+}
+
+.album-placeholder-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.25);
+}
+
+.album-info {
+  padding: 14px 16px 16px;
+}
+
+.album-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--black);
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.album-year {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  margin-bottom: 12px;
+}
+
+.album-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.album-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(0,0,0,0.55);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.album-link:hover {
+  color: var(--purple);
+}
+
+.album-link svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+@media (max-width: 500px) {
+  .album-grid { grid-template-columns: 1fr; }
+}
+
+/* ── BOTTOM BAR ── */
+footer {
+  border-top: 1px solid rgba(0,0,0,0.12);
+  padding: 12px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-hint {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(0,0,0,0.35);
+  text-transform: uppercase;
+}
+
+.footer-hint span { color: var(--purple); }
+
+/* ── MOBILE TABS ── */
+.tab-mobile {
+  display: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  background: var(--lime);
+}
+.tab-mobile::-webkit-scrollbar { display: none; }
+
+.tab-mobile-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-right: 1px solid rgba(0,0,0,0.1);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.45);
+  transition: background 0.2s, color 0.2s;
+  user-select: none;
+}
+
+.tab-mobile-btn.active {
+  background: var(--purple);
+  color: var(--lime);
+  border-bottom: 3px solid var(--black);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 639px) {
+  .tab-sidebar { display: none; }
+  .tab-mobile { display: flex; }
+  .main-content { padding: 24px 20px 48px; }
+  header { padding: 24px 20px 20px; }
+  .site-name { font-size: clamp(40px, 12vw, 72px); }
+  .about-top { flex-direction: column; }
+  .photo-frame { width: 100%; height: 200px; }
+  .skill-name { min-width: 100px; }
+}
+
+@media (min-width: 640px) {
+  .site-wrap { flex-direction: row; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="site-name">Blake Stringer</div>
+    <div class="site-tagline">Actor &nbsp;·&nbsp; Sound Designer &nbsp;·&nbsp; Musician &nbsp;·&nbsp; Director</div>
+  </div>
+  <div class="header-right">
+    <div class="header-location">Melbourne, VIC, Australia</div>
+  </div>
+</header>
+
+<!-- MOBILE TABS -->
+<div class="tab-mobile" id="tab-mobile"></div>
+
+<!-- MAIN LAYOUT -->
+<div class="site-wrap">
+
+  <!-- SIDEBAR TABS -->
+  <nav class="tab-sidebar" id="tab-sidebar"></nav>
+
+  <!-- CONTENT -->
+  <main class="main-content">
+
+    <!-- ABOUT & CONTACT -->
+    <div class="panel active" id="panel-about">
+
+      <div class="section-label">About</div>
+
+      <div class="about-top">
+        <div class="photo-frame">
+          <!-- Replace the line below with: <img src="images/your-photo.jpg" alt="Blake Stringer"> -->
+          Photo<br>Goes<br>Here
+        </div>
+        <div class="about-bio">
+          <p>I'm a Melbourne based actor whose work and primary focus predominantly lie on the stage. However, as a musician and sound designer, I always finds myself creating and never out of work.</p>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:40px;">Contact</div>
+
+      <div class="cfield">
+        <span class="ck">Email</span>
+        <span class="cv"><a href="mailto:BlakeStringer@hotmail.com">BlakeStringer@hotmail.com</a></span>
+      </div>
+      <div class="cfield">
+        <span class="ck">Instagram</span>
+        <span class="cv"><a href="https://www.instagram.com/blakestringer4444/" target="_blank" rel="noopener noreferrer">instagram.com/blakestringer4444</a></span>
+      </div>
+      <div class="cfield" style="border:none;">
+        <span class="ck">StarNow</span>
+        <span class="cv"><a href="https://www.starnow.com/u/BlakeStringer/" target="_blank" rel="noopener noreferrer">starnow.com/BlakeStringer</a></span>
+      </div>
+      <div class="cfield" style="border:none;">
+        <span class="ck">Music</span>
+        <span class="cv"><a href="https://hyperfollow.com/blakestringer" target="_blank" rel="noopener noreferrer">hyperfollow.com/blakestringer</a></span>
+      </div>
+
+
+
+    </div>
+
+    <!-- ACTING CV -->
+    <div class="panel" id="panel-acting">
+      <div class="section-label">Acting CV</div>
+
+      <div class="section-sublabel">Theatre</div>
+      <div class="cv-table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Production</th>
+              <th>Role</th>
+              <th>Director</th>
+              <th>Playwright</th>
+              <th>Company / Venue</th>
+              <th>Dates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2026</td><td>Birdsong</td><td>Jack Firebrace</td><td>Michelle Swann</td><td>Rachel Wagstaff</td><td>Heidelberg Theatre</td><td>3 – 18 Jul</td></tr>
+            <tr><td>2026</td><td>Lovesong</td><td>William</td><td>Vicki Smith</td><td>Abi Morgan</td><td>Williamstown Little Theatre</td><td>22 Apr – 9 May</td></tr>
+            <tr><td>2025</td><td>Love, Love, Love</td><td>Kenneth</td><td>George Werther</td><td>Mike Bartlett</td><td>Heidelberg Theatre</td><td>4 – 19 Jul</td></tr>
+            <tr><td>2025</td><td>Things I Know To Be True</td><td>Mark / Mia</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>23 Apr – 10 May</td></tr>
+            <tr><td>2024</td><td>1984</td><td>Big Brother / Goldstein</td><td>Joe Dias / Sharon Maine</td><td>Robert Owens, et al.</td><td>Peridot Theatre</td><td>15 – 24 Nov</td></tr>
+            <tr><td>2024</td><td>Hearth</td><td>Matthew</td><td>Damian Jones</td><td>Fleur Murphy</td><td>Mordialloc Theatre</td><td>10 – 25 May</td></tr>
+            <tr><td>2024</td><td>Photograph 51</td><td>Maurice Wilkins</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
+            <tr><td>2023</td><td>Schmattes</td><td>Tal</td><td>George Werther</td><td>Alison Knight</td><td>Peridot Theatre</td><td>9 – 11 Nov</td></tr>
+            <tr><td>2023</td><td>The Normal Heart</td><td>Felix Turner</td><td>George Benca</td><td>Larry Kramer</td><td>Strathmore Theatrical Arts Group</td><td>17 – 26 Aug</td></tr>
+            <tr><td>2023</td><td>The Shoe-Horn Sonata</td><td>Interviewer</td><td>Andrew Ferguson</td><td>John Mistro</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
+            <tr><td>2022</td><td>The History Boys</td><td>Irwin</td><td>Dexter Bourke</td><td>Alan Bennett</td><td>1812 Theatre</td><td>6 – 29 Oct</td></tr>
+            <tr><td>2022</td><td>Torch Song</td><td>Arnold Beckoff</td><td>Annie Blood</td><td>Harvey Fierstein</td><td>Brighton Theatre</td><td>20 May – 4 Jun</td></tr>
+            <tr><td>2022</td><td>Dracula – The Bloody Truth</td><td>Actor 2 (incl. Dracula)</td><td>Dexter Bourke</td><td>John Nicholson</td><td>1812 Theatre</td><td>24 Feb – 19 Mar</td></tr>
+            <tr><td>2019</td><td>Ghosts</td><td>Oswald Alving</td><td>Dexter Bourke</td><td>Henrik Ibsen</td><td>1812 Theatre</td><td>3 – 26 Oct</td></tr>
+            <tr><td>2018</td><td>The Elephant Man</td><td>Frederick Treves</td><td>Christopher Shaw</td><td>Bernard Pomerance</td><td>Lilydale Athenaeum Theatre</td><td>24 May – 9 Jun</td></tr>
+            <tr><td>2017</td><td>Never The Sinner</td><td>Richard Loeb</td><td>Geoff Hickey</td><td>John Logan</td><td>1812 Theatre</td><td>5 – 28 Oct</td></tr>
+            <tr><td>2017</td><td>Heroes</td><td>Nick</td><td>Dexter Bourke</td><td>Gabriel Bergmoser</td><td>Bitten By Productions</td><td>25 May – 3 Jun</td></tr>
+            <tr><td>2017</td><td>The One Day of the Year</td><td>Hughie Cook</td><td>Judy Corderoy</td><td>Alan Seymour</td><td>Mordialloc Theatre</td><td>21 Apr – 6 May</td></tr>
+            <tr><td>2016</td><td>Sherlock Holmes &amp; The Adventure of the Suicide Club</td><td>Nikita Starloff</td><td>Christine Grant</td><td>Jeffrey Hatcher</td><td>1812 Theatre</td><td>18 May – 4 Jun</td></tr>
+            <tr><td>2016</td><td>Measure For Measure</td><td>Lucio</td><td>Sharon Maine</td><td>William Shakespeare</td><td>Gemco Players</td><td>29 Apr – 14 May</td></tr>
+            <tr><td>2015</td><td>Patient 12</td><td>Percy Groves</td><td>Dexter Bourke</td><td>Kevin Summers</td><td>1812 Theatre</td><td>1 – 24 Oct</td></tr>
+            <tr><td>2015</td><td>Romeo &amp; Juliet</td><td>Mercutio</td><td>Malcolm Sussman</td><td>William Shakespeare</td><td>Sherbrooke Theatre</td><td>7 – 22 Aug</td></tr>
+            <tr><td>2015</td><td>Caught In The Net</td><td>Gavin Smith</td><td>Gaetano Santo</td><td>Ray Cooney</td><td>Brighton Theatre</td><td>21 May – 6 Jun</td></tr>
+            <tr><td>2015</td><td>The Peach Season</td><td>Kieran</td><td>John Mills</td><td>Debra Oswald</td><td>1812 Theatre</td><td>25 Feb – 21 Mar</td></tr>
+            <tr><td>2014</td><td>True Minds</td><td>Benedict Perring</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Heidelberg Theatre</td><td>20 Nov – 6 Dec</td></tr>
+            <tr><td>2014</td><td>Amadeus</td><td>Venticello 2</td><td>Bruce Akers</td><td>Peter Shaffer</td><td>Heidelberg Theatre</td><td>11 – 27 Sep</td></tr>
+            <tr><td>2014</td><td>The Vortex</td><td>Nicky Lancaster</td><td>Horrie Leek</td><td>Noël Coward</td><td>Malvern Theatre</td><td>19 Jun – 5 Jul</td></tr>
+            <tr><td>2014</td><td>As Bees In Honey Drown</td><td>Evan Wyler</td><td>Peter Newling</td><td>Douglas Carter Beane</td><td>Brighton Theatre</td><td>19 Feb – 8 Mar</td></tr>
+            <tr><td>2013</td><td>Easy Virtue</td><td>John Whittaker</td><td>Horrie Leek</td><td>Noël Coward</td><td>Peridot Theatre</td><td>7 – 23 Nov</td></tr>
+            <tr><td>2013</td><td>Morning Departure</td><td>Sub-Lt. McFee</td><td>Gaetano Santo</td><td>Kenneth Woollard</td><td>Williamstown Little Theatre</td><td>5 – 21 Sep</td></tr>
+            <tr><td>2013</td><td>Picasso at the Lapin Agile</td><td>Pablo Picasso</td><td>Jeff Saliba</td><td>Steve Martin</td><td>Brighton Theatre</td><td>22 May – 8 Jun</td></tr>
+            <tr><td>2012</td><td>Brilliant Lies</td><td>Paul</td><td>Zina Carman</td><td>David Williamson</td><td>1812 Theatre</td><td>8 Aug – 1 Sep</td></tr>
+            <tr><td>2011</td><td>It Runs In The Family</td><td>Leslie</td><td>Jill Hiam</td><td>Ray Cooney</td><td>Knox Theatre</td><td>20 – 28 May</td></tr>
+            <tr><td>2010</td><td>Crave</td><td>A</td><td>David Adamson</td><td>Sarah Kane</td><td>Deakin University</td><td>14 Oct</td></tr>
+            <tr><td>2009</td><td>Così</td><td>Lewis Riley</td><td>Matt Hillman</td><td>Louis Nowra</td><td>Adlib Entertainment</td><td>12 – 13 Dec</td></tr>
+            <tr><td>2009</td><td>Romeo &amp; Juliet</td><td>Romeo</td><td>Matt Hillman</td><td>William Shakespeare</td><td>Adlib Entertainment</td><td>5 – 6 Jun</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-sublabel" style="margin-top:32px;">Accolades</div>
+      <div class="cv-table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Award</th>
+              <th>Result</th>
+              <th>Category</th>
+              <th>Production</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2024</td><td>VDL Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Photograph 51</td></tr>
+            <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>The Normal Heart</td></tr>
+            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Highly Commended Performance in a One Act Play</td><td>Schmattes</td></tr>
+            <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Lead Actor in a Drama</td><td>Torch Song</td></tr>
+            <tr><td>2022</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Comedy</td><td>Dracula – The Bloody Truth</td></tr>
+            <tr><td>2019</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>Ghosts</td></tr>
+            <tr><td>2018</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>The Elephant Man</td></tr>
+            <tr><td>2017</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Never The Sinner</td></tr>
+            <tr><td>2015</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>Romeo &amp; Juliet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-sublabel" style="margin-top:32px;">Attributes</div>
+      <span class="tag tag-lime">Height: 182cm</span>
+      <span class="tag tag-lime">Hair: Brown</span>
+      <span class="tag tag-lime">Eyes: Blue</span>
+      <span class="tag tag-lime">Age Range: 30–40</span>
+    </div>
+
+    <!-- SOUND DESIGN CV -->
+    <div class="panel" id="panel-sound">
+      <div class="section-label">Sound Design CV</div>
+
+      <div class="section-sublabel">Theatre</div>
+      <div class="cv-table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Production</th>
+              <th>Director</th>
+              <th>Playwright</th>
+              <th>Company</th>
+              <th>Dates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2026</td><td>A Simple Act of Kindness</td><td>Blake Stringer</td><td>Ross Mueller</td><td>Brighton Theatre</td><td>7 – 22 Nov</td></tr>
+            <tr><td>2026</td><td>The Truth</td><td>George Werther</td><td>Florian Zeller, Christopher Hampton</td><td>Mordialloc Theatre</td><td>30 Jul – 8 Aug</td></tr>
+            <tr><td>2026</td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>21 – 31 May</td></tr>
+            <tr><td>2026</td><td>Wicked Sisters</td><td>LB Bradley</td><td>LB Bradley, Michaela Smith</td><td>Brighton Theatre</td><td>15 – 30 May</td></tr>
+            <tr><td>2026</td><td>The Gift</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Torquay Theatre Troupe</td><td>19 – 28 Mar</td></tr>
+            <tr><td>2025</td><td>The Humans</td><td>Nicky Neville-Jones</td><td>Stephen Karam</td><td>Malvern Theatre</td><td>22 Aug – 6 Sep</td></tr>
+            <tr><td>2025</td><td>Frankenstein</td><td>George Benca</td><td>Nick Dear, Mary Shelley</td><td>Peridot Theatre</td><td>15 – 26 Aug</td></tr>
+            <tr><td>2025</td><td>Love, Love, Love</td><td>George Werther</td><td>Mike Bartlett</td><td>Heidelberg Theatre</td><td>4 – 19 Jul</td></tr>
+            <tr><td>2025</td><td>Knife Edge</td><td>Deborah Fabbro</td><td>Alison Campbell-Rate</td><td>Beaumaris Theatre</td><td>9 – 24 May</td></tr>
+            <tr><td>2025</td><td>Things I Know To Be True</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>26 Apr – 10 May</td></tr>
+            <tr><td>2024</td><td>Consent</td><td>Nicky Neville-Jones</td><td>Nina Raine</td><td>Bottled Snail Productions</td><td>31 Oct – 9 Nov</td></tr>
+            <tr><td>2024</td><td>The Father</td><td>Div Collins</td><td>Florian Zeller, Christopher Hampton</td><td>Williamstown Little Theatre</td><td>4 – 21 Sep</td></tr>
+            <tr><td>2024</td><td>Lovesong</td><td>George Werther</td><td>Abi Rose</td><td>Malvern Theatre</td><td>21 Jun – 6 Jul</td></tr>
+            <tr><td>2024</td><td>Berlin</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Heidelberg Theatre</td><td>19 Apr – 4 May</td></tr>
+            <tr><td>2024</td><td>The Fire Raisers</td><td>Andrew Ferguson</td><td>Max Frisch</td><td>1812 Theatre</td><td>4 – 27 Apr</td></tr>
+            <tr><td>2024</td><td>Photograph 51</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
+            <tr><td>2023</td><td>The Normal Heart</td><td>George Benca</td><td>Larry Kramer</td><td>STAG Theatre</td><td>17 – 26 Aug</td></tr>
+            <tr><td>2023</td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>18 – 27 May</td></tr>
+            <tr><td>2023</td><td>The Shoe-Horn Sonata</td><td>Andrew Ferguson</td><td>John Misto</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
+            <tr><td>2023</td><td>The Revlon Girl</td><td>Natasha Boyd</td><td>Neil Anthony Docking</td><td>Brighton Theatre</td><td>17 Feb – 4 Mar</td></tr>
+            <tr><td>2022</td><td>Citysong</td><td>Shirley Sydenham</td><td>Dylan Coburn Gray</td><td>Williamstown Little Theatre</td><td>7 – 24 Sep</td></tr>
+            <tr><td>2019</td><td>Stargazers</td><td>Pedro Ramos</td><td>Reina Hardy</td><td>Brighton Theatre</td><td>16 – 31 Aug</td></tr>
+            <tr><td>2019</td><td>The Beast</td><td>Terese Maurici-Ryan</td><td>Eddie Perfect</td><td>Powderkeg Players</td><td>4 – 13 Apr</td></tr>
+            <tr><td>2018</td><td>In The Next Room (or The Vibrator Play)</td><td>Natasha Boyd</td><td>Sarah Ruhl</td><td>Brighton Theatre</td><td>15 Feb – 3 Mar</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-sublabel" style="margin-top:32px;">Accolades</div>
+      <div class="cv-table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Award</th>
+              <th>Result</th>
+              <th>Category</th>
+              <th>Production</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2024</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>Frankenstein</td></tr>
+            <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>Lovesong</td></tr>
+            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>The Revlon Girl</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- MUSIC CV -->
+    <div class="panel" id="panel-music">
+      <div class="section-label">Music</div>
+
+      <div class="music-follow">
+        <a href="https://hyperfollow.com/blakestringer" target="_blank" rel="noopener noreferrer" class="follow-link">
+          ♫ &nbsp;Follow on all platforms via Hyperfollow
+        </a>
+      </div>
+
+      <div class="section-sublabel">Releases</div>
+      <div class="album-grid">
+
+        <div class="album-card">
+          <div class="album-art">
+            <!-- Replace with: <img src="images/album1.jpg" alt="ORGANIC"> -->
+            <div class="album-placeholder">
+              <span class="album-num">01</span>
+              <span class="album-placeholder-text">Album Artwork</span>
+            </div>
+          </div>
+          <div class="album-info">
+            <div class="album-title">ORGANIC</div>
+            <div class="album-year">2024</div>
+            <div class="album-links">
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.997 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.988c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208c-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.802.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03c.525 0 1.048-.034 1.57-.1.823-.106 1.597-.35 2.296-.81 1.279-.838 2.024-2.017 2.304-3.496.13-.678.165-1.368.17-2.057.007-4.222.004-8.445.003-12.667zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.045-1.773-.6-1.943-1.536a1.88 1.88 0 011.038-2.022c.323-.16.67-.25 1.018-.324.376-.082.753-.162 1.125-.254.26-.063.42-.23.457-.498.018-.13.023-.262.023-.394.003-1.54.002-3.082.002-4.623v-.22c-.005 0-.01-.001-.014-.001l-4.86 1.227v6.124c0 .435-.07.856-.285 1.244-.324.585-.81.94-1.468 1.077-.37.076-.743.11-1.12.092-.82-.04-1.55-.645-1.674-1.456a1.905 1.905 0 011.032-2.075c.36-.18.747-.268 1.14-.35.35-.073.702-.147 1.05-.228.268-.063.42-.234.457-.507.017-.13.022-.262.022-.393l.002-5.985c0-.31.077-.6.227-.868.282-.51.71-.827 1.28-.943l4.65-1.17c.424-.107.853-.213 1.28-.313.432-.102.794.069 1.02.442.14.235.19.494.19.765l-.002 2.067z"/></svg>
+                Apple Music
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+                YouTube Music
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="album-card">
+          <div class="album-art">
+            <!-- Replace with: <img src="images/album2.jpg" alt="Art of Somethingness"> -->
+            <div class="album-placeholder">
+              <span class="album-num">02</span>
+              <span class="album-placeholder-text">Album Artwork</span>
+            </div>
+          </div>
+          <div class="album-info">
+            <div class="album-title">Art of Somethingness</div>
+            <div class="album-year">2022</div>
+            <div class="album-links">
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.997 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.988c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208c-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.802.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03c.525 0 1.048-.034 1.57-.1.823-.106 1.597-.35 2.296-.81 1.279-.838 2.024-2.017 2.304-3.496.13-.678.165-1.368.17-2.057.007-4.222.004-8.445.003-12.667zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.045-1.773-.6-1.943-1.536a1.88 1.88 0 011.038-2.022c.323-.16.67-.25 1.018-.324.376-.082.753-.162 1.125-.254.26-.063.42-.23.457-.498.018-.13.023-.262.023-.394.003-1.54.002-3.082.002-4.623v-.22c-.005 0-.01-.001-.014-.001l-4.86 1.227v6.124c0 .435-.07.856-.285 1.244-.324.585-.81.94-1.468 1.077-.37.076-.743.11-1.12.092-.82-.04-1.55-.645-1.674-1.456a1.905 1.905 0 011.032-2.075c.36-.18.747-.268 1.14-.35.35-.073.702-.147 1.05-.228.268-.063.42-.234.457-.507.017-.13.022-.262.022-.393l.002-5.985c0-.31.077-.6.227-.868.282-.51.71-.827 1.28-.943l4.65-1.17c.424-.107.853-.213 1.28-.313.432-.102.794.069 1.02.442.14.235.19.494.19.765l-.002 2.067z"/></svg>
+                Apple Music
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+                YouTube Music
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="album-card">
+          <div class="album-art">
+            <!-- Replace with: <img src="images/album3.jpg" alt="30/30 V I S I O N"> -->
+            <div class="album-placeholder">
+              <span class="album-num">03</span>
+              <span class="album-placeholder-text">Album Artwork</span>
+            </div>
+          </div>
+          <div class="album-info">
+            <div class="album-title">30/30 V I S I O N</div>
+            <div class="album-year">2021</div>
+            <div class="album-links">
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.997 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.988c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208c-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.802.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03c.525 0 1.048-.034 1.57-.1.823-.106 1.597-.35 2.296-.81 1.279-.838 2.024-2.017 2.304-3.496.13-.678.165-1.368.17-2.057.007-4.222.004-8.445.003-12.667zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.045-1.773-.6-1.943-1.536a1.88 1.88 0 011.038-2.022c.323-.16.67-.25 1.018-.324.376-.082.753-.162 1.125-.254.26-.063.42-.23.457-.498.018-.13.023-.262.023-.394.003-1.54.002-3.082.002-4.623v-.22c-.005 0-.01-.001-.014-.001l-4.86 1.227v6.124c0 .435-.07.856-.285 1.244-.324.585-.81.94-1.468 1.077-.37.076-.743.11-1.12.092-.82-.04-1.55-.645-1.674-1.456a1.905 1.905 0 011.032-2.075c.36-.18.747-.268 1.14-.35.35-.073.702-.147 1.05-.228.268-.063.42-.234.457-.507.017-.13.022-.262.022-.393l.002-5.985c0-.31.077-.6.227-.868.282-.51.71-.827 1.28-.943l4.65-1.17c.424-.107.853-.213 1.28-.313.432-.102.794.069 1.02.442.14.235.19.494.19.765l-.002 2.067z"/></svg>
+                Apple Music
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+                YouTube Music
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="album-card">
+          <div class="album-art">
+            <!-- Replace with: <img src="images/album4.jpg" alt="Stargazers"> -->
+            <div class="album-placeholder">
+              <span class="album-num">04</span>
+              <span class="album-placeholder-text">Album Artwork</span>
+            </div>
+          </div>
+          <div class="album-info">
+            <div class="album-title">Stargazers</div>
+            <div class="album-year">2019</div>
+            <div class="album-links">
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.997 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.988c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208c-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.802.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03c.525 0 1.048-.034 1.57-.1.823-.106 1.597-.35 2.296-.81 1.279-.838 2.024-2.017 2.304-3.496.13-.678.165-1.368.17-2.057.007-4.222.004-8.445.003-12.667zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.045-1.773-.6-1.943-1.536a1.88 1.88 0 011.038-2.022c.323-.16.67-.25 1.018-.324.376-.082.753-.162 1.125-.254.26-.063.42-.23.457-.498.018-.13.023-.262.023-.394.003-1.54.002-3.082.002-4.623v-.22c-.005 0-.01-.001-.014-.001l-4.86 1.227v6.124c0 .435-.07.856-.285 1.244-.324.585-.81.94-1.468 1.077-.37.076-.743.11-1.12.092-.82-.04-1.55-.645-1.674-1.456a1.905 1.905 0 011.032-2.075c.36-.18.747-.268 1.14-.35.35-.073.702-.147 1.05-.228.268-.063.42-.234.457-.507.017-.13.022-.262.022-.393l.002-5.985c0-.31.077-.6.227-.868.282-.51.71-.827 1.28-.943l4.65-1.17c.424-.107.853-.213 1.28-.313.432-.102.794.069 1.02.442.14.235.19.494.19.765l-.002 2.067z"/></svg>
+                Apple Music
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="album-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+                YouTube Music
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="section-sublabel" style="margin-top:28px;">Genres</div>
+      <div style="margin-bottom:8px;">
+        <span class="tag">Future Garage</span>
+        <span class="tag">Tech House</span>
+      </div>
+
+    </div>
+
+    <!-- DIRECTING CV -->
+    <div class="panel" id="panel-directing">
+      <div class="section-label">Directing CV</div>
+
+      <div class="section-sublabel">Theatre</div>
+      <div class="cv-table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Production</th>
+              <th>Playwright</th>
+              <th>Company</th>
+              <th>Dates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2026</td><td>A Simple Act of Kindness</td><td>Ross Mueller</td><td>Brighton Theatre</td><td>7 – 22 Nov</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-sublabel" style="margin-top:32px;">Short Films &amp; Trailers</div>
+      <div class="credit">
+        <div class="credit-head">
+          <span class="credit-title">Film Title</span>
+          <span class="credit-date">2024</span>
+        </div>
+        <div class="credit-role">Director</div>
+        <div class="credit-org">// Production Company / Festival</div>
+        <div class="credit-desc">Brief description, genre, or notable achievements (e.g. festival selections).</div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-hint" id="nav-hint">[ <span>↑ ↓</span> ] NAVIGATE</span>
+  <span class="footer-hint">BLAKE STRINGER // <span>PORTFOLIO</span></span>
+</footer>
+
+<script>
+const sections = [
+  { id: 'about',      label: 'About' },
+  { id: 'acting',     label: 'Acting' },
+  { id: 'sound',      label: 'Sound Design' },
+  { id: 'music',      label: 'Music' },
+  { id: 'directing',  label: 'Directing' },
+];
+
+let current = 0;
+let skillsDone = false;
+
+function buildTabs() {
+  const sidebar  = document.getElementById('tab-sidebar');
+  const mobilebar = document.getElementById('tab-mobile');
+
+  sections.forEach((s, i) => {
+    // Sidebar tab
+    const t = document.createElement('div');
+    t.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    t.id = 'tab-' + s.id;
+    t.innerHTML = `<span class="tab-text">${s.label}</span><span class="tab-num">0${i+1}</span>`;
+    t.addEventListener('click', () => select(i));
+    sidebar.appendChild(t);
+
+    // Mobile tab
+    const m = document.createElement('div');
+    m.className = 'tab-mobile-btn' + (i === 0 ? ' active' : '');
+    m.id = 'mtab-' + s.id;
+    m.textContent = s.label;
+    m.addEventListener('click', () => select(i));
+    mobilebar.appendChild(m);
+  });
+}
+
+function select(i) {
+  current = i;
+  document.querySelectorAll('.tab-btn').forEach((t, j) => t.classList.toggle('active', j === i));
+  document.querySelectorAll('.tab-mobile-btn').forEach((t, j) => t.classList.toggle('active', j === i));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + sections[i].id).classList.add('active');
+
+  // Scroll mobile tab into view
+  const mt = document.getElementById('mtab-' + sections[i].id);
+  if (mt) mt.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+  // Animate skill bars on Sound tab
+  if ((sections[i].id === 'sound') && !skillsDone) {
+    skillsDone = true;
+    setTimeout(() => {
+      document.querySelectorAll('.skill-fill').forEach(b => b.style.width = b.dataset.w + '%');
+    }, 80);
+  }
+  // Re-animate every time sound tab is opened
+  if (sections[i].id === 'sound') {
+    setTimeout(() => {
+      document.querySelectorAll('.skill-fill').forEach(b => b.style.width = b.dataset.w + '%');
+    }, 80);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 's') select(Math.min(current + 1, sections.length - 1));
+  if (e.key === 'ArrowUp'   || e.key === 'w') select(Math.max(current - 1, 0));
+});
+
+function updateHint() {
+  const hint = document.getElementById('nav-hint');
+  if (!hint) return;
+  if (window.innerWidth < 640) {
+    hint.innerHTML = '[ <span>TAP TAB</span> ] NAVIGATE';
+  } else {
+    hint.innerHTML = '[ <span>↑ ↓</span> ] NAVIGATE';
+  }
+}
+
+window.addEventListener('resize', updateHint);
+updateHint();
+buildTabs();
+</script>
+</body>
+</html>
