@@ -228,11 +228,13 @@ header::after {
   gap: 32px;
   margin-bottom: 32px;
   flex-wrap: wrap;
+  flex-direction: row;
+  align-items: flex-start;
 }
 
 .photo-frame {
-  width: 140px;
-  height: 170px;
+  width: 336px;
+  height: 408px;
   flex-shrink: 0;
   background: rgba(0,0,0,0.08);
   border: 2px solid var(--purple);
@@ -250,8 +252,12 @@ header::after {
 }
 
 .photo-frame img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  object-position: top center;
+  transform: scale(1.5) translateY(-3%);
+  transform-origin: top center;
 }
 
 .photo-frame::after {
@@ -334,6 +340,8 @@ header::after {
   text-decoration: none;
   color: inherit;
   transition: color 0.15s;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
 }
 .cv a:hover {
   color: var(--purple);
@@ -520,7 +528,8 @@ header::after {
   color: var(--black);
   line-height: 1.4;
   vertical-align: top;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Optima', 'Palatino Linotype', 'Palatino', 'Book Antiqua', Georgia, serif;
+  font-size: 13px;
 }
 
 .cv-table tbody td:first-child {
@@ -603,6 +612,7 @@ header::after {
 }
 
 .album-art {
+  display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   position: relative;
@@ -701,6 +711,111 @@ header::after {
   .album-grid { grid-template-columns: 1fr; }
 }
 
+/* ── VIDEO GRID ── */
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.video-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.12);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.video-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0,0,0,0.15);
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.video-card:hover .video-thumb img {
+  transform: scale(1.03);
+}
+
+.video-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  transition: background 0.2s;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.video-thumb::after {
+  content: '▶';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  color: var(--lime);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.video-card:hover .video-thumb::before {
+  background: rgba(0,0,0,0.35);
+}
+
+.video-card:hover .video-thumb::after {
+  opacity: 1;
+}
+
+.video-info {
+  padding: 10px 12px 12px;
+}
+
+.video-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  color: var(--black);
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin-bottom: 3px;
+}
+
+.video-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .video-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .video-grid { grid-template-columns: 1fr; }
+}
+
 /* ── BOTTOM BAR ── */
 footer {
   border-top: 1px solid rgba(0,0,0,0.12);
@@ -762,7 +877,7 @@ footer {
   header { padding: 24px 20px 20px; }
   .site-name { font-size: clamp(40px, 12vw, 72px); }
   .about-top { flex-direction: column; }
-  .photo-frame { width: 100%; height: 200px; }
+  .photo-frame { width: 100%; height: 400px; }
   .skill-name { min-width: 100px; }
 }
 
@@ -805,8 +920,7 @@ footer {
 
       <div class="about-top">
         <div class="photo-frame">
-          <!-- Replace the line below with: <img src="images/your-photo.jpg" alt="Blake Stringer"> -->
-          Photo<br>Goes<br>Here
+          <img src="Images/BlakeStringerHeadshot.jpg" alt="Blake Stringer">
         </div>
         <div class="about-bio">
           <p>I'm a Melbourne based actor whose work and primary focus predominantly lie on the stage. However, as a musician and sound designer, I always finds myself creating and never out of work.</p>
@@ -850,50 +964,56 @@ footer {
               <th>Role</th>
               <th>Director</th>
               <th>Playwright</th>
-              <th>Company / Venue</th>
+              <th>Company</th>
               <th>Dates</th>
             </tr>
           </thead>
           <tbody>
             <tr><td>2026</td><td>Birdsong</td><td>Jack Firebrace</td><td>Michelle Swann</td><td>Rachel Wagstaff</td><td>Heidelberg Theatre</td><td>3 – 18 Jul</td></tr>
-            <tr><td>2026</td><td>Lovesong</td><td>William</td><td>Vicki Smith</td><td>Abi Morgan</td><td>Williamstown Little Theatre</td><td>22 Apr – 9 May</td></tr>
+            <tr><td></td><td>Lovesong</td><td>William</td><td>Vicki Smith</td><td>Abi Morgan</td><td>Williamstown Little Theatre</td><td>22 Apr – 9 May</td></tr>
             <tr><td>2025</td><td>Love, Love, Love</td><td>Kenneth</td><td>George Werther</td><td>Mike Bartlett</td><td>Heidelberg Theatre</td><td>4 – 19 Jul</td></tr>
-            <tr><td>2025</td><td>Things I Know To Be True</td><td>Mark / Mia</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>23 Apr – 10 May</td></tr>
+            <tr><td></td><td>Things I Know To Be True</td><td>Mark / Mia</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>23 Apr – 10 May</td></tr>
             <tr><td>2024</td><td>1984</td><td>Big Brother / Goldstein</td><td>Joe Dias / Sharon Maine</td><td>Robert Owens, et al.</td><td>Peridot Theatre</td><td>15 – 24 Nov</td></tr>
-            <tr><td>2024</td><td>Hearth</td><td>Matthew</td><td>Damian Jones</td><td>Fleur Murphy</td><td>Mordialloc Theatre</td><td>10 – 25 May</td></tr>
-            <tr><td>2024</td><td>Photograph 51</td><td>Maurice Wilkins</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
+            <tr><td></td><td>Hearth</td><td>Matthew</td><td>Damian Jones</td><td>Fleur Murphy</td><td>Mordialloc Theatre</td><td>10 – 25 May</td></tr>
+            <tr><td></td><td>Photograph 51</td><td>Maurice Wilkins</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
             <tr><td>2023</td><td>Schmattes</td><td>Tal</td><td>George Werther</td><td>Alison Knight</td><td>Peridot Theatre</td><td>9 – 11 Nov</td></tr>
-            <tr><td>2023</td><td>The Normal Heart</td><td>Felix Turner</td><td>George Benca</td><td>Larry Kramer</td><td>Strathmore Theatrical Arts Group</td><td>17 – 26 Aug</td></tr>
-            <tr><td>2023</td><td>The Shoe-Horn Sonata</td><td>Interviewer</td><td>Andrew Ferguson</td><td>John Mistro</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
+            <tr><td></td><td>The Normal Heart</td><td>Felix Turner</td><td>George Benca</td><td>Larry Kramer</td><td>Strathmore Theatrical Arts Group</td><td>17 – 26 Aug</td></tr>
+            <tr><td></td><td>The Shoe-Horn Sonata</td><td>Interviewer</td><td>Andrew Ferguson</td><td>John Mistro</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
             <tr><td>2022</td><td>The History Boys</td><td>Irwin</td><td>Dexter Bourke</td><td>Alan Bennett</td><td>1812 Theatre</td><td>6 – 29 Oct</td></tr>
-            <tr><td>2022</td><td>Torch Song</td><td>Arnold Beckoff</td><td>Annie Blood</td><td>Harvey Fierstein</td><td>Brighton Theatre</td><td>20 May – 4 Jun</td></tr>
-            <tr><td>2022</td><td>Dracula – The Bloody Truth</td><td>Actor 2 (incl. Dracula)</td><td>Dexter Bourke</td><td>John Nicholson</td><td>1812 Theatre</td><td>24 Feb – 19 Mar</td></tr>
+            <tr><td></td><td>Torch Song</td><td>Arnold Beckoff</td><td>Annie Blood</td><td>Harvey Fierstein</td><td>Brighton Theatre</td><td>20 May – 4 Jun</td></tr>
+            <tr><td></td><td>Dracula – The Bloody Truth</td><td>Actor 2 (incl. Dracula)</td><td>Dexter Bourke</td><td>John Nicholson</td><td>1812 Theatre</td><td>24 Feb – 19 Mar</td></tr>
             <tr><td>2019</td><td>Ghosts</td><td>Oswald Alving</td><td>Dexter Bourke</td><td>Henrik Ibsen</td><td>1812 Theatre</td><td>3 – 26 Oct</td></tr>
             <tr><td>2018</td><td>The Elephant Man</td><td>Frederick Treves</td><td>Christopher Shaw</td><td>Bernard Pomerance</td><td>Lilydale Athenaeum Theatre</td><td>24 May – 9 Jun</td></tr>
             <tr><td>2017</td><td>Never The Sinner</td><td>Richard Loeb</td><td>Geoff Hickey</td><td>John Logan</td><td>1812 Theatre</td><td>5 – 28 Oct</td></tr>
-            <tr><td>2017</td><td>Heroes</td><td>Nick</td><td>Dexter Bourke</td><td>Gabriel Bergmoser</td><td>Bitten By Productions</td><td>25 May – 3 Jun</td></tr>
-            <tr><td>2017</td><td>The One Day of the Year</td><td>Hughie Cook</td><td>Judy Corderoy</td><td>Alan Seymour</td><td>Mordialloc Theatre</td><td>21 Apr – 6 May</td></tr>
+            <tr><td></td><td>Heroes</td><td>Nick</td><td>Dexter Bourke</td><td>Gabriel Bergmoser</td><td>Bitten By Productions</td><td>25 May – 3 Jun</td></tr>
+            <tr><td></td><td>The One Day of the Year</td><td>Hughie Cook</td><td>Judy Corderoy</td><td>Alan Seymour</td><td>Mordialloc Theatre</td><td>21 Apr – 6 May</td></tr>
             <tr><td>2016</td><td>Sherlock Holmes &amp; The Adventure of the Suicide Club</td><td>Nikita Starloff</td><td>Christine Grant</td><td>Jeffrey Hatcher</td><td>1812 Theatre</td><td>18 May – 4 Jun</td></tr>
-            <tr><td>2016</td><td>Measure For Measure</td><td>Lucio</td><td>Sharon Maine</td><td>William Shakespeare</td><td>Gemco Players</td><td>29 Apr – 14 May</td></tr>
+            <tr><td></td><td>Measure For Measure</td><td>Lucio</td><td>Sharon Maine</td><td>William Shakespeare</td><td>Gemco Players</td><td>29 Apr – 14 May</td></tr>
             <tr><td>2015</td><td>Patient 12</td><td>Percy Groves</td><td>Dexter Bourke</td><td>Kevin Summers</td><td>1812 Theatre</td><td>1 – 24 Oct</td></tr>
-            <tr><td>2015</td><td>Romeo &amp; Juliet</td><td>Mercutio</td><td>Malcolm Sussman</td><td>William Shakespeare</td><td>Sherbrooke Theatre</td><td>7 – 22 Aug</td></tr>
-            <tr><td>2015</td><td>Caught In The Net</td><td>Gavin Smith</td><td>Gaetano Santo</td><td>Ray Cooney</td><td>Brighton Theatre</td><td>21 May – 6 Jun</td></tr>
-            <tr><td>2015</td><td>The Peach Season</td><td>Kieran</td><td>John Mills</td><td>Debra Oswald</td><td>1812 Theatre</td><td>25 Feb – 21 Mar</td></tr>
+            <tr><td></td><td>Romeo &amp; Juliet</td><td>Mercutio</td><td>Malcolm Sussman</td><td>William Shakespeare</td><td>Sherbrooke Theatre</td><td>7 – 22 Aug</td></tr>
+            <tr><td></td><td>Caught In The Net</td><td>Gavin Smith</td><td>Gaetano Santo</td><td>Ray Cooney</td><td>Brighton Theatre</td><td>21 May – 6 Jun</td></tr>
+            <tr><td></td><td>The Peach Season</td><td>Kieran</td><td>John Mills</td><td>Debra Oswald</td><td>1812 Theatre</td><td>25 Feb – 21 Mar</td></tr>
             <tr><td>2014</td><td>True Minds</td><td>Benedict Perring</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Heidelberg Theatre</td><td>20 Nov – 6 Dec</td></tr>
-            <tr><td>2014</td><td>Amadeus</td><td>Venticello 2</td><td>Bruce Akers</td><td>Peter Shaffer</td><td>Heidelberg Theatre</td><td>11 – 27 Sep</td></tr>
-            <tr><td>2014</td><td>The Vortex</td><td>Nicky Lancaster</td><td>Horrie Leek</td><td>Noël Coward</td><td>Malvern Theatre</td><td>19 Jun – 5 Jul</td></tr>
-            <tr><td>2014</td><td>As Bees In Honey Drown</td><td>Evan Wyler</td><td>Peter Newling</td><td>Douglas Carter Beane</td><td>Brighton Theatre</td><td>19 Feb – 8 Mar</td></tr>
+            <tr><td></td><td>Amadeus</td><td>Venticello 2</td><td>Bruce Akers</td><td>Peter Shaffer</td><td>Heidelberg Theatre</td><td>11 – 27 Sep</td></tr>
+            <tr><td></td><td>The Vortex</td><td>Nicky Lancaster</td><td>Horrie Leek</td><td>Noël Coward</td><td>Malvern Theatre</td><td>19 Jun – 5 Jul</td></tr>
+            <tr><td></td><td>As Bees In Honey Drown</td><td>Evan Wyler</td><td>Peter Newling</td><td>Douglas Carter Beane</td><td>Brighton Theatre</td><td>19 Feb – 8 Mar</td></tr>
             <tr><td>2013</td><td>Easy Virtue</td><td>John Whittaker</td><td>Horrie Leek</td><td>Noël Coward</td><td>Peridot Theatre</td><td>7 – 23 Nov</td></tr>
-            <tr><td>2013</td><td>Morning Departure</td><td>Sub-Lt. McFee</td><td>Gaetano Santo</td><td>Kenneth Woollard</td><td>Williamstown Little Theatre</td><td>5 – 21 Sep</td></tr>
-            <tr><td>2013</td><td>Picasso at the Lapin Agile</td><td>Pablo Picasso</td><td>Jeff Saliba</td><td>Steve Martin</td><td>Brighton Theatre</td><td>22 May – 8 Jun</td></tr>
+            <tr><td></td><td>Morning Departure</td><td>Sub-Lt. McFee</td><td>Gaetano Santo</td><td>Kenneth Woollard</td><td>Williamstown Little Theatre</td><td>5 – 21 Sep</td></tr>
+            <tr><td></td><td>Picasso at the Lapin Agile</td><td>Pablo Picasso</td><td>Jeff Saliba</td><td>Steve Martin</td><td>Brighton Theatre</td><td>22 May – 8 Jun</td></tr>
             <tr><td>2012</td><td>Brilliant Lies</td><td>Paul</td><td>Zina Carman</td><td>David Williamson</td><td>1812 Theatre</td><td>8 Aug – 1 Sep</td></tr>
             <tr><td>2011</td><td>It Runs In The Family</td><td>Leslie</td><td>Jill Hiam</td><td>Ray Cooney</td><td>Knox Theatre</td><td>20 – 28 May</td></tr>
             <tr><td>2010</td><td>Crave</td><td>A</td><td>David Adamson</td><td>Sarah Kane</td><td>Deakin University</td><td>14 Oct</td></tr>
             <tr><td>2009</td><td>Così</td><td>Lewis Riley</td><td>Matt Hillman</td><td>Louis Nowra</td><td>Adlib Entertainment</td><td>12 – 13 Dec</td></tr>
-            <tr><td>2009</td><td>Romeo &amp; Juliet</td><td>Romeo</td><td>Matt Hillman</td><td>William Shakespeare</td><td>Adlib Entertainment</td><td>5 – 6 Jun</td></tr>
+            <tr><td></td><td>Romeo &amp; Juliet</td><td>Romeo</td><td>Matt Hillman</td><td>William Shakespeare</td><td>Adlib Entertainment</td><td>5 – 6 Jun</td></tr>
           </tbody>
         </table>
       </div>
+
+      <div class="section-sublabel" style="margin-top:32px;">Attributes</div>
+      <span class="tag tag-lime">Height: 182cm</span>
+      <span class="tag tag-lime">Hair: Brown</span>
+      <span class="tag tag-lime">Eyes: Blue</span>
+      <span class="tag tag-lime">Age Range: 30–40</span>
 
       <div class="section-sublabel" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
@@ -910,10 +1030,10 @@ footer {
           <tbody>
             <tr><td>2024</td><td>VDL Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Photograph 51</td></tr>
             <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>The Normal Heart</td></tr>
-            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
-            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Highly Commended Performance in a One Act Play</td><td>Schmattes</td></tr>
+            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Highly Commended Performance in a One Act Play</td><td>Schmattes</td></tr>
             <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Lead Actor in a Drama</td><td>Torch Song</td></tr>
-            <tr><td>2022</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Comedy</td><td>Dracula – The Bloody Truth</td></tr>
+            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Comedy</td><td>Dracula – The Bloody Truth</td></tr>
             <tr><td>2019</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>Ghosts</td></tr>
             <tr><td>2018</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>The Elephant Man</td></tr>
             <tr><td>2017</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Never The Sinner</td></tr>
@@ -922,11 +1042,26 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Attributes</div>
-      <span class="tag tag-lime">Height: 182cm</span>
-      <span class="tag tag-lime">Hair: Brown</span>
-      <span class="tag tag-lime">Eyes: Blue</span>
-      <span class="tag tag-lime">Age Range: 30–40</span>
+      <div class="section-sublabel" style="margin-top:32px;">Video Reel</div>
+      <div class="video-grid">
+        <a href="https://www.youtube.com/watch?v=ckq8P67JgDc" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb"><img src="https://img.youtube.com/vi/ckq8P67JgDc/hqdefault.jpg" alt="The Raven"></div>
+          <div class="video-info"><div class="video-title">The Raven</div><div class="video-meta">Monologue</div></div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=GFkI2HiQW7o" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb"><img src="https://img.youtube.com/vi/GFkI2HiQW7o/hqdefault.jpg" alt="Halogen"></div>
+          <div class="video-info"><div class="video-title">Halogen</div><div class="video-meta">Short Film</div></div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=1SLXbZOAosU" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb"><img src="https://img.youtube.com/vi/1SLXbZOAosU/hqdefault.jpg" alt="Epicene Neurasthenia"></div>
+          <div class="video-info"><div class="video-title">Epicene Neurasthenia</div><div class="video-meta">Short Film</div></div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=NTbam91beUY" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb"><img src="https://img.youtube.com/vi/NTbam91beUY/hqdefault.jpg" alt="Penta"></div>
+          <div class="video-info"><div class="video-title">Penta</div><div class="video-meta">Short Film</div></div>
+        </a>
+      </div>
+
     </div>
 
     <!-- SOUND DESIGN CV -->
@@ -948,28 +1083,28 @@ footer {
           </thead>
           <tbody>
             <tr><td>2026</td><td>A Simple Act of Kindness</td><td>Blake Stringer</td><td>Ross Mueller</td><td>Brighton Theatre</td><td>7 – 22 Nov</td></tr>
-            <tr><td>2026</td><td>The Truth</td><td>George Werther</td><td>Florian Zeller, Christopher Hampton</td><td>Mordialloc Theatre</td><td>30 Jul – 8 Aug</td></tr>
-            <tr><td>2026</td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>21 – 31 May</td></tr>
-            <tr><td>2026</td><td>Wicked Sisters</td><td>LB Bradley</td><td>LB Bradley, Michaela Smith</td><td>Brighton Theatre</td><td>15 – 30 May</td></tr>
-            <tr><td>2026</td><td>The Gift</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Torquay Theatre Troupe</td><td>19 – 28 Mar</td></tr>
+            <tr><td></td><td>The Truth</td><td>George Werther</td><td>Florian Zeller, Christopher Hampton</td><td>Mordialloc Theatre</td><td>30 Jul – 8 Aug</td></tr>
+            <tr><td></td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>21 – 31 May</td></tr>
+            <tr><td></td><td>Wicked Sisters</td><td>LB Bradley</td><td>LB Bradley, Michaela Smith</td><td>Brighton Theatre</td><td>15 – 30 May</td></tr>
+            <tr><td></td><td>The Gift</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Torquay Theatre Troupe</td><td>19 – 28 Mar</td></tr>
             <tr><td>2025</td><td>The Humans</td><td>Nicky Neville-Jones</td><td>Stephen Karam</td><td>Malvern Theatre</td><td>22 Aug – 6 Sep</td></tr>
-            <tr><td>2025</td><td>Frankenstein</td><td>George Benca</td><td>Nick Dear, Mary Shelley</td><td>Peridot Theatre</td><td>15 – 26 Aug</td></tr>
-            <tr><td>2025</td><td>Love, Love, Love</td><td>George Werther</td><td>Mike Bartlett</td><td>Heidelberg Theatre</td><td>4 – 19 Jul</td></tr>
-            <tr><td>2025</td><td>Knife Edge</td><td>Deborah Fabbro</td><td>Alison Campbell-Rate</td><td>Beaumaris Theatre</td><td>9 – 24 May</td></tr>
-            <tr><td>2025</td><td>Things I Know To Be True</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>26 Apr – 10 May</td></tr>
+            <tr><td></td><td>Frankenstein</td><td>George Benca</td><td>Nick Dear, Mary Shelley</td><td>Peridot Theatre</td><td>15 – 26 Aug</td></tr>
+            <tr><td></td><td>Love, Love, Love</td><td>George Werther</td><td>Mike Bartlett</td><td>Heidelberg Theatre</td><td>4 – 19 Jul</td></tr>
+            <tr><td></td><td>Knife Edge</td><td>Deborah Fabbro</td><td>Alison Campbell-Rate</td><td>Beaumaris Theatre</td><td>9 – 24 May</td></tr>
+            <tr><td></td><td>Things I Know To Be True</td><td>Shirley Sydenham</td><td>Andrew Bovell</td><td>Williamstown Little Theatre</td><td>26 Apr – 10 May</td></tr>
             <tr><td>2024</td><td>Consent</td><td>Nicky Neville-Jones</td><td>Nina Raine</td><td>Bottled Snail Productions</td><td>31 Oct – 9 Nov</td></tr>
-            <tr><td>2024</td><td>The Father</td><td>Div Collins</td><td>Florian Zeller, Christopher Hampton</td><td>Williamstown Little Theatre</td><td>4 – 21 Sep</td></tr>
-            <tr><td>2024</td><td>Lovesong</td><td>George Werther</td><td>Abi Rose</td><td>Malvern Theatre</td><td>21 Jun – 6 Jul</td></tr>
-            <tr><td>2024</td><td>Berlin</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Heidelberg Theatre</td><td>19 Apr – 4 May</td></tr>
-            <tr><td>2024</td><td>The Fire Raisers</td><td>Andrew Ferguson</td><td>Max Frisch</td><td>1812 Theatre</td><td>4 – 27 Apr</td></tr>
-            <tr><td>2024</td><td>Photograph 51</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
+            <tr><td></td><td>The Father</td><td>Div Collins</td><td>Florian Zeller, Christopher Hampton</td><td>Williamstown Little Theatre</td><td>4 – 21 Sep</td></tr>
+            <tr><td></td><td>Lovesong</td><td>George Werther</td><td>Abi Rose</td><td>Malvern Theatre</td><td>21 Jun – 6 Jul</td></tr>
+            <tr><td></td><td>Berlin</td><td>Natasha Boyd</td><td>Joanna Murray-Smith</td><td>Heidelberg Theatre</td><td>19 Apr – 4 May</td></tr>
+            <tr><td></td><td>The Fire Raisers</td><td>Andrew Ferguson</td><td>Max Frisch</td><td>1812 Theatre</td><td>4 – 27 Apr</td></tr>
+            <tr><td></td><td>Photograph 51</td><td>Natasha Boyd</td><td>Anna Ziegler</td><td>Williamstown Little Theatre</td><td>7 – 24 Feb</td></tr>
             <tr><td>2023</td><td>The Normal Heart</td><td>George Benca</td><td>Larry Kramer</td><td>STAG Theatre</td><td>17 – 26 Aug</td></tr>
-            <tr><td>2023</td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>18 – 27 May</td></tr>
-            <tr><td>2023</td><td>The Shoe-Horn Sonata</td><td>Andrew Ferguson</td><td>John Misto</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
-            <tr><td>2023</td><td>The Revlon Girl</td><td>Natasha Boyd</td><td>Neil Anthony Docking</td><td>Brighton Theatre</td><td>17 Feb – 4 Mar</td></tr>
+            <tr><td></td><td>Witness for the Prosecution</td><td>Nicky Neville-Jones</td><td>Agatha Christie</td><td>Bottled Snail Productions</td><td>18 – 27 May</td></tr>
+            <tr><td></td><td>The Shoe-Horn Sonata</td><td>Andrew Ferguson</td><td>John Misto</td><td>1812 Theatre</td><td>23 Mar – 22 Apr</td></tr>
+            <tr><td></td><td>The Revlon Girl</td><td>Natasha Boyd</td><td>Neil Anthony Docking</td><td>Brighton Theatre</td><td>17 Feb – 4 Mar</td></tr>
             <tr><td>2022</td><td>Citysong</td><td>Shirley Sydenham</td><td>Dylan Coburn Gray</td><td>Williamstown Little Theatre</td><td>7 – 24 Sep</td></tr>
             <tr><td>2019</td><td>Stargazers</td><td>Pedro Ramos</td><td>Reina Hardy</td><td>Brighton Theatre</td><td>16 – 31 Aug</td></tr>
-            <tr><td>2019</td><td>The Beast</td><td>Terese Maurici-Ryan</td><td>Eddie Perfect</td><td>Powderkeg Players</td><td>4 – 13 Apr</td></tr>
+            <tr><td></td><td>The Beast</td><td>Terese Maurici-Ryan</td><td>Eddie Perfect</td><td>Powderkeg Players</td><td>4 – 13 Apr</td></tr>
             <tr><td>2018</td><td>In The Next Room (or The Vibrator Play)</td><td>Natasha Boyd</td><td>Sarah Ruhl</td><td>Brighton Theatre</td><td>15 Feb – 3 Mar</td></tr>
           </tbody>
         </table>
@@ -990,7 +1125,7 @@ footer {
           <tbody>
             <tr><td>2024</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>Frankenstein</td></tr>
             <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>Lovesong</td></tr>
-            <tr><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
             <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>The Revlon Girl</td></tr>
           </tbody>
         </table>
@@ -1012,9 +1147,9 @@ footer {
       <div class="album-grid">
 
         <div class="album-card">
-          <div class="album-art">
+          <a href="https://hyperfollow.com/BlakeStringer/Organic" target="_blank" rel="noopener noreferrer" class="album-art">
             <img src="Images/OrganicAlbum.PNG" alt="ORGANIC">
-          </div>
+          </a>
           <div class="album-info">
             <div class="album-title">ORGANIC</div>
             <div class="album-year">2024</div>
@@ -1036,9 +1171,9 @@ footer {
         </div>
 
         <div class="album-card">
-          <div class="album-art">
+          <a href="https://distrokid.com/hyperfollow/blakestringerandaaela/art-of-somethingness" target="_blank" rel="noopener noreferrer" class="album-art">
             <img src="Images/ArtOfSomethingnessAlbum.jpeg" alt="Art of Somethingness">
-          </div>
+          </a>
           <div class="album-info">
             <div class="album-title">Art of Somethingness</div>
             <div class="album-year">2022</div>
@@ -1060,9 +1195,9 @@ footer {
         </div>
 
         <div class="album-card">
-          <div class="album-art">
+          <a href="https://distrokid.com/hyperfollow/blakestringer/3030-v-i-s-i-o-n" target="_blank" rel="noopener noreferrer" class="album-art">
             <img src="Images/3030VISIONAlbum.jpg" alt="30/30 V I S I O N">
-          </div>
+          </a>
           <div class="album-info">
             <div class="album-title">30/30 V I S I O N</div>
             <div class="album-year">2021</div>
@@ -1084,9 +1219,9 @@ footer {
         </div>
 
         <div class="album-card">
-          <div class="album-art">
+          <a href="https://distrokid.com/hyperfollow/ab112/stargazers" target="_blank" rel="noopener noreferrer" class="album-art">
             <img src="Images/StargazersAlbum.jpeg" alt="Stargazers">
-          </div>
+          </a>
           <div class="album-info">
             <div class="album-title">Stargazers</div>
             <div class="album-year">2019</div>
@@ -1134,20 +1269,116 @@ footer {
             </tr>
           </thead>
           <tbody>
+            <tr><td>2028</td><td>???</td><td>???</td><td>???</td><td>May</td></tr>
+            <tr><td>2027</td><td>???</td><td>???</td><td>???</td><td>June</td></tr>
             <tr><td>2026</td><td>A Simple Act of Kindness</td><td>Ross Mueller</td><td>Brighton Theatre</td><td>7 – 22 Nov</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="section-sublabel" style="margin-top:32px;">Short Films &amp; Trailers</div>
-      <div class="credit">
-        <div class="credit-head">
-          <span class="credit-title">Film Title</span>
-          <span class="credit-date">2024</span>
-        </div>
-        <div class="credit-role">Director</div>
-        <div class="credit-org">// Production Company / Festival</div>
-        <div class="credit-desc">Brief description, genre, or notable achievements (e.g. festival selections).</div>
+      <div class="video-grid">
+
+        <a href="https://www.youtube.com/watch?v=ChhSwebkyNQ" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/ChhSwebkyNQ/hqdefault.jpg" alt="The Shoe-Horn Sonata">
+          </div>
+          <div class="video-info">
+            <div class="video-title">The Shoe-Horn Sonata</div>
+            <div class="video-meta">The 1812 Theatre · 2023</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=6ExVRiEj-SI" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/6ExVRiEj-SI/hqdefault.jpg" alt="The History Boys">
+          </div>
+          <div class="video-info">
+            <div class="video-title">The History Boys</div>
+            <div class="video-meta">The 1812 Theatre · 2022</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=hrqEOe8zHAQ" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/hrqEOe8zHAQ/hqdefault.jpg" alt="Dracula – The Bloody Truth">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Dracula – The Bloody Truth</div>
+            <div class="video-meta">The 1812 Theatre · 2022</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=SKt8pq-7V2w" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/SKt8pq-7V2w/hqdefault.jpg" alt="What is the Matter with Mary Jane">
+          </div>
+          <div class="video-info">
+            <div class="video-title">What is the Matter with Mary Jane</div>
+            <div class="video-meta">Fourth Wall Theatre · 2021</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=v-eSJwVkVXE" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/v-eSJwVkVXE/hqdefault.jpg" alt="Slut">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Slut</div>
+            <div class="video-meta">Fourth Wall Theatre · 2021</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=6kX7bOIomFE" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/6kX7bOIomFE/hqdefault.jpg" alt="Ghosts">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Ghosts</div>
+            <div class="video-meta">The 1812 Theatre · 2019</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=JMNMXwAFqPk" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/JMNMXwAFqPk/hqdefault.jpg" alt="Gulls">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Gulls</div>
+            <div class="video-meta">The 1812 Theatre · 2018</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=AMlFezPDaCc" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/AMlFezPDaCc/hqdefault.jpg" alt="Never The Sinner">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Never The Sinner</div>
+            <div class="video-meta">The 1812 Theatre · 2017</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=w9PvgRCoJx8" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/w9PvgRCoJx8/hqdefault.jpg" alt="The Crucible">
+          </div>
+          <div class="video-info">
+            <div class="video-title">The Crucible</div>
+            <div class="video-meta">Centrestage · The 1812 Theatre · 2017</div>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=YmZl_LOp9Lk" target="_blank" rel="noopener noreferrer" class="video-card">
+          <div class="video-thumb">
+            <img src="https://img.youtube.com/vi/YmZl_LOp9Lk/hqdefault.jpg" alt="Patient 12">
+          </div>
+          <div class="video-info">
+            <div class="video-title">Patient 12</div>
+            <div class="video-meta">The 1812 Theatre · 2015</div>
+          </div>
+        </a>
+
       </div>
 
     </div>
