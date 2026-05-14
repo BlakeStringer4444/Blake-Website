@@ -2305,7 +2305,7 @@ backToTop.addEventListener('click', () => {
   
 /* ── SNAKE EASTER EGG ── */
 (function () {
-  const COLS = 20, ROWS = 20, CELL = 20, SPEED = 140;
+  const COLS = 20, ROWS = 20, CELL = 20, SPEED = 93;
   const LS_KEY = 'blakeSnakeScores';
   let gameLoop = null;
   let snake, dir, nextDir, food, score, dead;
@@ -2412,7 +2412,16 @@ backToTop.addEventListener('click', () => {
       ctx.textAlign = 'center';
       ctx.fillStyle = '#D4FF1A';
       ctx.font = '700 38px "Bebas Neue", sans-serif';
-      ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+      const midY = score >= 500 ? canvas.height / 2 - 40 : canvas.height / 2;
+      ctx.fillText('GAME OVER', canvas.width / 2, midY);
+      if (score >= 500) {
+        ctx.fillStyle = '#9933FF';
+        ctx.font = '700 16px "Bebas Neue", sans-serif';
+        ctx.fillText('Congratulations, you\'ve unlocked a secret code', canvas.width / 2, midY + 36);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '700 26px "Bebas Neue", sans-serif';
+        ctx.fillText("'HCUOT'", canvas.width / 2, midY + 68);
+      }
     }
   }
 
@@ -2498,6 +2507,203 @@ if (siteName) {
   }, { passive: false });
 
   overlay.addEventListener('click', e => { if (e.target === overlay) closeGame(); });
+})();
+
+/* ── CHESS: THE BLAKE GAMBIT ── */
+/* Trigger: click headshot 100 times within 60 seconds */
+(function () {
+  let cTaps = 0, cTimer = null;
+  const hs = document.querySelector('.photo-frame img');
+  if (hs) {
+    hs.style.cursor = 'pointer';
+    hs.addEventListener('click', () => {
+      cTaps++;
+      if (cTimer) clearTimeout(cTimer);
+      if (cTaps >= 100) { cTaps = 0; clearTimeout(cTimer); launchChess(); }
+      else cTimer = setTimeout(() => { cTaps = 0; }, 60000);
+    });
+  }
+
+  const UNI = {
+    wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',
+    bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'
+  };
+  let B, turn, sel, legs, over, ep, cst;
+
+  const cl  = p => p ? p[0] : null;
+  const typ = p => p ? p[1] : null;
+  const opp = c => c === 'w' ? 'b' : 'w';
+  const ok  = (r,c) => r>=0&&r<8&&c>=0&&c<8;
+
+  function raw(b,r,c,ep,cst) {
+    const p=b[r][c]; if(!p) return [];
+    const co=cl(p),t=typ(p),mv=[];
+    if(t==='P'){
+      const d=co==='w'?-1:1,sr=co==='w'?6:1;
+      if(ok(r+d,c)&&!b[r+d][c]){mv.push([r+d,c]);if(r===sr&&!b[r+d*2][c])mv.push([r+d*2,c]);}
+      for(const dc of[-1,1]) if(ok(r+d,c+dc)){
+        if(b[r+d][c+dc]&&cl(b[r+d][c+dc])===opp(co))mv.push([r+d,c+dc]);
+        if(ep&&ep.r===r+d&&ep.c===c+dc)mv.push([r+d,c+dc]);
+      }
+    } else if(t==='N'){
+      for(const[dr,dc]of[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])
+        if(ok(r+dr,c+dc)&&cl(b[r+dr][c+dc])!==co)mv.push([r+dr,c+dc]);
+    } else if(t==='B'||t==='Q'){
+      for(const[dr,dc]of[[-1,-1],[-1,1],[1,-1],[1,1]]){
+        let[tr,tc]=[r+dr,c+dc];
+        while(ok(tr,tc)){if(b[tr][tc]){if(cl(b[tr][tc])===opp(co))mv.push([tr,tc]);break;}mv.push([tr,tc]);tr+=dr;tc+=dc;}
+      }
+    }
+    if(t==='R'||t==='Q'){
+      for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){
+        let[tr,tc]=[r+dr,c+dc];
+        while(ok(tr,tc)){if(b[tr][tc]){if(cl(b[tr][tc])===opp(co))mv.push([tr,tc]);break;}mv.push([tr,tc]);tr+=dr;tc+=dc;}
+      }
+    }
+    if(t==='K'){
+      for(const[dr,dc]of[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]])
+        if(ok(r+dr,c+dc)&&cl(b[r+dr][c+dc])!==co)mv.push([r+dr,c+dc]);
+      if(cst&&cst[co]){
+        const row=co==='w'?7:0;
+        if(r===row&&c===4){
+          if(cst[co].k&&!b[row][5]&&!b[row][6]&&b[row][7]===co+'R')mv.push([row,6]);
+          if(cst[co].q&&!b[row][1]&&!b[row][2]&&!b[row][3]&&b[row][0]===co+'R')mv.push([row,2]);
+        }
+      }
+    }
+    return mv;
+  }
+
+  function apply(b,r,c,tr,tc,ep){
+    const nb=b.map(x=>[...x]),p=nb[r][c],co=cl(p),t=typ(p);
+    if(t==='P'&&ep&&tr===ep.r&&tc===ep.c)nb[co==='w'?ep.r+1:ep.r-1][tc]=null;
+    if(t==='K'){if(tc===6&&c===4){nb[r][5]=co+'R';nb[r][7]=null;}if(tc===2&&c===4){nb[r][3]=co+'R';nb[r][0]=null;}}
+    nb[tr][tc]=p;nb[r][c]=null;
+    if(t==='P'&&(tr===0||tr===7))nb[tr][tc]=co+'Q';
+    return nb;
+  }
+
+  function inChk(b,co){
+    let kr=-1,kc=-1;
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(b[r][c]===co+'K'){kr=r;kc=c;}
+    if(kr<0)return false;
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+      if(cl(b[r][c])===opp(co)&&raw(b,r,c,null,null).some(([tr,tc])=>tr===kr&&tc===kc))return true;
+    return false;
+  }
+
+  function legal(b,r,c,ep,cst){
+    const p=b[r][c];if(!p)return[];
+    const co=cl(p);
+    return raw(b,r,c,ep,cst).filter(([tr,tc])=>{
+      if(typ(p)==='K'&&Math.abs(tc-c)===2){
+        const mc=c+Math.sign(tc-c);
+        if(inChk(b,co)||inChk(apply(b,r,c,r,mc,ep),co))return false;
+      }
+      return !inChk(apply(b,r,c,tr,tc,ep),co);
+    });
+  }
+
+  function allLegal(b,co,ep,cst){
+    const all=[];
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+      if(cl(b[r][c])===co)legal(b,r,c,ep,cst).forEach(([tr,tc])=>all.push({r,c,tr,tc}));
+    return all;
+  }
+
+  function doMove(r,c,tr,tc){
+    const p=B[r][c],co=cl(p),t=typ(p);
+    let ne=null;
+    if(t==='P'&&Math.abs(tr-r)===2)ne={r:(r+tr)/2,c};
+    const nc={w:{...cst.w},b:{...cst.b}};
+    if(p==='wK'){nc.w.k=false;nc.w.q=false;}if(p==='bK'){nc.b.k=false;nc.b.q=false;}
+    if((r===7&&c===0)||(tr===7&&tc===0))nc.w.q=false;if((r===7&&c===7)||(tr===7&&tc===7))nc.w.k=false;
+    if((r===0&&c===0)||(tr===0&&tc===0))nc.b.q=false;if((r===0&&c===7)||(tr===0&&tc===7))nc.b.k=false;
+    B=apply(B,r,c,tr,tc,ep);ep=ne;cst=nc;turn=opp(co);sel=null;legs=[];
+    const nxt=allLegal(B,turn,ep,cst),chk=inChk(B,turn);
+    if(!nxt.length){
+      over=true;
+      if(chk&&opp(turn)==='w'){
+        const el=document.getElementById('chess-msg');
+        if(el){el.style.fontSize='9px';el.style.lineHeight='1.6';el.innerHTML='CHECKMATE — BLAKE IS DEFEATED.<br><br><span style="color:#9933FF">You truly are remarkable. The fact you have made it this far suggests you are indeed, a true champion.</span><br><br><span style="color:#9933FF">Congratulations on 100%\'ing Blake\'s website. You a real one. Please send the following message to him.</span><br><br><span style="color:#D4FF1A;font-size:11px;">\'Eating the green bit of a Strawberry is elite behaviour\'</span>';}
+      } else {
+        msg(chk?'CHECKMATE — BLAKE WINS.':'STALEMATE — DRAW. BLAKE SURVIVES.');
+      }
+    } else {
+      msg(chk?(turn==='w'?'CHECK — your king is in danger!':'CHECK — Blake is rattled!'):(turn==='w'?'Your turn':'Blake is thinking...'));
+    }
+    render();
+    if(!over&&turn==='b')setTimeout(ai,650);
+  }
+
+  function ai(){
+    if(over||turn!=='b')return;
+    const moves=allLegal(B,'b',ep,cst);if(!moves.length)return;
+    let best=null;
+    for(const m of moves)if(inChk(apply(B,m.r,m.c,m.tr,m.tc,ep),'w')){best=m;break;}
+    if(!best){const caps=moves.filter(m=>B[m.tr][m.tc]);best=caps.length?caps[Math.floor(Math.random()*caps.length)]:moves[Math.floor(Math.random()*moves.length)];}
+    doMove(best.r,best.c,best.tr,best.tc);
+  }
+
+  function click(r,c){
+    if(over||turn!=='w')return;
+    if(sel){const m=legs.find(([tr,tc])=>tr===r&&tc===c);if(m){doMove(sel.r,sel.c,r,c);return;}}
+    if(cl(B[r][c])==='w'){sel={r,c};legs=legal(B,r,c,ep,cst);render();msg('Click a highlighted square to move');}
+    else{sel=null;legs=[];render();msg('Your turn');}
+  }
+
+  function render(){
+    const el=document.getElementById('chess-board');if(!el)return;el.innerHTML='';
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+      const cell=document.createElement('div');
+      const lt=(r+c)%2===0,isSel=sel&&sel.r===r&&sel.c===c;
+      const isLeg=legs.some(([tr,tc])=>tr===r&&tc===c),isCap=isLeg&&B[r][c];
+      cell.style.cssText=`aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3.2vw,26px);cursor:pointer;position:relative;background:${isSel?'rgba(153,51,255,0.45)':lt?'rgba(212,255,26,0.09)':'rgba(0,0,0,0.35)'};border:${isSel?'2px solid #D4FF1A':isLeg?'2px solid rgba(212,255,26,0.75)':'1px solid rgba(153,51,255,0.15)'};box-sizing:border-box;user-select:none;transition:background 0.1s;`;
+      if(isLeg&&!isCap){const d=document.createElement('div');d.style.cssText='position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(212,255,26,0.4);pointer-events:none;';cell.appendChild(d);}
+      const p=B[r][c];
+      if(p){const s=document.createElement('span');s.textContent=UNI[p];s.style.cssText=`color:${cl(p)==='w'?'#D4FF1A':'#9933FF'};text-shadow:0 1px 5px rgba(0,0,0,0.95);line-height:1;z-index:1;position:relative;`;cell.appendChild(s);}
+      cell.addEventListener('click',()=>click(r,c));
+      el.appendChild(cell);
+    }
+  }
+
+  function msg(t){const el=document.getElementById('chess-msg');if(el)el.textContent=t;}
+
+  function initChess(){
+    B=[
+      ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+      ['bP','bP','bP','bP','bP','bP','bP','bP'],
+      [null,null,null,null,null,null,null,null],
+      [null,null,null,null,null,null,null,null],
+      [null,null,null,null,null,null,null,null],
+      [null,null,null,null,null,null,null,null],
+      ['wP','wP','wP','wP','wP','wP','wP','wP'],
+      ['wR','wN','wB','wQ','wK','wB','wN','wR'],
+    ];
+    turn='w';sel=null;legs=[];over=false;ep=null;cst={w:{k:true,q:true},b:{k:true,q:true}};
+    render();msg('Your turn — you are White ♔');
+  }
+
+  function launchChess(){
+    if(document.getElementById('chess-overlay'))return;
+    const ov=document.createElement('div');ov.id='chess-overlay';ov.className='easter-overlay';
+    ov.innerHTML=`
+      <div class="easter-box" style="max-width:500px">
+        <button class="easter-close" id="chess-close">✕</button>
+        <div class="easter-title">THE BLAKE GAMBIT</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:3px;text-align:center;margin-top:-6px;margin-bottom:8px;text-transform:uppercase;">Final Boss</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:10px;">
+          YOU <span style="color:#D4FF1A">♙</span> WHITE vs BLAKE <span style="color:#9933FF">♟</span> BLACK · CLICK TO MOVE
+        </div>
+        <div id="chess-board" style="display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:420px;margin:0 auto;border:2px solid rgba(153,51,255,0.4);"></div>
+        <div id="chess-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;padding:0 8px;"></div>
+        <button id="chess-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:7px 18px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
+      </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('chess-close').addEventListener('click',()=>ov.remove());
+    document.getElementById('chess-new').addEventListener('click',initChess);
+    initChess();
+  }
 })();
 
 /* ── PONG: YOU vs. BLAKE at PONG ── */
@@ -2613,7 +2819,14 @@ if (siteName) {
         }
         if (s.bx > W) {
           s.ps++;
-          if (s.ps >= 7) { s.over = true; msg.textContent = 'YOU WIN! BLAKE IS SHOOK.'; }
+          if (s.ps >= 7) {
+            s.over = true;
+            if (s.bs === 0) {
+              msg.innerHTML = "YOU WIN! BLAKE IS SHOOK.<br><br>Congratulations, you've unlocked a secret code<br><strong>'YM'</strong>";
+            } else {
+              msg.textContent = 'YOU WIN! BLAKE IS SHOOK.';
+            }
+          }
           else reset(-1);
         }
       }
@@ -2771,12 +2984,23 @@ if (siteName) {
       if (state === 'dead') {
         ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
+        const hasCode = sc >= 20;
+        const baseY = hasCode ? H / 2 - 80 : H / 2 - 40;
         ctx.fillStyle = '#D4FF1A'; ctx.font = 'bold 44px "Bebas Neue",sans-serif';
-        ctx.fillText('SPLAT!', W / 2, H / 2 - 40);
+        ctx.fillText('SPLAT!', W / 2, baseY);
         ctx.fillStyle = '#9933FF'; ctx.font = 'bold 26px "Bebas Neue",sans-serif';
-        ctx.fillText('SCORE: ' + sc, W / 2, H / 2 + 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '10px "DM Mono",monospace';
-        ctx.fillText('TAP TO PLAY AGAIN', W / 2, H / 2 + 40);
+        ctx.fillText('SCORE: ' + sc, W / 2, baseY + 42);
+        if (hasCode) {
+          ctx.fillStyle = '#9933FF'; ctx.font = 'bold 14px "Bebas Neue",sans-serif';
+          ctx.fillText("Congratulations, you've unlocked a secret code", W / 2, baseY + 88);
+          ctx.fillStyle = '#D4FF1A'; ctx.font = 'bold 24px "Bebas Neue",sans-serif';
+          ctx.fillText("'TOHSDAEH'", W / 2, baseY + 118);
+          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '10px "DM Mono",monospace';
+          ctx.fillText('TAP TO PLAY AGAIN', W / 2, baseY + 148);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '10px "DM Mono",monospace';
+          ctx.fillText('TAP TO PLAY AGAIN', W / 2, baseY + 82);
+        }
         info.textContent = '';
       }
 
@@ -2927,7 +3151,9 @@ if (siteName) {
       if (c < 3 && board[r][c] === board[r][c + 1]) return;
       if (r < 3 && board[r][c] === board[r + 1][c]) return;
     }
-    msg.textContent = 'NO MOVES LEFT. BLAKE SURVIVES.';
+    msg.innerHTML = score48 >= 500
+      ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
+      : 'NO MOVES LEFT. BLAKE SURVIVES.';
   }
 
   function render2048() {
@@ -3070,7 +3296,9 @@ if (siteName) {
       if (bestEl) bestEl.textContent = wScore;
       if (msg) msg.textContent = 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.';
     } else {
-      if (msg) msg.textContent = 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.';
+      if (msg) msg.innerHTML = wScore >= 44
+        ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
+        : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.';
     }
     if (again) again.style.display = 'block';
   }
