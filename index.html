@@ -850,13 +850,11 @@ footer {
 .tab-mobile::-webkit-scrollbar { display: none; }
 
 .tab-mobile-btn {
-  flex: 1;
-  min-width: 110px;
+  flex-shrink: 0;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 10px 20px;
+  padding: 10px 24px;
   cursor: pointer;
   border-right: 1px solid rgba(0,0,0,0.1);
   font-size: 9px;
@@ -1466,8 +1464,7 @@ footer {
 
 <!-- FOOTER -->
 <footer>
-  <span class="footer-hint" id="nav-hint">[ <span>↑ ↓</span> ] NAVIGATE</span>
-  <span class="footer-hint">BLAKE STRINGER // <span>PORTFOLIO</span></span>
+    <span class="footer-hint">BLAKE STRINGER // <span>PORTFOLIO</span></span>
 </footer>
 
 <script>
@@ -1537,18 +1534,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowUp'   || e.key === 'w') select(Math.max(current - 1, 0));
 });
 
-function updateHint() {
-  const hint = document.getElementById('nav-hint');
-  if (!hint) return;
-  if (window.innerWidth < 640) {
-    hint.innerHTML = '[ <span>TAP TAB</span> ] NAVIGATE';
-  } else {
-    hint.innerHTML = '[ <span>↑ ↓</span> ] NAVIGATE';
-  }
-}
-
-window.addEventListener('resize', updateHint);
-updateHint();
 buildTabs();
 // Auto-label table cells from their column headers for mobile card view
 document.querySelectorAll('.cv-table').forEach(table => {
