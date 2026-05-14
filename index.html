@@ -886,6 +886,56 @@ footer {
 @media (min-width: 640px) {
   .site-wrap { flex-direction: row; }
 }
+
+/* ── MOBILE TABLE CARDS ── */
+@media (max-width: 639px) {
+  .cv-table-wrap { border: none; }
+  .cv-table,
+  .cv-table tbody,
+  .cv-table tr,
+  .cv-table td { display: block; width: 100%; }
+  .cv-table thead { display: none; }
+  .cv-table { min-width: unset; }
+  .cv-table tbody tr {
+    border: 1px solid rgba(0,0,0,0.12);
+    border-left: 3px solid var(--purple);
+    margin-bottom: 10px;
+    background: rgba(0,0,0,0.03);
+  }
+  .cv-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.03); }
+  .cv-table tbody td {
+    display: flex;
+    gap: 12px;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    line-height: 1.5;
+    white-space: normal;
+    font-size: 13px;
+  }
+  .cv-table tbody td:last-child { border-bottom: none; }
+  .cv-table tbody td::before {
+    content: attr(data-label);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--purple);
+    min-width: 88px;
+    flex-shrink: 0;
+    padding-top: 3px;
+  }
+  .cv-table tbody td:first-child {
+    background: rgba(153,51,255,0.10);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--purple);
+    font-weight: 700;
+    padding: 8px 12px;
+    letter-spacing: 2px;
+  }
+  .cv-table tbody td:first-child::before { display: none; }
+  .cv-table tbody td:first-child:empty { display: none; }
+}
 </style>
 </head>
 <body>
@@ -1498,6 +1548,15 @@ function updateHint() {
 window.addEventListener('resize', updateHint);
 updateHint();
 buildTabs();
+// Auto-label table cells from their column headers for mobile card view
+document.querySelectorAll('.cv-table').forEach(table => {
+  const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+  table.querySelectorAll('tbody tr').forEach(row => {
+    [...row.querySelectorAll('td')].forEach((td, i) => {
+      if (i > 0 && headers[i]) td.dataset.label = headers[i];
+    });
+  });
+});
 </script>
 </body>
 </html>
