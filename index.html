@@ -1076,6 +1076,68 @@ body[data-theme="dark"] .jump-btn--active { background: var(--purple); color: va
 body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+
+/* ── SNAKE EASTER EGG ── */
+.snake-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.93);
+  z-index: 9000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.snake-overlay.active { display: flex; }
+.snake-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px;
+  letter-spacing: 8px;
+  color: var(--lime);
+}
+.snake-score-display {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--purple);
+}
+#snake-canvas {
+  border: 2px solid var(--purple);
+  display: block;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 200px);
+}
+.snake-controls-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  text-align: center;
+  padding: 0 20px;
+}
+.snake-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.4);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
+}
+.snake-close:hover {
+  border-color: var(--purple);
+  color: var(--lime);
+}
+
 </style>
 </head>
 <body>
@@ -1760,6 +1822,167 @@ window.addEventListener('scroll', () => {
 backToTop.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+  
+/* ── SNAKE EASTER EGG ── */
+(function () {
+  const COLS = 20, ROWS = 20, CELL = 20, SPEED = 140;
+  let gameLoop = null;
+  let snake, dir, nextDir, food, score, dead;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'snake-overlay';
+  overlay.innerHTML = `
+    <button class="snake-close" id="snake-close">ESC · Close</button>
+    <div class="snake-title">Snake</div>
+    <div class="snake-score-display" id="snake-score">Score: 0</div>
+    <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
+    <div class="snake-controls-hint">Arrow keys / WASD · R to restart · Swipe on mobile</div>
+  `;
+  document.body.appendChild(overlay);
+
+  const canvas = document.getElementById('snake-canvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('snake-score');
+  document.getElementById('snake-close').addEventListener('click', closeGame);
+
+  function newFood() {
+    let p;
+    do { p = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
+    while (snake.some(s => s.x === p.x && s.y === p.y));
+    return p;
+  }
+
+  function init() {
+    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+    dir = nextDir = { x: 1, y: 0 };
+    score = 0; dead = false;
+    food = newFood();
+    scoreEl.textContent = 'Score: 0';
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = 'rgba(153,51,255,0.07)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= COLS; i++) {
+      ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+    }
+    for (let i = 0; i <= ROWS; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+    }
+
+    ctx.fillStyle = '#D4FF1A';
+    ctx.fillRect(food.x * CELL + 4, food.y * CELL + 4, CELL - 8, CELL - 8);
+
+    snake.forEach((seg, i) => {
+      ctx.fillStyle = i === 0 ? '#9933FF' : '#7700DD';
+      ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
+    });
+
+    if (dead) {
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#D4FF1A';
+      ctx.font = '700 38px "Bebas Neue", sans-serif';
+      ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 12);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '11px "DM Mono", monospace';
+      ctx.fillText('R  ·  RESTART', canvas.width / 2, canvas.height / 2 + 16);
+    }
+  }
+
+  function step() {
+    if (dead) return;
+    dir = { ...nextDir };
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS ||
+        snake.some(s => s.x === head.x && s.y === head.y)) {
+      dead = true; draw(); return;
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      score += 10;
+      scoreEl.textContent = 'Score: ' + score;
+      food = newFood();
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  function openGame() {
+    overlay.classList.add('active');
+    init(); draw();
+    if (gameLoop) clearInterval(gameLoop);
+    gameLoop = setInterval(step, SPEED);
+  }
+
+  function closeGame() {
+    overlay.classList.remove('active');
+    if (gameLoop) { clearInterval(gameLoop); gameLoop = null; }
+  }
+
+  function restart() {
+    init(); draw();
+    if (gameLoop) clearInterval(gameLoop);
+    gameLoop = setInterval(step, SPEED);
+  }
+
+  // ── Trigger: tap/click "Blake Stringer" 5 times within 2 seconds ──
+  let tapCount = 0, tapTimer = null;
+  const siteName = document.querySelector('.site-name');
+  if (siteName) {
+    siteName.style.cursor = 'pointer';
+    siteName.addEventListener('click', () => {
+      tapCount++;
+      if (tapTimer) clearTimeout(tapTimer);
+      if (tapCount >= 5) {
+        tapCount = 0;
+        openGame();
+      } else {
+        tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+      }
+    });
+  }
+
+  // ── Keyboard controls (while game is open) ──
+  document.addEventListener('keydown', e => {
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') { closeGame(); return; }
+    if (e.key === 'r' || e.key === 'R') { restart(); return; }
+    const map = {
+      ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+      w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0},
+      W:{x:0,y:-1}, S:{x:0,y:1}, A:{x:-1,y:0}, D:{x:1,y:0},
+    };
+    const nd = map[e.key];
+    if (nd && !(nd.x === -dir.x && nd.y === -dir.y)) { nextDir = nd; e.preventDefault(); }
+  });
+
+  // ── Swipe controls (mobile, while game is open) ──
+  let touch = null;
+  canvas.addEventListener('touchstart', e => {
+    touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', e => {
+    if (!touch) return;
+    const dx = e.changedTouches[0].clientX - touch.x;
+    const dy = e.changedTouches[0].clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    const nd = Math.abs(dx) > Math.abs(dy)
+      ? (dx > 0 ? {x:1,y:0} : {x:-1,y:0})
+      : (dy > 0 ? {x:0,y:1} : {x:0,y:-1});
+    if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
+  }, { passive: false });
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeGame(); });
+})();
+
 </script>
 </body>
 </html>
