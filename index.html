@@ -2789,11 +2789,9 @@ if (siteName) {
 
 
 /* ── 2048: THE END OF BLAKE ── */
-/* Trigger: tap the Melbourne location text 5 times */
 (function () {
   let taps48 = 0, timer48;
-  // Find the Melbourne text element
-  const loc48 = [...document.querySelectorAll('.jump-btn')].find(el => el.textContent.trim() === 'Future Garage');
+  const loc48 = [...document.querySelectorAll('.tag')].find(el => el.textContent.trim() === 'Future Garage');
   if (loc48) {
     loc48.addEventListener('click', function () {
       taps48++;
