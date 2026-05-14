@@ -2457,10 +2457,10 @@ backToTop.addEventListener('click', () => {
   }
 
   let tapCount = 0, tapTimer = null;
-  const siteName = document.querySelector('.site-name');
-  if (siteName) {
-    siteName.style.cursor = 'pointer';
-    siteName.addEventListener('click', () => {
+const siteName = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Contact');
+if (siteName) {
+  siteName.style.cursor = 'pointer';
+  siteName.addEventListener('click', () => {
       tapCount++;
       if (tapTimer) clearTimeout(tapTimer);
       if (tapCount >= 5) { tapCount = 0; openGame(); }
@@ -2505,7 +2505,7 @@ backToTop.addEventListener('click', () => {
 /* Trigger: tap the purple site header bar 5 times */
 (function () {
   let pongTaps = 0, pongTimer, pongRAF;
-  const pongTrigger = document.querySelector('header') || document.querySelector('.site-header');
+  const pongTrigger = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Acting CV');
   if (pongTrigger) {
     pongTrigger.addEventListener('click', function () {
       pongTaps++;
@@ -2642,7 +2642,7 @@ backToTop.addEventListener('click', () => {
 /* Trigger: tap the site tagline 5 times */
 (function () {
   let flTaps = 0, flTimer, flRAF;
-  const flTrigger = document.querySelector('.site-tagline');
+  const flTrigger = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Sound Design CV');
   if (flTrigger) {
     flTrigger.addEventListener('click', function () {
       flTaps++;
@@ -2650,7 +2650,6 @@ backToTop.addEventListener('click', () => {
       if (flTaps >= 5) { flTaps = 0; launchFlappy(); }
       else flTimer = setTimeout(() => { flTaps = 0; }, 2000);
     });
-    flTrigger.style.cursor = 'pointer';
   }
 
   function launchFlappy() {
@@ -2794,12 +2793,8 @@ backToTop.addEventListener('click', () => {
 (function () {
   let taps48 = 0, timer48;
   // Find the Melbourne text element
-  const loc48 = document.querySelector('.site-location') ||
-    [...document.querySelectorAll('span,p,div,small')].find(el =>
-      /melbourne/i.test(el.textContent) && el.children.length === 0 && el.textContent.trim().length < 40
-    );
+  const loc48 = [...document.querySelectorAll('.jump-btn')].find(el => el.textContent.trim() === 'Future Garage');
   if (loc48) {
-    loc48.style.cursor = 'pointer';
     loc48.addEventListener('click', function () {
       taps48++;
       clearTimeout(timer48);
@@ -2960,7 +2955,7 @@ backToTop.addEventListener('click', () => {
 /* Trigger: tap the footer 5 times */
 (function () {
   let wTaps = 0, wTimer;
-  const wTrigger = document.querySelector('footer') || document.querySelector('.site-footer');
+  const wTrigger = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Directing CV');
   if (wTrigger) {
     wTrigger.addEventListener('click', function () {
       wTaps++;
