@@ -967,22 +967,33 @@ footer {
 
   /* ── DARK MODE TOGGLE ── */
 .dark-toggle {
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  z-index: 500;
   background: none;
   border: 1px solid rgba(0,0,0,0.25);
   cursor: pointer;
-  padding: 5px 12px;
+  padding: 10px 20px;
   font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--black);
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   line-height: 1;
   letter-spacing: 1px;
-  margin-top: 6px;
 }
 .dark-toggle:hover {
   background: var(--purple);
   color: var(--lime);
   border-color: var(--purple);
+}
+@media (max-width: 639px) {
+  .dark-toggle {
+    top: 20px;
+    right: 20px;
+    font-size: 11px;
+    padding: 8px 14px;
+  }
 }
 
 /* ── JUMP NAV ACTIVE STATE ── */
@@ -1078,9 +1089,9 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
   </div>
   <div class="header-right">
     <div class="header-location">Melbourne, VIC, Australia</div>
-    <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">☾</button>
   </div>
 </header>
+<button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">☾</button>
 
 <!-- MOBILE TABS -->
 <div class="tab-mobile" id="tab-mobile"></div>
