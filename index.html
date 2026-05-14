@@ -141,6 +141,7 @@ header::after {
   transition: background 0.2s;
   user-select: none;
   padding: 0;
+  overflow: hidden;
 }
 
 .tab-btn:last-child { border-bottom: none; }
@@ -170,8 +171,8 @@ header::after {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: 'DM Mono', monospace;
-  font-size: 13px;
-  letter-spacing: 6px;
+  font-size: 10px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: rgba(0,0,0,0.45);
   white-space: nowrap;
@@ -886,6 +887,13 @@ footer {
 
 @media (min-width: 640px) {
   .site-wrap { flex-direction: row; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .tab-sidebar { display: none; }
+  .tab-mobile { display: flex; }
+  .site-wrap { flex-direction: column; }
+  .main-content { padding: 24px 20px 48px; }
 }
 
 /* ── MOBILE TABLE CARDS ── */
