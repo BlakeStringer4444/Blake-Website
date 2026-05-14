@@ -850,11 +850,13 @@ footer {
 .tab-mobile::-webkit-scrollbar { display: none; }
 
 .tab-mobile-btn {
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 110px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 16px;
+  justify-content: center;
+  padding: 10px 20px;
   cursor: pointer;
   border-right: 1px solid rgba(0,0,0,0.1);
   font-size: 9px;
@@ -1489,7 +1491,7 @@ function buildTabs() {
     const t = document.createElement('div');
     t.className = 'tab-btn' + (i === 0 ? ' active' : '');
     t.id = 'tab-' + s.id;
-    t.innerHTML = `<span class="tab-text">${s.label}</span><span class="tab-num">0${i+1}</span>`;
+    t.innerHTML = `<span class="tab-text">${s.label}</span>`;
     t.addEventListener('click', () => select(i));
     sidebar.appendChild(t);
 
