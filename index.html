@@ -21,6 +21,7 @@
 
 html {
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -936,6 +937,32 @@ footer {
   .cv-table tbody td:first-child::before { display: none; }
   .cv-table tbody td:first-child:empty { display: none; }
 }
+
+/* ── JUMP NAV ── */
+.jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.jump-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  border: 1px solid var(--purple);
+  padding: 5px 12px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+  display: inline-block;
+}
+.jump-btn:hover {
+  background: var(--purple);
+  color: var(--lime);
+}
 </style>
 </head>
 <body>
@@ -1005,8 +1032,14 @@ footer {
     <!-- ACTING CV -->
     <div class="panel" id="panel-acting">
       <div class="section-label">Acting CV</div>
+      <div class="jump-nav">
+        <a class="jump-btn" href="#act-theatre">Theatre</a>
+        <a class="jump-btn" href="#act-attributes">Attributes</a>
+        <a class="jump-btn" href="#act-accolades">Accolades</a>
+        <a class="jump-btn" href="#act-reel">Video Reel</a>
+      </div>
 
-      <div class="section-sublabel">Theatre</div>
+      <div class="section-sublabel" id="act-theatre">Theatre</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1061,13 +1094,13 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Attributes</div>
+      <div class="section-sublabel" id="act-attributes" style="margin-top:32px;">Attributes</div>
       <span class="tag tag-lime">Height: 182cm</span>
       <span class="tag tag-lime">Hair: Brown</span>
       <span class="tag tag-lime">Eyes: Blue</span>
       <span class="tag tag-lime">Age Range: 30–40</span>
 
-      <div class="section-sublabel" style="margin-top:32px;">Accolades</div>
+            <div class="section-sublabel" id="act-accolades" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1094,7 +1127,7 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Video Reel</div>
+      <div class="section-sublabel" id="act-reel" style="margin-top:32px;">Video Reel</div>
       <div class="video-grid">
         <a href="https://www.youtube.com/watch?v=ckq8P67JgDc" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb"><img src="https://img.youtube.com/vi/ckq8P67JgDc/hqdefault.jpg" alt="The Raven"></div>
@@ -1119,8 +1152,13 @@ footer {
     <!-- SOUND DESIGN CV -->
     <div class="panel" id="panel-sound">
       <div class="section-label">Sound Design CV</div>
+      <div class="jump-nav">
+        <a class="jump-btn" href="#snd-theatre">Theatre</a>
+        <a class="jump-btn" href="#snd-accolades">Accolades</a>
+        <a class="jump-btn" href="#snd-reel">Music Design Reel</a>
+      </div>
 
-      <div class="section-sublabel">Theatre</div>
+      <div class="section-sublabel" id="snd-theatre">Theatre</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1162,7 +1200,7 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Accolades</div>
+      <div class="section-sublabel" id="snd-accolades" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1183,7 +1221,7 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Music Design Reel</div>
+      <div class="section-sublabel" id="snd-reel" style="margin-top:32px;">Music Design Reel</div>
       <div class="video-grid">
         <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-TheGift.png" alt="The Gift"></div>
@@ -1331,8 +1369,12 @@ footer {
     <!-- DIRECTING CV -->
     <div class="panel" id="panel-directing">
       <div class="section-label">Directing CV</div>
+      <div class="jump-nav">
+        <a class="jump-btn" href="#dir-theatre">Theatre</a>
+        <a class="jump-btn" href="#dir-films">Short Films &amp; Trailers</a>
+      </div>
 
-      <div class="section-sublabel">Theatre</div>
+      <div class="section-sublabel" id="dir-theatre">Theatre</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1352,7 +1394,7 @@ footer {
         </table>
       </div>
 
-      <div class="section-sublabel" style="margin-top:32px;">Short Films &amp; Trailers</div>
+      <div class="section-sublabel" id="dir-films" style="margin-top:32px;">Short Films &amp; Trailers</div>
       <div class="video-grid">
 
         <a href="https://www.youtube.com/watch?v=ChhSwebkyNQ" target="_blank" rel="noopener noreferrer" class="video-card">
