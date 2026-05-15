@@ -224,12 +224,8 @@ header {
 }
 
 /* ── PANELS ── */
-.panel { display: none; }
-.panel.active {
-  display: block;
-  animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.panel { display: none; opacity: 0; }
+.panel.active { display: block; opacity: 1; transition: opacity 0.22s ease; }
 
 /* ── SECTION LABEL ── */
 .section-label {
@@ -1758,6 +1754,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 -->
 
 <div id="scroll-progress"></div>
+<canvas id="ambient-bg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.55;"></canvas>
 
 <div class="top-bar"></div>
 
@@ -2343,25 +2340,33 @@ function select(i) {
   current = i;
   document.querySelectorAll('.tab-btn').forEach((t, j) => t.classList.toggle('active', j === i));
   document.querySelectorAll('.tab-mobile-btn').forEach((t, j) => t.classList.toggle('active', j === i));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + sections[i].id).classList.add('active');
+
+  const prev = document.querySelector('.panel.active');
+  const next = document.getElementById('panel-' + sections[i].id);
+
+  if (prev && prev !== next) {
+    prev.style.opacity = '0';
+    setTimeout(() => {
+      prev.classList.remove('active');
+      next.classList.add('active');
+      requestAnimationFrame(() => { next.style.opacity = '1'; });
+    }, 200);
+  } else {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    next.classList.add('active');
+    requestAnimationFrame(() => { next.style.opacity = '1'; });
+  }
 
   // Scroll mobile tab into view
   const mt = document.getElementById('mtab-' + sections[i].id);
   if (mt) mt.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 
   // Animate skill bars on Sound tab
-  if ((sections[i].id === 'sound') && !skillsDone) {
-    skillsDone = true;
-    setTimeout(() => {
-      document.querySelectorAll('.skill-fill').forEach(b => b.style.width = b.dataset.w + '%');
-    }, 80);
-  }
-  // Re-animate every time sound tab is opened
+  if ((sections[i].id === 'sound') && !skillsDone) { skillsDone = true; }
   if (sections[i].id === 'sound') {
     setTimeout(() => {
       document.querySelectorAll('.skill-fill').forEach(b => b.style.width = b.dataset.w + '%');
-    }, 80);
+    }, 280);
   }
 }
 
@@ -3528,6 +3533,42 @@ if (siteName) {
     setTimeout(() => { p.remove(); particles.splice(particles.indexOf(p), 1); }, 520);
     if (particles.length > 40) { particles[0].remove(); particles.shift(); }
   });
+})();
+
+/* ── AMBIENT GENERATIVE BACKGROUND ── */
+(function () {
+  const canvas = document.getElementById('ambient-bg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  const orbs = [
+    { x: 0, y: 0, r: 320, dx: 0.18, dy: 0.11, color: '#9933FF' },
+    { x: 0, y: 0, r: 260, dx: -0.13, dy: 0.15, color: '#D4FF1A' },
+    { x: 0, y: 0, r: 200, dx: 0.09, dy: -0.12, color: '#9933FF' },
+  ];
+  orbs[0].x = W * 0.15; orbs[0].y = H * 0.25;
+  orbs[1].x = W * 0.75; orbs[1].y = H * 0.65;
+  orbs[2].x = W * 0.50; orbs[2].y = H * 0.10;
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    orbs.forEach(o => {
+      o.x += o.dx; o.y += o.dy;
+      if (o.x < -o.r || o.x > W + o.r) o.dx *= -1;
+      if (o.y < -o.r || o.y > H + o.r) o.dy *= -1;
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
+      g.addColorStop(0, o.color + '18');
+      g.addColorStop(1, o.color + '00');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
 })();
 
 /* ── CONSOLE ART ── */
