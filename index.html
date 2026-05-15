@@ -1125,7 +1125,7 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
 /* ── NOW BANNER ── */
 .now-banner {
   display: inline-block;
-  margin-top: 40px;
+  margin-top: 24px;
   font-family: 'DM Mono', monospace;
   font-size: 9px;
   letter-spacing: 2px;
@@ -1141,6 +1141,11 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
   0%, 100% { background: var(--purple); color: var(--lime); }
   50%       { background: var(--lime);   color: var(--purple); }
 }
+@keyframes now-pulse-dark {
+  0%, 100% { background: var(--purple); color: var(--lime); border-color: var(--purple); }
+  50%       { background: #111111;       color: var(--purple); border-color: var(--purple); }
+}
+body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 .now-banner em { font-style: italic; text-transform: none; letter-spacing: 0; }
 
 /* ── SNAKE EASTER EGG ── */
@@ -1737,7 +1742,7 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
         </div>
       </div>
 
-      <div class="now-banner">Currently rehearsing for Heidelberg Theatre Company's<br><em>'Birdsong'</em> (3 – 18 Jul)</div>
+      <div class="now-banner">Currently rehearsing for<br>Heidelberg Theatre Company's<br><em>'Birdsong'</em> (3 – 18 Jul)</div>
 
       <div class="section-label" style="margin-top:40px;">Contact</div>
 
