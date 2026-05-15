@@ -905,6 +905,7 @@ footer {
   .site-name { font-size: clamp(40px, 12vw, 72px); }
   .about-top { flex-direction: column; }
   .photo-frame { width: 100%; height: 400px; }
+  .now-banner { width: 100%; }
   .skill-name { min-width: 100px; }
 }
 
@@ -1077,7 +1078,7 @@ body[data-theme="dark"] .tab-btn { border-bottom-color: rgba(255,255,255,0.08); 
 body[data-theme="dark"] .tab-text { color: rgba(240,240,235,0.45); }
 body[data-theme="dark"] .tab-mobile { border-bottom-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .tab-mobile-btn { color: rgba(240,240,235,0.45); border-right-color: rgba(255,255,255,0.08); }
-body[data-theme="dark"] .dark-toggle { border-color: rgba(255,255,255,0.25); color: #f0f0eb; }
+body[data-theme="dark"] .dark-toggle { border-color: rgba(212,255,26,0.4); color: var(--lime); }
 body[data-theme="dark"] .section-label { color: var(--purple); border-color: var(--purple); }
 body[data-theme="dark"] .section-sublabel { color: rgba(240,240,235,0.45); }
 body[data-theme="dark"] .about-bio p { color: rgba(240,240,235,0.75); }
@@ -1181,7 +1182,8 @@ body[data-theme="dark"] .card-grid-value { color: #f0f0eb; }
 
 /* ── NOW BANNER ── */
 .now-banner {
-  display: inline-block;
+  display: block;
+  width: 336px;
   margin-top: 2px;
   font-family: 'DM Mono', monospace;
   font-size: 9px;
@@ -1894,6 +1896,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
       <span class="tag tag-lime">Hair: Brown</span>
       <span class="tag tag-lime">Eyes: Blue</span>
       <span class="tag tag-lime">Age Range: 30–40</span>
+      <span class="tag tag-lime">Shoe Size: 10</span>
 
             <div class="section-sublabel" id="act-accolades" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
@@ -2408,16 +2411,17 @@ document.querySelectorAll('.cv-table').forEach(table => {
 
 /* ── DARK MODE ── */
 const darkToggle = document.getElementById('dark-toggle');
+const sunSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
 if (darkToggle) {
   if (localStorage.getItem('theme') === 'dark') {
     document.body.dataset.theme = 'dark';
-    darkToggle.textContent = '☀';
+    darkToggle.innerHTML = sunSVG;
   }
   darkToggle.addEventListener('click', () => {
     const isDark = document.body.dataset.theme === 'dark';
     document.body.dataset.theme = isDark ? '' : 'dark';
     localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    darkToggle.textContent = isDark ? '☾' : '☀';
+    darkToggle.innerHTML = isDark ? '☾' : sunSVG;
   });
 }
 
