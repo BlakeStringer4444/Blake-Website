@@ -3435,19 +3435,16 @@ if (siteName) {
     if (wScore > best) {
       localStorage.setItem('whackBest', wScore);
       if (bestEl) bestEl.textContent = wScore;
-      if (msg) msg.textContent = 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.';
-    } else {
-      if (msg) msg.innerHTML = wScore >= 44
-        ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
-        : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.';
     }
+    if (msg) msg.innerHTML = wScore >= 44
+      ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
+      : (wScore > best ? 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.' : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.');
     if (again) again.style.display = 'block';
   }
 })();
 
 /* ── DESKTOP THEATRE CARD GRID TRANSFORM ── */
 (function () {
-  if (!window.matchMedia('(min-width: 640px)').matches) return;
   const theatreIds = ['act-theatre', 'snd-theatre', 'dir-theatre'];
   theatreIds.forEach(function (id) {
     const section = document.getElementById(id);
