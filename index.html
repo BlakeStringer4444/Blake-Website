@@ -1110,6 +1110,64 @@ body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
 
+/* ── DESKTOP THEATRE CARD GRID ── */
+.card-grid-container { width: 100%; }
+.card-grid-year {
+  background: rgba(153,51,255,0.10);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--purple);
+  font-weight: 700;
+  padding: 8px 14px;
+  letter-spacing: 2px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.card-grid-year:first-child { margin-top: 0; }
+.card-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.card-grid-item {
+  border: 1px solid rgba(0,0,0,0.12);
+  border-left: 3px solid var(--purple);
+  background: rgba(0,0,0,0.03);
+}
+.card-grid-field {
+  display: flex;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  font-family: 'Optima','Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;
+}
+.card-grid-field--last { border-bottom: none; }
+.card-grid-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  min-width: 76px;
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+.card-grid-value { color: var(--black); }
+body[data-theme="dark"] .card-grid-year { background: rgba(153,51,255,0.20); }
+body[data-theme="dark"] .card-grid-item {
+  border-color: rgba(255,255,255,0.12);
+  border-left-color: var(--purple);
+  background: rgba(255,255,255,0.03);
+}
+body[data-theme="dark"] .card-grid-field { border-bottom-color: rgba(255,255,255,0.06); }
+body[data-theme="dark"] .card-grid-value { color: #f0f0eb; }
+@media (min-width: 640px) { .cv-table-wrap[data-card-hidden] { display: none !important; } }
+@media (max-width: 639px) { .card-grid-container { display: none !important; } }
+
 /* ── SCROLL PROGRESS BAR ── */
 #scroll-progress {
   position: fixed;
@@ -1125,7 +1183,7 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
 /* ── NOW BANNER ── */
 .now-banner {
   display: inline-block;
-  margin-top: 24px;
+  margin-top: 2px;
   font-family: 'DM Mono', monospace;
   font-size: 9px;
   letter-spacing: 2px;
@@ -3385,6 +3443,62 @@ if (siteName) {
     }
     if (again) again.style.display = 'block';
   }
+})();
+
+/* ── DESKTOP THEATRE CARD GRID TRANSFORM ── */
+(function () {
+  if (!window.matchMedia('(min-width: 640px)').matches) return;
+  const theatreIds = ['act-theatre', 'snd-theatre', 'dir-theatre'];
+  theatreIds.forEach(function (id) {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const wrap = section.nextElementSibling && section.nextElementSibling.classList.contains('cv-table-wrap')
+      ? section.nextElementSibling
+      : section.parentNode.querySelector('.cv-table-wrap');
+    if (!wrap) return;
+    const table = wrap.querySelector('.cv-table');
+    if (!table) return;
+    const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    const rows = [...table.querySelectorAll('tbody tr')];
+    const container = document.createElement('div');
+    container.className = 'card-grid-container';
+    let cardGrid = null;
+    rows.forEach(function (row) {
+      const cells = [...row.querySelectorAll('td')];
+      const yearText = cells[0] ? cells[0].textContent.trim() : '';
+      const productionCells = cells.slice(1);
+      if (yearText) {
+        const yearBanner = document.createElement('div');
+        yearBanner.className = 'card-grid-year';
+        yearBanner.textContent = yearText;
+        container.appendChild(yearBanner);
+        cardGrid = document.createElement('div');
+        cardGrid.className = 'card-grid-row';
+        container.appendChild(cardGrid);
+      }
+      const card = document.createElement('div');
+      card.className = 'card-grid-item';
+      productionCells.forEach(function (cell, i) {
+        const label = headers[i + 1] || '';
+        const fieldRow = document.createElement('div');
+        fieldRow.className = 'card-grid-field' + (i === productionCells.length - 1 ? ' card-grid-field--last' : '');
+        if (label) {
+          const labelEl = document.createElement('span');
+          labelEl.className = 'card-grid-label';
+          labelEl.textContent = label;
+          fieldRow.appendChild(labelEl);
+        }
+        const valEl = document.createElement('span');
+        valEl.className = 'card-grid-value';
+        valEl.innerHTML = cell.innerHTML;
+        fieldRow.appendChild(valEl);
+        card.appendChild(fieldRow);
+      });
+      if (cardGrid) cardGrid.appendChild(card);
+    });
+    wrap.parentNode.insertBefore(container, wrap);
+    wrap.setAttribute('data-card-hidden', '1');
+  });
 })();
 
 /* ── SCROLL PROGRESS BAR ── */
