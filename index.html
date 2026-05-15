@@ -1004,13 +1004,16 @@ footer {
   background: none;
   border: 1px solid rgba(0,0,0,0.25);
   cursor: pointer;
-  padding: 10px 20px;
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
   color: var(--black);
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   line-height: 1;
-  letter-spacing: 1px;
 }
 .dark-toggle:hover {
   background: var(--purple);
@@ -3553,19 +3556,24 @@ if (siteName) {
   orbs[1].x = W * 0.75; orbs[1].y = H * 0.65;
   orbs[2].x = W * 0.50; orbs[2].y = H * 0.10;
   function draw() {
+    const isDark = document.body.dataset.theme === 'dark';
     ctx.clearRect(0, 0, W, H);
-    orbs.forEach(o => {
-      o.x += o.dx; o.y += o.dy;
-      if (o.x < -o.r || o.x > W + o.r) o.dx *= -1;
-      if (o.y < -o.r || o.y > H + o.r) o.dy *= -1;
-      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
-      g.addColorStop(0, o.color + '18');
-      g.addColorStop(1, o.color + '00');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    if (isDark) {
+      orbs.forEach(o => {
+        o.x += o.dx; o.y += o.dy;
+        if (o.x < -o.r || o.x > W + o.r) o.dx *= -1;
+        if (o.y < -o.r || o.y > H + o.r) o.dy *= -1;
+        const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
+        g.addColorStop(0, '#D4FF1A26');
+        g.addColorStop(1, '#D4FF1A00');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else {
+      orbs.forEach(o => { o.x += o.dx; o.y += o.dy; });
+    }
     requestAnimationFrame(draw);
   }
   draw();
