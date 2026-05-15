@@ -1717,6 +1717,35 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
   transition: background 0.1s;
 }
 
+/* ── 2048 D-PAD CONTROLS ── */
+.b2048-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+}
+.b2048-dpad-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.b2048-arrow {
+  width: 48px; height: 48px;
+  background: transparent;
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.b2048-arrow:active { background: var(--purple); color: var(--lime); }
+.b2048-dpad-center { width: 48px; height: 48px; }
+
 /* ── WHACK-A-BLAKE GRID ── */
 .whack-grid {
   display: grid;
@@ -2466,6 +2495,7 @@ backToTop.addEventListener('click', () => {
   const LS_KEY = 'blakeSnakeScores';
   let gameLoop = null;
   let snake, dir, nextDir, food, score, dead;
+  let cherry = null, cherryTimer = null, foodEaten = 0;
 
   function getScores() {
     try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
@@ -2497,6 +2527,7 @@ backToTop.addEventListener('click', () => {
     <div class="snake-score-display" id="snake-score">Score: 0</div>
     <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
     <div class="snake-controls-hint">Arrow keys / WASD · Swipe on mobile</div>
+    <div class="snake-controls-hint" style="margin-top:4px;color:rgba(255,80,110,0.7);">Pink cherry = bonus +30 pts</div>
     <div class="snake-gameover-panel" id="snake-gameover-panel">
       <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
       <div class="snake-go-row">
@@ -2534,10 +2565,22 @@ backToTop.addEventListener('click', () => {
     return p;
   }
 
+  function spawnCherry() {
+    if (cherry) return;
+    let p;
+    do { p = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
+    while (snake.some(s => s.x === p.x && s.y === p.y) || (p.x === food.x && p.y === food.y));
+    cherry = p;
+    if (cherryTimer) clearTimeout(cherryTimer);
+    cherryTimer = setTimeout(() => { cherry = null; }, 7000);
+  }
+
   function init() {
     snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
     dir = nextDir = { x: 1, y: 0 };
-    score = 0; dead = false;
+    score = 0; dead = false; foodEaten = 0;
+    if (cherryTimer) { clearTimeout(cherryTimer); cherryTimer = null; }
+    cherry = null;
     food = newFood();
     scoreEl.textContent = 'Score: 0';
     goPanel.classList.remove('active');
@@ -2559,6 +2602,18 @@ backToTop.addEventListener('click', () => {
     }
     ctx.fillStyle = '#D4FF1A';
     ctx.fillRect(food.x * CELL + 4, food.y * CELL + 4, CELL - 8, CELL - 8);
+    if (cherry) {
+      ctx.fillStyle = '#FF3366';
+      ctx.beginPath();
+      ctx.arc(cherry.x * CELL + CELL / 2, cherry.y * CELL + CELL / 2, CELL / 2 - 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#88DD44';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cherry.x * CELL + CELL / 2, cherry.y * CELL + 3);
+      ctx.lineTo(cherry.x * CELL + CELL / 2 + 4, cherry.y * CELL + 1);
+      ctx.stroke();
+    }
     snake.forEach((seg, i) => {
       ctx.fillStyle = i === 0 ? '#9933FF' : '#7700DD';
       ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
@@ -2597,8 +2652,16 @@ backToTop.addEventListener('click', () => {
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score += 10;
+      foodEaten++;
       scoreEl.textContent = 'Score: ' + score;
       food = newFood();
+      if (foodEaten % 3 === 0 && Math.random() < 0.75) spawnCherry();
+    } else if (cherry && head.x === cherry.x && head.y === cherry.y) {
+      score += 30;
+      scoreEl.textContent = 'Score: ' + score;
+      cherry = null;
+      if (cherryTimer) { clearTimeout(cherryTimer); cherryTimer = null; }
+      snake.pop();
     } else { snake.pop(); }
     draw();
   }
@@ -3202,12 +3265,21 @@ if (siteName) {
         <button class="easter-close" id="b2048-close">✕</button>
         <div class="easter-title">2048: THE END OF BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;">ARROW KEYS OR SWIPE</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;">ARROWS · SWIPE · D-PAD</div>
           <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;">SCORE: <span id="b2048-score">0</span></div>
         </div>
         <div id="b2048-grid" class="b2048-grid"></div>
-        <div id="b2048-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:14px;min-height:20px;"></div>
-        <button id="b2048-new" style="display:block;margin:12px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
+        <div class="b2048-dpad">
+          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-up">▲</button></div>
+          <div class="b2048-dpad-row">
+            <button class="b2048-arrow" id="b2048-left">◀</button>
+            <div class="b2048-dpad-center"></div>
+            <button class="b2048-arrow" id="b2048-right">▶</button>
+          </div>
+          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-down">▼</button></div>
+        </div>
+        <div id="b2048-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:20px;"></div>
+        <button id="b2048-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
       </div>`;
     document.body.appendChild(ov);
     document.getElementById('b2048-close').addEventListener('click', () => {
@@ -3215,6 +3287,10 @@ if (siteName) {
       ov.remove();
     });
     document.getElementById('b2048-new').addEventListener('click', start2048);
+    document.getElementById('b2048-up').addEventListener('click',    () => move2048('U'));
+    document.getElementById('b2048-down').addEventListener('click',  () => move2048('D'));
+    document.getElementById('b2048-left').addEventListener('click',  () => move2048('L'));
+    document.getElementById('b2048-right').addEventListener('click', () => move2048('R'));
     start2048();
   }
 
