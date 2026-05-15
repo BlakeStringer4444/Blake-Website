@@ -3,7 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blake Stringer | ACTOR • MUSICIAN</title>
+<title>Blake Stringer | Actor · Musician · Sound Designer</title>
+<meta name="description" content="Blake Stringer is an Australian actor, musician, and sound designer. Explore his acting CV, theatre credits, music composition work, directing experience, and creative portfolio.">
+<meta name="keywords" content="Blake Stringer, actor, musician, sound designer, theatre, performing arts, Australian actor, music composition, stage, portfolio">
+<meta name="author" content="Blake Stringer">
+<meta name="category" content="Arts and Entertainment">
+
+<!-- Open Graph -->
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Blake Stringer | Actor · Musician · Sound Designer">
+<meta property="og:description" content="Australian actor, musician, and sound designer. Acting CV, theatre credits, music composition, and creative portfolio.">
+<meta property="og:url" content="https://www.blakestringer.com">
+<meta property="og:site_name" content="Blake Stringer">
+<meta property="og:locale" content="en_AU">
+<meta property="profile:first_name" content="Blake">
+<meta property="profile:last_name" content="Stringer">
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Blake Stringer | Actor · Musician · Sound Designer">
+<meta name="twitter:description" content="Australian actor, musician, and sound designer. Acting CV, theatre credits, music composition, and creative portfolio.">
+
+<!-- Schema.org structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Blake Stringer",
+  "url": "https://www.blakestringer.com",
+  "jobTitle": ["Actor", "Musician", "Sound Designer"],
+  "description": "Australian actor, musician, and sound designer with experience in theatre, film, and music composition.",
+  "nationality": "Australian",
+  "knowsAbout": ["Acting", "Theatre", "Music Composition", "Sound Design", "Directing", "Performing Arts"],
+  "sameAs": ["https://www.instagram.com/blakestringer4444/"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1076,6 +1110,49 @@ body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
 
+/* ── SCROLL PROGRESS BAR ── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--lime);
+  z-index: 9999;
+  transition: width 0.05s linear;
+  pointer-events: none;
+}
+body[data-theme="dark"] #scroll-progress { background: var(--purple); }
+
+/* ── NOW SECTION ── */
+.now-block {
+  margin-top: 32px;
+}
+.now-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  align-items: baseline;
+}
+.now-item:last-child { border-bottom: none; }
+.now-key {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  white-space: nowrap;
+  min-width: 120px;
+}
+.now-val {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--black);
+}
+body[data-theme="dark"] .now-item { border-bottom-color: rgba(255,255,255,0.08); }
+body[data-theme="dark"] .now-val { color: #f0f0eb; }
+
 /* ── SNAKE EASTER EGG ── */
 .snake-overlay {
   position: fixed;
@@ -1622,6 +1699,14 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
 </head>
 <body>
 
+<!--
+  OMG why are you inspecting my code, Tim.
+  If you can see this, message me "I eat the skin of a Kiwi fruit"
+-->
+
+<div id="scroll-progress"></div>
+
+
 <div class="top-bar"></div>
 
 <!-- HEADER -->
@@ -1659,6 +1744,14 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
         </div>
         <div class="about-bio">
           <p>I'm a Melbourne based actor whose work and primary focus predominantly lie on the stage. However, as a musician and sound designer, I always finds myself creating and never out of work.</p>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:40px;">Now</div>
+      <div class="now-block">
+        <div class="now-item">
+          <span class="now-key">Rehearsing</span>
+          <span class="now-val">Heidelberg Theatre Company's <em>Birdsong</em> (3 – 18 Jul)</span>
         </div>
       </div>
 
@@ -2228,8 +2321,11 @@ function select(i) {
 
 // Keyboard navigation
 document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.key === 'ArrowDown' || e.key === 's') select(Math.min(current + 1, sections.length - 1));
   if (e.key === 'ArrowUp'   || e.key === 'w') select(Math.max(current - 1, 0));
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= sections.length) select(n - 1);
 });
 
 buildTabs();
@@ -2515,7 +2611,6 @@ if (siteName) {
   let cTaps = 0, cTimer = null;
   const hs = document.querySelector('.photo-frame img');
   if (hs) {
-    hs.style.cursor = 'pointer';
     hs.addEventListener('click', () => {
       cTaps++;
       if (cTimer) clearTimeout(cTimer);
@@ -3302,6 +3397,58 @@ if (siteName) {
     }
     if (again) again.style.display = 'block';
   }
+})();
+
+/* ── SCROLL PROGRESS BAR ── */
+(function () {
+  const bar = document.getElementById('scroll-progress');
+  if (!bar) return;
+  function updateBar() {
+    const el = document.documentElement;
+    const scrolled = el.scrollTop || document.body.scrollTop;
+    const total = el.scrollHeight - el.clientHeight;
+    bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  document.querySelector('.content-area') && document.querySelector('.content-area').addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+})();
+
+/* ── CURSOR PARTICLE TRAIL (desktop only) ── */
+(function () {
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  const particles = [];
+  const colours = ['#D4FF1A', '#9933FF', '#D4FF1A', '#ffffff'];
+  document.addEventListener('mousemove', e => {
+    const p = document.createElement('div');
+    p.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
+    document.body.appendChild(p);
+    particles.push(p);
+    requestAnimationFrame(() => { p.style.opacity = '0'; p.style.transform = 'translate(-50%,-50%) scale(0.2)'; });
+    setTimeout(() => { p.remove(); particles.splice(particles.indexOf(p), 1); }, 520);
+    if (particles.length > 40) { particles[0].remove(); particles.shift(); }
+  });
+})();
+
+/* ── CONSOLE ART ── */
+(function () {
+  const butterfly = [
+    '%c',
+    '      .   .',
+    '     (\\\_/)',
+    '   .-(^ ^)-.',
+    '  /|  . .  |\\',
+    ' | |  (_)  | |',
+    '  \\|       |/',
+    '   \'-------\'',
+    '',
+    '  Hey there, curious one 🦋',
+    '  This site was hand-crafted with love (and chaos).',
+    '',
+    '  Blake Stringer — Actor · Musician · Sound Designer',
+    '  www.blakestringer.com',
+  ].join('\n');
+  console.log(butterfly, 'color:#D4FF1A;font-family:monospace;font-size:12px;line-height:1.5;');
 })();
 </script>
 </body>
