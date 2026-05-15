@@ -904,8 +904,8 @@ footer {
   header { padding: 24px 20px 20px; }
   .site-name { font-size: clamp(40px, 12vw, 72px); }
   .about-top { flex-direction: column; }
+  .about-photo-col { width: 100%; }
   .photo-frame { width: 100%; height: 400px; }
-  .now-banner { width: 100%; }
   .skill-name { min-width: 100px; }
 }
 
@@ -1180,10 +1180,16 @@ body[data-theme="dark"] .card-grid-value { color: #f0f0eb; }
   pointer-events: none;
 }
 
+/* ── PHOTO COLUMN (photo + now-banner share same width) ── */
+.about-photo-col {
+  width: 336px;
+  flex-shrink: 0;
+}
+
 /* ── NOW BANNER ── */
 .now-banner {
   display: block;
-  width: 336px;
+  width: 100%;
   box-sizing: border-box;
   margin-top: 2px;
   font-family: 'DM Mono', monospace;
@@ -1794,15 +1800,16 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
       <div class="section-label">About</div>
 
       <div class="about-top">
-        <div class="photo-frame">
-          <img src="Images/BlakeStringerHeadshot.jpg" alt="Blake Stringer">
+        <div class="about-photo-col">
+          <div class="photo-frame">
+            <img src="Images/BlakeStringerHeadshot.jpg" alt="Blake Stringer">
+          </div>
+          <div class="now-banner">Currently rehearsing for<br>Heidelberg Theatre Company's<br><em>'Birdsong'</em> (3 – 18 Jul)</div>
         </div>
         <div class="about-bio">
           <p>I'm a Melbourne-based actor whose primary focus is theatre and stage performance. Alongside my work as a performer, I'm a musician and sound designer, lending strong creative input to community productions.</p>
         </div>
       </div>
-
-      <div class="now-banner">Currently rehearsing for<br>Heidelberg Theatre Company's<br><em>'Birdsong'</em> (3 – 18 Jul)</div>
 
       <div class="section-label" style="margin-top:40px;">Contact</div>
 
