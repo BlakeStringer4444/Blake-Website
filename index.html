@@ -2970,7 +2970,7 @@ if (siteName) {
     const canvas = document.getElementById('pong-canvas');
     const ctx = canvas.getContext('2d');
     const msg = document.getElementById('pong-msg');
-    const W = 500, H = 300, PW = 10, PH = 64, BS = 10, BASE = 4;
+    const W = 500, H = 300, PW = 12, PH = 64, BS = 10, BASE = 4;
 
     let s = {
       py: H / 2 - PH / 2, by: H / 2 - PH / 2,
@@ -3023,14 +3023,16 @@ if (siteName) {
         if (s.bx - BS / 2 <= 20 + PW && s.bx - BS / 2 >= 20 &&
             s.ballY >= s.py && s.ballY <= s.py + PH && s.vx < 0) {
           s.vx = Math.abs(s.vx) * 1.04;
-          s.vy = ((s.ballY - (s.py + PH / 2)) / (PH / 2)) * BASE * 1.2;
+          const pn = (s.ballY - (s.py + PH / 2)) / (PH / 2);
+          s.vy = Math.sign(pn) * Math.pow(Math.abs(pn), 0.7) * BASE * 1.6;
           if (s.vx > 12) s.vx = 12;
         }
         // Blake paddle
         if (s.bx + BS / 2 >= W - 20 - PW && s.bx + BS / 2 <= W - 20 &&
             s.ballY >= s.by && s.ballY <= s.by + PH && s.vx > 0) {
           s.vx = -Math.abs(s.vx) * 1.04;
-          s.vy = ((s.ballY - (s.by + PH / 2)) / (PH / 2)) * BASE * 1.2;
+          const bn = (s.ballY - (s.by + PH / 2)) / (PH / 2);
+          s.vy = Math.sign(bn) * Math.pow(Math.abs(bn), 0.7) * BASE * 1.6;
           if (Math.abs(s.vx) > 12) s.vx = -12;
         }
         if (s.bx < 0) {
@@ -3060,8 +3062,10 @@ if (siteName) {
       ctx.fillText(s.ps, W / 4, 50); ctx.fillText(s.bs, 3 * W / 4, 50);
       ctx.font = '9px "DM Mono",monospace'; ctx.fillStyle = 'rgba(255,255,255,0.35)';
       ctx.fillText('YOU', W / 4, 64); ctx.fillText('BLAKE', 3 * W / 4, 64);
-      ctx.fillStyle = '#D4FF1A'; ctx.fillRect(20, s.py, PW, PH);
-      ctx.fillStyle = '#9933FF'; ctx.fillRect(W - 20 - PW, s.by, PW, PH);
+      ctx.fillStyle = '#D4FF1A';
+      ctx.beginPath(); ctx.roundRect(20, s.py, PW, PH, PW / 2); ctx.fill();
+      ctx.fillStyle = '#9933FF';
+      ctx.beginPath(); ctx.roundRect(W - 20 - PW, s.by, PW, PH, PW / 2); ctx.fill();
       ctx.fillStyle = '#ffffff'; ctx.fillRect(s.bx - BS / 2, s.ballY - BS / 2, BS, BS);
 
       pongRAF = requestAnimationFrame(tick);
