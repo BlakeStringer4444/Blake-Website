@@ -1110,6 +1110,44 @@ body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
 
+/* ── SCROLL PROGRESS BAR ── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--purple);
+  z-index: 9999;
+  transition: width 0.05s linear;
+  pointer-events: none;
+}
+
+/* ── NOW BANNER ── */
+.now-banner {
+  display: inline-block;
+  margin-top: 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  border: 1px solid var(--purple);
+  padding: 5px 12px;
+  cursor: default;
+  user-select: none;
+  animation: now-pulse 2s step-end infinite;
+}
+@keyframes now-pulse {
+  0%, 100% { background: var(--purple); color: var(--lime); }
+  50%       { background: var(--lime);   color: var(--purple); }
+}
+@keyframes now-pulse-dark {
+  0%, 100% { background: var(--purple); color: var(--lime); border-color: var(--purple); }
+  50%       { background: #111111;       color: var(--purple); border-color: var(--purple); }
+}
+body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
+.now-banner em { font-style: italic; text-transform: none; letter-spacing: 0; }
+
 /* ── SNAKE EASTER EGG ── */
 .snake-overlay {
   position: fixed;
@@ -1656,6 +1694,13 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
 </head>
 <body>
 
+<!--
+  OMG why are you inspecting my code, Tim.
+  If you can see this, message me "I eat the skin of a Kiwi fruit"
+-->
+
+<div id="scroll-progress"></div>
+
 <div class="top-bar"></div>
 
 <!-- HEADER -->
@@ -1695,6 +1740,8 @@ body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); borde
           <p>I'm a Melbourne based actor whose work and primary focus predominantly lie on the stage. However, as a musician and sound designer, I always find myself creating and never out of work.</p>
         </div>
       </div>
+
+      <div class="now-banner">Currently rehearsing for<br>Heidelberg Theatre Company's<br><em>'Birdsong'</em> (3 – 18 Jul)</div>
 
       <div class="section-label" style="margin-top:40px;">Contact</div>
 
@@ -2262,8 +2309,11 @@ function select(i) {
 
 // Keyboard navigation
 document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.key === 'ArrowDown' || e.key === 's') select(Math.min(current + 1, sections.length - 1));
   if (e.key === 'ArrowUp'   || e.key === 'w') select(Math.max(current - 1, 0));
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= sections.length) select(n - 1);
 });
 
 buildTabs();
@@ -3335,6 +3385,59 @@ if (siteName) {
     }
     if (again) again.style.display = 'block';
   }
+})();
+
+/* ── SCROLL PROGRESS BAR ── */
+(function () {
+  const bar = document.getElementById('scroll-progress');
+  if (!bar) return;
+  function updateBar() {
+    const el = document.documentElement;
+    const scrolled = el.scrollTop || document.body.scrollTop;
+    const total = el.scrollHeight - el.clientHeight;
+    bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  const ca = document.querySelector('.content-area');
+  if (ca) ca.addEventListener('scroll', updateBar, { passive: true });
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+})();
+
+/* ── CURSOR PARTICLE TRAIL (desktop only) ── */
+(function () {
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  const particles = [];
+  const colours = ['#D4FF1A', '#9933FF', '#D4FF1A', '#ffffff'];
+  document.addEventListener('mousemove', e => {
+    const p = document.createElement('div');
+    p.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
+    document.body.appendChild(p);
+    particles.push(p);
+    requestAnimationFrame(() => { p.style.opacity = '0'; p.style.transform = 'translate(-50%,-50%) scale(0.2)'; });
+    setTimeout(() => { p.remove(); particles.splice(particles.indexOf(p), 1); }, 520);
+    if (particles.length > 40) { particles[0].remove(); particles.shift(); }
+  });
+})();
+
+/* ── CONSOLE ART ── */
+(function () {
+  const butterfly = [
+    '%c',
+    '      .   .',
+    '     (\\_/)',
+    '   .-(^ ^)-.',
+    '  /|  . .  |\\',
+    ' | |  (_)  | |',
+    '  \\|       |/',
+    "   '---------'",
+    '',
+    '  Hey there, curious one 🦋',
+    '  This site was hand-crafted with love (and chaos).',
+    '',
+    '  Blake Stringer — Actor · Musician · Sound Designer',
+    '  www.blakestringer.com',
+  ].join('\n');
+  console.log(butterfly, 'color:#D4FF1A;font-family:monospace;font-size:12px;line-height:1.5;');
 })();
 </script>
 </body>
