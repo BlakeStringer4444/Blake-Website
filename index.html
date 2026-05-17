@@ -1758,8 +1758,8 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 /* ── WHACK-A-BLAKE GRID ── */
 .whack-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 .whack-hole {
   aspect-ratio: 1;
@@ -1775,7 +1775,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 }
 .whack-mole {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(24px, 5vw, 40px);
+  font-size: clamp(18px, 4vw, 30px);
   color: var(--lime);
   background: var(--purple);
   width: 100%;
@@ -2572,8 +2572,17 @@ backToTop.addEventListener('click', () => {
     <div class="snake-title">BLAKE SNAKE</div>
     <div class="snake-score-display" id="snake-score">Score: 0</div>
     <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
-    <div class="snake-controls-hint">Arrow keys / WASD · Swipe on mobile</div>
+    <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad</div>
     <div class="snake-controls-hint" style="margin-top:4px;color:rgba(255,80,110,0.7);">Pink cherry = bonus +30 pts</div>
+    <div class="b2048-dpad" style="margin-top:10px;">
+      <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up">▲</button></div>
+      <div class="b2048-dpad-row">
+        <button class="b2048-arrow" id="snake-btn-left">◀</button>
+        <div class="b2048-dpad-center"></div>
+        <button class="b2048-arrow" id="snake-btn-right">▶</button>
+      </div>
+      <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-down">▼</button></div>
+    </div>
     <div class="snake-gameover-panel" id="snake-gameover-panel">
       <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
       <div class="snake-go-row">
@@ -2596,6 +2605,18 @@ backToTop.addEventListener('click', () => {
 
   document.getElementById('snake-close').addEventListener('click', closeGame);
   document.getElementById('snake-restart-btn').addEventListener('click', restart);
+
+  const snakeDirMap = {
+    'snake-btn-up':    {x:0,y:-1},
+    'snake-btn-down':  {x:0,y:1},
+    'snake-btn-left':  {x:-1,y:0},
+    'snake-btn-right': {x:1,y:0}
+  };
+  Object.entries(snakeDirMap).forEach(([id, nd]) => {
+    document.getElementById(id).addEventListener('click', () => {
+      if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
+    });
+  });
   saveBtn.addEventListener('click', () => {
     saveScore(nameInput.value, score);
     nameInput.value = '';
@@ -3001,7 +3022,14 @@ if (siteName) {
         <canvas id="pong-canvas" width="500" height="300"
           style="width:100%;max-width:500px;display:block;margin:0 auto;border:1px solid rgba(153,51,255,0.3);background:#0a0a0a;touch-action:none;">
         </canvas>
-        <div id="pong-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:12px;min-height:20px;"></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;">
+          <div style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:2px;">YOUR<br>PADDLE</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <button class="b2048-arrow" id="pong-btn-up" style="touch-action:none;">▲</button>
+            <button class="b2048-arrow" id="pong-btn-down" style="touch-action:none;">▼</button>
+          </div>
+        </div>
+        <div id="pong-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:8px;min-height:20px;"></div>
       </div>`;
     document.body.appendChild(overlay);
     document.getElementById('pong-close').addEventListener('click', () => {
@@ -3025,6 +3053,24 @@ if (siteName) {
       ps: 0, bs: 0, over: false, waiting: true
     };
     msg.textContent = 'MOVE MOUSE OR TOUCH TO START';
+
+    // Paddle buttons (hold to move)
+    let pongBtnLoop = null;
+    function pongBtnMove(dir) {
+      s.py = Math.max(0, Math.min(H - PH, s.py + dir * 12));
+      if (s.waiting) { s.waiting = false; msg.textContent = ''; }
+    }
+    [['pong-btn-up', -1], ['pong-btn-down', 1]].forEach(([id, d]) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const start = () => { pongBtnMove(d); pongBtnLoop = setInterval(() => pongBtnMove(d), 40); };
+      const stop  = () => clearInterval(pongBtnLoop);
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('touchstart', e => { e.preventDefault(); start(); }, { passive: false });
+      btn.addEventListener('mouseup',    stop);
+      btn.addEventListener('mouseleave', stop);
+      btn.addEventListener('touchend',   stop);
+    });
 
     function getCanvasY(clientY) {
       const r = canvas.getBoundingClientRect();
@@ -3476,7 +3522,7 @@ if (siteName) {
     const ov = document.createElement('div');
     ov.id = 'whack-overlay'; ov.className = 'easter-overlay';
     ov.innerHTML = `
-      <div class="easter-box" style="max-width:480px">
+      <div class="easter-box" style="max-width:560px">
         <button class="easter-close" id="whack-close">✕</button>
         <div class="easter-title">WHACK-A-BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -3491,7 +3537,7 @@ if (siteName) {
     document.body.appendChild(ov);
 
     const grid = document.getElementById('whack-grid');
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 16; i++) {
       const hole = document.createElement('div');
       hole.className = 'whack-hole';
       const mole = document.createElement('div');
