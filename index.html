@@ -2409,6 +2409,7 @@ function buildTabs() {
 
 function select(i) {
   current = i;
+  window.scrollTo({ top: 0, behavior: 'instant' });
   document.querySelectorAll('.tab-btn').forEach((t, j) => t.classList.toggle('active', j === i));
   document.querySelectorAll('.tab-mobile-btn').forEach((t, j) => t.classList.toggle('active', j === i));
 
@@ -2491,11 +2492,13 @@ if (darkToggle) {
 }
 
 /* ── SCROLL-AWARE JUMP NAV ── */
-// Jump button active state: scroll-position based (reliable for short sections)
+// Jump button active state: scroll-position based + click-lock
 (function () {
-  const THRESHOLD = 0.22; // section heading must be within top 22% of viewport to activate
+  const THRESHOLD = 0.22;
+  let locked = false, lockTimer = null;
 
   function updateActiveJumpBtn() {
+    if (locked) return;
     const activePanel = document.querySelector('.panel.active');
     if (!activePanel) return;
     const btns = [...activePanel.querySelectorAll('.jump-btn')];
@@ -2504,32 +2507,40 @@ if (darkToggle) {
     const limit = window.innerHeight * THRESHOLD;
     const atBottom = window.scrollY + window.innerHeight >= document.body.scrollHeight - 40;
 
-    if (atBottom) {
-      // At page bottom: always highlight last button
-      document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
-      btns[btns.length - 1].classList.add('jump-btn--active');
-      return;
-    }
-
-    // Find the last section heading that has scrolled above the threshold line
     let activeBtn = null;
-    for (const btn of btns) {
-      const target = document.querySelector(btn.getAttribute('href'));
-      if (!target) continue;
-      if (target.getBoundingClientRect().top <= limit) activeBtn = btn;
+    if (atBottom) {
+      activeBtn = btns[btns.length - 1];
+    } else {
+      for (const btn of btns) {
+        const target = document.querySelector(btn.getAttribute('href'));
+        if (!target) continue;
+        if (target.getBoundingClientRect().top <= limit) activeBtn = btn;
+      }
     }
 
     document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
     if (activeBtn) activeBtn.classList.add('jump-btn--active');
   }
 
-  window.addEventListener('scroll', updateActiveJumpBtn, { passive: true });
-  // Also update when switching tabs
   document.addEventListener('click', e => {
+    // Jump button clicked: lock it as active for 700ms
+    const jumpBtn = e.target.closest('.jump-btn');
+    if (jumpBtn) {
+      document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
+      jumpBtn.classList.add('jump-btn--active');
+      locked = true;
+      clearTimeout(lockTimer);
+      lockTimer = setTimeout(() => { locked = false; updateActiveJumpBtn(); }, 700);
+    }
+    // Tab switch: clear lock and re-evaluate after transition
     if (e.target.closest('.tab-btn, .tab-mobile-btn')) {
-      setTimeout(updateActiveJumpBtn, 250);
+      locked = false;
+      clearTimeout(lockTimer);
+      setTimeout(updateActiveJumpBtn, 300);
     }
   });
+
+  window.addEventListener('scroll', updateActiveJumpBtn, { passive: true });
 })();
 
 /* ── BACK TO TOP ── */
