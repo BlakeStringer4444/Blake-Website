@@ -2491,36 +2491,46 @@ if (darkToggle) {
 }
 
 /* ── SCROLL-AWARE JUMP NAV ── */
-if ('IntersectionObserver' in window) {
-  const jumpBtns = document.querySelectorAll('.jump-btn');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = '#' + entry.target.id;
-        jumpBtns.forEach(btn => {
-          btn.classList.toggle('jump-btn--active', btn.getAttribute('href') === id);
-        });
-      }
-    });
-  }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
-  jumpBtns.forEach(btn => {
-    const target = document.querySelector(btn.getAttribute('href'));
-    if (target) observer.observe(target);
-  });
+// Jump button active state: scroll-position based (reliable for short sections)
+(function () {
+  const THRESHOLD = 0.22; // section heading must be within top 22% of viewport to activate
 
-  // At bottom of page: activate the last visible jump button in the active panel
-  window.addEventListener('scroll', () => {
-    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 40) {
-      const activePanel = document.querySelector('.panel.active');
-      if (!activePanel) return;
-      const btns = [...activePanel.querySelectorAll('.jump-btn')];
-      if (!btns.length) return;
-      const lastBtn = btns[btns.length - 1];
+  function updateActiveJumpBtn() {
+    const activePanel = document.querySelector('.panel.active');
+    if (!activePanel) return;
+    const btns = [...activePanel.querySelectorAll('.jump-btn')];
+    if (!btns.length) return;
+
+    const limit = window.innerHeight * THRESHOLD;
+    const atBottom = window.scrollY + window.innerHeight >= document.body.scrollHeight - 40;
+
+    if (atBottom) {
+      // At page bottom: always highlight last button
       document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
-      lastBtn.classList.add('jump-btn--active');
+      btns[btns.length - 1].classList.add('jump-btn--active');
+      return;
     }
-  }, { passive: true });
-}
+
+    // Find the last section heading that has scrolled above the threshold line
+    let activeBtn = null;
+    for (const btn of btns) {
+      const target = document.querySelector(btn.getAttribute('href'));
+      if (!target) continue;
+      if (target.getBoundingClientRect().top <= limit) activeBtn = btn;
+    }
+
+    document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
+    if (activeBtn) activeBtn.classList.add('jump-btn--active');
+  }
+
+  window.addEventListener('scroll', updateActiveJumpBtn, { passive: true });
+  // Also update when switching tabs
+  document.addEventListener('click', e => {
+    if (e.target.closest('.tab-btn, .tab-mobile-btn')) {
+      setTimeout(updateActiveJumpBtn, 250);
+    }
+  });
+})();
 
 /* ── BACK TO TOP ── */
 const backToTop = document.createElement('button');
