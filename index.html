@@ -54,12 +54,12 @@
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 html {
-  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--lime);
   font-family: 'Inter', sans-serif;
   color: var(--black);
@@ -2507,6 +2507,19 @@ if ('IntersectionObserver' in window) {
     const target = document.querySelector(btn.getAttribute('href'));
     if (target) observer.observe(target);
   });
+
+  // At bottom of page: activate the last visible jump button in the active panel
+  window.addEventListener('scroll', () => {
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 40) {
+      const activePanel = document.querySelector('.panel.active');
+      if (!activePanel) return;
+      const btns = [...activePanel.querySelectorAll('.jump-btn')];
+      if (!btns.length) return;
+      const lastBtn = btns[btns.length - 1];
+      document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
+      lastBtn.classList.add('jump-btn--active');
+    }
+  }, { passive: true });
 }
 
 /* ── BACK TO TOP ── */
