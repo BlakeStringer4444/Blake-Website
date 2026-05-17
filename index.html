@@ -975,7 +975,16 @@ footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--lime);
+  padding: 10px 0;
+  margin-top: -10px;
+}
+body[data-theme="dark"] .jump-nav {
+  background: var(--black);
 }
 .jump-btn {
   font-family: 'DM Mono', monospace;
@@ -1931,11 +1940,11 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
       </div>
 
       <div class="section-sublabel" id="act-attributes" style="margin-top:32px;">Attributes</div>
-      <span class="tag tag-lime">Height: 182cm</span>
-      <span class="tag tag-lime">Hair: Brown</span>
-      <span class="tag tag-lime">Eyes: Blue</span>
-      <span class="tag tag-lime">Age Range: 30–40</span>
-      <span class="tag tag-lime">Shoe Size: 10</span>
+      <span class="tag">Height: 182cm</span>
+      <span class="tag">Hair: Brown</span>
+      <span class="tag">Eyes: Blue</span>
+      <span class="tag">Age Range: 30–40</span>
+      <span class="tag">Shoe Size: 10</span>
 
             <div class="section-sublabel" id="act-accolades" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
@@ -1991,6 +2000,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
       <div class="section-label">Sound Design CV</div>
       <div class="jump-nav">
         <a class="jump-btn" href="#snd-theatre">Theatre</a>
+        <a class="jump-btn" href="#snd-software">Software</a>
         <a class="jump-btn" href="#snd-accolades">Accolades</a>
         <a class="jump-btn" href="#snd-reel">Music Design Reel</a>
       </div>
@@ -2036,6 +2046,13 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
           </tbody>
         </table>
       </div>
+
+      <div class="section-sublabel" id="snd-software" style="margin-top:32px;">Software</div>
+      <span class="tag">Ableton Live</span>
+      <span class="tag">Logic Pro</span>
+      <span class="tag">Sony Acid</span>
+      <span class="tag">QLab 5</span>
+      <span class="tag">Show Cue System</span>
 
       <div class="section-sublabel" id="snd-accolades" style="margin-top:32px;">Accolades</div>
       <div class="cv-table-wrap">
@@ -2087,8 +2104,13 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
     <!-- MUSIC CV -->
     <div class="panel" id="panel-music">
       <div class="section-label">Music</div>
+      <div class="jump-nav">
+        <a class="jump-btn" href="#mus-releases">Releases</a>
+        <a class="jump-btn" href="#mus-software">Software</a>
+        <a class="jump-btn" href="#mus-genres">Genres</a>
+      </div>
 
-      <div class="section-sublabel">Releases</div>
+      <div class="section-sublabel" id="mus-releases">Releases</div>
       <div class="album-grid">
 
         <div class="album-card">
@@ -2189,7 +2211,14 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 
       </div>
 
-      <div class="section-sublabel" style="margin-top:28px;">Genres</div>
+      <div class="section-sublabel" id="mus-software" style="margin-top:28px;">Software</div>
+      <div style="margin-bottom:8px;">
+        <span class="tag">Ableton Live</span>
+        <span class="tag">Logic Pro</span>
+        <span class="tag">Sony Acid</span>
+      </div>
+
+      <div class="section-sublabel" id="mus-genres" style="margin-top:28px;">Genres</div>
       <div style="margin-bottom:8px;">
         <span class="tag">Future Garage</span>
         <span class="tag">Tech House</span>
@@ -2203,6 +2232,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
       <div class="jump-nav">
         <a class="jump-btn" href="#dir-theatre">Theatre</a>
         <a class="jump-btn" href="#dir-films">Short Films &amp; Trailers</a>
+        <a class="jump-btn" href="#dir-software">Software</a>
       </div>
 
       <div class="section-sublabel" id="dir-theatre">Theatre</div>
@@ -2328,6 +2358,9 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </a>
 
       </div>
+
+      <div class="section-sublabel" id="dir-software" style="margin-top:32px;">Software</div>
+      <span class="tag">Final Cut Pro X</span>
 
     </div>
 
@@ -2689,7 +2722,6 @@ backToTop.addEventListener('click', () => {
   let tapCount = 0, tapTimer = null;
 const siteName = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Contact');
 if (siteName) {
-  siteName.style.cursor = 'pointer';
   siteName.addEventListener('click', () => {
       tapCount++;
       if (tapTimer) clearTimeout(tapTimer);
@@ -2928,10 +2960,10 @@ if (siteName) {
 })();
 
 /* ── PONG: YOU vs. BLAKE at PONG ── */
-/* Trigger: tap the purple site header bar 5 times */
+/* Trigger: click "Eyes: Blue" attribute tag 5 times */
 (function () {
   let pongTaps = 0, pongTimer, pongRAF;
-  const pongTrigger = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Acting CV');
+  const pongTrigger = [...document.querySelectorAll('.tag')].find(el => el.textContent.trim() === 'Eyes: Blue');
   if (pongTrigger) {
     pongTrigger.addEventListener('click', function () {
       pongTaps++;
@@ -3413,10 +3445,10 @@ if (siteName) {
 
 
 /* ── WHACK-A-BLAKE ── */
-/* Trigger: tap the footer 5 times */
+/* Trigger: click "Final Cut Pro X" software tag 5 times */
 (function () {
   let wTaps = 0, wTimer;
-  const wTrigger = [...document.querySelectorAll('.section-label')].find(el => el.textContent.trim() === 'Directing CV');
+  const wTrigger = [...document.querySelectorAll('.tag')].find(el => el.textContent.trim() === 'Final Cut Pro X');
   if (wTrigger) {
     wTrigger.addEventListener('click', function () {
       wTaps++;
