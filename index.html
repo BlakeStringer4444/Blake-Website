@@ -240,12 +240,16 @@ header {
 }
 
 .section-sublabel {
-  font-size: 10px;
-  letter-spacing: 3px;
+  font-size: 13px;
+  letter-spacing: 4px;
   color: rgba(0,0,0,0.45);
   text-transform: uppercase;
-  margin-bottom: 8px;
-  margin-top: 28px;
+  margin-bottom: 14px;
+  margin-top: 48px;
+  scroll-margin-top: 60px;
+}
+@media (max-width: 639px) {
+  .section-sublabel { scroll-margin-top: 85px; }
 }
 
 /* ── PHOTO + BIO ROW ── */
@@ -1939,14 +1943,14 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </table>
       </div>
 
-      <div class="section-sublabel" id="act-attributes" style="margin-top:32px;">Attributes</div>
+      <div class="section-sublabel" id="act-attributes">Attributes</div>
       <span class="tag">Height: 182cm</span>
       <span class="tag">Hair: Brown</span>
       <span class="tag">Eyes: Blue</span>
       <span class="tag">Age Range: 30–40</span>
       <span class="tag">Shoe Size: 10</span>
 
-            <div class="section-sublabel" id="act-accolades" style="margin-top:32px;">Accolades</div>
+            <div class="section-sublabel" id="act-accolades">Accolades</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -1973,7 +1977,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </table>
       </div>
 
-      <div class="section-sublabel" id="act-reel" style="margin-top:32px;">Video Reel</div>
+      <div class="section-sublabel" id="act-reel">Video Reel</div>
       <div class="video-grid">
         <a href="https://www.youtube.com/watch?v=ckq8P67JgDc" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb"><img src="https://img.youtube.com/vi/ckq8P67JgDc/hqdefault.jpg" alt="The Raven"></div>
@@ -2047,14 +2051,14 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </table>
       </div>
 
-      <div class="section-sublabel" id="snd-software" style="margin-top:32px;">Software</div>
+      <div class="section-sublabel" id="snd-software">Software</div>
       <span class="tag">Ableton Live</span>
       <span class="tag">Logic Pro</span>
       <span class="tag">Sony Acid</span>
       <span class="tag">QLab 5</span>
       <span class="tag">Show Cue System</span>
 
-      <div class="section-sublabel" id="snd-accolades" style="margin-top:32px;">Accolades</div>
+      <div class="section-sublabel" id="snd-accolades">Accolades</div>
       <div class="cv-table-wrap">
         <table class="cv-table">
           <thead>
@@ -2075,7 +2079,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </table>
       </div>
 
-      <div class="section-sublabel" id="snd-reel" style="margin-top:32px;">Music Design Reel</div>
+      <div class="section-sublabel" id="snd-reel">Music Design Reel</div>
       <div class="video-grid">
         <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-TheGift.png" alt="The Gift"></div>
@@ -2211,14 +2215,14 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 
       </div>
 
-      <div class="section-sublabel" id="mus-software" style="margin-top:28px;">Software</div>
+      <div class="section-sublabel" id="mus-software">Software</div>
       <div style="margin-bottom:8px;">
         <span class="tag">Ableton Live</span>
         <span class="tag">Logic Pro</span>
         <span class="tag">Sony Acid</span>
       </div>
 
-      <div class="section-sublabel" id="mus-genres" style="margin-top:28px;">Genres</div>
+      <div class="section-sublabel" id="mus-genres">Genres</div>
       <div style="margin-bottom:8px;">
         <span class="tag">Future Garage</span>
         <span class="tag">Tech House</span>
@@ -2254,7 +2258,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
         </table>
       </div>
 
-      <div class="section-sublabel" id="dir-films" style="margin-top:32px;">Short Films &amp; Trailers</div>
+      <div class="section-sublabel" id="dir-films">Short Films &amp; Trailers</div>
       <div class="video-grid">
 
         <a href="https://www.youtube.com/watch?v=ChhSwebkyNQ" target="_blank" rel="noopener noreferrer" class="video-card">
@@ -2359,7 +2363,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 
       </div>
 
-      <div class="section-sublabel" id="dir-software" style="margin-top:32px;">Software</div>
+      <div class="section-sublabel" id="dir-software">Software</div>
       <span class="tag">Final Cut Pro X</span>
 
     </div>
@@ -2494,7 +2498,6 @@ if (darkToggle) {
 /* ── SCROLL-AWARE JUMP NAV ── */
 // Jump button active state: scroll-position based + click-lock
 (function () {
-  const THRESHOLD = 0.22;
   let locked = false, lockTimer = null;
 
   function updateActiveJumpBtn() {
@@ -2504,7 +2507,10 @@ if (darkToggle) {
     const btns = [...activePanel.querySelectorAll('.jump-btn')];
     if (!btns.length) return;
 
-    const limit = window.innerHeight * THRESHOLD;
+    // Threshold = bottom edge of sticky nav + small buffer
+    // This ensures only the section whose heading cleared the nav counts as active
+    const nav = activePanel.querySelector('.jump-nav');
+    const limit = (nav ? nav.offsetHeight : 50) + 20;
     const atBottom = window.scrollY + window.innerHeight >= document.body.scrollHeight - 40;
 
     let activeBtn = null;
