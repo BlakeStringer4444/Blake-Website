@@ -2518,15 +2518,20 @@ if (darkToggle) {
       : 60;
     const limit = scrollMargin + 10;
 
-    // Walk every button: the last one whose heading has cleared the threshold wins.
-    // No special atBottom override — that was firing prematurely on pages where
-    // sections near the bottom don't have much content after them, causing e.g.
-    // "Video Reel" to highlight when you were still on "Attributes".
+    // atBottom: when the user has physically scrolled to the bottom, always
+    // highlight the last section. Safe now because the click-lock expires silently
+    // (no updateActiveJumpBtn call), so this only ever fires on real scroll events.
+    const atBottom = window.scrollY + window.innerHeight >= document.body.scrollHeight - 40;
+
     let activeBtn = null;
-    for (const btn of btns) {
-      const target = document.querySelector(btn.getAttribute('href'));
-      if (!target) continue;
-      if (target.getBoundingClientRect().top <= limit) activeBtn = btn;
+    if (atBottom) {
+      activeBtn = btns[btns.length - 1];
+    } else {
+      for (const btn of btns) {
+        const target = document.querySelector(btn.getAttribute('href'));
+        if (!target) continue;
+        if (target.getBoundingClientRect().top <= limit) activeBtn = btn;
+      }
     }
 
     document.querySelectorAll('.jump-btn').forEach(b => b.classList.remove('jump-btn--active'));
