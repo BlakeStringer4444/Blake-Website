@@ -1427,6 +1427,10 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
   border-color: var(--purple);
   color: var(--lime);
 }
+@media (max-width: 580px) {
+  #pong-overlay { padding: 4px; }
+  #pong-box { padding: 44px 6px 10px; }
+}
 
 /* ── FLAPPY BLAKE ── */
 .flappy-overlay {
@@ -3066,7 +3070,7 @@ if (siteName) {
     overlay.id = 'pong-overlay';
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
-      <div class="easter-box" style="max-width:560px">
+      <div class="easter-box" id="pong-box" style="max-width:560px">
         <button class="easter-close" id="pong-close">✕</button>
         <div class="easter-title">YOU vs. BLAKE at PONG</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:12px;">
@@ -3075,12 +3079,9 @@ if (siteName) {
         <canvas id="pong-canvas" width="500" height="300"
           style="width:100%;max-width:500px;display:block;margin:0 auto;border:1px solid rgba(153,51,255,0.3);background:#0a0a0a;touch-action:none;">
         </canvas>
-        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;">
-          <div style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:2px;">YOUR<br>PADDLE</div>
-          <div style="display:flex;flex-direction:column;gap:5px;">
-            <button class="b2048-arrow" id="pong-btn-up" style="touch-action:none;">▲</button>
-            <button class="b2048-arrow" id="pong-btn-down" style="touch-action:none;">▼</button>
-          </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px;">
+          <button class="b2048-arrow" id="pong-btn-up" style="touch-action:none;">▲</button>
+          <button class="b2048-arrow" id="pong-btn-down" style="touch-action:none;">▼</button>
         </div>
         <div id="pong-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:8px;min-height:20px;"></div>
       </div>`;
