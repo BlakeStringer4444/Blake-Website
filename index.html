@@ -10,11 +10,13 @@
 <meta name="category" content="Arts and Entertainment">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#D4FF1A">
+<meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://www.blakestringer.com">
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="Images/Favicon.png">
 <link rel="apple-touch-icon" href="Images/Favicon.png">
+<link rel="manifest" href="manifest.json">
 
 <!-- Open Graph -->
 <meta property="og:type" content="profile">
@@ -47,12 +49,30 @@
   "description": "Australian actor, musician, and sound designer with experience in theatre, film, and music composition.",
   "nationality": "Australian",
   "knowsAbout": ["Acting", "Theatre", "Music Composition", "Sound Design", "Directing", "Performing Arts"],
+  "image": "https://www.blakestringer.com/Images/BlakeStringerHeadshot.jpg",
   "sameAs": ["https://www.instagram.com/blakestringer4444/", "https://au.linkedin.com/in/blakestringerndis"]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: var(--purple);
+  color: var(--lime);
+  padding: 8px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  z-index: 99999;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 0; }
 :root {
   --lime:    #D4FF1A;
   --purple:  #9933FF;
@@ -1822,6 +1842,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <!--
   OMG why are you inspecting my code, Tim.
@@ -1855,7 +1876,7 @@ body[data-theme="dark"] .now-banner { animation-name: now-pulse-dark; }
   <nav class="tab-sidebar" id="tab-sidebar"></nav>
 
   <!-- CONTENT -->
-  <main class="main-content">
+  <main class="main-content" id="main-content">
 
     <!-- ABOUT & CONTACT -->
     <div class="panel active" id="panel-about">

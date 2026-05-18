@@ -1,0 +1,16 @@
+{
+  "name": "Blake Stringer",
+  "short_name": "Blake Stringer",
+  "description": "Australian actor, musician, and sound designer.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4FF1A",
+  "icons": [
+    {
+      "src": "Images/Favicon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
