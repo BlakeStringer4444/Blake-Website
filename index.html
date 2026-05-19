@@ -1353,6 +1353,19 @@ body[data-theme="terminal"] footer { border-top-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .footer-hint { color: rgba(255,255,255,0.2); }
 body[data-theme="terminal"] .now-banner { background: rgba(255,255,255,0.06); color: #FFFFFF; border-color: rgba(255,255,255,0.15); animation: none; }
 body[data-theme="terminal"] .award-win { background: #FFFFFF; color: #000000; }
+body[data-theme="terminal"] .site-name { cursor: pointer; }
+
+/* ── BLAKE BREAKER PASSCODE INPUT ── */
+.bb-digit {
+  width: 44px; height: 56px;
+  background: #000; border: 1px solid rgba(255,255,255,0.25);
+  color: #FFF; font-family: 'DM Mono', monospace;
+  font-size: 28px; text-align: center;
+  outline: none; caret-color: transparent;
+  transition: border-color 0.15s;
+  border-radius: 2px;
+}
+.bb-digit:focus { border-color: #FFFFFF; }
 body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 
 /* ── TERMINAL UNLOCK TOAST ── */
@@ -4026,6 +4039,447 @@ if (siteName) {
     requestAnimationFrame(draw);
   }
   draw();
+})();
+
+/* ── BLAKE BREAKER EASTER EGG ── */
+(function () {
+  let bbRAF = null;
+  let tapCount = 0, tapTimer = null;
+
+  const siteNameEl = document.querySelector('.site-name');
+  if (siteNameEl) {
+    siteNameEl.addEventListener('click', () => {
+      if (document.body.dataset.theme !== 'terminal') return;
+      if (tapCount === 0) {
+        tapTimer = setTimeout(() => { tapCount = 0; }, 60000);
+      }
+      tapCount++;
+      if (tapCount >= 44) {
+        tapCount = 0;
+        clearTimeout(tapTimer);
+        showPasscode();
+      }
+    });
+  }
+
+  function showPasscode() {
+    if (document.getElementById('bb-code-overlay') || document.getElementById('bb-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'bb-code-overlay';
+    overlay.className = 'easter-overlay';
+    overlay.innerHTML = `
+      <div class="easter-box" style="max-width:300px;text-align:center;">
+        <button class="easter-close" id="bb-code-close">✕</button>
+        <div class="easter-title" style="font-size:clamp(16px,4vw,22px);margin-bottom:6px;">ENTER CODE</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:22px;">ACCESS RESTRICTED</div>
+        <div style="display:flex;gap:12px;justify-content:center;margin-bottom:18px;">
+          <input class="bb-digit" id="bb-d1" maxlength="1" inputmode="numeric">
+          <input class="bb-digit" id="bb-d2" maxlength="1" inputmode="numeric">
+          <input class="bb-digit" id="bb-d3" maxlength="1" inputmode="numeric">
+          <input class="bb-digit" id="bb-d4" maxlength="1" inputmode="numeric">
+        </div>
+        <div id="bb-code-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,80,80,0.85);letter-spacing:2px;min-height:16px;"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const digits  = ['bb-d1','bb-d2','bb-d3','bb-d4'].map(id => document.getElementById(id));
+    const codeMsg = document.getElementById('bb-code-msg');
+
+    digits[0].focus();
+
+    digits.forEach((inp, i) => {
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) {
+          digits[i-1].value = '';
+          digits[i-1].focus();
+        }
+      });
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        if (inp.value && i < 3) digits[i+1].focus();
+        const code = digits.map(d => d.value).join('');
+        if (code.length === 4) {
+          if (code === '4444') {
+            overlay.remove();
+            document.removeEventListener('keydown', escClose);
+            launchBB();
+          } else {
+            codeMsg.textContent = 'ACCESS DENIED';
+            setTimeout(() => {
+              digits.forEach(d => d.value = '');
+              codeMsg.textContent = '';
+              digits[0].focus();
+            }, 900);
+          }
+        }
+      });
+    });
+
+    function escClose(e) {
+      if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escClose); }
+    }
+    document.getElementById('bb-code-close').addEventListener('click', () => {
+      overlay.remove();
+      document.removeEventListener('keydown', escClose);
+    });
+    document.addEventListener('keydown', escClose);
+  }
+
+  function launchBB() {
+    if (document.getElementById('bb-overlay')) return;
+    cancelAnimationFrame(bbRAF);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'bb-overlay';
+    overlay.className = 'easter-overlay';
+    overlay.innerHTML = `
+      <div class="easter-box" style="max-width:500px">
+        <button class="easter-close" id="bb-close">✕</button>
+        <div class="easter-title">BLAKE BREAKER</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-align:center;margin:-12px 0 14px;">104% COMPLETE EDITION</div>
+        <canvas id="bb-canvas" width="440" height="320"
+          style="width:100%;display:block;margin:0 auto;background:#000;border:1px solid rgba(255,255,255,0.15);touch-action:none;"></canvas>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;">
+          <button class="b2048-arrow" id="bb-btn-left" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">◀ LEFT</button>
+          <button class="b2048-arrow" id="bb-btn-right" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">RIGHT ▶</button>
+        </div>
+        <div id="bb-msg" style="font-family:'DM Mono',monospace;font-size:11px;color:#FFF;letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const canvas = document.getElementById('bb-canvas');
+    const ctx    = canvas.getContext('2d');
+    const msg    = document.getElementById('bb-msg');
+    const W = 440, H = 320;
+    const PW = 72, PH = 9, BR = 6;
+    const ROWS = 8, COLS = 10, BH = 16, GAP = 4, TOP = 34;
+    const BW = (W - GAP * (COLS + 1)) / COLS;
+
+    let paddle = { x: W/2 - PW/2, y: H - 28 };
+    let ball, lives, score, waiting, over, level, levelClear, won;
+    let bricks, confetti = [];
+
+    const LEVEL_NAMES = ['B','L','A','K','E'];
+    const LEVELS = [
+      [ // 1: B
+        [1,1,1,1,1,1,1,1,0,0],
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,1,1,1,1,1,1,0,0],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
+      [ // 2: L
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
+      [ // 3: A
+        [0,0,0,0,1,1,0,0,0,0],
+        [0,0,0,1,1,1,1,0,0,0],
+        [0,0,1,1,0,0,1,1,0,0],
+        [0,0,1,1,1,1,1,1,0,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [1,1,1,0,0,0,0,1,1,1],
+      ],
+      [ // 4: K
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,0,0,0,0,1,1,0,0],
+        [1,1,0,0,0,1,1,0,0,0],
+        [1,1,0,0,1,1,0,0,0,0],
+        [1,1,1,1,1,0,0,0,0,0],
+        [1,1,0,0,1,1,0,0,0,0],
+        [1,1,0,0,0,1,1,0,0,0],
+        [1,1,0,0,0,0,1,1,0,0],
+      ],
+      [ // 5: E
+        [1,1,1,1,1,1,1,1,1,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
+    ];
+
+    function makeBricks() {
+      bricks = [];
+      const map = LEVELS[level - 1];
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
+          if (!map[r][c]) continue;
+          const hp = r < 2 ? 3 : r < 5 ? 2 : 1;
+          bricks.push({ x: GAP+c*(BW+GAP), y: TOP+r*(BH+GAP), w: BW, h: BH, hp, max: hp });
+        }
+    }
+
+    function resetBall() {
+      const spd = 1 + (level - 1) * 0.12;
+      ball = { x: W/2, y: paddle.y-BR-1, vx: 2.2*spd*(Math.random()>.5?1:-1), vy: -3.4*spd };
+      waiting = true;
+    }
+
+    function advanceLevel() {
+      level++;
+      levelClear = false;
+      makeBricks();
+      resetBall();
+    }
+
+    function spawnConfetti() {
+      confetti = [];
+      for (let i = 0; i < 100; i++) {
+        const col = Math.random() < 0.55 ? '#D4FF1A' : Math.random() < 0.6 ? '#FFFFFF' : 'rgba(255,255,255,0.45)';
+        confetti.push({
+          x: Math.random() * W,
+          y: Math.random() * H - H,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: 1.4 + Math.random() * 2.2,
+          size: 2 + Math.floor(Math.random() * 3),
+          color: col,
+        });
+      }
+    }
+
+    function init() {
+      level = 1; lives = 4; score = 0; over = false; won = false; levelClear = false;
+      confetti = []; msg.textContent = '';
+      makeBricks(); resetBall();
+    }
+
+    init();
+
+    const keys = {};
+    function onKeyDown(e) {
+      if (!document.getElementById('bb-overlay')) { cleanup(); return; }
+      if (e.key === 'Escape') { closeBB(); return; }
+      if (levelClear) { advanceLevel(); return; }
+      if (e.key === 'ArrowLeft')  { keys.l = true; if (waiting) waiting = false; }
+      if (e.key === 'ArrowRight') { keys.r = true; if (waiting) waiting = false; }
+    }
+    function onKeyUp(e) {
+      if (e.key === 'ArrowLeft')  keys.l = false;
+      if (e.key === 'ArrowRight') keys.r = false;
+    }
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup',   onKeyUp);
+
+    function cleanup() {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup',   onKeyUp);
+    }
+    function closeBB() {
+      cancelAnimationFrame(bbRAF);
+      overlay.remove();
+      cleanup();
+    }
+    document.getElementById('bb-close').addEventListener('click', closeBB);
+
+    function cX(cx) {
+      const r = canvas.getBoundingClientRect();
+      return (cx - r.left) * (W / r.width);
+    }
+    canvas.addEventListener('mousemove', e => {
+      paddle.x = Math.max(0, Math.min(W-PW, cX(e.clientX)-PW/2));
+      if (waiting && !levelClear) waiting = false;
+    });
+    canvas.addEventListener('click', () => {
+      if (levelClear) { advanceLevel(); return; }
+      if (waiting) waiting = false;
+    });
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      paddle.x = Math.max(0, Math.min(W-PW, cX(e.touches[0].clientX)-PW/2));
+      if (waiting && !levelClear) waiting = false;
+    }, { passive: false });
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (levelClear) { advanceLevel(); return; }
+      if (waiting) waiting = false;
+    }, { passive: false });
+
+    let btnTimer = null;
+    function movePaddle(d) {
+      paddle.x = Math.max(0, Math.min(W-PW, paddle.x + d*15));
+      if (waiting) waiting = false;
+    }
+    [['bb-btn-left',-1], ['bb-btn-right',1]].forEach(([id, d]) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const go   = () => { movePaddle(d); btnTimer = setInterval(() => movePaddle(d), 40); };
+      const stop = () => clearInterval(btnTimer);
+      btn.addEventListener('mousedown',  go);
+      btn.addEventListener('touchstart', e => { e.preventDefault(); go(); }, { passive: false });
+      btn.addEventListener('mouseup',    stop);
+      btn.addEventListener('mouseleave', stop);
+      btn.addEventListener('touchend',   stop);
+    });
+
+    function tick() {
+      if (!document.getElementById('bb-overlay')) { cleanup(); return; }
+
+      if (keys.l) paddle.x = Math.max(0, paddle.x - 7);
+      if (keys.r) paddle.x = Math.min(W-PW, paddle.x + 7);
+
+      if (!over && !waiting) {
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x-BR <= 0)  { ball.vx =  Math.abs(ball.vx); ball.x = BR; }
+        if (ball.x+BR >= W)  { ball.vx = -Math.abs(ball.vx); ball.x = W-BR; }
+        if (ball.y-BR <= 0)  { ball.vy =  Math.abs(ball.vy); ball.y = BR; }
+
+        if (ball.vy > 0 &&
+            ball.y+BR >= paddle.y && ball.y-BR <= paddle.y+PH &&
+            ball.x    >= paddle.x-BR && ball.x <= paddle.x+PW+BR) {
+          const rel = (ball.x - (paddle.x+PW/2)) / (PW/2);
+          const spd = Math.hypot(ball.vx, ball.vy);
+          ball.vx = Math.max(-7, Math.min(7, rel * spd * 1.8));
+          ball.vy = -Math.abs(ball.vy);
+          ball.y  = paddle.y - BR;
+        }
+
+        for (const b of bricks) {
+          if (b.hp <= 0) continue;
+          if (ball.x+BR > b.x && ball.x-BR < b.x+b.w &&
+              ball.y+BR > b.y && ball.y-BR < b.y+b.h) {
+            b.hp--;
+            score += 10 * b.max;
+            const oL = ball.x+BR - b.x,       oR = b.x+b.w - (ball.x-BR);
+            const oT = ball.y+BR - b.y,       oB = b.y+b.h - (ball.y-BR);
+            if (Math.min(oT,oB) < Math.min(oL,oR)) ball.vy *= -1; else ball.vx *= -1;
+            break;
+          }
+        }
+
+        if (ball.y - BR > H) {
+          lives--;
+          if (lives <= 0) {
+            over = true;
+            msg.innerHTML = `GAME OVER &nbsp;·&nbsp; SCORE: ${score}`;
+          } else {
+            resetBall();
+          }
+        }
+
+        if (!levelClear && !over && bricks.every(b => b.hp <= 0)) {
+          if (level < 5) {
+            levelClear = true;
+            waiting = true;
+          } else {
+            over = true; won = true;
+            msg.textContent = '';
+            spawnConfetti();
+          }
+        }
+      }
+
+      // Draw
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '10px "DM Mono",monospace';
+      ctx.textAlign = 'left';   ctx.fillText(`SCORE  ${score}`, 6, 18);
+      ctx.textAlign = 'center'; ctx.fillText(`LVL ${level}  ·  ${LEVEL_NAMES[level-1]}`, W/2, 18);
+      ctx.textAlign = 'right';  ctx.fillText(`${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 18);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, 26); ctx.lineTo(W, 26); ctx.stroke();
+
+      bricks.forEach(b => {
+        if (b.hp <= 0) return;
+        const shade = Math.round((b.hp / b.max) * 180 + 55);
+        ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(b.x, b.y, b.w, 2);
+      });
+
+      const pr = PH / 2;
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath();
+      ctx.moveTo(paddle.x + pr, paddle.y);
+      ctx.lineTo(paddle.x + PW - pr, paddle.y);
+      ctx.arc(paddle.x + PW - pr, paddle.y + pr, pr, -Math.PI/2, Math.PI/2);
+      ctx.lineTo(paddle.x + pr, paddle.y + PH);
+      ctx.arc(paddle.x + pr, paddle.y + pr, pr, Math.PI/2, Math.PI*3/2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#D4FF1A';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, BR, 0, Math.PI*2);
+      ctx.fill();
+
+      if (waiting && !over && !levelClear) {
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.font = '9px "DM Mono",monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('MOVE TO LAUNCH', W/2, H-8);
+      }
+
+      if (levelClear) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '20px "DM Mono",monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`LEVEL ${level} CLEARED!`, W/2, H/2 - 16);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '11px "DM Mono",monospace';
+        ctx.fillText('TAP  ·  CLICK  ·  ANY KEY', W/2, H/2 + 14);
+      }
+
+      if (won) {
+        confetti.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.y > H + p.size) { p.y = -p.size; p.x = Math.random() * W; }
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        const bx = 28, by = 56, bw = W - 56, bh = 158;
+        ctx.fillStyle = 'rgba(0,0,0,0.88)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = 'rgba(212,255,26,0.4)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '18px "DM Mono",monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('104% COMPLETE', W/2, by + 34);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '10px "DM Mono",monospace';
+        ctx.fillText("You have truly TRULY clocked", W/2, by + 62);
+        ctx.fillText("Blake’s Website — you a Master!", W/2, by + 80);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '9px "DM Mono",monospace';
+        ctx.fillText('————————————————————', W/2, by + 102);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '11px "DM Mono",monospace';
+        ctx.fillText('Send this screenshot to Blake', W/2, by + 126);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '9px "DM Mono",monospace';
+        ctx.fillText(`FINAL SCORE: ${score}`, W/2, by + 146);
+      }
+
+      bbRAF = requestAnimationFrame(tick);
+    }
+
+    bbRAF = requestAnimationFrame(tick);
+  }
 })();
 
 </script>
