@@ -3733,7 +3733,7 @@ if (siteName) {
       if (c < 3 && board[r][c] === board[r][c + 1]) return;
       if (r < 3 && board[r][c] === board[r + 1][c]) return;
     }
-    msg.innerHTML = score48 >= 500
+    msg.innerHTML = score48 >= 1000
       ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
       : 'NO MOVES LEFT. BLAKE SURVIVES.';
   }
@@ -3877,7 +3877,7 @@ if (siteName) {
       localStorage.setItem('whackBest', wScore);
       if (bestEl) bestEl.textContent = wScore;
     }
-    if (msg) msg.innerHTML = wScore >= 44
+    if (msg) msg.innerHTML = wScore >= 48
       ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
       : (wScore > best ? 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.' : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.');
     if (again) again.style.display = 'block';
