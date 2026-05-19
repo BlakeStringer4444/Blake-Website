@@ -4159,10 +4159,19 @@ if (siteName) {
     let ball, lives, score, waiting, over;
     let bricks;
 
+    const BMAP = [
+      [0,0,1,1,1,1,1,0,0,0],
+      [0,0,1,0,0,0,1,0,0,0],
+      [0,0,1,1,1,1,0,0,0,0],
+      [0,0,1,0,0,0,0,1,0,0],
+      [0,0,1,0,0,0,0,1,0,0],
+      [0,0,1,1,1,1,1,1,0,0],
+    ];
     function makeBricks() {
       bricks = [];
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c < COLS; c++) {
+          if (!BMAP[r][c]) continue;
           const hp = r < 2 ? 3 : r < 4 ? 2 : 1;
           bricks.push({ x: GAP+c*(BW+GAP), y: TOP+r*(BH+GAP), w: BW, h: BH, hp, max: hp });
         }
@@ -4174,7 +4183,7 @@ if (siteName) {
     }
 
     function init() {
-      lives = 3; score = 0; over = false; msg.textContent = '';
+      lives = 4; score = 0; over = false; msg.textContent = '';
       makeBricks(); resetBall();
     }
 
@@ -4300,7 +4309,7 @@ if (siteName) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '10px "DM Mono",monospace';
       ctx.textAlign = 'left';  ctx.fillText(`SCORE  ${score}`, 6, 18);
-      ctx.textAlign = 'right'; ctx.fillText(`LIVES  ${'♥'.repeat(lives)}${'♡'.repeat(3-lives)}`, W-6, 18);
+      ctx.textAlign = 'right'; ctx.fillText(`LIVES  ${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 18);
 
       ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.lineWidth = 1;
