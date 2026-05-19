@@ -3733,7 +3733,7 @@ if (siteName) {
       if (c < 3 && board[r][c] === board[r][c + 1]) return;
       if (r < 3 && board[r][c] === board[r + 1][c]) return;
     }
-    msg.innerHTML = score48 >= 1000
+    msg.innerHTML = score48 >= 2048
       ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
       : 'NO MOVES LEFT. BLAKE SURVIVES.';
   }
