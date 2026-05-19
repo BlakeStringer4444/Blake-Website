@@ -4137,7 +4137,7 @@ if (siteName) {
         <button class="easter-close" id="bb-close">✕</button>
         <div class="easter-title">BLAKE BREAKER</div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-align:center;margin:-12px 0 14px;">104% COMPLETE EDITION</div>
-        <canvas id="bb-canvas" width="440" height="320"
+        <canvas id="bb-canvas" width="440" height="500"
           style="width:100%;display:block;margin:0 auto;background:#000;border:1px solid rgba(255,255,255,0.15);touch-action:none;"></canvas>
         <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;">
           <button class="b2048-arrow" id="bb-btn-left" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">◀ LEFT</button>
@@ -4150,7 +4150,7 @@ if (siteName) {
     const canvas = document.getElementById('bb-canvas');
     const ctx    = canvas.getContext('2d');
     const msg    = document.getElementById('bb-msg');
-    const W = 440, H = 320;
+    const W = 440, H = 500;
     const PW = 72, PH = 9, BR = 6;
     const ROWS = 8, COLS = 10, BH = 16, GAP = 4, TOP = 34;
     const BW = (W - GAP * (COLS + 1)) / COLS;
