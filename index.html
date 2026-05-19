@@ -1295,7 +1295,7 @@ body[data-theme="terminal"] .site-name::after {
 body[data-theme="terminal"] header { border-bottom-color: rgba(255,255,255,0.1); background: #000000; }
 body[data-theme="terminal"] .site-tagline { color: rgba(255,255,255,0.35); }
 body[data-theme="terminal"] .header-location { color: rgba(255,255,255,0.2); }
-body[data-theme="terminal"] .dark-toggle { border-color: rgba(255,255,255,0.25); color: #FFFFFF; }
+body[data-theme="terminal"] .dark-toggle { background: #000000; border-color: rgba(255,255,255,0.25); color: #FFFFFF; }
 body[data-theme="terminal"] .tab-sidebar { background: #000000; border-right-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .tab-mobile { background: #000000; border-bottom-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .tab-btn { border-bottom-color: rgba(255,255,255,0.06); color: rgba(255,255,255,0.25); }
@@ -1303,7 +1303,7 @@ body[data-theme="terminal"] .tab-btn.active,
 body[data-theme="terminal"] .tab-btn:hover { color: #FFFFFF; background: rgba(255,255,255,0.04); }
 body[data-theme="terminal"] .tab-text { color: rgba(255,255,255,0.25); }
 body[data-theme="terminal"] .tab-mobile-btn { color: rgba(255,255,255,0.25); border-right-color: rgba(255,255,255,0.06); }
-body[data-theme="terminal"] .tab-mobile-btn.active { color: #FFFFFF; }
+body[data-theme="terminal"] .tab-mobile-btn.active { background: #FFFFFF; color: #000000; }
 body[data-theme="terminal"] .main-content { background: #000000; }
 body[data-theme="terminal"] .section-label { color: #FFFFFF; border-color: #FFFFFF; }
 body[data-theme="terminal"] .section-label::before { content: '>_ '; }
@@ -3965,10 +3965,24 @@ if (siteName) {
   orbs[0].x = W * 0.15; orbs[0].y = H * 0.25;
   orbs[1].x = W * 0.75; orbs[1].y = H * 0.65;
   orbs[2].x = W * 0.50; orbs[2].y = H * 0.10;
+
+  const monoOrbs = [
+    { x: 0, y: 0, r: 300, dx: 0.23, dy: 0.13, alpha: 0.09 },
+    { x: 0, y: 0, r: 200, dx: -0.17, dy: 0.21, alpha: 0.07 },
+    { x: 0, y: 0, r: 360, dx: 0.12, dy: -0.16, alpha: 0.05 },
+    { x: 0, y: 0, r: 160, dx: -0.27, dy: -0.19, alpha: 0.10 },
+    { x: 0, y: 0, r: 240, dx: 0.20, dy: 0.08,  alpha: 0.06 },
+  ];
+  monoOrbs[0].x = W * 0.15; monoOrbs[0].y = H * 0.30;
+  monoOrbs[1].x = W * 0.80; monoOrbs[1].y = H * 0.60;
+  monoOrbs[2].x = W * 0.45; monoOrbs[2].y = H * 0.10;
+  monoOrbs[3].x = W * 0.65; monoOrbs[3].y = H * 0.85;
+  monoOrbs[4].x = W * 0.25; monoOrbs[4].y = H * 0.70;
+
   function draw() {
-    const isDark = document.body.dataset.theme === 'dark';
+    const theme = document.body.dataset.theme;
     ctx.clearRect(0, 0, W, H);
-    if (isDark) {
+    if (theme === 'dark') {
       orbs.forEach(o => {
         o.x += o.dx; o.y += o.dy;
         if (o.x < -o.r || o.x > W + o.r) o.dx *= -1;
@@ -3976,6 +3990,21 @@ if (siteName) {
         const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
         g.addColorStop(0, '#D4FF1A26');
         g.addColorStop(1, '#D4FF1A00');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else if (theme === 'terminal') {
+      monoOrbs.forEach(o => {
+        o.x += o.dx; o.y += o.dy;
+        if (o.x < -o.r || o.x > W + o.r) o.dx *= -1;
+        if (o.y < -o.r || o.y > H + o.r) o.dy *= -1;
+        const flicker = 0.5 + Math.random() * 0.5;
+        const a = Math.round(o.alpha * flicker * 255).toString(16).padStart(2, '0');
+        const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
+        g.addColorStop(0, `#FFFFFF${a}`);
+        g.addColorStop(1, '#FFFFFF00');
         ctx.fillStyle = g;
         ctx.beginPath();
         ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
