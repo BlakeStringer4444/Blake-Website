@@ -2638,8 +2638,13 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
 
 function setTheme(theme) {
   document.body.dataset.theme = theme === 'light' ? '' : theme;
-  localStorage.setItem('theme', theme);
   darkToggle.innerHTML = theme === 'terminal' ? lockSVG : theme === 'dark' ? sunSVG : '☾';
+  if (theme === 'terminal') {
+    sessionStorage.setItem('theme', 'terminal');
+  } else {
+    localStorage.setItem('theme', theme);
+    sessionStorage.removeItem('theme');
+  }
 }
 
 function showTerminalToast() {
@@ -2657,13 +2662,21 @@ function showTerminalToast() {
 }
 
 if (darkToggle) {
-  const saved = localStorage.getItem('theme') || 'light';
-  setTheme(saved);
+  const activeTheme = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'light';
+  setTheme(activeTheme);
 
   let toggleTaps = 0, toggleTimer = null;
 
   darkToggle.addEventListener('click', () => {
     const current = document.body.dataset.theme || 'light';
+    const unlocked = sessionStorage.getItem('terminalUnlocked') === 'true';
+
+    if (unlocked) {
+      if (current === 'light') setTheme('dark');
+      else if (current === 'dark') setTheme('terminal');
+      else setTheme('light');
+      return;
+    }
 
     toggleTaps++;
     clearTimeout(toggleTimer);
@@ -2672,18 +2685,13 @@ if (darkToggle) {
     if (toggleTaps >= 20) {
       toggleTaps = 0;
       clearTimeout(toggleTimer);
+      sessionStorage.setItem('terminalUnlocked', 'true');
       setTheme('terminal');
       showTerminalToast();
       return;
     }
 
-    if (current === 'terminal') {
-      setTheme('light');
-    } else if (current === 'dark') {
-      setTheme('light');
-    } else {
-      setTheme('dark');
-    }
+    setTheme(current === 'dark' ? 'light' : 'dark');
   });
 }
 
