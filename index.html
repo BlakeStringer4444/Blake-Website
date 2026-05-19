@@ -1353,7 +1353,7 @@ body[data-theme="terminal"] footer { border-top-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .footer-hint { color: rgba(255,255,255,0.2); }
 body[data-theme="terminal"] .now-banner { background: rgba(255,255,255,0.06); color: #FFFFFF; border-color: rgba(255,255,255,0.15); animation: none; }
 body[data-theme="terminal"] .award-win { background: #FFFFFF; color: #000000; }
-body[data-theme="terminal"] .site-name { cursor: pointer; }
+body[data-theme="terminal"] .site-name { cursor: default; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
 /* ── BLAKE BREAKER PASSCODE INPUT ── */
 .bb-digit {
@@ -4044,12 +4044,18 @@ if (siteName) {
 /* ── BLAKE BREAKER EASTER EGG ── */
 (function () {
   let bbRAF = null;
-  let tapCount = 0, tapTimer = null;
+  let tapCount = 0, tapTimer = null, lastBBTouch = 0;
 
   const siteNameEl = document.querySelector('.site-name');
   if (siteNameEl) {
-    siteNameEl.addEventListener('click', () => {
+    function handleBBTap(e) {
       if (document.body.dataset.theme !== 'terminal') return;
+      if (e.type === 'touchend') {
+        lastBBTouch = Date.now();
+        e.preventDefault();
+      } else if (e.type === 'click' && Date.now() - lastBBTouch < 600) {
+        return;
+      }
       if (tapCount === 0) {
         tapTimer = setTimeout(() => { tapCount = 0; }, 60000);
       }
@@ -4059,7 +4065,9 @@ if (siteName) {
         clearTimeout(tapTimer);
         showPasscode();
       }
-    });
+    }
+    siteNameEl.addEventListener('click', handleBBTap);
+    siteNameEl.addEventListener('touchend', handleBBTap, { passive: false });
   }
 
   function showPasscode() {
