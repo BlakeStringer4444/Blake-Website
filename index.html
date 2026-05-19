@@ -4156,8 +4156,8 @@ if (siteName) {
     const BW = (W - GAP * (COLS + 1)) / COLS;
 
     let paddle = { x: W/2 - PW/2, y: H - 28 };
-    let ball, lives, score, waiting, over, level, levelClear;
-    let bricks;
+    let ball, lives, score, waiting, over, level, levelClear, won;
+    let bricks, confetti = [];
 
     const LEVEL_NAMES = ['B','L','A','K','E'];
     const LEVELS = [
@@ -4237,8 +4237,24 @@ if (siteName) {
       resetBall();
     }
 
+    function spawnConfetti() {
+      confetti = [];
+      for (let i = 0; i < 100; i++) {
+        const col = Math.random() < 0.55 ? '#D4FF1A' : Math.random() < 0.6 ? '#FFFFFF' : 'rgba(255,255,255,0.45)';
+        confetti.push({
+          x: Math.random() * W,
+          y: Math.random() * H - H,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: 1.4 + Math.random() * 2.2,
+          size: 2 + Math.floor(Math.random() * 3),
+          color: col,
+        });
+      }
+    }
+
     function init() {
-      level = 1; lives = 4; score = 0; over = false; levelClear = false; msg.textContent = '';
+      level = 1; lives = 4; score = 0; over = false; won = false; levelClear = false;
+      confetti = []; msg.textContent = '';
       makeBricks(); resetBall();
     }
 
@@ -4362,8 +4378,9 @@ if (siteName) {
             levelClear = true;
             waiting = true;
           } else {
-            over = true;
-            msg.innerHTML = `BLAKE · 104% COMPLETE! &nbsp;·&nbsp; SCORE: ${score}`;
+            over = true; won = true;
+            msg.textContent = '';
+            spawnConfetti();
           }
         }
       }
@@ -4420,12 +4437,42 @@ if (siteName) {
         ctx.fillStyle = '#D4FF1A';
         ctx.font = '20px "DM Mono",monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(`LEVEL ${level} CLEARED!`, W/2, H/2 - 22);
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = '11px "DM Mono",monospace';
-        ctx.fillText(`NEXT UP: ${LEVEL_NAMES[level]}`, W/2, H/2 + 6);
+        ctx.fillText(`LEVEL ${level} CLEARED!`, W/2, H/2 - 16);
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText('TAP  ·  CLICK  ·  ANY KEY', W/2, H/2 + 28);
+        ctx.font = '11px "DM Mono",monospace';
+        ctx.fillText('TAP  ·  CLICK  ·  ANY KEY', W/2, H/2 + 14);
+      }
+
+      if (won) {
+        confetti.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.y > H + p.size) { p.y = -p.size; p.x = Math.random() * W; }
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        const bx = 28, by = 56, bw = W - 56, bh = 158;
+        ctx.fillStyle = 'rgba(0,0,0,0.88)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = 'rgba(212,255,26,0.4)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '18px "DM Mono",monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('104% COMPLETE', W/2, by + 34);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '10px "DM Mono",monospace';
+        ctx.fillText("You have truly TRULY clocked", W/2, by + 62);
+        ctx.fillText("Blake’s Website — you a Master!", W/2, by + 80);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '9px "DM Mono",monospace';
+        ctx.fillText('————————————————————', W/2, by + 102);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '11px "DM Mono",monospace';
+        ctx.fillText('Send this screenshot to Blake', W/2, by + 126);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '9px "DM Mono",monospace';
+        ctx.fillText(`FINAL SCORE: ${score}`, W/2, by + 146);
       }
 
       bbRAF = requestAnimationFrame(tick);
