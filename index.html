@@ -4156,36 +4156,89 @@ if (siteName) {
     const BW = (W - GAP * (COLS + 1)) / COLS;
 
     let paddle = { x: W/2 - PW/2, y: H - 28 };
-    let ball, lives, score, waiting, over;
+    let ball, lives, score, waiting, over, level, levelClear;
     let bricks;
 
-    const BMAP = [
-      [1,1,1,1,1,1,1,1,0,0],  // top bar
-      [1,1,0,0,0,0,0,1,1,0],  // top bump interior
-      [1,1,0,0,0,0,0,1,1,0],  // top bump interior
-      [1,1,1,1,1,1,1,1,0,0],  // middle bar
-      [1,1,0,0,0,0,0,0,1,1],  // bottom bump interior (wider)
-      [1,1,0,0,0,0,0,0,1,1],  // bottom bump interior
-      [1,1,0,0,0,0,0,0,1,1],  // bottom bump interior
-      [1,1,1,1,1,1,1,1,1,0],  // bottom bar (wider than top)
+    const LEVEL_NAMES = ['B','L','A','K','E'];
+    const LEVELS = [
+      [ // 1: B
+        [1,1,1,1,1,1,1,1,0,0],
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,1,1,1,1,1,1,0,0],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,0,0,0,0,0,0,1,1],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
+      [ // 2: L
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
+      [ // 3: A
+        [0,0,0,0,1,1,0,0,0,0],
+        [0,0,0,1,1,1,1,0,0,0],
+        [0,0,1,1,0,0,1,1,0,0],
+        [0,0,1,1,1,1,1,1,0,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [0,1,1,0,0,0,0,1,1,0],
+        [1,1,1,0,0,0,0,1,1,1],
+      ],
+      [ // 4: K
+        [1,1,0,0,0,0,0,1,1,0],
+        [1,1,0,0,0,0,1,1,0,0],
+        [1,1,0,0,0,1,1,0,0,0],
+        [1,1,0,0,1,1,0,0,0,0],
+        [1,1,1,1,1,0,0,0,0,0],
+        [1,1,0,0,1,1,0,0,0,0],
+        [1,1,0,0,0,1,1,0,0,0],
+        [1,1,0,0,0,0,1,1,0,0],
+      ],
+      [ // 5: E
+        [1,1,1,1,1,1,1,1,1,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,1,1,0],
+      ],
     ];
+
     function makeBricks() {
       bricks = [];
+      const map = LEVELS[level - 1];
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c < COLS; c++) {
-          if (!BMAP[r][c]) continue;
+          if (!map[r][c]) continue;
           const hp = r < 2 ? 3 : r < 5 ? 2 : 1;
           bricks.push({ x: GAP+c*(BW+GAP), y: TOP+r*(BH+GAP), w: BW, h: BH, hp, max: hp });
         }
     }
 
     function resetBall() {
-      ball = { x: W/2, y: paddle.y-BR-1, vx: 2.2*(Math.random()>.5?1:-1), vy: -3.4 };
+      const spd = 1 + (level - 1) * 0.12;
+      ball = { x: W/2, y: paddle.y-BR-1, vx: 2.2*spd*(Math.random()>.5?1:-1), vy: -3.4*spd };
       waiting = true;
     }
 
+    function advanceLevel() {
+      level++;
+      levelClear = false;
+      makeBricks();
+      resetBall();
+    }
+
     function init() {
-      lives = 4; score = 0; over = false; msg.textContent = '';
+      level = 1; lives = 4; score = 0; over = false; levelClear = false; msg.textContent = '';
       makeBricks(); resetBall();
     }
 
@@ -4195,6 +4248,7 @@ if (siteName) {
     function onKeyDown(e) {
       if (!document.getElementById('bb-overlay')) { cleanup(); return; }
       if (e.key === 'Escape') { closeBB(); return; }
+      if (levelClear) { advanceLevel(); return; }
       if (e.key === 'ArrowLeft')  { keys.l = true; if (waiting) waiting = false; }
       if (e.key === 'ArrowRight') { keys.r = true; if (waiting) waiting = false; }
     }
@@ -4222,15 +4276,20 @@ if (siteName) {
     }
     canvas.addEventListener('mousemove', e => {
       paddle.x = Math.max(0, Math.min(W-PW, cX(e.clientX)-PW/2));
+      if (waiting && !levelClear) waiting = false;
+    });
+    canvas.addEventListener('click', () => {
+      if (levelClear) { advanceLevel(); return; }
       if (waiting) waiting = false;
     });
     canvas.addEventListener('touchmove', e => {
       e.preventDefault();
       paddle.x = Math.max(0, Math.min(W-PW, cX(e.touches[0].clientX)-PW/2));
-      if (waiting) waiting = false;
+      if (waiting && !levelClear) waiting = false;
     }, { passive: false });
     canvas.addEventListener('touchstart', e => {
       e.preventDefault();
+      if (levelClear) { advanceLevel(); return; }
       if (waiting) waiting = false;
     }, { passive: false });
 
@@ -4298,9 +4357,14 @@ if (siteName) {
           }
         }
 
-        if (!over && bricks.every(b => b.hp <= 0)) {
-          over = true;
-          msg.innerHTML = `104% COMPLETE! &nbsp;·&nbsp; SCORE: ${score}`;
+        if (!levelClear && !over && bricks.every(b => b.hp <= 0)) {
+          if (level < 5) {
+            levelClear = true;
+            waiting = true;
+          } else {
+            over = true;
+            msg.innerHTML = `BLAKE · 104% COMPLETE! &nbsp;·&nbsp; SCORE: ${score}`;
+          }
         }
       }
 
@@ -4310,8 +4374,9 @@ if (siteName) {
 
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '10px "DM Mono",monospace';
-      ctx.textAlign = 'left';  ctx.fillText(`SCORE  ${score}`, 6, 18);
-      ctx.textAlign = 'right'; ctx.fillText(`LIVES  ${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 18);
+      ctx.textAlign = 'left';   ctx.fillText(`SCORE  ${score}`, 6, 18);
+      ctx.textAlign = 'center'; ctx.fillText(`LVL ${level}  ·  ${LEVEL_NAMES[level-1]}`, W/2, 18);
+      ctx.textAlign = 'right';  ctx.fillText(`${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 18);
 
       ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.lineWidth = 1;
@@ -4342,11 +4407,25 @@ if (siteName) {
       ctx.arc(ball.x, ball.y, BR, 0, Math.PI*2);
       ctx.fill();
 
-      if (waiting && !over) {
+      if (waiting && !over && !levelClear) {
         ctx.fillStyle = 'rgba(255,255,255,0.22)';
         ctx.font = '9px "DM Mono",monospace';
         ctx.textAlign = 'center';
         ctx.fillText('MOVE TO LAUNCH', W/2, H-8);
+      }
+
+      if (levelClear) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#D4FF1A';
+        ctx.font = '20px "DM Mono",monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`LEVEL ${level} CLEARED!`, W/2, H/2 - 22);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = '11px "DM Mono",monospace';
+        ctx.fillText(`NEXT UP: ${LEVEL_NAMES[level]}`, W/2, H/2 + 6);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText('TAP  ·  CLICK  ·  ANY KEY', W/2, H/2 + 28);
       }
 
       bbRAF = requestAnimationFrame(tick);
