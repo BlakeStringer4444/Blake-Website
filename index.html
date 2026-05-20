@@ -1965,7 +1965,69 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   transform: translateY(0%) scale(0.85);
   transition: transform 0.1s, background 0.1s, color 0.1s;
 }
+/* ── GLOBAL LEADERBOARD ── */
+#lb-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999;
+  font-family: 'DM Mono', monospace;
+}
+#lb-card {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  padding: 28px 24px;
+  width: min(380px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-sizing: border-box;
+}
+#lb-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none;
+  color: #555; font-family: 'DM Mono', monospace;
+  font-size: 11px; cursor: pointer; letter-spacing: 1px;
+}
+#lb-close:hover { color: #D4FF1A; }
+.lb-super { font-size: 9px; letter-spacing: 3px; color: #555; margin-bottom: 4px; }
+.lb-title { font-size: 14px; letter-spacing: 2px; color: #D4FF1A; margin-bottom: 12px; }
+.lb-your-score { font-size: 11px; color: #888; margin-bottom: 18px; letter-spacing: 1px; }
+.lb-your-score strong { color: #FFFFFF; }
+#lb-name-row { margin-bottom: 20px; }
+.lb-qualify-label { font-size: 10px; letter-spacing: 1.5px; color: #D4FF1A; margin-bottom: 8px; line-height: 1.5; }
+.lb-input-row { display: flex; gap: 8px; }
+#lb-name-input {
+  flex: 1; background: #000; border: 1px solid #D4FF1A;
+  color: #fff; font-family: 'DM Mono', monospace;
+  font-size: 13px; padding: 8px 10px;
+  letter-spacing: 2px; text-transform: uppercase; outline: none;
+  box-sizing: border-box;
+}
+#lb-submit {
+  background: #D4FF1A; color: #000; border: none;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 1px; padding: 9px 12px; cursor: pointer; font-weight: bold;
+  white-space: nowrap;
+}
+#lb-submit:disabled { opacity: 0.5; cursor: default; }
+.lb-cols {
+  font-size: 9px; letter-spacing: 2px; color: #333;
+  display: flex; justify-content: space-between;
+  padding-bottom: 6px; border-bottom: 1px solid #1e1e1e;
+  margin-bottom: 6px;
+}
+.lb-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 7px 0;
+  border-bottom: 1px solid #141414;
+  font-size: 12px; letter-spacing: 1px;
+}
+.lb-row--hl { background: rgba(212,255,26,0.07); margin: 0 -8px; padding: 7px 8px; }
+.lb-row-name { flex: 1; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -2543,6 +2605,105 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 </footer>
 
 <script>
+/* ── GLOBAL LEADERBOARD SYSTEM ── */
+(function () {
+  const FB_CFG = {
+    apiKey: "AIzaSyCQxq2a-LCydrobpW_d8XI4CRB5KDO1YBs",
+    authDomain: "scoreboardsblake.firebaseapp.com",
+    projectId: "scoreboardsblake",
+    storageBucket: "scoreboardsblake.firebasestorage.app",
+    messagingSenderId: "472684920212",
+    appId: "1:472684920212:web:d559e9521a877482992381"
+  };
+  let db;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+    db = firebase.firestore();
+  } catch (e) {
+    window.showLeaderboard = function () {};
+    return;
+  }
+
+  async function getTop(col) {
+    try {
+      const snap = await db.collection(col).orderBy('score', 'desc').limit(10).get();
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) { return []; }
+  }
+
+  async function submitScore(col, name, score) {
+    const clean = name.trim().replace(/[^A-Z0-9 _\-]/gi, '').slice(0, 8).toUpperCase() || 'ANON';
+    await db.collection(col).add({ name: clean, score, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    return clean;
+  }
+
+  function renderRows(scores, hlName) {
+    if (!scores.length) return '<div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;">NO SCORES YET — BE FIRST</div>';
+    return scores.map((s, i) => {
+      const hl = hlName && s.name === hlName;
+      const rc = i === 0 ? '#D4FF1A' : i < 3 ? '#FFFFFF' : '#555555';
+      return `<div class="lb-row${hl ? ' lb-row--hl' : ''}">
+        <span style="color:${rc};min-width:18px;">${i + 1}</span>
+        <span class="lb-row-name" style="color:${hl ? '#D4FF1A' : '#FFF'}">${s.name}</span>
+        <span style="color:${hl ? '#D4FF1A' : i < 3 ? '#CCC' : '#555'}">${s.score}</span>
+      </div>`;
+    }).join('');
+  }
+
+  window.showLeaderboard = async function (col, gameTitle, playerScore) {
+    if (document.getElementById('lb-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'lb-overlay';
+    ov.innerHTML = `
+      <div id="lb-card">
+        <button id="lb-close">✕ CLOSE</button>
+        <div class="lb-super">GLOBAL LEADERBOARD</div>
+        <div class="lb-title">${gameTitle}</div>
+        <div class="lb-your-score">YOUR SCORE: <strong>${playerScore}</strong></div>
+        <div id="lb-name-row" style="display:none;">
+          <div class="lb-qualify-label">YOU MADE THE TOP 10 — ENTER YOUR NAME</div>
+          <div class="lb-input-row">
+            <input id="lb-name-input" maxlength="8" placeholder="YOUR NAME" autocomplete="off" spellcheck="false">
+            <button id="lb-submit">SUBMIT →</button>
+          </div>
+        </div>
+        <div class="lb-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>
+        <div id="lb-list"><div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;">LOADING...</div></div>
+      </div>`;
+    document.body.appendChild(ov);
+
+    document.getElementById('lb-close').onclick = () => ov.remove();
+    const nameRow = document.getElementById('lb-name-row');
+    const nameInput = document.getElementById('lb-name-input');
+    const submitBtn = document.getElementById('lb-submit');
+    const listEl = document.getElementById('lb-list');
+
+    const scores = await getTop(col);
+    const qualifies = scores.length < 10 || (scores.length > 0 && playerScore > scores[scores.length - 1].score);
+    listEl.innerHTML = renderRows(scores, null);
+
+    if (qualifies) {
+      nameRow.style.display = 'block';
+      setTimeout(() => nameInput.focus(), 50);
+      nameInput.addEventListener('input', () => {
+        nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9 _\-]/g, '');
+      });
+      async function doSubmit() {
+        const raw = nameInput.value.trim();
+        if (!raw) { nameInput.focus(); return; }
+        submitBtn.disabled = true;
+        submitBtn.textContent = '...';
+        const saved = await submitScore(col, raw, playerScore);
+        const fresh = await getTop(col);
+        nameRow.style.display = 'none';
+        listEl.innerHTML = renderRows(fresh, saved);
+      }
+      submitBtn.onclick = doSubmit;
+      nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+    }
+  };
+})();
+
 const sections = [
   { id: 'about',      label: 'About' },
   { id: 'acting',     label: 'Acting' },
@@ -2972,6 +3133,7 @@ backToTop.addEventListener('click', () => {
       finalScoreEl.textContent = score;
       renderScores();
       goPanel.classList.add('active');
+      setTimeout(() => showLeaderboard('snake_scores', 'SNAKE', score), 700);
       return;
     }
     snake.unshift(head);
@@ -3727,7 +3889,7 @@ if (siteName) {
     const msg = document.getElementById('b2048-msg');
     if (!msg) return;
     for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++)
-      if (board[r][c] === 2048) { msg.textContent = 'BLAKE HAS ENDED. CONGRATULATIONS.'; return; }
+      if (board[r][c] === 2048) { msg.textContent = 'BLAKE HAS ENDED. CONGRATULATIONS.'; setTimeout(() => showLeaderboard('scores_2048', '2048', score48), 700); return; }
     for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
       if (!board[r][c]) return;
       if (c < 3 && board[r][c] === board[r][c + 1]) return;
@@ -3736,6 +3898,7 @@ if (siteName) {
     msg.innerHTML = score48 >= 2048
       ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
       : 'NO MOVES LEFT. BLAKE SURVIVES.';
+    setTimeout(() => showLeaderboard('scores_2048', '2048', score48), 700);
   }
 
   function render2048() {
@@ -3881,6 +4044,7 @@ if (siteName) {
       ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
       : (wScore > best ? 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.' : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.');
     if (again) again.style.display = 'block';
+    setTimeout(() => showLeaderboard('whack_scores', 'WHACK-A-BLAKE', wScore), 700);
   }
 })();
 
