@@ -3625,15 +3625,21 @@ if (siteName) {
       s.py = Math.max(0, Math.min(H - PH, getCanvasY(e.clientY) - PH / 2));
       if (s.waiting) { s.waiting = false; msg.textContent = ''; }
     });
-    canvas.addEventListener('touchmove', e => {
-      e.preventDefault();
-      s.py = Math.max(0, Math.min(H - PH, getCanvasY(e.touches[0].clientY) - PH / 2));
-      if (s.waiting) { s.waiting = false; msg.textContent = ''; }
-    }, { passive: false });
+    let touchLastY = null;
     canvas.addEventListener('touchstart', e => {
       e.preventDefault();
+      touchLastY = e.touches[0].clientY;
       if (s.waiting) { s.waiting = false; msg.textContent = ''; }
     }, { passive: false });
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const dy = (e.touches[0].clientY - touchLastY) * (H / r.height);
+      touchLastY = e.touches[0].clientY;
+      s.py = Math.max(0, Math.min(H - PH, s.py + dy));
+      if (s.waiting) { s.waiting = false; msg.textContent = ''; }
+    }, { passive: false });
+    canvas.addEventListener('touchend', () => { touchLastY = null; });
 
     function reset(dir) {
       s.bx = W / 2; s.ballY = H / 2;
