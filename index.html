@@ -2621,36 +2621,69 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
     db = firebase.firestore();
   } catch (e) {
     window.showLeaderboard = function () {};
+    window.fmtTime = function (s) { return s + 's'; };
     return;
   }
 
-  async function getTop(col) {
+  window.fmtTime = function (s) {
+    s = Math.max(0, Math.floor(s));
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  };
+
+  async function getTop(col, sortAsc) {
     try {
-      const snap = await db.collection(col).orderBy('score', 'desc').limit(10).get();
+      const dir = sortAsc ? 'asc' : 'desc';
+      const snap = await db.collection(col).orderBy('score', dir).limit(50).get();
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (e) { return []; }
   }
 
-  async function submitScore(col, name, score) {
+  async function submitScore(col, name, score, extra) {
     const clean = name.trim().replace(/[^A-Z0-9 _\-]/gi, '').slice(0, 8).toUpperCase() || 'ANON';
-    await db.collection(col).add({ name: clean, score, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    const doc = { name: clean, score, ts: firebase.firestore.FieldValue.serverTimestamp() };
+    if (extra) Object.assign(doc, extra);
+    await db.collection(col).add(doc);
     return clean;
   }
 
-  function renderRows(scores, hlName) {
-    if (!scores.length) return '<div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;">NO SCORES YET — BE FIRST</div>';
-    return scores.map((s, i) => {
+  function sortScores(arr, sortAsc, tieBreakerTime) {
+    if (tieBreakerTime) return [...arr].sort((a, b) => b.score !== a.score ? b.score - a.score : (a.time || 0) - (b.time || 0));
+    return [...arr].sort((a, b) => sortAsc ? a.score - b.score : b.score - a.score);
+  }
+
+  function qualifies(sorted, playerScore, sortAsc, tieBreakerTime, playerTime) {
+    if (sorted.length < 10) return true;
+    const w = sorted[9];
+    if (tieBreakerTime) return playerScore > w.score || (playerScore === w.score && (playerTime || 0) < (w.time || Infinity));
+    return sortAsc ? playerScore < w.score : playerScore > w.score;
+  }
+
+  function renderRows(arr, hlName, opts) {
+    opts = opts || {};
+    const { formatScore, showTime } = opts;
+    if (!arr.length) return '<div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;">NO SCORES YET — BE FIRST</div>';
+    return arr.slice(0, 10).map((s, i) => {
       const hl = hlName && s.name === hlName;
       const rc = i === 0 ? '#D4FF1A' : i < 3 ? '#FFFFFF' : '#555555';
+      const disp = formatScore ? formatScore(s.score) : s.score;
+      const timeStr = showTime && s.time != null ? `<span style="color:#555;font-size:10px;margin-left:6px;">${window.fmtTime(s.time)}</span>` : '';
       return `<div class="lb-row${hl ? ' lb-row--hl' : ''}">
         <span style="color:${rc};min-width:18px;">${i + 1}</span>
         <span class="lb-row-name" style="color:${hl ? '#D4FF1A' : '#FFF'}">${s.name}</span>
-        <span style="color:${hl ? '#D4FF1A' : i < 3 ? '#CCC' : '#555'}">${s.score}</span>
+        <span style="color:${hl ? '#D4FF1A' : i < 3 ? '#CCC' : '#555'}">${disp}${timeStr}</span>
       </div>`;
     }).join('');
   }
 
-  window.showLeaderboard = async function (col, gameTitle, playerScore) {
+  // playerData: { score } or { score, time }
+  // opts: { sortAsc, tieBreakerTime, scoreLabel, formatScore, showTime }
+  window.showLeaderboard = async function (col, gameTitle, playerData, opts) {
+    opts = opts || {};
+    const { sortAsc = false, tieBreakerTime = false, scoreLabel = 'SCORE', formatScore = null, showTime = false } = opts;
+    const playerScore = typeof playerData === 'object' ? playerData.score : playerData;
+    const playerTime  = playerData.time;
+    const dispScore   = formatScore ? formatScore(playerScore) : playerScore;
+
     if (document.getElementById('lb-overlay')) return;
     const ov = document.createElement('div');
     ov.id = 'lb-overlay';
@@ -2659,7 +2692,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         <button id="lb-close">✕ CLOSE</button>
         <div class="lb-super">GLOBAL LEADERBOARD</div>
         <div class="lb-title">${gameTitle}</div>
-        <div class="lb-your-score">YOUR SCORE: <strong>${playerScore}</strong></div>
+        <div class="lb-your-score">YOUR ${scoreLabel}: <strong>${dispScore}</strong>${showTime && playerTime != null ? `<span style="color:#555;font-size:10px;margin-left:8px;">${window.fmtTime(playerTime)}</span>` : ''}</div>
         <div id="lb-name-row" style="display:none;">
           <div class="lb-qualify-label">YOU MADE THE TOP 10 — ENTER YOUR NAME</div>
           <div class="lb-input-row">
@@ -2667,22 +2700,22 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
             <button id="lb-submit">SUBMIT →</button>
           </div>
         </div>
-        <div class="lb-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>
+        <div class="lb-cols"><span>#&nbsp;&nbsp;NAME</span><span>${scoreLabel}</span></div>
         <div id="lb-list"><div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;">LOADING...</div></div>
       </div>`;
     document.body.appendChild(ov);
 
     document.getElementById('lb-close').onclick = () => ov.remove();
-    const nameRow = document.getElementById('lb-name-row');
+    const nameRow   = document.getElementById('lb-name-row');
     const nameInput = document.getElementById('lb-name-input');
     const submitBtn = document.getElementById('lb-submit');
-    const listEl = document.getElementById('lb-list');
+    const listEl    = document.getElementById('lb-list');
 
-    const scores = await getTop(col);
-    const qualifies = scores.length < 10 || (scores.length > 0 && playerScore > scores[scores.length - 1].score);
-    listEl.innerHTML = renderRows(scores, null);
+    const raw    = await getTop(col, sortAsc && !tieBreakerTime);
+    const sorted = sortScores(raw, sortAsc, tieBreakerTime);
+    listEl.innerHTML = renderRows(sorted, null, opts);
 
-    if (qualifies) {
+    if (qualifies(sorted, playerScore, sortAsc, tieBreakerTime, playerTime)) {
       nameRow.style.display = 'block';
       setTimeout(() => nameInput.focus(), 50);
       nameInput.addEventListener('input', () => {
@@ -2693,10 +2726,12 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         if (!raw) { nameInput.focus(); return; }
         submitBtn.disabled = true;
         submitBtn.textContent = '...';
-        const saved = await submitScore(col, raw, playerScore);
-        const fresh = await getTop(col);
+        const extra = playerTime != null ? { time: playerTime } : null;
+        const saved = await submitScore(col, raw, playerScore, extra);
+        const freshRaw    = await getTop(col, sortAsc && !tieBreakerTime);
+        const freshSorted = sortScores(freshRaw, sortAsc, tieBreakerTime);
         nameRow.style.display = 'none';
-        listEl.innerHTML = renderRows(fresh, saved);
+        listEl.innerHTML = renderRows(freshSorted, saved, opts);
       }
       submitBtn.onclick = doSubmit;
       nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
@@ -3218,7 +3253,7 @@ if (siteName) {
 /* ── CHESS: THE BLAKE GAMBIT ── */
 /* Trigger: click headshot 100 times within 60 seconds */
 (function () {
-  let cTaps = 0, cTimer = null;
+  let cTaps = 0, cTimer = null, chessStart = null, chessInterval = null;
   const hs = document.querySelector('.photo-frame img');
   if (hs) {
     hs.addEventListener('click', () => {
@@ -3317,6 +3352,14 @@ if (siteName) {
   }
 
   function doMove(r,c,tr,tc){
+    if(!chessStart&&cl(B[r][c])==='w'){
+      chessStart=Date.now();
+      chessInterval=setInterval(()=>{
+        const el=document.getElementById('chess-timer');
+        if(!el){clearInterval(chessInterval);return;}
+        el.textContent=window.fmtTime(Math.floor((Date.now()-chessStart)/1000));
+      },1000);
+    }
     const p=B[r][c],co=cl(p),t=typ(p);
     let ne=null;
     if(t==='P'&&Math.abs(tr-r)===2)ne={r:(r+tr)/2,c};
@@ -3328,9 +3371,12 @@ if (siteName) {
     const nxt=allLegal(B,turn,ep,cst),chk=inChk(B,turn);
     if(!nxt.length){
       over=true;
+      clearInterval(chessInterval);
       if(chk&&opp(turn)==='w'){
+        const elapsed=chessStart?Math.floor((Date.now()-chessStart)/1000):0;
         const el=document.getElementById('chess-msg');
         if(el){el.style.fontSize='9px';el.style.lineHeight='1.6';el.innerHTML='CHECKMATE — BLAKE IS DEFEATED.<br><br><span style="color:#9933FF">You truly are remarkable. The fact you have made it this far suggests you are indeed, a true champion.</span><br><br><span style="color:#9933FF">Congratulations on 100%\'ing Blake\'s website. You a real one. Please send the following message to him.</span><br><br><span style="color:#D4FF1A;font-size:11px;">\'Eating the green bit of a Strawberry is elite behaviour\'</span>';}
+        setTimeout(()=>showLeaderboard('chess_scores','THE BLAKE GAMBIT',{score:elapsed},{sortAsc:true,scoreLabel:'TIME',formatScore:window.fmtTime}),700);
       } else {
         msg(chk?'CHECKMATE — BLAKE WINS.':'STALEMATE — DRAW. BLAKE SURVIVES.');
       }
@@ -3386,6 +3432,8 @@ if (siteName) {
       ['wR','wN','wB','wQ','wK','wB','wN','wR'],
     ];
     turn='w';sel=null;legs=[];over=false;ep=null;cst={w:{k:true,q:true},b:{k:true,q:true}};
+    clearInterval(chessInterval);chessStart=null;
+    const timerEl=document.getElementById('chess-timer');if(timerEl)timerEl.textContent='00:00';
     render();msg('Your turn — you are White ♔');
   }
 
@@ -3401,7 +3449,10 @@ if (siteName) {
           YOU <span style="color:#D4FF1A">♙</span> WHITE vs BLAKE <span style="color:#9933FF">♟</span> BLACK · CLICK TO MOVE
         </div>
         <div id="chess-board" style="display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:420px;margin:0 auto;border:2px solid rgba(153,51,255,0.4);"></div>
-        <div id="chess-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;padding:0 8px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;max-width:420px;margin:8px auto 0;padding:0 2px;">
+          <div id="chess-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--lime);letter-spacing:2px;min-height:18px;padding:0 4px;flex:1;"></div>
+          <div id="chess-timer" style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:2px;white-space:nowrap;">00:00</div>
+        </div>
         <button id="chess-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:7px 18px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
       </div>`;
     document.body.appendChild(ov);
@@ -3414,7 +3465,7 @@ if (siteName) {
 /* ── PONG: YOU vs. BLAKE at PONG ── */
 /* Trigger: click "Eyes: Blue" attribute tag 5 times */
 (function () {
-  let pongTaps = 0, pongTimer, pongRAF;
+  let pongTaps = 0, pongTimer, pongRAF, pongStartTime = null, pongFinalTime = 0;
   const pongTrigger = [...document.querySelectorAll('.tag')].find(el => el.textContent.trim() === 'Eyes: Blue');
   if (pongTrigger) {
     pongTrigger.addEventListener('click', function () {
@@ -3460,6 +3511,7 @@ if (siteName) {
     const msg = document.getElementById('pong-msg');
     const W = 500, H = 300, PW = 12, PH = 64, BS = 10, BASE = 4;
 
+    pongStartTime = null; pongFinalTime = 0;
     let s = {
       py: H / 2 - PH / 2, by: H / 2 - PH / 2,
       bx: W / 2, ballY: H / 2,
@@ -3541,17 +3593,20 @@ if (siteName) {
           s.vy = Math.sign(bn) * Math.pow(Math.abs(bn), 0.7) * BASE * 1.6;
           if (Math.abs(s.vx) > 12) s.vx = -12;
         }
+        if (!pongStartTime) pongStartTime = Date.now();
         if (s.bx < 0) {
           s.bs++;
-          if (s.bs >= 7) { s.over = true; msg.textContent = 'BLAKE WINS. TYPICAL.'; }
+          if (s.bs >= 7) { s.over = true; pongFinalTime = Math.floor((Date.now() - pongStartTime) / 1000); msg.textContent = 'BLAKE WINS. TYPICAL.'; }
           else reset(1);
         }
         if (s.bx > W) {
           s.ps++;
           if (s.ps >= 7) {
             s.over = true;
+            pongFinalTime = Math.floor((Date.now() - pongStartTime) / 1000);
             if (s.bs === 0) {
               msg.innerHTML = "YOU WIN! BLAKE IS SHOOK.<br><br>Congratulations, you've unlocked a secret code<br><strong>'YM'</strong>";
+              setTimeout(() => showLeaderboard('pong_scores', 'PONG — PERFECT WIN', { score: pongFinalTime }, { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime }), 700);
             } else {
               msg.textContent = 'YOU WIN! BLAKE IS SHOOK.';
             }
@@ -3568,6 +3623,11 @@ if (siteName) {
       ctx.fillText(s.ps, W / 4, 50); ctx.fillText(s.bs, 3 * W / 4, 50);
       ctx.font = '9px "DM Mono",monospace'; ctx.fillStyle = 'rgba(255,255,255,0.35)';
       ctx.fillText('YOU', W / 4, 64); ctx.fillText('BLAKE', 3 * W / 4, 64);
+      if (pongStartTime) {
+        const t = s.over ? pongFinalTime : Math.floor((Date.now() - pongStartTime) / 1000);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px "DM Mono",monospace'; ctx.textAlign = 'center';
+        ctx.fillText(window.fmtTime(t), W / 2, 18);
+      }
       ctx.fillStyle = '#D4FF1A';
       ctx.beginPath(); ctx.roundRect(20, s.py, PW, PH, PW / 2); ctx.fill();
       ctx.fillStyle = '#9933FF';
@@ -3630,11 +3690,11 @@ if (siteName) {
     const info = document.getElementById('flappy-info');
     const W = 360, H = 480, GAP = 145, PIPE_W = 46;
 
-    let bird, pipes, sc, state, frame;
+    let bird, pipes, sc, state, frame, flDeadNotified;
 
     function init() {
       bird = { x: 80, y: H / 2, vy: 0, r: 18 };
-      pipes = []; sc = 0; state = 'waiting'; frame = 0;
+      pipes = []; sc = 0; state = 'waiting'; frame = 0; flDeadNotified = false;
       info.textContent = 'TAP TO START';
     }
 
@@ -3713,6 +3773,10 @@ if (siteName) {
         ctx.fillText('TAP TO START', W / 2, H / 2 + 18);
       }
       if (state === 'dead') {
+        if (!flDeadNotified) {
+          flDeadNotified = true;
+          setTimeout(() => showLeaderboard('flappy_scores', 'FLAPPY BLAKE', { score: sc }), 700);
+        }
         ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
         const hasCode = sc >= 20;
@@ -3758,15 +3822,17 @@ if (siteName) {
   const COLORS = {
     0: 'transparent', 2: '#1a1030', 4: '#1e1040', 8: '#2a0a60',
     16: '#4a1a80', 32: '#6600cc', 64: '#9933FF', 128: '#7700DD',
-    256: '#6600bb', 512: '#5500aa', 1024: '#D4FF1A', 2048: '#ffff44'
+    256: '#6600bb', 512: '#5500aa', 1024: '#D4FF1A', 2048: '#ffff44',
+    4096: '#FF9900', 8192: '#FF6600', 16384: '#FF3300', 32768: '#CC0000'
   };
   const TEXT_C = {
     2: '#D4FF1A', 4: '#D4FF1A', 8: '#fff', 16: '#fff', 32: '#fff',
     64: '#D4FF1A', 128: '#D4FF1A', 256: '#D4FF1A', 512: '#D4FF1A',
-    1024: '#0a0a0a', 2048: '#0a0a0a'
+    1024: '#0a0a0a', 2048: '#0a0a0a',
+    4096: '#0a0a0a', 8192: '#0a0a0a', 16384: '#fff', 32768: '#fff'
   };
 
-  let board, score48, keyH48;
+  let board, score48, keyH48, b2048blakeShown;
 
   function launch2048() {
     if (document.getElementById('b2048-overlay')) return;
@@ -3807,7 +3873,7 @@ if (siteName) {
   }
 
   function start2048() {
-    score48 = 0;
+    score48 = 0; b2048blakeShown = false;
     board = Array.from({ length: 4 }, () => Array(4).fill(0));
     addTile(); addTile();
     render2048();
@@ -3889,7 +3955,7 @@ if (siteName) {
     const msg = document.getElementById('b2048-msg');
     if (!msg) return;
     for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++)
-      if (board[r][c] === 2048) { msg.textContent = 'BLAKE HAS ENDED. CONGRATULATIONS.'; setTimeout(() => showLeaderboard('scores_2048', '2048', score48), 700); return; }
+      if (board[r][c] === 2048 && !b2048blakeShown) { b2048blakeShown = true; if(msg) msg.textContent = 'BLAKE ACHIEVED — KEEP GOING!'; setTimeout(() => { if(msg && msg.textContent === 'BLAKE ACHIEVED — KEEP GOING!') msg.textContent = ''; }, 2500); }
     for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
       if (!board[r][c]) return;
       if (c < 3 && board[r][c] === board[r][c + 1]) return;
@@ -3912,6 +3978,7 @@ if (siteName) {
       cell.style.background = COLORS[v] || '#440090';
       cell.style.color = TEXT_C[v] || '#D4FF1A';
       if (v === 2048) { cell.textContent = 'BLAKE'; cell.style.fontSize = '13px'; }
+      else if (v > 2048) { cell.textContent = v; cell.style.fontSize = v >= 16384 ? '12px' : v >= 4096 ? '14px' : '17px'; }
       else { cell.textContent = v || ''; cell.style.fontSize = v > 512 ? '18px' : v > 64 ? '22px' : '26px'; }
       grid.appendChild(cell);
     }
@@ -4329,6 +4396,7 @@ if (siteName) {
 
     let paddle = { x: W/2 - PW/2, y: H - 28 };
     let ball, lives, score, waiting, over, level, levelClear, won;
+    let bbStart = null, bbStarted = false, bbElapsed = 0;
     let bricks, confetti = [];
 
     const LEVEL_NAMES = ['B','L','A','K','E'];
@@ -4426,6 +4494,7 @@ if (siteName) {
 
     function init() {
       level = 1; lives = 4; score = 0; over = false; won = false; levelClear = false;
+      bbStart = null; bbStarted = false; bbElapsed = 0;
       confetti = []; msg.textContent = '';
       makeBricks(); resetBall();
     }
@@ -4505,6 +4574,7 @@ if (siteName) {
       if (keys.r) paddle.x = Math.min(W-PW, paddle.x + 7);
 
       if (!over && !waiting) {
+        if (!bbStarted) { bbStarted = true; bbStart = Date.now(); }
         ball.x += ball.vx;
         ball.y += ball.vy;
 
@@ -4539,7 +4609,9 @@ if (siteName) {
           lives--;
           if (lives <= 0) {
             over = true;
+            bbElapsed = bbStart ? Math.floor((Date.now() - bbStart) / 1000) : 0;
             msg.innerHTML = `GAME OVER &nbsp;·&nbsp; SCORE: ${score}`;
+            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true }), 700);
           } else {
             resetBall();
           }
@@ -4551,8 +4623,10 @@ if (siteName) {
             waiting = true;
           } else {
             over = true; won = true;
+            bbElapsed = bbStart ? Math.floor((Date.now() - bbStart) / 1000) : 0;
             msg.textContent = '';
             spawnConfetti();
+            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true }), 2000);
           }
         }
       }
@@ -4563,9 +4637,14 @@ if (siteName) {
 
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '10px "DM Mono",monospace';
-      ctx.textAlign = 'left';   ctx.fillText(`SCORE  ${score}`, 6, 18);
-      ctx.textAlign = 'center'; ctx.fillText(`LVL ${level}  ·  ${LEVEL_NAMES[level-1]}`, W/2, 18);
-      ctx.textAlign = 'right';  ctx.fillText(`${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 18);
+      ctx.textAlign = 'left';   ctx.fillText(`SCORE  ${score}`, 6, 13);
+      ctx.textAlign = 'center'; ctx.fillText(`LVL ${level}  ·  ${LEVEL_NAMES[level-1]}`, W/2, 13);
+      ctx.textAlign = 'right';  ctx.fillText(`${'♥'.repeat(lives)}${'♡'.repeat(4-lives)}`, W-6, 13);
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.font = '8px "DM Mono",monospace';
+      ctx.textAlign = 'right';
+      const bbT = bbStarted ? Math.floor((Date.now() - bbStart) / 1000) : 0;
+      ctx.fillText(`TIME  ${window.fmtTime(bbT)}`, W-6, 24);
 
       ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.lineWidth = 1;
