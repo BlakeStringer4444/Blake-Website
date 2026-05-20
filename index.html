@@ -2060,6 +2060,17 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   padding: 5px 0; border-bottom: 1px solid #111;
   font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
 }
+@keyframes bk-glow {
+  0%,100% { text-shadow: 0 0 6px #cc44ff, 0 0 18px #9933ff, 0 1px 4px rgba(0,0,0,0.9); }
+  50%      { text-shadow: 0 0 14px #ff33cc, 0 0 32px #ff33cc, 0 0 48px rgba(255,51,204,0.35), 0 1px 4px rgba(0,0,0,0.9); }
+}
+.chess-bk {
+  animation: bk-glow 1.8s ease-in-out infinite;
+  color: #dd44ff !important;
+  font-size: 1.5em;
+  display: inline-block;
+  filter: drop-shadow(0 0 4px #9933ff);
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -3293,7 +3304,7 @@ if (siteName) {
 
   const UNI = {
     wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',
-    bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'
+    bK:'♚︎',bQ:'♛︎',bR:'♜︎',bB:'♝︎',bN:'♞︎',bP:'♟︎'
   };
   let B, turn, sel, legs, over, ep, cst;
 
@@ -3439,7 +3450,18 @@ if (siteName) {
       cell.style.cssText=`aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3.2vw,26px);cursor:pointer;position:relative;background:${isSel?'rgba(153,51,255,0.45)':lt?'rgba(212,255,26,0.09)':'rgba(0,0,0,0.35)'};border:${isSel?'2px solid #D4FF1A':isLeg?'2px solid rgba(212,255,26,0.75)':'1px solid rgba(153,51,255,0.15)'};box-sizing:border-box;user-select:none;transition:background 0.1s;`;
       if(isLeg&&!isCap){const d=document.createElement('div');d.style.cssText='position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(212,255,26,0.4);pointer-events:none;';cell.appendChild(d);}
       const p=B[r][c];
-      if(p){const s=document.createElement('span');s.textContent=UNI[p];s.style.cssText=`color:${cl(p)==='w'?'#D4FF1A':'#9933FF'};text-shadow:0 1px 5px rgba(0,0,0,0.95);line-height:1;z-index:1;position:relative;`;cell.appendChild(s);}
+      if(p){
+        const s=document.createElement('span');
+        s.textContent=UNI[p];
+        if(p==='bK'){
+          s.className='chess-bk';
+          s.style.cssText='line-height:1;z-index:1;position:relative;';
+          cell.style.background=isSel?'rgba(153,51,255,0.55)':lt?'rgba(153,51,255,0.13)':'rgba(80,0,80,0.35)';
+        } else {
+          s.style.cssText=`color:${cl(p)==='w'?'#D4FF1A':'#9933FF'};text-shadow:0 1px 5px rgba(0,0,0,0.95);line-height:1;z-index:1;position:relative;`;
+        }
+        cell.appendChild(s);
+      }
       cell.addEventListener('click',()=>click(r,c));
       el.appendChild(cell);
     }
