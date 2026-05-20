@@ -4052,7 +4052,9 @@ if (siteName) {
     }
     msg.innerHTML = score48 >= 2048
       ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
-      : 'NO MOVES LEFT. BLAKE SURVIVES.';
+      : b2048blakeShown
+        ? 'NO MOVES LEFT. BUT YOU ENDED BLAKE — THAT\'S HOT!'
+        : 'NO MOVES LEFT. BLAKE SURVIVES.';
     setTimeout(() => showLeaderboard('scores_2048', '2048', score48, { inlineId: '2048-lb-inline' }), 700);
   }
 
