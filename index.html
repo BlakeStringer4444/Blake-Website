@@ -1972,16 +1972,24 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   display: flex; align-items: center; justify-content: center;
   z-index: 99999;
   font-family: 'DM Mono', monospace;
+  padding: 16px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 #lb-card {
   background: #0f0f0f;
   border: 1px solid #2a2a2a;
   padding: 28px 24px;
-  width: min(380px, 90vw);
+  width: 100%;
+  max-width: 380px;
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
+}
+@media (max-width: 420px) {
+  #lb-card { padding: 20px 16px; }
+  #lb-overlay { padding: 12px; align-items: flex-start; padding-top: 40px; }
 }
 #lb-close {
   position: absolute; top: 12px; right: 14px;
@@ -2000,7 +2008,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 #lb-name-input {
   flex: 1; background: #000; border: 1px solid #D4FF1A;
   color: #fff; font-family: 'DM Mono', monospace;
-  font-size: 13px; padding: 8px 10px;
+  font-size: 16px; padding: 8px 10px;
   letter-spacing: 2px; text-transform: uppercase; outline: none;
   box-sizing: border-box;
 }
@@ -2025,6 +2033,44 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 }
 .lb-row--hl { background: rgba(212,255,26,0.07); margin: 0 -8px; padding: 7px 8px; }
 .lb-row-name { flex: 1; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ── INLINE LEADERBOARD (below each game) ── */
+.game-lb-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  width: 100%;
+  box-sizing: border-box;
+}
+.game-lb-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #444;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.game-lb-cols {
+  display: flex; justify-content: space-between;
+  font-size: 9px; letter-spacing: 2px; color: #2a2a2a;
+  padding-bottom: 5px; border-bottom: 1px solid #181818;
+  margin-bottom: 4px;
+}
+.game-lb-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid #111;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+}
+@keyframes bk-glow {
+  0%,100% { text-shadow: 0 0 6px #cc44ff, 0 0 18px #9933ff, 0 1px 4px rgba(0,0,0,0.9); }
+  50%      { text-shadow: 0 0 14px #ff33cc, 0 0 32px #ff33cc, 0 0 48px rgba(255,51,204,0.35), 0 1px 4px rgba(0,0,0,0.9); }
+}
+.chess-bk {
+  animation: bk-glow 1.8s ease-in-out infinite;
+  color: #dd44ff !important;
+  font-size: 1.5em;
+  display: inline-block;
+  filter: drop-shadow(0 0 4px #9933ff);
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -2732,10 +2778,37 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         const freshSorted = sortScores(freshRaw, sortAsc, tieBreakerTime);
         nameRow.style.display = 'none';
         listEl.innerHTML = renderRows(freshSorted, saved, opts);
+        if (opts.inlineId) window.loadInlineLB(col, opts.inlineId, opts);
       }
       submitBtn.onclick = doSubmit;
       nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
     }
+  };
+
+  window.loadInlineLB = async function(col, containerId, opts) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    opts = opts || {};
+    const { sortAsc = false, tieBreakerTime = false, formatScore = null, showTime = false, scoreLabel = 'SCORE' } = opts;
+    el.innerHTML = '<div style="color:#2a2a2a;font-size:10px;padding:8px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">LOADING...</div>';
+    const raw = await getTop(col, sortAsc && !tieBreakerTime);
+    const sorted = sortScores(raw, sortAsc, tieBreakerTime);
+    if (!sorted.length) {
+      el.innerHTML = '<div style="color:#2a2a2a;font-size:10px;padding:8px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">NO SCORES YET — BE FIRST</div>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="game-lb-cols"><span>#&nbsp;&nbsp;NAME</span><span>${scoreLabel}</span></div>
+      ${sorted.slice(0, 10).map((s, i) => {
+        const rc = i === 0 ? '#D4FF1A' : i < 3 ? '#FFFFFF' : '#444444';
+        const disp = formatScore ? formatScore(s.score) : s.score;
+        const timeStr = showTime && s.time != null ? `<span style="color:#333;font-size:9px;margin-left:4px;">${window.fmtTime(s.time)}</span>` : '';
+        return `<div class="game-lb-row">
+          <span style="color:${rc};min-width:16px;">${i + 1}</span>
+          <span style="flex:1;padding-left:8px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
+          <span style="color:${i < 3 ? '#777' : '#444'}">${disp}${timeStr}</span>
+        </div>`;
+      }).join('')}`;
   };
 })();
 
@@ -2990,32 +3063,9 @@ backToTop.addEventListener('click', () => {
 /* ── SNAKE EASTER EGG ── */
 (function () {
   const COLS = 20, ROWS = 20, CELL = 20, SPEED = 93;
-  const LS_KEY = 'blakeSnakeScores';
   let gameLoop = null;
   let snake, dir, nextDir, food, score, dead;
   let cherry = null, cherryTimer = null, foodEaten = 0;
-
-  function getScores() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function saveScore(name, sc) {
-    const scores = getScores();
-    scores.push({ name: name.trim() || 'Anonymous', score: sc });
-    scores.sort((a, b) => b.score - a.score);
-    localStorage.setItem(LS_KEY, JSON.stringify(scores.slice(0, 10)));
-  }
-  function renderScores() {
-    const scores = getScores().slice(0, 5);
-    const wrap = document.getElementById('snake-scores-wrap');
-    if (!scores.length) { wrap.innerHTML = ''; return; }
-    wrap.innerHTML = `<div class="snake-scores-title">High Scores</div>` +
-      scores.map((s, i) => `
-        <div class="snake-score-row">
-          <span>${i + 1}. ${s.name}</span>
-          <span>${s.score}</span>
-        </div>`).join('');
-  }
 
   const overlay = document.createElement('div');
   overlay.className = 'snake-overlay';
@@ -3037,12 +3087,11 @@ backToTop.addEventListener('click', () => {
     </div>
     <div class="snake-gameover-panel" id="snake-gameover-panel">
       <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
-      <div class="snake-go-row">
-        <input class="snake-name-input" id="snake-name-input" placeholder="Enter your name..." maxlength="20">
-        <button class="snake-btn" id="snake-save-btn">Save</button>
-      </div>
       <button class="snake-btn snake-btn--restart" id="snake-restart-btn">↺ Restart</button>
-      <div class="snake-scores-wrap" id="snake-scores-wrap"></div>
+    </div>
+    <div class="game-lb-section">
+      <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+      <div id="snake-lb-inline"></div>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -3052,8 +3101,6 @@ backToTop.addEventListener('click', () => {
   const scoreEl = document.getElementById('snake-score');
   const goPanel = document.getElementById('snake-gameover-panel');
   const finalScoreEl = document.getElementById('snake-final-score');
-  const nameInput = document.getElementById('snake-name-input');
-  const saveBtn = document.getElementById('snake-save-btn');
 
   document.getElementById('snake-close').addEventListener('click', closeGame);
   document.getElementById('snake-restart-btn').addEventListener('click', restart);
@@ -3069,13 +3116,7 @@ backToTop.addEventListener('click', () => {
       if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
     });
   });
-  saveBtn.addEventListener('click', () => {
-    saveScore(nameInput.value, score);
-    nameInput.value = '';
-    saveBtn.textContent = 'Saved ✓';
-    saveBtn.disabled = true;
-    renderScores();
-  });
+  window.loadInlineLB('snake_scores', 'snake-lb-inline', {});
 
   function newFood() {
     let p;
@@ -3103,9 +3144,6 @@ backToTop.addEventListener('click', () => {
     food = newFood();
     scoreEl.textContent = 'Score: 0';
     goPanel.classList.remove('active');
-    saveBtn.textContent = 'Save';
-    saveBtn.disabled = false;
-    nameInput.value = '';
   }
 
   function draw() {
@@ -3166,9 +3204,8 @@ backToTop.addEventListener('click', () => {
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
       dead = true; draw();
       finalScoreEl.textContent = score;
-      renderScores();
       goPanel.classList.add('active');
-      setTimeout(() => showLeaderboard('snake_scores', 'SNAKE', score), 700);
+      setTimeout(() => showLeaderboard('snake_scores', 'SNAKE', { score }, { inlineId: 'snake-lb-inline' }), 700);
       return;
     }
     snake.unshift(head);
@@ -3219,8 +3256,9 @@ if (siteName) {
 
   document.addEventListener('keydown', e => {
     if (!overlay.classList.contains('active')) return;
+    if (document.getElementById('lb-overlay')) return;
     if (e.key === 'Escape') { closeGame(); return; }
-    if ((e.key === 'r' || e.key === 'R') && document.activeElement !== nameInput) { restart(); return; }
+    if ((e.key === 'r' || e.key === 'R') && document.activeElement.tagName !== 'INPUT') { restart(); return; }
     const map = {
       ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
       w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0},
@@ -3266,7 +3304,7 @@ if (siteName) {
 
   const UNI = {
     wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',
-    bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'
+    bK:'♚︎',bQ:'♛︎',bR:'♜︎',bB:'♝︎',bN:'♞︎',bP:'♟︎'
   };
   let B, turn, sel, legs, over, ep, cst;
 
@@ -3376,7 +3414,7 @@ if (siteName) {
         const elapsed=chessStart?Math.floor((Date.now()-chessStart)/1000):0;
         const el=document.getElementById('chess-msg');
         if(el){el.style.fontSize='9px';el.style.lineHeight='1.6';el.innerHTML='CHECKMATE — BLAKE IS DEFEATED.<br><br><span style="color:#9933FF">You truly are remarkable. The fact you have made it this far suggests you are indeed, a true champion.</span><br><br><span style="color:#9933FF">Congratulations on 100%\'ing Blake\'s website. You a real one. Please send the following message to him.</span><br><br><span style="color:#D4FF1A;font-size:11px;">\'Eating the green bit of a Strawberry is elite behaviour\'</span>';}
-        setTimeout(()=>showLeaderboard('chess_scores','THE BLAKE GAMBIT',{score:elapsed},{sortAsc:true,scoreLabel:'TIME',formatScore:window.fmtTime}),700);
+        setTimeout(()=>showLeaderboard('chess_scores','THE BLAKE GAMBIT',{score:elapsed},{sortAsc:true,scoreLabel:'TIME',formatScore:window.fmtTime,inlineId:'chess-lb-inline'}),700);
       } else {
         msg(chk?'CHECKMATE — BLAKE WINS.':'STALEMATE — DRAW. BLAKE SURVIVES.');
       }
@@ -3412,7 +3450,18 @@ if (siteName) {
       cell.style.cssText=`aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3.2vw,26px);cursor:pointer;position:relative;background:${isSel?'rgba(153,51,255,0.45)':lt?'rgba(212,255,26,0.09)':'rgba(0,0,0,0.35)'};border:${isSel?'2px solid #D4FF1A':isLeg?'2px solid rgba(212,255,26,0.75)':'1px solid rgba(153,51,255,0.15)'};box-sizing:border-box;user-select:none;transition:background 0.1s;`;
       if(isLeg&&!isCap){const d=document.createElement('div');d.style.cssText='position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(212,255,26,0.4);pointer-events:none;';cell.appendChild(d);}
       const p=B[r][c];
-      if(p){const s=document.createElement('span');s.textContent=UNI[p];s.style.cssText=`color:${cl(p)==='w'?'#D4FF1A':'#9933FF'};text-shadow:0 1px 5px rgba(0,0,0,0.95);line-height:1;z-index:1;position:relative;`;cell.appendChild(s);}
+      if(p){
+        const s=document.createElement('span');
+        s.textContent=UNI[p];
+        if(p==='bK'){
+          s.className='chess-bk';
+          s.style.cssText='line-height:1;z-index:1;position:relative;';
+          cell.style.background=isSel?'rgba(153,51,255,0.55)':lt?'rgba(153,51,255,0.13)':'rgba(80,0,80,0.35)';
+        } else {
+          s.style.cssText=`color:${cl(p)==='w'?'#D4FF1A':'#9933FF'};text-shadow:0 1px 5px rgba(0,0,0,0.95);line-height:1;z-index:1;position:relative;`;
+        }
+        cell.appendChild(s);
+      }
       cell.addEventListener('click',()=>click(r,c));
       el.appendChild(cell);
     }
@@ -3454,11 +3503,16 @@ if (siteName) {
           <div id="chess-timer" style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:2px;white-space:nowrap;">00:00</div>
         </div>
         <button id="chess-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:7px 18px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="chess-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(ov);
     document.getElementById('chess-close').addEventListener('click',()=>ov.remove());
     document.getElementById('chess-new').addEventListener('click',initChess);
     initChess();
+    window.loadInlineLB('chess_scores', 'chess-lb-inline', { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime });
   }
 })();
 
@@ -3496,8 +3550,13 @@ if (siteName) {
           <button class="b2048-arrow" id="pong-btn-down" style="touch-action:none;">▼</button>
         </div>
         <div id="pong-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:8px;min-height:20px;"></div>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD — FASTEST PERFECT WIN</div>
+          <div id="pong-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(overlay);
+    window.loadInlineLB('pong_scores', 'pong-lb-inline', { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime });
     document.getElementById('pong-close').addEventListener('click', () => {
       cancelAnimationFrame(pongRAF);
       overlay.remove();
@@ -3606,7 +3665,7 @@ if (siteName) {
             pongFinalTime = Math.floor((Date.now() - pongStartTime) / 1000);
             if (s.bs === 0) {
               msg.innerHTML = "YOU WIN! BLAKE IS SHOOK.<br><br>Congratulations, you've unlocked a secret code<br><strong>'YM'</strong>";
-              setTimeout(() => showLeaderboard('pong_scores', 'PONG — PERFECT WIN', { score: pongFinalTime }, { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime }), 700);
+              setTimeout(() => showLeaderboard('pong_scores', 'PONG — PERFECT WIN', { score: pongFinalTime }, { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime, inlineId: 'pong-lb-inline' }), 700);
             } else {
               msg.textContent = 'YOU WIN! BLAKE IS SHOOK.';
             }
@@ -3671,8 +3730,13 @@ if (siteName) {
           style="width:100%;max-width:360px;display:block;margin:0 auto;background:#0a0a0a;border:1px solid rgba(153,51,255,0.3);touch-action:none;">
         </canvas>
         <div id="flappy-info" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:12px;min-height:20px;"></div>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="flappy-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(overlay);
+    window.loadInlineLB('flappy_scores', 'flappy-lb-inline', {});
 
     const closeBtn = document.getElementById('flappy-close');
     let keyH;
@@ -3775,7 +3839,7 @@ if (siteName) {
       if (state === 'dead') {
         if (!flDeadNotified) {
           flDeadNotified = true;
-          setTimeout(() => showLeaderboard('flappy_scores', 'FLAPPY BLAKE', { score: sc }), 700);
+          setTimeout(() => showLeaderboard('flappy_scores', 'FLAPPY BLAKE', { score: sc }, { inlineId: 'flappy-lb-inline' }), 700);
         }
         ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
@@ -3858,6 +3922,10 @@ if (siteName) {
         </div>
         <div id="b2048-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:20px;"></div>
         <button id="b2048-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="2048-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(ov);
     document.getElementById('b2048-close').addEventListener('click', () => {
@@ -3870,6 +3938,7 @@ if (siteName) {
     document.getElementById('b2048-left').addEventListener('click',  () => move2048('L'));
     document.getElementById('b2048-right').addEventListener('click', () => move2048('R'));
     start2048();
+    window.loadInlineLB('scores_2048', '2048-lb-inline', {});
   }
 
   function start2048() {
@@ -3885,6 +3954,7 @@ if (siteName) {
     if (keyH48) document.removeEventListener('keydown', keyH48);
     keyH48 = e => {
       if (!document.getElementById('b2048-overlay')) return;
+      if (document.getElementById('lb-overlay')) return;
       const map = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' };
       if (map[e.key]) { e.preventDefault(); move2048(map[e.key]); }
     };
@@ -3964,7 +4034,7 @@ if (siteName) {
     msg.innerHTML = score48 >= 2048
       ? "NO MOVES LEFT. BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'001'</strong>"
       : 'NO MOVES LEFT. BLAKE SURVIVES.';
-    setTimeout(() => showLeaderboard('scores_2048', '2048', score48), 700);
+    setTimeout(() => showLeaderboard('scores_2048', '2048', score48, { inlineId: '2048-lb-inline' }), 700);
   }
 
   function render2048() {
@@ -4016,6 +4086,10 @@ if (siteName) {
         <div id="whack-grid" class="whack-grid"></div>
         <div id="w-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:14px;min-height:20px;"></div>
         <button id="w-again" style="display:none;margin:12px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">PLAY AGAIN</button>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="whack-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(ov);
 
@@ -4036,6 +4110,7 @@ if (siteName) {
     document.getElementById('whack-close').addEventListener('click', () => { wStop(); ov.remove(); });
     document.getElementById('w-again').addEventListener('click', wStart);
     wStart();
+    window.loadInlineLB('whack_scores', 'whack-lb-inline', {});
   }
 
   let wScore, wTime, wGen = 0, wTick;
@@ -4111,7 +4186,7 @@ if (siteName) {
       ? "FINAL SCORE: " + wScore + ". BLAKE SURVIVES.<br><br>Congratulations, you've unlocked a secret code<br><strong>'SEMIT'</strong>"
       : (wScore > best ? 'NEW BEST: ' + wScore + '! BLAKE DESTROYED.' : 'FINAL SCORE: ' + wScore + '. BLAKE SURVIVES.');
     if (again) again.style.display = 'block';
-    setTimeout(() => showLeaderboard('whack_scores', 'WHACK-A-BLAKE', wScore), 700);
+    setTimeout(() => showLeaderboard('whack_scores', 'WHACK-A-BLAKE', wScore, { inlineId: 'whack-lb-inline' }), 700);
   }
 })();
 
@@ -4383,8 +4458,13 @@ if (siteName) {
           <button class="b2048-arrow" id="bb-btn-right" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">RIGHT ▶</button>
         </div>
         <div id="bb-msg" style="font-family:'DM Mono',monospace;font-size:11px;color:#FFF;letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;"></div>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="breaker-lb-inline"></div>
+        </div>
       </div>`;
     document.body.appendChild(overlay);
+    window.loadInlineLB('breaker_scores', 'breaker-lb-inline', { showTime: true, tieBreakerTime: true });
 
     const canvas = document.getElementById('bb-canvas');
     const ctx    = canvas.getContext('2d');
@@ -4504,6 +4584,7 @@ if (siteName) {
     const keys = {};
     function onKeyDown(e) {
       if (!document.getElementById('bb-overlay')) { cleanup(); return; }
+      if (document.getElementById('lb-overlay')) return;
       if (e.key === 'Escape') { closeBB(); return; }
       if (levelClear) { advanceLevel(); return; }
       if (e.key === 'ArrowLeft')  { keys.l = true; if (waiting) waiting = false; }
@@ -4611,7 +4692,7 @@ if (siteName) {
             over = true;
             bbElapsed = bbStart ? Math.floor((Date.now() - bbStart) / 1000) : 0;
             msg.innerHTML = `GAME OVER &nbsp;·&nbsp; SCORE: ${score}`;
-            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true }), 700);
+            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true, inlineId: 'breaker-lb-inline' }), 700);
           } else {
             resetBall();
           }
@@ -4626,7 +4707,7 @@ if (siteName) {
             bbElapsed = bbStart ? Math.floor((Date.now() - bbStart) / 1000) : 0;
             msg.textContent = '';
             spawnConfetti();
-            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true }), 2000);
+            setTimeout(() => showLeaderboard('breaker_scores', 'BLAKE BREAKER', { score, time: bbElapsed }, { showTime: true, tieBreakerTime: true, inlineId: 'breaker-lb-inline' }), 2000);
           }
         }
       }
