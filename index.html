@@ -1412,11 +1412,28 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 @media (max-width: 639px) {
   .snake-overlay {
     justify-content: flex-start;
-    padding: 52px 16px 24px;
-    gap: 7px;
+    padding: 52px 16px 20px;
+    gap: 6px;
   }
   #snake-canvas {
-    max-height: calc(100svh - 330px);
+    max-height: calc(100svh - 370px);
+  }
+  .snake-controls-hint {
+    display: none;
+  }
+  .snake-overlay .b2048-arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+  .snake-overlay .b2048-dpad-center {
+    width: 40px;
+    height: 40px;
+  }
+  .snake-overlay .game-lb-section {
+    max-height: 116px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 .snake-title {
@@ -3100,8 +3117,7 @@ backToTop.addEventListener('click', () => {
       <div class="snake-score-display" id="snake-timer" style="color:rgba(153,51,255,0.5);">00:00</div>
     </div>
     <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
-    <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad</div>
-    <div class="snake-controls-hint" style="margin-top:4px;color:rgba(255,80,110,0.7);">Pink cherry = bonus +30 pts</div>
+    <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad &nbsp;·&nbsp; <span style="color:rgba(255,80,110,0.7);">Pink cherry = +30 pts</span></div>
     <div class="b2048-dpad" style="margin-top:10px;">
       <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up">▲</button></div>
       <div class="b2048-dpad-row">
@@ -3967,7 +3983,6 @@ if (siteName) {
           <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-down">▼</button></div>
         </div>
         <div id="b2048-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:20px;"></div>
-        <button id="b2048-new" style="display:block;margin:10px auto 0;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid var(--purple);color:var(--purple);cursor:pointer;text-transform:uppercase;">NEW GAME</button>
         <div class="game-lb-section">
           <div class="game-lb-title">GLOBAL LEADERBOARD</div>
           <div id="2048-lb-inline"></div>
@@ -3978,7 +3993,6 @@ if (siteName) {
       if (keyH48) document.removeEventListener('keydown', keyH48);
       ov.remove();
     });
-    document.getElementById('b2048-new').addEventListener('click', start2048);
     document.getElementById('b2048-up').addEventListener('click',    () => move2048('U'));
     document.getElementById('b2048-down').addEventListener('click',  () => move2048('D'));
     document.getElementById('b2048-left').addEventListener('click',  () => move2048('L'));
