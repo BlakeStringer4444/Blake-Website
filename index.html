@@ -1483,11 +1483,18 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   border: 1px solid rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.4);
   font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  padding: 6px 12px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
   cursor: pointer;
   text-transform: uppercase;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   transition: border-color 0.2s, color 0.2s;
   z-index: 9001;
 }
@@ -1889,6 +1896,10 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
     justify-content: flex-start;
     padding: 16px 12px 24px;
   }
+  #bb-code-overlay {
+    align-items: center;
+    justify-content: center;
+  }
 }
 .easter-box {
   background: #111111;
@@ -1915,12 +1926,18 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   border: 1px solid rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.4);
   font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  padding: 6px 12px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
   cursor: pointer;
   text-transform: uppercase;
-  white-space: nowrap;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .easter-close:hover { background: var(--purple); color: var(--lime); border-color: var(--purple); }
@@ -3121,7 +3138,7 @@ backToTop.addEventListener('click', () => {
   overlay.className = 'snake-overlay';
   overlay.innerHTML = `
     <div class="snake-inner">
-      <button class="snake-close" id="snake-close">ESC · CLOSE</button>
+      <button class="snake-close" id="snake-close">ESC<br>CLOSE</button>
       <div class="snake-title">BLAKE SNAKE</div>
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:${COLS*CELL}px;">
         <div class="snake-score-display" id="snake-score">Score: 0</div>
@@ -3561,7 +3578,7 @@ if (siteName) {
     const ov=document.createElement('div');ov.id='chess-overlay';ov.className='easter-overlay';
     ov.innerHTML=`
       <div class="easter-box" style="max-width:500px">
-        <button class="easter-close" id="chess-close">ESC · CLOSE</button>
+        <button class="easter-close" id="chess-close">ESC<br>CLOSE</button>
         <div class="easter-title">THE BLAKE GAMBIT</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:3px;text-align:center;margin-top:-6px;margin-bottom:8px;text-transform:uppercase;">Final Boss</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:10px;">
@@ -3609,7 +3626,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" id="pong-box" style="max-width:560px">
-        <button class="easter-close" id="pong-close">ESC · CLOSE</button>
+        <button class="easter-close" id="pong-close">ESC<br>CLOSE</button>
         <div class="easter-title">YOU vs. BLAKE at PONG</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:12px;">
           MOVE MOUSE / DRAG COURT TO PLAY · FIRST TO 7 WINS
@@ -3822,7 +3839,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:400px">
-        <button class="easter-close" id="flappy-close">ESC · CLOSE</button>
+        <button class="easter-close" id="flappy-close">ESC<br>CLOSE</button>
         <div class="easter-title">FLAPPY BLAKE</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:12px;">
           TAP / CLICK / SPACE TO FLAP
@@ -4005,7 +4022,7 @@ if (siteName) {
     ov.id = 'b2048-overlay'; ov.className = 'easter-overlay';
     ov.innerHTML = `
       <div class="easter-box" style="max-width:440px">
-        <button class="easter-close" id="b2048-close">ESC · CLOSE</button>
+        <button class="easter-close" id="b2048-close">ESC<br>CLOSE</button>
         <div class="easter-title">2048: THE END OF BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;">ARROWS · SWIPE · D-PAD</div>
@@ -4176,7 +4193,7 @@ if (siteName) {
     ov.id = 'whack-overlay'; ov.className = 'easter-overlay';
     ov.innerHTML = `
       <div class="easter-box" style="max-width:560px">
-        <button class="easter-close" id="whack-close">ESC · CLOSE</button>
+        <button class="easter-close" id="whack-close">ESC<br>CLOSE</button>
         <div class="easter-title">WHACK-A-BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
           <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;">SCORE: <span id="w-score">0</span></div>
@@ -4483,7 +4500,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:300px;text-align:center;">
-        <button class="easter-close" id="bb-code-close">ESC · CLOSE</button>
+        <button class="easter-close" id="bb-code-close">ESC<br>CLOSE</button>
         <div class="easter-title" style="font-size:clamp(16px,4vw,22px);margin-bottom:6px;">ENTER CODE</div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:22px;">ACCESS RESTRICTED</div>
         <div style="display:flex;gap:12px;justify-content:center;margin-bottom:18px;">
@@ -4548,7 +4565,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:500px">
-        <button class="easter-close" id="bb-close">ESC · CLOSE</button>
+        <button class="easter-close" id="bb-close">ESC<br>CLOSE</button>
         <div class="easter-title">BLAKE BREAKER</div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-align:center;margin:-12px 0 14px;">104% COMPLETE EDITION</div>
         <canvas id="bb-canvas" width="440" height="500"
