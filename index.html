@@ -4551,9 +4551,9 @@ if (siteName) {
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-align:center;margin:-12px 0 14px;">104% COMPLETE EDITION</div>
         <canvas id="bb-canvas" width="440" height="500"
           style="width:100%;display:block;margin:0 auto;background:#000;border:1px solid rgba(255,255,255,0.15);touch-action:none;"></canvas>
-        <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;">
-          <button class="b2048-arrow" id="bb-btn-left" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">◀ LEFT</button>
-          <button class="b2048-arrow" id="bb-btn-right" style="touch-action:none;padding:0 14px;font-size:11px;letter-spacing:1px;">RIGHT ▶</button>
+        <div style="display:flex;gap:8px;margin-top:10px;width:100%;">
+          <button id="bb-btn-left" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">◀</button>
+          <button id="bb-btn-right" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▶</button>
         </div>
         <div id="bb-msg" style="font-family:'DM Mono',monospace;font-size:11px;color:#FFF;letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;"></div>
         <div class="game-lb-section">
