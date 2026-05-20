@@ -1062,6 +1062,8 @@ body[data-theme="dark"] .jump-nav {
   color: var(--black);
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .dark-toggle:hover {
   background: var(--purple);
@@ -1403,9 +1405,20 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   justify-content: center;
   gap: 12px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 60px 20px 30px;
 }
 .snake-overlay.active { display: flex; }
+@media (max-width: 639px) {
+  .snake-overlay {
+    justify-content: flex-start;
+    padding: 52px 16px 24px;
+    gap: 7px;
+  }
+  #snake-canvas {
+    max-height: calc(100svh - 330px);
+  }
+}
 .snake-title {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 40px;
@@ -1840,6 +1853,14 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   justify-content: center;
   padding: 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 639px) {
+  .easter-overlay {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 16px 12px 24px;
+  }
 }
 .easter-box {
   background: #111111;
