@@ -281,6 +281,13 @@ header {
   margin-top: 48px;
   scroll-margin-top: 60px;
 }
+.sublabel-count {
+  font-size: 0.78em;
+  letter-spacing: 1px;
+  opacity: 0.55;
+  font-weight: 400;
+  text-transform: none;
+}
 @media (max-width: 639px) {
   .section-sublabel { scroll-margin-top: 85px; }
 }
@@ -2965,6 +2972,23 @@ document.querySelectorAll('.cv-table').forEach(table => {
       if (i > 0 && headers[i]) td.dataset.label = headers[i];
     });
   });
+});
+
+/* ── SUBLABEL ITEM COUNTS ── */
+[
+  { id: 'act-theatre',  selector: 'tbody tr' },
+  { id: 'snd-theatre',  selector: 'tbody tr' },
+  { id: 'dir-theatre',  selector: 'tbody tr' },
+  { id: 'mus-releases', selector: '.album-card' },
+].forEach(({ id, selector }) => {
+  const lbl = document.getElementById(id);
+  if (!lbl || !lbl.nextElementSibling) return;
+  const count = lbl.nextElementSibling.querySelectorAll(selector).length;
+  if (!count) return;
+  const span = document.createElement('span');
+  span.className = 'sublabel-count';
+  span.textContent = ' (' + count + ')';
+  lbl.appendChild(span);
 });
 
 /* ── TYPEWRITER ── */
