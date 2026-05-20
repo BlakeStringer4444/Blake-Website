@@ -1972,16 +1972,24 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   display: flex; align-items: center; justify-content: center;
   z-index: 99999;
   font-family: 'DM Mono', monospace;
+  padding: 16px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 #lb-card {
   background: #0f0f0f;
   border: 1px solid #2a2a2a;
   padding: 28px 24px;
-  width: min(380px, 90vw);
+  width: 100%;
+  max-width: 380px;
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
+}
+@media (max-width: 420px) {
+  #lb-card { padding: 20px 16px; }
+  #lb-overlay { padding: 12px; align-items: flex-start; padding-top: 40px; }
 }
 #lb-close {
   position: absolute; top: 12px; right: 14px;
@@ -2000,7 +2008,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 #lb-name-input {
   flex: 1; background: #000; border: 1px solid #D4FF1A;
   color: #fff; font-family: 'DM Mono', monospace;
-  font-size: 13px; padding: 8px 10px;
+  font-size: 16px; padding: 8px 10px;
   letter-spacing: 2px; text-transform: uppercase; outline: none;
   box-sizing: border-box;
 }
@@ -3219,6 +3227,7 @@ if (siteName) {
 
   document.addEventListener('keydown', e => {
     if (!overlay.classList.contains('active')) return;
+    if (document.getElementById('lb-overlay')) return;
     if (e.key === 'Escape') { closeGame(); return; }
     if ((e.key === 'r' || e.key === 'R') && document.activeElement !== nameInput) { restart(); return; }
     const map = {
@@ -3885,6 +3894,7 @@ if (siteName) {
     if (keyH48) document.removeEventListener('keydown', keyH48);
     keyH48 = e => {
       if (!document.getElementById('b2048-overlay')) return;
+      if (document.getElementById('lb-overlay')) return;
       const map = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' };
       if (map[e.key]) { e.preventDefault(); move2048(map[e.key]); }
     };
@@ -4504,6 +4514,7 @@ if (siteName) {
     const keys = {};
     function onKeyDown(e) {
       if (!document.getElementById('bb-overlay')) { cleanup(); return; }
+      if (document.getElementById('lb-overlay')) return;
       if (e.key === 'Escape') { closeBB(); return; }
       if (levelClear) { advanceLevel(); return; }
       if (e.key === 'ArrowLeft')  { keys.l = true; if (waiting) waiting = false; }
