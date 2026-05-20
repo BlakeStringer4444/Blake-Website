@@ -1397,21 +1397,29 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 .snake-overlay {
   position: fixed;
   inset: 0;
-  background: #060606;
+  background: #000;
   z-index: 9000;
   display: none;
+  overflow: hidden;
+}
+.snake-overlay.active { display: block; }
+.snake-inner {
+  position: absolute;
+  inset: 0;
+  background: #060606;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
   padding: 60px 20px 30px;
+  box-sizing: border-box;
 }
-.snake-overlay.active { display: flex; }
 @media (max-width: 639px) {
-  .snake-overlay {
+  .snake-inner {
     justify-content: flex-start;
     padding: 52px 16px 20px;
     gap: 6px;
@@ -3112,30 +3120,32 @@ backToTop.addEventListener('click', () => {
   const overlay = document.createElement('div');
   overlay.className = 'snake-overlay';
   overlay.innerHTML = `
-    <button class="snake-close" id="snake-close">ESC · Close</button>
-    <div class="snake-title">BLAKE SNAKE</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:${COLS*CELL}px;">
-      <div class="snake-score-display" id="snake-score">Score: 0</div>
-      <div class="snake-score-display" id="snake-timer" style="color:rgba(153,51,255,0.5);">00:00</div>
-    </div>
-    <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
-    <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad &nbsp;·&nbsp; <span style="color:rgba(255,80,110,0.7);">Pink cherry = +30 pts</span></div>
-    <div class="b2048-dpad" style="margin-top:10px;">
-      <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up">▲</button></div>
-      <div class="b2048-dpad-row">
-        <button class="b2048-arrow" id="snake-btn-left">◀</button>
-        <div class="b2048-dpad-center"></div>
-        <button class="b2048-arrow" id="snake-btn-right">▶</button>
+    <div class="snake-inner">
+      <button class="snake-close" id="snake-close">ESC · Close</button>
+      <div class="snake-title">BLAKE SNAKE</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:${COLS*CELL}px;">
+        <div class="snake-score-display" id="snake-score">Score: 0</div>
+        <div class="snake-score-display" id="snake-timer" style="color:rgba(153,51,255,0.5);">00:00</div>
       </div>
-      <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-down">▼</button></div>
-    </div>
-    <div class="snake-gameover-panel" id="snake-gameover-panel">
-      <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
-      <button class="snake-btn snake-btn--restart" id="snake-restart-btn">↺ Restart</button>
-    </div>
-    <div class="game-lb-section">
-      <div class="game-lb-title">GLOBAL LEADERBOARD</div>
-      <div id="snake-lb-inline"></div>
+      <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
+      <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad &nbsp;·&nbsp; <span style="color:rgba(255,80,110,0.7);">Pink cherry = +30 pts</span></div>
+      <div class="b2048-dpad" style="margin-top:10px;">
+        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up">▲</button></div>
+        <div class="b2048-dpad-row">
+          <button class="b2048-arrow" id="snake-btn-left">◀</button>
+          <div class="b2048-dpad-center"></div>
+          <button class="b2048-arrow" id="snake-btn-right">▶</button>
+        </div>
+        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-down">▼</button></div>
+      </div>
+      <div class="snake-gameover-panel" id="snake-gameover-panel">
+        <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
+        <button class="snake-btn snake-btn--restart" id="snake-restart-btn">↺ Restart</button>
+      </div>
+      <div class="game-lb-section">
+        <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+        <div id="snake-lb-inline"></div>
+      </div>
     </div>
   `;
   document.body.appendChild(overlay);
