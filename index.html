@@ -3529,7 +3529,7 @@ if (siteName) {
   function click(r,c){
     if(over||turn!=='w')return;
     if(sel){const m=legs.find(([tr,tc])=>tr===r&&tc===c);if(m){doMove(sel.r,sel.c,r,c);return;}}
-    if(cl(B[r][c])==='w'){sel={r,c};legs=legal(B,r,c,ep,cst);render();msg('Click a highlighted square to move');}
+    if(cl(B[r][c])==='w'){sel={r,c};legs=legal(B,r,c,ep,cst);render();msg(legs.length?'Click a highlighted square to move':'This piece cannot move — it may be pinned.');}
     else{sel=null;legs=[];render();msg('Your turn');}
   }
 
@@ -3539,7 +3539,7 @@ if (siteName) {
       const cell=document.createElement('div');
       const lt=(r+c)%2===0,isSel=sel&&sel.r===r&&sel.c===c;
       const isLeg=legs.some(([tr,tc])=>tr===r&&tc===c),isCap=isLeg&&B[r][c];
-      cell.style.cssText=`aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3.2vw,26px);cursor:pointer;position:relative;background:${isSel?'rgba(153,51,255,0.45)':lt?'rgba(212,255,26,0.09)':'rgba(0,0,0,0.35)'};border:${isSel?'2px solid #D4FF1A':isLeg?'2px solid rgba(212,255,26,0.75)':'1px solid rgba(153,51,255,0.15)'};box-sizing:border-box;user-select:none;transition:background 0.1s;`;
+      cell.style.cssText=`aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3.2vw,26px);cursor:pointer;position:relative;background:${isSel?'rgba(153,51,255,0.45)':lt?'rgba(212,255,26,0.09)':'rgba(0,0,0,0.35)'};border:${isSel?'2px solid #D4FF1A':isLeg?'2px solid rgba(212,255,26,0.75)':'1px solid rgba(153,51,255,0.15)'};box-sizing:border-box;user-select:none;touch-action:manipulation;transition:background 0.1s;`;
       if(isLeg&&!isCap){const d=document.createElement('div');d.style.cssText='position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(212,255,26,0.4);pointer-events:none;';cell.appendChild(d);}
       const p=B[r][c];
       if(p){
@@ -3554,7 +3554,8 @@ if (siteName) {
         }
         cell.appendChild(s);
       }
-      cell.addEventListener('click',()=>click(r,c));
+      cell.addEventListener('touchstart', e => { e.preventDefault(); click(r,c); }, { passive: false });
+      cell.addEventListener('mousedown', () => click(r,c));
       el.appendChild(cell);
     }
   }
