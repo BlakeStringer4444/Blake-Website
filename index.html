@@ -3184,7 +3184,12 @@ backToTop.addEventListener('click', () => {
     'snake-btn-right': {x:1,y:0}
   };
   Object.entries(snakeDirMap).forEach(([id, nd]) => {
-    document.getElementById(id).addEventListener('click', () => {
+    const btn = document.getElementById(id);
+    btn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
+    }, { passive: false });
+    btn.addEventListener('mousedown', () => {
       if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
     });
   });
