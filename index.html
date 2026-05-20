@@ -1397,7 +1397,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 .snake-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.93);
+  background: #060606;
   z-index: 9000;
   display: none;
   flex-direction: column;
@@ -1406,6 +1406,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   gap: 12px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 60px 20px 30px;
 }
 .snake-overlay.active { display: flex; }
@@ -3282,6 +3283,7 @@ backToTop.addEventListener('click', () => {
 
   function openGame() {
     overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
     init(); draw();
     if (gameLoop) clearInterval(gameLoop);
     gameLoop = setInterval(step, SPEED);
@@ -3289,6 +3291,7 @@ backToTop.addEventListener('click', () => {
 
   function closeGame() {
     overlay.classList.remove('active');
+    document.body.style.overflow = '';
     if (gameLoop) { clearInterval(gameLoop); gameLoop = null; }
     if (snakeTimerInterval) { clearInterval(snakeTimerInterval); snakeTimerInterval = null; }
   }
