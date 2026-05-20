@@ -1911,16 +1911,14 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   right: 14px;
   background: none;
   border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.55);
-  font-size: 14px;
-  width: 30px;
-  height: 30px;
+  color: rgba(255,255,255,0.4);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 6px 12px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: monospace;
-  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .easter-close:hover { background: var(--purple); color: var(--lime); border-color: var(--purple); }
@@ -3121,7 +3119,7 @@ backToTop.addEventListener('click', () => {
   overlay.className = 'snake-overlay';
   overlay.innerHTML = `
     <div class="snake-inner">
-      <button class="snake-close" id="snake-close">ESC · Close</button>
+      <button class="snake-close" id="snake-close">ESC · CLOSE</button>
       <div class="snake-title">BLAKE SNAKE</div>
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:${COLS*CELL}px;">
         <div class="snake-score-display" id="snake-score">Score: 0</div>
@@ -3561,7 +3559,7 @@ if (siteName) {
     const ov=document.createElement('div');ov.id='chess-overlay';ov.className='easter-overlay';
     ov.innerHTML=`
       <div class="easter-box" style="max-width:500px">
-        <button class="easter-close" id="chess-close">✕</button>
+        <button class="easter-close" id="chess-close">ESC · CLOSE</button>
         <div class="easter-title">THE BLAKE GAMBIT</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:3px;text-align:center;margin-top:-6px;margin-bottom:8px;text-transform:uppercase;">Final Boss</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:10px;">
@@ -3600,6 +3598,8 @@ if (siteName) {
     });
   }
 
+  let pongKeyCleanup = null;
+
   function launchPong() {
     if (document.getElementById('pong-overlay')) return;
     const overlay = document.createElement('div');
@@ -3607,7 +3607,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" id="pong-box" style="max-width:560px">
-        <button class="easter-close" id="pong-close">✕</button>
+        <button class="easter-close" id="pong-close">ESC · CLOSE</button>
         <div class="easter-title">YOU vs. BLAKE at PONG</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:12px;">
           MOVE MOUSE / DRAG COURT TO PLAY · FIRST TO 7 WINS
@@ -3629,7 +3629,7 @@ if (siteName) {
     window.loadInlineLB('pong_scores', 'pong-lb-inline', { sortAsc: true, scoreLabel: 'TIME', formatScore: window.fmtTime });
     document.getElementById('pong-close').addEventListener('click', () => {
       cancelAnimationFrame(pongRAF);
-      cleanup();
+      if (pongKeyCleanup) pongKeyCleanup();
       overlay.remove();
     });
     runPong();
@@ -3676,7 +3676,7 @@ if (siteName) {
       if (pongKeys.down) pongBtnMove(1);
     }
     function onPongKey(e) {
-      if (!document.getElementById('pong-overlay')) { cleanup(); return; }
+      if (!document.getElementById('pong-overlay')) { if (pongKeyCleanup) pongKeyCleanup(); return; }
       if (e.key === 'ArrowUp')   { e.preventDefault(); pongKeys.up   = true; }
       if (e.key === 'ArrowDown') { e.preventDefault(); pongKeys.down = true; }
       if (!pongKeyLoop && (pongKeys.up || pongKeys.down))
@@ -3687,7 +3687,7 @@ if (siteName) {
       if (e.key === 'ArrowDown') pongKeys.down = false;
       if (!pongKeys.up && !pongKeys.down) { clearInterval(pongKeyLoop); pongKeyLoop = null; }
     }
-    function cleanup() { document.removeEventListener('keydown', onPongKey); document.removeEventListener('keyup', onPongKeyUp); }
+    pongKeyCleanup = function() { document.removeEventListener('keydown', onPongKey); document.removeEventListener('keyup', onPongKeyUp); clearInterval(pongKeyLoop); pongKeyLoop = null; };
     document.addEventListener('keydown', onPongKey);
     document.addEventListener('keyup',   onPongKeyUp);
 
@@ -3820,7 +3820,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:400px">
-        <button class="easter-close" id="flappy-close">✕</button>
+        <button class="easter-close" id="flappy-close">ESC · CLOSE</button>
         <div class="easter-title">FLAPPY BLAKE</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);letter-spacing:2px;text-align:center;margin-bottom:12px;">
           TAP / CLICK / SPACE TO FLAP
@@ -4003,7 +4003,7 @@ if (siteName) {
     ov.id = 'b2048-overlay'; ov.className = 'easter-overlay';
     ov.innerHTML = `
       <div class="easter-box" style="max-width:440px">
-        <button class="easter-close" id="b2048-close">✕</button>
+        <button class="easter-close" id="b2048-close">ESC · CLOSE</button>
         <div class="easter-title">2048: THE END OF BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;">ARROWS · SWIPE · D-PAD</div>
@@ -4174,7 +4174,7 @@ if (siteName) {
     ov.id = 'whack-overlay'; ov.className = 'easter-overlay';
     ov.innerHTML = `
       <div class="easter-box" style="max-width:560px">
-        <button class="easter-close" id="whack-close">✕</button>
+        <button class="easter-close" id="whack-close">ESC · CLOSE</button>
         <div class="easter-title">WHACK-A-BLAKE</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
           <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;">SCORE: <span id="w-score">0</span></div>
@@ -4481,7 +4481,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:300px;text-align:center;">
-        <button class="easter-close" id="bb-code-close">✕</button>
+        <button class="easter-close" id="bb-code-close">ESC · CLOSE</button>
         <div class="easter-title" style="font-size:clamp(16px,4vw,22px);margin-bottom:6px;">ENTER CODE</div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:22px;">ACCESS RESTRICTED</div>
         <div style="display:flex;gap:12px;justify-content:center;margin-bottom:18px;">
@@ -4546,7 +4546,7 @@ if (siteName) {
     overlay.className = 'easter-overlay';
     overlay.innerHTML = `
       <div class="easter-box" style="max-width:500px">
-        <button class="easter-close" id="bb-close">✕</button>
+        <button class="easter-close" id="bb-close">ESC · CLOSE</button>
         <div class="easter-title">BLAKE BREAKER</div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-align:center;margin:-12px 0 14px;">104% COMPLETE EDITION</div>
         <canvas id="bb-canvas" width="440" height="500"
