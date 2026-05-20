@@ -3067,13 +3067,17 @@ backToTop.addEventListener('click', () => {
   let gameLoop = null;
   let snake, dir, nextDir, food, score, dead;
   let cherry = null, cherryTimer = null, foodEaten = 0;
+  let snakeStart = null, snakeElapsed = 0, snakeTimerInterval = null;
 
   const overlay = document.createElement('div');
   overlay.className = 'snake-overlay';
   overlay.innerHTML = `
     <button class="snake-close" id="snake-close">ESC · Close</button>
     <div class="snake-title">BLAKE SNAKE</div>
-    <div class="snake-score-display" id="snake-score">Score: 0</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:${COLS*CELL}px;">
+      <div class="snake-score-display" id="snake-score">Score: 0</div>
+      <div class="snake-score-display" id="snake-timer" style="color:rgba(153,51,255,0.5);">00:00</div>
+    </div>
     <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
     <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad</div>
     <div class="snake-controls-hint" style="margin-top:4px;color:rgba(255,80,110,0.7);">Pink cherry = bonus +30 pts</div>
@@ -3100,6 +3104,7 @@ backToTop.addEventListener('click', () => {
   const canvas = document.getElementById('snake-canvas');
   const ctx = canvas.getContext('2d');
   const scoreEl = document.getElementById('snake-score');
+  const timerEl = document.getElementById('snake-timer');
   const goPanel = document.getElementById('snake-gameover-panel');
   const finalScoreEl = document.getElementById('snake-final-score');
 
@@ -3117,7 +3122,7 @@ backToTop.addEventListener('click', () => {
       if (!(nd.x === -dir.x && nd.y === -dir.y)) nextDir = nd;
     });
   });
-  window.loadInlineLB('snake_scores', 'snake-lb-inline', {});
+  window.loadInlineLB('snake_scores', 'snake-lb-inline', { showTime: true, tieBreakerTime: true });
 
   function newFood() {
     let p;
@@ -3145,6 +3150,15 @@ backToTop.addEventListener('click', () => {
     food = newFood();
     scoreEl.textContent = 'Score: 0';
     goPanel.classList.remove('active');
+    if (snakeTimerInterval) clearInterval(snakeTimerInterval);
+    snakeStart = Date.now(); snakeElapsed = 0;
+    timerEl.textContent = '00:00';
+    snakeTimerInterval = setInterval(() => {
+      if (!snakeStart) return;
+      const el = document.getElementById('snake-timer');
+      if (!el) { clearInterval(snakeTimerInterval); return; }
+      el.textContent = window.fmtTime(Math.floor((Date.now() - snakeStart) / 1000));
+    }, 1000);
   }
 
   function draw() {
@@ -3203,10 +3217,13 @@ backToTop.addEventListener('click', () => {
       y: (snake[0].y + dir.y + ROWS) % ROWS
     };
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
-      dead = true; draw();
+      dead = true;
+      snakeElapsed = snakeStart ? Math.floor((Date.now() - snakeStart) / 1000) : 0;
+      clearInterval(snakeTimerInterval);
+      draw();
       finalScoreEl.textContent = score;
       goPanel.classList.add('active');
-      setTimeout(() => showLeaderboard('snake_scores', 'SNAKE', { score }, { inlineId: 'snake-lb-inline' }), 700);
+      setTimeout(() => showLeaderboard('snake_scores', 'SNAKE', { score, time: snakeElapsed }, { showTime: true, tieBreakerTime: true, inlineId: 'snake-lb-inline' }), 700);
       return;
     }
     snake.unshift(head);
@@ -3236,6 +3253,7 @@ backToTop.addEventListener('click', () => {
   function closeGame() {
     overlay.classList.remove('active');
     if (gameLoop) { clearInterval(gameLoop); gameLoop = null; }
+    if (snakeTimerInterval) { clearInterval(snakeTimerInterval); snakeTimerInterval = null; }
   }
 
   function restart() {
