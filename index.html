@@ -884,6 +884,9 @@ header {
   text-transform: uppercase;
 }
 
+@media (max-width: 639px) {
+  .video-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 420px) {
   .video-grid { grid-template-columns: 1fr; }
 }
@@ -1108,7 +1111,6 @@ body[data-theme="dark"] .jump-nav {
   height: 100%;
   animation: act-filmstrip-scroll 50s linear infinite;
 }
-.act-filmstrip-track:hover { animation-play-state: paused; }
 .act-filmstrip-item {
   flex-shrink: 0;
   width: 160px;
@@ -1128,7 +1130,7 @@ body[data-theme="dark"] .jump-nav {
   to   { transform: translateX(-50%); }
 }
 @media (max-width: 639px) {
-  .act-filmstrip { margin: 20px 0 32px; width: 100%; height: 170px; }
+  .act-filmstrip { margin: 20px -20px 32px; height: 170px; }
   .act-filmstrip-item { width: 120px; height: 170px; }
 }
 
@@ -3025,10 +3027,12 @@ document.querySelectorAll('.cv-table').forEach(table => {
   });
 });
 
-/* ── ACTING FILMSTRIP — randomised order each page load ── */
+/* ── ACTING FILMSTRIP — randomised order, swipe + auto-resume ── */
 (function () {
   const track = document.getElementById('act-filmstrip-track');
   if (!track) return;
+
+  /* Shuffle and render */
   const srcs = Array.from({length: 14}, (_, i) =>
     'Images/blake-acting-' + String(i + 1).padStart(2, '0') + '.jpeg'
   );
@@ -3045,6 +3049,73 @@ document.querySelectorAll('.cv-table').forEach(table => {
     wrap.appendChild(img);
     track.appendChild(wrap);
   });
+
+  /* Pause / resume helpers */
+  const DURATION = 50;
+  let resumeTimer = null;
+
+  function currentX() {
+    return new DOMMatrix(getComputedStyle(track).transform).m41;
+  }
+
+  function resumeFrom(x) {
+    const halfW = track.scrollWidth / 2;
+    if (!halfW) return;
+    /* Normalise x into [−halfW, 0) */
+    let nx = ((x % halfW) + halfW) % halfW - halfW;
+    const delay = (nx / halfW) * DURATION; /* ≤ 0 */
+    track.style.animation = 'none';
+    void track.offsetWidth;
+    track.style.animation = `act-filmstrip-scroll ${DURATION}s linear ${delay}s infinite`;
+  }
+
+  function freeze() {
+    clearTimeout(resumeTimer);
+    const x = currentX();
+    track.style.animation = 'none';
+    track.style.transform = `translateX(${x}px)`;
+  }
+
+  function thaw(x) {
+    track.style.transform = '';
+    resumeFrom(x !== undefined ? x : currentX());
+  }
+
+  function scheduleResume(x) {
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => thaw(x), 3000);
+  }
+
+  /* Mouse hover: pause while hovered, resume immediately on leave */
+  track.addEventListener('mouseenter', freeze);
+  track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); thaw(); });
+
+  /* Touch: drag to scrub, tap to pause then auto-resume after 3s */
+  let t0x = 0, baseX = 0, dragging = false;
+
+  track.addEventListener('touchstart', e => {
+    dragging = true;
+    t0x = e.touches[0].clientX;
+    baseX = currentX();
+    freeze();
+  }, { passive: true });
+
+  track.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    track.style.transform = `translateX(${baseX + e.touches[0].clientX - t0x}px)`;
+  }, { passive: true });
+
+  track.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    const finalX = baseX + e.changedTouches[0].clientX - t0x;
+    if (Math.abs(finalX - baseX) > 8) {
+      thaw(finalX);          /* swipe — resume immediately */
+    } else {
+      track.style.transform = `translateX(${finalX}px)`;
+      scheduleResume(finalX); /* tap   — resume after 3 s  */
+    }
+  }, { passive: true });
 })();
 
 /* ── SUBLABEL ITEM COUNTS ── */
