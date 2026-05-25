@@ -2281,36 +2281,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
            change in the second half of the list as well.
            ═══════════════════════════════════════════════════════════════ -->
       <div class="act-filmstrip">
-        <div class="act-filmstrip-track">
-          <!-- ── Set 1 of 2 ── -->
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-01.jpeg" alt="Acting photo 1"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-02.jpeg" alt="Acting photo 2"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-03.jpeg" alt="Acting photo 3"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-04.jpeg" alt="Acting photo 4"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-05.jpeg" alt="Acting photo 5"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-06.jpeg" alt="Acting photo 6"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-07.jpeg" alt="Acting photo 7"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-08.jpeg" alt="Acting photo 8"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-09.jpeg" alt="Acting photo 9"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-10.jpeg" alt="Acting photo 10"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-11.jpeg" alt="Acting photo 11"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-12.jpeg" alt="Acting photo 12"></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-13.jpeg" alt="Acting photo 13"></div>
-          <!-- ── Set 2 of 2 (exact mirror — do not modify independently) ── -->
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-01.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-02.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-03.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-04.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-05.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-06.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-07.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-08.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-09.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-10.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-11.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-12.jpeg" alt=""></div>
-          <div class="act-filmstrip-item"><img src="Images/blake-acting-13.jpeg" alt=""></div>
-        </div>
+        <div class="act-filmstrip-track" id="act-filmstrip-track"></div>
       </div>
 
       <div class="section-sublabel" id="act-theatre">Theatre</div>
@@ -3052,6 +3023,28 @@ document.querySelectorAll('.cv-table').forEach(table => {
     });
   });
 });
+
+/* ── ACTING FILMSTRIP — randomised order each page load ── */
+(function () {
+  const track = document.getElementById('act-filmstrip-track');
+  if (!track) return;
+  const srcs = Array.from({length: 14}, (_, i) =>
+    'Images/blake-acting-' + String(i + 1).padStart(2, '0') + '.jpeg'
+  );
+  for (let i = srcs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [srcs[i], srcs[j]] = [srcs[j], srcs[i]];
+  }
+  [...srcs, ...srcs].forEach((src, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'act-filmstrip-item';
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = idx < srcs.length ? src.replace(/.*blake-acting-(\d+)\.jpeg/, 'Acting photo $1') : '';
+    wrap.appendChild(img);
+    track.appendChild(wrap);
+  });
+})();
 
 /* ── SUBLABEL ITEM COUNTS ── */
 [
