@@ -1106,6 +1106,8 @@ body[data-theme="dark"] .jump-nav {
   margin: 32px -48px 44px;
   overflow: hidden;
   height: 220px;
+  cursor: grab;
+  user-select: none;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
 }
@@ -3032,7 +3034,7 @@ document.querySelectorAll('.cv-table').forEach(table => {
   });
 });
 
-/* ── ACTING FILMSTRIP — randomised order, swipe + auto-resume ── */
+/* ── ACTING FILMSTRIP — randomised order, mouse drag, swipe, auto-resume ── */
 (function () {
   const track = document.getElementById('act-filmstrip-track');
   if (!track) return;
@@ -3050,12 +3052,13 @@ document.querySelectorAll('.cv-table').forEach(table => {
     wrap.className = 'act-filmstrip-item';
     const img = document.createElement('img');
     img.src = src;
+    img.draggable = false; /* prevent browser native image drag */
     img.alt = idx < srcs.length ? src.replace(/.*blake-acting-(\d+)\.jpeg/, 'Acting photo $1') : '';
     wrap.appendChild(img);
     track.appendChild(wrap);
   });
 
-  /* Pause / resume helpers */
+  /* ── Core helpers ── */
   const DURATION = 50;
   let resumeTimer = null;
 
@@ -3066,9 +3069,8 @@ document.querySelectorAll('.cv-table').forEach(table => {
   function resumeFrom(x) {
     const halfW = track.scrollWidth / 2;
     if (!halfW) return;
-    /* Normalise x into [−halfW, 0) */
     let nx = ((x % halfW) + halfW) % halfW - halfW;
-    const delay = (nx / halfW) * DURATION; /* ≤ 0 */
+    const delay = (nx / halfW) * DURATION;
     track.style.animation = 'none';
     void track.offsetWidth;
     track.style.animation = `act-filmstrip-scroll ${DURATION}s linear ${delay}s infinite`;
@@ -3082,8 +3084,10 @@ document.querySelectorAll('.cv-table').forEach(table => {
   }
 
   function thaw(x) {
+    /* Capture position BEFORE clearing the static transform */
+    const pos = x !== undefined ? x : currentX();
     track.style.transform = '';
-    resumeFrom(x !== undefined ? x : currentX());
+    resumeFrom(pos);
   }
 
   function scheduleResume(x) {
@@ -3091,31 +3095,71 @@ document.querySelectorAll('.cv-table').forEach(table => {
     resumeTimer = setTimeout(() => thaw(x), 3000);
   }
 
-  /* Mouse hover: pause while hovered, resume immediately on leave */
-  track.addEventListener('mouseenter', freeze);
-  track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); thaw(); });
+  /* ── Mouse hover + drag ── */
+  let isHovering = false;
+  let mouseDragging = false;
+  let m0x = 0, mBaseX = 0;
 
-  /* Touch: drag to scrub, tap to pause then auto-resume after 3s */
-  let t0x = 0, baseX = 0, dragging = false;
+  track.addEventListener('mouseenter', () => {
+    isHovering = true;
+    if (!mouseDragging) freeze();
+  });
+
+  track.addEventListener('mouseleave', () => {
+    isHovering = false;
+    if (mouseDragging) return; /* drag cleanup happens in mouseup */
+    clearTimeout(resumeTimer);
+    thaw();
+  });
+
+  track.addEventListener('mousedown', e => {
+    mouseDragging = true;
+    m0x = e.clientX;
+    mBaseX = currentX();
+    freeze();
+    document.body.style.cursor = 'grabbing';
+    e.preventDefault(); /* prevent text / image selection */
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!mouseDragging) return;
+    track.style.transform = `translateX(${mBaseX + e.clientX - m0x}px)`;
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!mouseDragging) return;
+    mouseDragging = false;
+    document.body.style.cursor = '';
+    const finalX = mBaseX + e.clientX - m0x;
+    track.style.transform = `translateX(${finalX}px)`;
+    if (!isHovering) {
+      /* Mouse released outside the filmstrip — resume immediately */
+      thaw(finalX);
+    }
+    /* If still hovering, stay frozen until mouseleave triggers thaw */
+  });
+
+  /* ── Touch: swipe to scrub, tap to pause then auto-resume after 3 s ── */
+  let t0x = 0, tBaseX = 0, touchDragging = false;
 
   track.addEventListener('touchstart', e => {
-    dragging = true;
+    touchDragging = true;
     t0x = e.touches[0].clientX;
-    baseX = currentX();
+    tBaseX = currentX();
     freeze();
   }, { passive: true });
 
   track.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    track.style.transform = `translateX(${baseX + e.touches[0].clientX - t0x}px)`;
+    if (!touchDragging) return;
+    track.style.transform = `translateX(${tBaseX + e.touches[0].clientX - t0x}px)`;
   }, { passive: true });
 
   track.addEventListener('touchend', e => {
-    if (!dragging) return;
-    dragging = false;
-    const finalX = baseX + e.changedTouches[0].clientX - t0x;
-    if (Math.abs(finalX - baseX) > 8) {
-      thaw(finalX);          /* swipe — resume immediately */
+    if (!touchDragging) return;
+    touchDragging = false;
+    const finalX = tBaseX + e.changedTouches[0].clientX - t0x;
+    if (Math.abs(finalX - tBaseX) > 8) {
+      thaw(finalX);           /* swipe — resume immediately */
     } else {
       track.style.transform = `translateX(${finalX}px)`;
       scheduleResume(finalX); /* tap   — resume after 3 s  */
