@@ -1106,6 +1106,8 @@ body[data-theme="dark"] .jump-nav {
   margin: 32px -48px 44px;
   overflow: hidden;
   height: 220px;
+  cursor: grab;
+  user-select: none;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
 }
@@ -1137,6 +1139,55 @@ body[data-theme="dark"] .jump-nav {
 @media (max-width: 639px) {
   .act-filmstrip { margin: 20px -20px 32px; height: 170px; }
   .act-filmstrip-item { width: 120px; height: 170px; }
+}
+
+/* ── ACTING PHOTO LIGHTBOX ── */
+.act-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.88);
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.act-lightbox.open {
+  display: flex;
+  animation: act-lb-fade 0.18s ease;
+}
+.act-lightbox img {
+  max-width: min(90vw, 640px);
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  cursor: default;
+  animation: act-lb-zoom 0.2s ease;
+  pointer-events: none;
+}
+.act-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 10px;
+  line-height: 1;
+  border-radius: 2px;
+  pointer-events: all;
+}
+.act-lightbox-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+@keyframes act-lb-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes act-lb-zoom {
+  from { transform: scale(0.93); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
 }
 
 
@@ -3032,7 +3083,7 @@ document.querySelectorAll('.cv-table').forEach(table => {
   });
 });
 
-/* ── ACTING FILMSTRIP — randomised order, swipe + auto-resume ── */
+/* ── ACTING FILMSTRIP — randomised order, drag, lightbox ── */
 (function () {
   const track = document.getElementById('act-filmstrip-track');
   if (!track) return;
@@ -3050,12 +3101,13 @@ document.querySelectorAll('.cv-table').forEach(table => {
     wrap.className = 'act-filmstrip-item';
     const img = document.createElement('img');
     img.src = src;
+    img.draggable = false;
     img.alt = idx < srcs.length ? src.replace(/.*blake-acting-(\d+)\.jpeg/, 'Acting photo $1') : '';
     wrap.appendChild(img);
     track.appendChild(wrap);
   });
 
-  /* Pause / resume helpers */
+  /* ── Animation helpers ── */
   const DURATION = 50;
   let resumeTimer = null;
 
@@ -3066,9 +3118,8 @@ document.querySelectorAll('.cv-table').forEach(table => {
   function resumeFrom(x) {
     const halfW = track.scrollWidth / 2;
     if (!halfW) return;
-    /* Normalise x into [−halfW, 0) */
     let nx = ((x % halfW) + halfW) % halfW - halfW;
-    const delay = (nx / halfW) * DURATION; /* ≤ 0 */
+    const delay = (nx / halfW) * DURATION;
     track.style.animation = 'none';
     void track.offsetWidth;
     track.style.animation = `act-filmstrip-scroll ${DURATION}s linear ${delay}s infinite`;
@@ -3082,8 +3133,9 @@ document.querySelectorAll('.cv-table').forEach(table => {
   }
 
   function thaw(x) {
+    const pos = x !== undefined ? x : currentX(); /* snapshot BEFORE clearing transform */
     track.style.transform = '';
-    resumeFrom(x !== undefined ? x : currentX());
+    resumeFrom(pos);
   }
 
   function scheduleResume(x) {
@@ -3091,34 +3143,123 @@ document.querySelectorAll('.cv-table').forEach(table => {
     resumeTimer = setTimeout(() => thaw(x), 3000);
   }
 
-  /* Mouse hover: pause while hovered, resume immediately on leave */
-  track.addEventListener('mouseenter', freeze);
-  track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); thaw(); });
+  /* ── Lightbox ── */
+  const lb = document.createElement('div');
+  lb.className = 'act-lightbox';
+  lb.setAttribute('role', 'dialog');
+  lb.setAttribute('aria-modal', 'true');
+  const lbClose = document.createElement('button');
+  lbClose.className = 'act-lightbox-close';
+  lbClose.setAttribute('aria-label', 'Close photo');
+  lbClose.textContent = '✕';
+  const lbImg = document.createElement('img');
+  lb.appendChild(lbClose);
+  lb.appendChild(lbImg);
+  document.body.appendChild(lb);
 
-  /* Touch: drag to scrub, tap to pause then auto-resume after 3s */
-  let t0x = 0, baseX = 0, dragging = false;
+  function openLightbox(src, alt) {
+    clearTimeout(resumeTimer);
+    lbImg.src = src;
+    lbImg.alt = alt || '';
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    thaw();
+  }
+
+  lb.addEventListener('click', () => closeLightbox());
+  lbClose.addEventListener('click', e => { e.stopPropagation(); closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && lb.classList.contains('open')) closeLightbox();
+  });
+
+  /* ── Mouse: hover pause / resume ── */
+  let isHovering = false, mouseDragging = false;
+  let m0x = 0, mBaseX = 0;
+
+  track.addEventListener('mouseenter', () => {
+    isHovering = true;
+    if (!mouseDragging) freeze();
+  });
+
+  track.addEventListener('mouseleave', () => {
+    isHovering = false;
+    if (mouseDragging) return;
+    clearTimeout(resumeTimer);
+    thaw();
+  });
+
+  /* ── Mouse: click-to-open + drag-to-scrub ── */
+  track.addEventListener('mousedown', e => {
+    mouseDragging = true;
+    m0x = e.clientX;
+    mBaseX = currentX();
+    freeze();
+    document.body.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!mouseDragging) return;
+    track.style.transform = `translateX(${mBaseX + e.clientX - m0x}px)`;
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!mouseDragging) return;
+    mouseDragging = false;
+    document.body.style.cursor = '';
+    const dx = e.clientX - m0x;
+    const finalX = mBaseX + dx;
+
+    if (Math.abs(dx) <= 8) {
+      /* Click — open lightbox for the photo under the cursor */
+      const item = e.target.closest && e.target.closest('.act-filmstrip-item');
+      if (item) { const img = item.querySelector('img'); if (img) openLightbox(img.src, img.alt); }
+    } else {
+      /* Drag — park at final position; resume if mouse left filmstrip */
+      track.style.transform = `translateX(${finalX}px)`;
+      if (!isHovering) thaw(finalX);
+    }
+  });
+
+  /* ── Touch: tap-to-open + swipe-to-scrub ── */
+  let t0x = 0, tBaseX = 0, touchDragging = false;
 
   track.addEventListener('touchstart', e => {
-    dragging = true;
-    t0x = e.touches[0].clientX;
-    baseX = currentX();
+    touchDragging = true;
+    t0x    = e.touches[0].clientX;
+    tBaseX = currentX();
     freeze();
   }, { passive: true });
 
   track.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    track.style.transform = `translateX(${baseX + e.touches[0].clientX - t0x}px)`;
+    if (!touchDragging) return;
+    track.style.transform = `translateX(${tBaseX + e.touches[0].clientX - t0x}px)`;
   }, { passive: true });
 
   track.addEventListener('touchend', e => {
-    if (!dragging) return;
-    dragging = false;
-    const finalX = baseX + e.changedTouches[0].clientX - t0x;
-    if (Math.abs(finalX - baseX) > 8) {
-      thaw(finalX);          /* swipe — resume immediately */
+    if (!touchDragging) return;
+    touchDragging = false;
+    const touch  = e.changedTouches[0];
+    const finalX = tBaseX + touch.clientX - t0x;
+
+    if (Math.abs(finalX - tBaseX) > 8) {
+      thaw(finalX); /* swipe — resume immediately */
     } else {
+      /* Tap — open lightbox for the photo under the finger */
+      const el   = document.elementFromPoint(touch.clientX, touch.clientY);
+      const item = el && el.closest('.act-filmstrip-item');
+      if (item) {
+        const img = item.querySelector('img');
+        if (img) { openLightbox(img.src, img.alt); return; }
+      }
+      /* Tapped empty space — auto-resume after 3 s */
       track.style.transform = `translateX(${finalX}px)`;
-      scheduleResume(finalX); /* tap   — resume after 3 s  */
+      scheduleResume(finalX);
     }
   }, { passive: true });
 })();
