@@ -156,6 +156,22 @@ body {
   align-items: center;
 }
 
+.td-upcoming-toggle {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 2px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.td-upcoming-toggle.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+.td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
+[data-theme="terminal"] .td-upcoming-toggle.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
+[data-theme="terminal"] .td-upcoming-toggle:hover:not(.active) { border-color: var(--lime); color: var(--lime); }
+
 .td-select {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
@@ -268,18 +284,19 @@ body {
   padding-top: 7px; margin-top: 2px;
 }
 .td-links {
-  display: flex; gap: 5px; flex-wrap: wrap;
+  display: flex; gap: 5px;
 }
 .td-link {
   font-family: 'DM Mono', monospace;
   font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
-  padding: 4px 9px;
+  padding: 5px 6px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
   text-decoration: none;
   color: var(--muted);
   transition: all 0.15s;
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  flex: 1; min-width: 0;
 }
 .td-link:hover { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-link:hover { border-color: var(--lime); color: var(--lime); }
@@ -383,6 +400,7 @@ body {
     <select class="td-select" id="td-month">
       <option value="">All Months</option>
     </select>
+    <button class="td-upcoming-toggle active" id="td-upcoming" title="Show only current &amp; future productions">Upcoming</button>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count"></div>
@@ -495,8 +513,17 @@ function monthsOf(row) {
   return out;
 }
 
+/* ── TODAY ── */
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
+
+function isUpcoming(row) {
+  const end = parseDate(row.date_end) || parseDate(row.date_start);
+  return !end || end >= TODAY;
+}
+
 /* ── STATE ── */
-let allShows = [], activeCompany = '', activeMonth = '', searchQ = '';
+let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, searchQ = '';
 
 /* ── RENDER CARD ── */
 function card(show) {
@@ -507,7 +534,10 @@ function card(show) {
   if (show.url_facebook)  links.push(`<a class="td-link" href="${show.url_facebook}"  target="_blank" rel="noopener">${iconFB} FB</a>`);
   if (show.url_instagram) links.push(`<a class="td-link" href="${show.url_instagram}" target="_blank" rel="noopener">${iconIG} IG</a>`);
   if (show.url_web)       links.push(`<a class="td-link" href="${show.url_web}"       target="_blank" rel="noopener">${iconWeb} Web</a>`);
-  const people = [show.director ? 'Dir. ' + show.director : '', show.playwright].filter(Boolean).join('<br>');
+  const people = [
+    show.director  ? 'Director: '   + show.director  : '',
+    show.playwright ? 'Playwright: ' + show.playwright : '',
+  ].filter(Boolean).join('<br>');
 
   return `<div class="td-card">
     <div class="td-card-row1">
@@ -533,6 +563,7 @@ function render() {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
       return hay.includes(q);
     }
+    if (activeUpcoming && !isUpcoming(s)) return false;
     if (activeCompany && s.company !== activeCompany) return false;
     if (month !== null && !monthsOf(s).includes(month)) return false;
     return true;
@@ -563,12 +594,6 @@ function buildFilters(shows) {
     monthSel.appendChild(o);
   });
 
-  /* Default month to the current calendar month if it exists in the data */
-  const currentMonth = new Date().getMonth();
-  if (monthSet.has(currentMonth)) {
-    activeMonth = String(currentMonth);
-    monthSel.value = activeMonth;
-  }
 }
 
 /* ── FETCH ── */
@@ -597,9 +622,14 @@ async function init(isRefresh = false) {
 }
 
 /* ── EVENTS ── */
-document.getElementById('td-search').addEventListener('input',  e => { searchQ      = e.target.value; render(); });
-document.getElementById('td-company').addEventListener('change', e => { activeCompany = e.target.value; render(); });
-document.getElementById('td-month').addEventListener('change',  e => { activeMonth  = e.target.value; render(); });
+document.getElementById('td-search').addEventListener('input',   e  => { searchQ = e.target.value; render(); });
+document.getElementById('td-company').addEventListener('change',  e  => { activeCompany = e.target.value; render(); });
+document.getElementById('td-month').addEventListener('change',    e  => { activeMonth = e.target.value; render(); });
+document.getElementById('td-upcoming').addEventListener('click',  () => {
+  activeUpcoming = !activeUpcoming;
+  document.getElementById('td-upcoming').classList.toggle('active', activeUpcoming);
+  render();
+});
 document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
 
 /* ── JUMP TO TOP ── */
