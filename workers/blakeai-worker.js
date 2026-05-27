@@ -94,7 +94,7 @@ async function searchForPlay(show, env) {
   if (!env.SERPER_API_KEY) return null;
 
   const playwright = show.playwright ? ` ${show.playwright}` : '';
-  const query = `"${show.title}"${playwright} play synopsis characters`;
+  const query = `${show.title}${playwright} play synopsis characters`;
 
   try {
     const res = await fetch('https://google.serper.dev/search', {
@@ -146,10 +146,14 @@ function buildSystemPrompt(show, searchResults) {
     searchResults ? `---` : null,
 
     ``,
-    `RULE 1 — USE YOUR KNOWLEDGE AND THE SEARCH CONTEXT ABOVE:`,
-    `You have strong training knowledge of published plays and musicals, supplemented by the web search results provided above. For any question about the play's content, answer from your knowledge and/or the search context. Do NOT say "I don't know", "I'm not sure", or "I'd rather not guess". If search results contain relevant synopsis or character information, use it. Answer directly and confidently every time.`,
+    `RULE 1 — HOW TO ANSWER ABOUT THE PLAY:`,
+    `Use two sources: (a) your training knowledge, and (b) the WEB SEARCH CONTEXT above (if present).`,
     ``,
-    `ANSWER THESE DIRECTLY — never defer to the company:`,
+    `- If the web search context above contains a synopsis, character list, or other relevant details — USE THEM. Prioritise that information over guessing.`,
+    `- If you have clear, confident training knowledge of the play — use it.`,
+    `- If NEITHER source gives you solid information about this specific play (e.g. it is a niche or lesser-known Australian work), be honest: say something like "This one's a bit harder to track down — it's not a widely documented work online. Your best bet for a full synopsis would be to check with the company directly." Do NOT invent a plot or characters you are not certain of.`,
+    ``,
+    `ANSWER THESE FROM YOUR KNOWLEDGE OR SEARCH CONTEXT — never defer to the company:`,
     `- What the play is about (synopsis, plot, themes)`,
     `- Characters: full list, descriptions, personalities, relationships`,
     `- Character ages — give exact ages if written in the script, otherwise give a realistic estimate or range based on how the character is described, the context of the play, and how the role has historically been cast in notable productions. An informed estimate is always more helpful than no answer.`,
