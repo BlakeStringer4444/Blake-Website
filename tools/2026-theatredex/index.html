@@ -82,11 +82,13 @@ body {
 }
 .td-sheet-btn {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
   color: rgba(212,255,26,0.55);
   text-decoration: none;
   border: 1px solid rgba(212,255,26,0.25);
-  padding: 7px 13px;
+  padding: 0 13px;
+  height: 34px;
+  display: inline-flex; align-items: center;
   border-radius: 2px;
   transition: all 0.2s;
   white-space: nowrap;
@@ -503,12 +505,12 @@ function render() {
   const month = activeMonth !== '' ? parseInt(activeMonth) : null;
 
   const results = allShows.filter(s => {
-    if (activeCompany && s.company !== activeCompany) return false;
-    if (month !== null && !monthsOf(s).includes(month)) return false;
     if (q) {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
+      return hay.includes(q);
     }
+    if (activeCompany && s.company !== activeCompany) return false;
+    if (month !== null && !monthsOf(s).includes(month)) return false;
     return true;
   });
 
