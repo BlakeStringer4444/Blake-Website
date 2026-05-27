@@ -916,14 +916,15 @@ async function sendMessage(override) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ show: baShow, messages: baMsgs_ }),
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const { text: reply } = await res.json();
+    const body = await res.text();
+    if (!res.ok) throw new Error(body);
+    const { text: reply } = JSON.parse(body);
     baMsgs_.push({ role: 'assistant', content: reply });
     thinking.remove();
     addMsg('ai', formatReply(reply));
-  } catch {
+  } catch(err) {
     thinking.remove();
-    addMsg('ai', 'Something went wrong — please try again shortly.');
+    addMsg('ai', 'Error: ' + err.message);
   }
 
   baBusy = false;
