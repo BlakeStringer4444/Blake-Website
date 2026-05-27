@@ -95,6 +95,26 @@ body {
 }
 .td-sheet-btn:hover { color: var(--lime); border-color: var(--lime); }
 
+.td-header-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.td-header-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(212,255,26,0.55);
+  text-decoration: none;
+  border: 1px solid rgba(212,255,26,0.25);
+  padding: 7px 14px;
+  border-radius: 2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center;
+}
+.td-header-btn:hover { color: var(--lime); border-color: var(--lime); }
+
 .td-theme-btn {
   background: none;
   border: 1px solid rgba(212,255,26,0.25);
@@ -374,7 +394,6 @@ button.td-link { background: none; cursor: pointer; }
   .td-footer   { padding: 20px; flex-direction: column; text-align: center; }
   .td-title    { font-size: clamp(48px, 14vw, 80px); }
   .td-jump-top { bottom: 18px; right: 18px; }
-  .td-sheet-btn { font-size: 8px; padding: 6px 10px; }
 }
 </style>
 </head>
@@ -384,12 +403,15 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-header-top">
     <a class="td-back" href="/">← blakestringer.com</a>
     <div class="td-header-actions">
-      <a class="td-sheet-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener">Spreadsheet ↗</a>
       <button class="td-theme-btn" id="td-theme-btn" title="Toggle theme"></button>
     </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
   <p class="td-subtitle">Victorian Community Theatre — 2026 Season</p>
+  <div class="td-header-btns">
+    <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet ↗</a>
+    <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Auditions ↗</a>
+  </div>
 </header>
 
 <div class="td-controls">
