@@ -24,7 +24,6 @@
   --muted:      rgba(0,0,0,0.45);
   --input-bg:   #ffffff;
   --input-border:rgba(0,0,0,0.15);
-  --header-bg:  var(--black);
 }
 [data-theme="dark"] {
   --bg:         var(--black);
@@ -59,7 +58,6 @@ body {
 .td-header {
   background: var(--black);
   padding: 28px 48px 24px;
-  position: relative;
 }
 .td-header-top {
   display: flex;
@@ -73,21 +71,40 @@ body {
   color: rgba(212,255,26,0.55);
   text-decoration: none;
   transition: color 0.2s;
-  padding-top: 4px;
+  padding-top: 6px;
 }
 .td-back:hover { color: var(--lime); }
+
+.td-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.td-sheet-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(212,255,26,0.55);
+  text-decoration: none;
+  border: 1px solid rgba(212,255,26,0.25);
+  padding: 7px 13px;
+  border-radius: 2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.td-sheet-btn:hover { color: var(--lime); border-color: var(--lime); }
+
 .td-theme-btn {
   background: none;
   border: 1px solid rgba(212,255,26,0.25);
-  color: rgba(212,255,26,0.55);
-  font-family: 'DM Mono', monospace;
-  font-size: 14px;
+  color: rgba(212,255,26,0.7);
   width: 34px; height: 34px;
   border-radius: 2px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
   flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
 }
 .td-theme-btn:hover { border-color: var(--lime); color: var(--lime); }
 .td-title {
@@ -136,20 +153,6 @@ body {
   gap: 8px;
   align-items: center;
 }
-.td-chips { display: flex; gap: 5px; flex-wrap: wrap; }
-.td-chip {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 5px 11px;
-  border: 1px solid var(--input-border);
-  border-radius: 2px;
-  background: none;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.td-chip:hover { border-color: var(--purple); color: var(--purple); }
-.td-chip.active { background: var(--purple); border-color: var(--purple); color: #fff; }
 
 .td-select {
   font-family: 'DM Mono', monospace;
@@ -247,19 +250,19 @@ body {
 .td-link {
   font-family: 'DM Mono', monospace;
   font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
   text-decoration: none;
   color: var(--muted);
   transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .td-link:hover { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-link:hover { border-color: var(--lime); color: var(--lime); }
+.td-link svg { flex-shrink: 0; }
 
 .td-blakeai {
-  margin-top: auto;
-  padding-top: 7px;
   width: 100%;
   padding: 7px 12px;
   font-family: 'DM Mono', monospace;
@@ -282,6 +285,27 @@ body {
   font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
   color: var(--muted);
 }
+
+/* ── JUMP TO TOP ── */
+.td-jump-top {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 42px; height: 42px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s, transform 0.2s;
+  z-index: 200;
+  box-shadow: 0 4px 18px rgba(153,51,255,0.35);
+}
+.td-jump-top.visible { opacity: 1; pointer-events: auto; }
+.td-jump-top:hover { transform: translateY(-3px); }
+[data-theme="terminal"] .td-jump-top { background: var(--lime); color: var(--black); box-shadow: 0 4px 18px rgba(212,255,26,0.2); }
 
 /* ── FOOTER ── */
 .td-footer {
@@ -308,6 +332,8 @@ body {
   .td-grid     { grid-template-columns: 1fr; }
   .td-footer   { padding: 20px; flex-direction: column; text-align: center; }
   .td-title    { font-size: clamp(48px, 14vw, 80px); }
+  .td-jump-top { bottom: 18px; right: 18px; }
+  .td-sheet-btn { font-size: 8px; padding: 6px 10px; }
 }
 </style>
 </head>
@@ -316,7 +342,10 @@ body {
 <header class="td-header">
   <div class="td-header-top">
     <a class="td-back" href="/">← blakestringer.com</a>
-    <button class="td-theme-btn" id="td-theme-btn" title="Toggle theme">◐</button>
+    <div class="td-header-actions">
+      <a class="td-sheet-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener">Spreadsheet ↗</a>
+      <button class="td-theme-btn" id="td-theme-btn" title="Toggle theme"></button>
+    </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
   <p class="td-subtitle">Victorian Community Theatre — 2026 Season</p>
@@ -325,17 +354,11 @@ body {
 <div class="td-controls">
   <input type="search" class="td-search" id="td-search" placeholder="Search title, company, playwright, director…">
   <div class="td-filter-row">
-    <div class="td-chips" id="td-type-chips">
-      <button class="td-chip active" data-value="">All Types</button>
-      <button class="td-chip" data-value="Play">Play</button>
-      <button class="td-chip" data-value="Musical">Musical</button>
-      <button class="td-chip" data-value="Pantomime">Pantomime</button>
-    </div>
+    <select class="td-select" id="td-company">
+      <option value="">All Companies</option>
+    </select>
     <select class="td-select" id="td-month">
       <option value="">All Months</option>
-    </select>
-    <select class="td-select" id="td-suburb">
-      <option value="">All Locations</option>
     </select>
   </div>
   <div class="td-count" id="td-count"></div>
@@ -352,24 +375,47 @@ body {
   <span>Data: Victorian community theatre listings</span>
 </footer>
 
+<button class="td-jump-top" id="td-jump-top" title="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
 <script>
 /* ── THEME ── */
+const themeBtn = document.getElementById('td-theme-btn');
+const sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  themeBtn.innerHTML = theme === 'terminal' ? lockSVG : theme === 'dark' ? sunSVG : '☾';
+  if (theme === 'terminal') {
+    sessionStorage.setItem('theme', 'terminal');
+  } else {
+    localStorage.setItem('theme', theme);
+    sessionStorage.removeItem('theme');
+  }
+}
+
 (function () {
-  const saved = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
+  const saved = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'light';
+  setTheme(saved);
 })();
 
-document.getElementById('td-theme-btn').addEventListener('click', () => {
+themeBtn.addEventListener('click', () => {
   const themes = ['light', 'dark', 'terminal'];
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = themes[(themes.indexOf(cur) + 1) % themes.length];
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
+  setTheme(themes[(themes.indexOf(cur) + 1) % themes.length]);
 });
 
 /* ── CONFIG ── */
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfBhALi9j_StQcvcxjy7Iyj6xNOejrkT5cLK4NHUiikmuoKoPXZxdOPeQJTpwrjD5tgUNQ0iKV9UIP/pub?gid=1603898813&single=true&output=csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ── LINK ICONS ── */
+const iconMap = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const iconFB  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>`;
+const iconIG  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`;
+const iconWeb = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
 
 /* ── CSV PARSER ── */
 function parseCSV(text) {
@@ -424,17 +470,17 @@ function monthsOf(row) {
 }
 
 /* ── STATE ── */
-let allShows = [], activeType = '', activeMonth = '', activeSuburb = '', searchQ = '';
+let allShows = [], activeCompany = '', activeMonth = '', searchQ = '';
 
 /* ── RENDER CARD ── */
 function card(show) {
-  const type    = show.type || 'Play';
+  const type     = show.type || 'Play';
   const badgeCls = 'td-badge td-badge-' + type.toLowerCase();
-  const links   = [];
-  if (show.url_map)       links.push(`<a class="td-link" href="${show.url_map}"       target="_blank" rel="noopener">Map</a>`);
-  if (show.url_facebook)  links.push(`<a class="td-link" href="${show.url_facebook}"  target="_blank" rel="noopener">FB</a>`);
-  if (show.url_instagram) links.push(`<a class="td-link" href="${show.url_instagram}" target="_blank" rel="noopener">IG</a>`);
-  if (show.url_web)       links.push(`<a class="td-link" href="${show.url_web}"       target="_blank" rel="noopener">Web</a>`);
+  const links    = [];
+  if (show.url_map)       links.push(`<a class="td-link" href="${show.url_map}"       target="_blank" rel="noopener">${iconMap} Map</a>`);
+  if (show.url_facebook)  links.push(`<a class="td-link" href="${show.url_facebook}"  target="_blank" rel="noopener">${iconFB} FB</a>`);
+  if (show.url_instagram) links.push(`<a class="td-link" href="${show.url_instagram}" target="_blank" rel="noopener">${iconIG} IG</a>`);
+  if (show.url_web)       links.push(`<a class="td-link" href="${show.url_web}"       target="_blank" rel="noopener">${iconWeb} Web</a>`);
   const people = [show.director ? 'Dir. ' + show.director : '', show.playwright].filter(Boolean).join('<br>');
 
   return `<div class="td-card">
@@ -453,12 +499,11 @@ function card(show) {
 
 /* ── FILTER + RENDER ── */
 function render() {
-  const q = searchQ.toLowerCase();
+  const q     = searchQ.toLowerCase();
   const month = activeMonth !== '' ? parseInt(activeMonth) : null;
 
   const results = allShows.filter(s => {
-    if (activeType && s.type !== activeType) return false;
-    if (activeSuburb && s.suburb !== activeSuburb) return false;
+    if (activeCompany && s.company !== activeCompany) return false;
     if (month !== null && !monthsOf(s).includes(month)) return false;
     if (q) {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
@@ -475,22 +520,29 @@ function render() {
 
 /* ── POPULATE DROPDOWNS ── */
 function buildFilters(shows) {
-  const monthSel  = document.getElementById('td-month');
-  const suburbSel = document.getElementById('td-suburb');
+  const companySel = document.getElementById('td-company');
+  const monthSel   = document.getElementById('td-month');
+
+  [...new Set(shows.map(s => s.company).filter(Boolean))].sort().forEach(co => {
+    const o = document.createElement('option');
+    o.value = co; o.textContent = co;
+    companySel.appendChild(o);
+  });
 
   const monthSet = new Set();
   shows.forEach(s => monthsOf(s).forEach(m => monthSet.add(m)));
-  [...monthSet].sort((a,b) => a-b).forEach(m => {
+  [...monthSet].sort((a, b) => a - b).forEach(m => {
     const o = document.createElement('option');
     o.value = m; o.textContent = MONTHS[m];
     monthSel.appendChild(o);
   });
 
-  [...new Set(shows.map(s => s.suburb).filter(Boolean))].sort().forEach(sub => {
-    const o = document.createElement('option');
-    o.value = sub; o.textContent = sub;
-    suburbSel.appendChild(o);
-  });
+  /* Default month to the current calendar month if it exists in the data */
+  const currentMonth = new Date().getMonth();
+  if (monthSet.has(currentMonth)) {
+    activeMonth = String(currentMonth);
+    monthSel.value = activeMonth;
+  }
 }
 
 /* ── FETCH ── */
@@ -510,17 +562,16 @@ async function init() {
 }
 
 /* ── EVENTS ── */
-document.getElementById('td-search').addEventListener('input', e => { searchQ = e.target.value; render(); });
+document.getElementById('td-search').addEventListener('input',  e => { searchQ      = e.target.value; render(); });
+document.getElementById('td-company').addEventListener('change', e => { activeCompany = e.target.value; render(); });
 document.getElementById('td-month').addEventListener('change',  e => { activeMonth  = e.target.value; render(); });
-document.getElementById('td-suburb').addEventListener('change', e => { activeSuburb = e.target.value; render(); });
-document.getElementById('td-type-chips').addEventListener('click', e => {
-  const chip = e.target.closest('.td-chip');
-  if (!chip) return;
-  document.querySelectorAll('#td-type-chips .td-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  activeType = chip.dataset.value;
-  render();
-});
+
+/* ── JUMP TO TOP ── */
+const jumpTop = document.getElementById('td-jump-top');
+window.addEventListener('scroll', () => {
+  jumpTop.classList.toggle('visible', window.scrollY > 300);
+}, { passive: true });
+jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
 init();
 </script>
