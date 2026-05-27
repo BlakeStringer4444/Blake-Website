@@ -2,17 +2,17 @@
  * BlakeAI — Cloudflare Worker
  *
  * Proxies requests from Theatredex 2026 to the Anthropic API.
- * Optionally enriches Claude's context with live web search via Brave Search API.
+ * Optionally enriches Claude's context with live web search via Serper (Google Search API).
  * Neither API key ever leaves this worker — both stored as Cloudflare secrets.
  *
  * Secrets required:
  *   ANTHROPIC_API_KEY  — from console.anthropic.com
- *   BRAVE_API_KEY      — from api.search.brave.com (free tier: 2,000 queries/month)
+ *   SERPER_API_KEY     — from serper.dev (free tier: 2,500 queries, no credit card)
  *
  * Deploy steps (done once):
  *   1. Go to workers.cloudflare.com → Create Worker → paste this file
  *   2. Settings → Variables → Add secret: ANTHROPIC_API_KEY = <your key>
- *   3. Settings → Variables → Add secret: BRAVE_API_KEY = <your key>
+ *   3. Settings → Variables → Add secret: SERPER_API_KEY = <your key>
  *   4. Copy the worker URL (e.g. https://blakeai.YOUR-NAME.workers.dev)
  *   5. Paste that URL into WORKER_URL in tools/2026-theatredex/index.html
  */
@@ -89,35 +89,33 @@ export default {
   },
 };
 
-/* ── Brave Search — fetch snippets about this play ── */
+/* ── Serper (Google Search) — fetch snippets about this play ── */
 async function searchForPlay(show, env) {
-  if (!env.BRAVE_API_KEY) return null;
+  if (!env.SERPER_API_KEY) return null;
 
   const playwright = show.playwright ? ` ${show.playwright}` : '';
   const query = `"${show.title}"${playwright} play synopsis characters`;
 
   try {
-    const res = await fetch(
-      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
-      {
-        headers: {
-          'Accept':               'application/json',
-          'Accept-Encoding':      'gzip',
-          'X-Subscription-Token': env.BRAVE_API_KEY,
-        },
-      }
-    );
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY':    env.SERPER_API_KEY,
+      },
+      body: JSON.stringify({ q: query, num: 5 }),
+    });
 
     if (!res.ok) return null;
 
     const data    = await res.json();
-    const results = data.web?.results ?? [];
+    const results = data.organic ?? [];
 
     if (results.length === 0) return null;
 
     return results
       .slice(0, 5)
-      .map(r => `[${r.title}]\nURL: ${r.url}\n${r.description ?? ''}`)
+      .map(r => `[${r.title}]\nURL: ${r.link}\n${r.snippet ?? ''}`)
       .join('\n\n');
   } catch {
     return null;
