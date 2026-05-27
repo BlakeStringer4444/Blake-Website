@@ -263,6 +263,56 @@ header {
 .panel { display: none; opacity: 0; }
 .panel.active { display: block; opacity: 1; transition: opacity 0.22s ease; }
 
+/* ── TOOLS GRID ── */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+.tool-card {
+  background: none;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 28px 16px 24px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+a.tool-card { cursor: pointer; }
+a.tool-card:hover { background: var(--purple); border-color: var(--purple); }
+a.tool-card:hover .tool-name,
+a.tool-card:hover .tool-desc { color: var(--lime); }
+.tool-card.placeholder { opacity: 0.35; cursor: default; }
+.tool-icon { font-size: 30px; line-height: 1; }
+.tool-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--black);
+}
+.tool-desc { font-size: 12px; color: rgba(0,0,0,0.5); line-height: 1.5; }
+.tool-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 2px;
+  background: rgba(153,51,255,0.1); color: var(--purple);
+}
+
+body[data-theme="dark"] .tool-card { border-color: rgba(255,255,255,0.12); }
+body[data-theme="dark"] a.tool-card:hover { background: var(--purple); border-color: var(--purple); }
+body[data-theme="dark"] .tool-name { color: #f0f0eb; }
+body[data-theme="dark"] .tool-desc { color: rgba(240,240,235,0.45); }
+body[data-theme="dark"] .tool-tag { background: rgba(153,51,255,0.2); }
+body[data-theme="terminal"] .tool-card { border-color: rgba(255,255,255,0.15); }
+body[data-theme="terminal"] a.tool-card:hover { background: var(--lime); border-color: var(--lime); }
+body[data-theme="terminal"] a.tool-card:hover .tool-name,
+body[data-theme="terminal"] a.tool-card:hover .tool-desc { color: var(--black); }
+body[data-theme="terminal"] .tool-name { color: #fff; }
+body[data-theme="terminal"] .tool-desc { color: rgba(255,255,255,0.4); }
+body[data-theme="dark"] #panel-tools > p { color: rgba(240,240,235,0.45); }
+
 /* ── SECTION LABEL ── */
 .section-label {
   font-family: 'Bebas Neue', sans-serif;
@@ -2824,6 +2874,28 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
 
     </div>
 
+    <!-- TOOLS -->
+    <div class="panel" id="panel-tools">
+      <div class="section-label">Tools</div>
+      <p style="font-size:13px;color:rgba(0,0,0,0.5);letter-spacing:0.5px;">A growing collection of projects and utilities.</p>
+      <div class="tools-grid">
+
+        <a class="tool-card" href="/tools/2026-theatredex">
+          <span class="tool-icon">🎭</span>
+          <span class="tool-name">2026 Theatredex</span>
+          <span class="tool-desc">Browse & filter Victorian community theatre productions</span>
+          <span class="tool-tag">Live</span>
+        </a>
+
+        <div class="tool-card placeholder">
+          <span class="tool-icon">✦</span>
+          <span class="tool-name">More to Come</span>
+          <span class="tool-desc">Additional tools in development</span>
+        </div>
+
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -3000,6 +3072,7 @@ const sections = [
   { id: 'sound',      label: 'Sound Design' },
   { id: 'music',      label: 'Music' },
   { id: 'directing',  label: 'Directing' },
+  { id: 'tools',      label: 'Tools' },
 ];
 
 let current = 0;
