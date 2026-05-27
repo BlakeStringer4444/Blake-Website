@@ -303,34 +303,6 @@ body {
 .td-link svg { flex-shrink: 0; }
 button.td-link { background: none; cursor: pointer; }
 
-/* ── MAP PICKER POPUP ── */
-.td-map-popup {
-  position: fixed;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 4px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
-  z-index: 500;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 176px;
-}
-.td-map-popup.show { display: flex; }
-.td-map-option {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 13px 16px;
-  text-decoration: none;
-  color: var(--fg);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  display: flex; align-items: center; gap: 8px;
-}
-.td-map-option + .td-map-option { border-top: 1px solid var(--card-border); }
-.td-map-option:hover { background: var(--purple); color: #fff; }
-[data-theme="terminal"] .td-map-option:hover { background: var(--lime); color: var(--black); }
-
 .td-blakeai {
   width: 100%;
   padding: 7px 12px;
@@ -447,11 +419,6 @@ button.td-link { background: none; cursor: pointer; }
   <span>Theatredex 2026 — <a href="/">blakestringer.com</a></span>
   <span>Data: Victorian community theatre listings</span>
 </footer>
-
-<div class="td-map-popup" id="td-map-popup" role="dialog" aria-label="Choose map app">
-  <a class="td-map-option" id="td-map-apple" target="_blank" rel="noopener noreferrer">🍎 Apple Maps</a>
-  <a class="td-map-option" id="td-map-google" target="_blank" rel="noopener noreferrer">🗺 Google Maps</a>
-</div>
 
 <button class="td-jump-top" id="td-jump-top" title="Back to top">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
@@ -570,7 +537,7 @@ function card(show) {
   const type     = show.type || 'Play';
   const badgeCls = 'td-badge td-badge-' + type.toLowerCase();
   const links    = [];
-  if (show.url_map)       links.push(`<button class="td-link td-link-map" data-suburb="${show.suburb || ''}" data-url="${safeUrl(show.url_map)}">${iconMap} Map</button>`);
+  if (show.url_map)       links.push(`<a class="td-link" href="${safeUrl(show.url_map)}" target="_blank" rel="noopener noreferrer">${iconMap} Map</a>`);
   if (show.url_facebook)  links.push(`<a class="td-link" href="${safeUrl(show.url_facebook)}"  target="_blank" rel="noopener noreferrer">${iconFB} FB</a>`);
   if (show.url_instagram) links.push(`<a class="td-link" href="${safeUrl(show.url_instagram)}" target="_blank" rel="noopener noreferrer">${iconIG} IG</a>`);
   if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer">${iconWeb} Web</a>`);
@@ -671,48 +638,6 @@ document.getElementById('td-upcoming').addEventListener('click',  () => {
   render();
 });
 document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
-
-/* ── MAP PICKER ── */
-const mapPopup   = document.getElementById('td-map-popup');
-const mapAppleEl = document.getElementById('td-map-apple');
-const mapGoogEl  = document.getElementById('td-map-google');
-
-function openMapPicker(btn) {
-  const suburb = btn.dataset.suburb || '';
-  const q      = encodeURIComponent(suburb ? suburb + ', Victoria, Australia' : 'Victoria, Australia');
-
-  mapAppleEl.href = 'https://maps.apple.com/?q=' + q;
-  mapGoogEl.href  = 'https://www.google.com/maps/search/?api=1&query=' + q;
-
-  const rect = btn.getBoundingClientRect();
-  const W    = window.innerWidth;
-  const popW = 180;
-  let left   = rect.left;
-  if (left + popW > W - 8) left = W - popW - 8;
-
-  mapPopup.style.left = left + 'px';
-  mapPopup.style.top  = (rect.bottom + 6) + 'px';
-  mapPopup.classList.add('show');
-  mapPopup._btn = btn;
-}
-
-function closeMapPopup() {
-  mapPopup.classList.remove('show');
-  mapPopup._btn = null;
-}
-
-document.getElementById('td-grid').addEventListener('click', e => {
-  const btn = e.target.closest('.td-link-map');
-  if (!btn) return;
-  if (mapPopup._btn === btn && mapPopup.classList.contains('show')) { closeMapPopup(); return; }
-  openMapPicker(btn);
-});
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('.td-link-map') && !e.target.closest('#td-map-popup')) closeMapPopup();
-});
-
-window.addEventListener('scroll', closeMapPopup, { passive: true });
 
 /* ── JUMP TO TOP ── */
 const jumpTop = document.getElementById('td-jump-top');
