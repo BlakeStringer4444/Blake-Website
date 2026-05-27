@@ -170,12 +170,33 @@ body {
 }
 .td-select:focus { border-color: var(--purple); }
 
+.td-controls-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .td-count {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--muted);
-  margin-top: 8px;
 }
+.td-refresh-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--input-border);
+  border-radius: 2px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.td-refresh-btn:hover { border-color: var(--purple); color: var(--purple); }
+.td-refresh-btn:disabled { opacity: 0.4; cursor: default; }
+[data-theme="terminal"] .td-refresh-btn:hover { border-color: var(--lime); color: var(--lime); }
 
 /* ── MAIN ── */
 .td-main { padding: 28px 48px 72px; }
@@ -363,7 +384,10 @@ body {
       <option value="">All Months</option>
     </select>
   </div>
-  <div class="td-count" id="td-count"></div>
+  <div class="td-controls-bottom">
+    <div class="td-count" id="td-count"></div>
+    <button class="td-refresh-btn" id="td-refresh-btn" title="Re-fetch data from Google Sheets">↻ Refresh Data</button>
+  </div>
 </div>
 
 <main class="td-main">
@@ -548,18 +572,27 @@ function buildFilters(shows) {
 }
 
 /* ── FETCH ── */
-async function init() {
+async function init(isRefresh = false) {
+  const refreshBtn = document.getElementById('td-refresh-btn');
+  const countEl    = document.getElementById('td-count');
+  if (isRefresh) {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '↻ Refreshing…';
+  }
   try {
-    const res = await fetch(CSV_URL);
+    const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     allShows = parseCSV(text).sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-    buildFilters(allShows);
+    if (!isRefresh) buildFilters(allShows);
     render();
   } catch (e) {
     document.getElementById('td-grid').innerHTML =
       '<div class="td-empty">Unable to load show data — please try again shortly.</div>';
-    document.getElementById('td-count').textContent = '';
+    countEl.textContent = '';
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '↻ Refresh Data';
   }
 }
 
@@ -567,6 +600,7 @@ async function init() {
 document.getElementById('td-search').addEventListener('input',  e => { searchQ      = e.target.value; render(); });
 document.getElementById('td-company').addEventListener('change', e => { activeCompany = e.target.value; render(); });
 document.getElementById('td-month').addEventListener('change',  e => { activeMonth  = e.target.value; render(); });
+document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
 
 /* ── JUMP TO TOP ── */
 const jumpTop = document.getElementById('td-jump-top');
