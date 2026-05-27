@@ -28,7 +28,7 @@ export default {
     }
 
     if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+      return new Response('Method not allowed', { status: 405, headers: CORS });
     }
 
     /* ── Parse body ── */
@@ -36,13 +36,13 @@ export default {
     try {
       body = await request.json();
     } catch {
-      return new Response('Invalid JSON', { status: 400 });
+      return new Response('Invalid JSON', { status: 400, headers: CORS });
     }
 
     const { show, messages } = body;
 
     if (!show || !Array.isArray(messages) || messages.length === 0) {
-      return new Response('Missing show or messages', { status: 400 });
+      return new Response('Missing show or messages', { status: 400, headers: CORS });
     }
 
     /* ── Call Anthropic ── */
@@ -63,12 +63,12 @@ export default {
         }),
       });
     } catch (e) {
-      return new Response('Could not reach Anthropic API', { status: 502 });
+      return new Response('Could not reach Anthropic API: ' + e.message, { status: 502, headers: CORS });
     }
 
     if (!apiRes.ok) {
       const err = await apiRes.text();
-      return new Response('Anthropic error: ' + err, { status: 502 });
+      return new Response('Anthropic error: ' + err, { status: 502, headers: CORS });
     }
 
     const data  = await apiRes.json();
