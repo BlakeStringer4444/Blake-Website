@@ -503,12 +503,12 @@ function render() {
   const month = activeMonth !== '' ? parseInt(activeMonth) : null;
 
   const results = allShows.filter(s => {
-    if (activeCompany && s.company !== activeCompany) return false;
-    if (month !== null && !monthsOf(s).includes(month)) return false;
     if (q) {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
+      return hay.includes(q);
     }
+    if (activeCompany && s.company !== activeCompany) return false;
+    if (month !== null && !monthsOf(s).includes(month)) return false;
     return true;
   });
 
