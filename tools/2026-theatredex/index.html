@@ -330,13 +330,126 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
   background: none;
-  border: 1px solid var(--input-border);
+  border: 1px solid rgba(153,51,255,0.35);
   border-radius: 2px;
-  color: var(--muted);
-  cursor: not-allowed;
-  opacity: 0.38;
+  color: var(--purple);
+  cursor: pointer;
   margin-top: 6px;
+  transition: background 0.15s, color 0.15s;
 }
+.td-blakeai:hover { background: var(--purple); color: #fff; }
+[data-theme="dark"]     .td-blakeai { border-color: rgba(212,255,26,0.3); color: var(--lime); }
+[data-theme="dark"]     .td-blakeai:hover { background: rgba(212,255,26,0.12); color: var(--lime); }
+[data-theme="terminal"] .td-blakeai { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.55); }
+[data-theme="terminal"] .td-blakeai:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+/* ── BLAKEAI MODAL ── */
+.blakeai-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 300;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.blakeai-overlay.open { opacity: 1; pointer-events: auto; }
+.blakeai-modal {
+  background: #111111;
+  width: 100%; max-width: 560px;
+  max-height: 82vh;
+  border-radius: 8px 8px 0 0;
+  display: flex; flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+.blakeai-overlay.open .blakeai-modal { transform: translateY(0); }
+.blakeai-modal-hd {
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 15px 18px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  flex-shrink: 0;
+}
+.blakeai-modal-info { flex: 1; min-width: 0; }
+.blakeai-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--lime); opacity: 0.65; margin-bottom: 4px;
+}
+.blakeai-modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 2px; color: #fff; line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.blakeai-modal-company {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.38); margin-top: 3px;
+}
+.blakeai-close {
+  background: none; border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.45); width: 30px; height: 30px;
+  border-radius: 2px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0; transition: all 0.15s;
+}
+.blakeai-close:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+.blakeai-messages {
+  flex: 1; overflow-y: auto;
+  padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.blakeai-welcome { display: flex; flex-direction: column; gap: 12px; }
+.blakeai-welcome-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.blakeai-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.blakeai-chip {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px;
+  padding: 7px 13px; border: 1px solid rgba(212,255,26,0.3);
+  border-radius: 20px; background: none; color: rgba(212,255,26,0.65);
+  cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.blakeai-chip:hover { background: rgba(212,255,26,0.1); border-color: var(--lime); color: var(--lime); }
+.blakeai-msg { display: flex; flex-direction: column; gap: 4px; max-width: 86%; }
+.blakeai-msg.user { align-self: flex-end; align-items: flex-end; }
+.blakeai-msg.ai   { align-self: flex-start; align-items: flex-start; }
+.blakeai-msg-label {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.blakeai-msg.user .blakeai-msg-label { color: rgba(153,51,255,0.55); }
+.blakeai-msg.ai   .blakeai-msg-label { color: rgba(212,255,26,0.45); }
+.blakeai-msg-bubble {
+  padding: 10px 14px; border-radius: 4px;
+  font-size: 13px; line-height: 1.6;
+}
+.blakeai-msg.user .blakeai-msg-bubble { background: var(--purple); color: #fff; }
+.blakeai-msg.ai   .blakeai-msg-bubble { background: #1c1c1c; color: #f0f0eb; }
+.blakeai-thinking .blakeai-msg-bubble { color: rgba(255,255,255,0.35); font-style: italic; }
+.blakeai-input-row {
+  padding: 12px 18px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+.blakeai-input {
+  flex: 1; padding: 10px 13px;
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 3px; font-family: 'Inter', sans-serif;
+  font-size: 14px; color: #f0f0eb; outline: none; transition: border-color 0.2s;
+}
+.blakeai-input:focus { border-color: var(--purple); }
+.blakeai-input::placeholder { color: rgba(255,255,255,0.22); }
+.blakeai-send {
+  background: var(--purple); border: none; border-radius: 3px;
+  width: 42px; height: 42px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: opacity 0.15s;
+}
+.blakeai-send:hover { opacity: 0.85; }
+.blakeai-send:disabled { opacity: 0.3; cursor: default; }
 
 /* ── STATES ── */
 .td-empty, .td-loading {
@@ -443,6 +556,26 @@ button.td-link { background: none; cursor: pointer; }
   <span>Data: Victorian community theatre listings</span>
 </footer>
 
+<div class="blakeai-overlay" id="blakeai-overlay">
+  <div class="blakeai-modal">
+    <div class="blakeai-modal-hd">
+      <div class="blakeai-modal-info">
+        <div class="blakeai-badge">✦ Ask BlakeAI</div>
+        <div class="blakeai-modal-title" id="blakeai-title"></div>
+        <div class="blakeai-modal-company" id="blakeai-company"></div>
+      </div>
+      <button class="blakeai-close" id="blakeai-close" aria-label="Close">✕</button>
+    </div>
+    <div class="blakeai-messages" id="blakeai-messages"></div>
+    <div class="blakeai-input-row">
+      <input class="blakeai-input" id="blakeai-input" type="text" placeholder="Ask about this play…" autocomplete="off">
+      <button class="blakeai-send" id="blakeai-send" aria-label="Send">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
 <button class="td-jump-top" id="td-jump-top" title="Back to top">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
 </button>
@@ -476,7 +609,8 @@ themeBtn.addEventListener('click', () => {
 });
 
 /* ── CONFIG ── */
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfBhALi9j_StQcvcxjy7Iyj6xNOejrkT5cLK4NHUiikmuoKoPXZxdOPeQJTpwrjD5tgUNQ0iKV9UIP/pub?gid=1603898813&single=true&output=csv';
+const CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfBhALi9j_StQcvcxjy7Iyj6xNOejrkT5cLK4NHUiikmuoKoPXZxdOPeQJTpwrjD5tgUNQ0iKV9UIP/pub?gid=1603898813&single=true&output=csv';
+const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste your Cloudflare Worker URL here once deployed */
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 /* ── URL NORMALISER ── */
@@ -579,7 +713,15 @@ function card(show) {
     <div class="td-location">📍 ${show.suburb || ''}</div>
     ${people ? `<div class="td-people">${people}</div>` : ''}
     ${links.length ? `<div class="td-links">${links.join('')}</div>` : ''}
-    <button class="td-blakeai" disabled title="Coming soon">✦ Ask BlakeAI about this play</button>
+    <button class="td-blakeai"
+      data-title="${show.title.replace(/"/g,'&quot;')}"
+      data-company="${show.company.replace(/"/g,'&quot;')}"
+      data-playwright="${(show.playwright||'').replace(/"/g,'&quot;')}"
+      data-director="${(show.director||'').replace(/"/g,'&quot;')}"
+      data-suburb="${(show.suburb||'').replace(/"/g,'&quot;')}"
+      data-dates="${fmtRange(show).replace(/"/g,'&quot;')}"
+      data-url-web="${safeUrl(show.url_web)}"
+      data-url-fb="${safeUrl(show.url_facebook)}">✦ Ask BlakeAI about this play</button>
   </div>`;
 }
 
@@ -661,6 +803,152 @@ document.getElementById('td-upcoming').addEventListener('click',  () => {
   render();
 });
 document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
+
+/* ── BLAKEAI ── */
+const CHIPS = [
+  "What's this play about?",
+  "How many characters does it have?",
+  "What are the main roles?",
+  "Does it have mature themes?",
+];
+
+let baShow    = null;
+let baMsgs_   = [];
+let baBusy    = false;
+
+const baOverlay = document.getElementById('blakeai-overlay');
+const baMsgEl   = document.getElementById('blakeai-messages');
+const baInputEl = document.getElementById('blakeai-input');
+const baSendEl  = document.getElementById('blakeai-send');
+const baTitleEl = document.getElementById('blakeai-title');
+const baCoEl    = document.getElementById('blakeai-company');
+
+function openBlakeAI(dataset) {
+  baShow = {
+    title:      dataset.title      || '',
+    company:    dataset.company    || '',
+    playwright: dataset.playwright || '',
+    director:   dataset.director   || '',
+    suburb:     dataset.suburb     || '',
+    dates:      dataset.dates      || '',
+    url_web:    dataset.urlWeb     || '',
+    url_fb:     dataset.urlFb      || '',
+  };
+  baMsgs_  = [];
+  baBusy   = false;
+
+  baTitleEl.textContent = baShow.title;
+  baCoEl.textContent    = baShow.company;
+  baInputEl.value       = '';
+  baSendEl.disabled     = false;
+
+  baMsgEl.innerHTML = buildWelcome();
+  baOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => baInputEl.focus(), 320);
+}
+
+function closeBlakeAI() {
+  baOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function buildWelcome() {
+  const chips = CHIPS.map(c => `<button class="blakeai-chip">${c}</button>`).join('');
+  return `<div class="blakeai-welcome">
+    <div class="blakeai-welcome-text">What would you like to know?</div>
+    <div class="blakeai-chips">${chips}</div>
+  </div>`;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function formatReply(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g,   '<br>');
+}
+
+function addMsg(role, html) {
+  const label = role === 'user' ? 'You' : 'BlakeAI';
+  const el = document.createElement('div');
+  el.className = 'blakeai-msg ' + role;
+  el.innerHTML = `<div class="blakeai-msg-label">${label}</div><div class="blakeai-msg-bubble">${html}</div>`;
+  baMsgEl.appendChild(el);
+  baMsgEl.scrollTop = baMsgEl.scrollHeight;
+  return el;
+}
+
+async function sendMessage(override) {
+  const text = (override !== undefined ? override : baInputEl.value).trim();
+  if (!text || baBusy) return;
+
+  const welcome = baMsgEl.querySelector('.blakeai-welcome');
+  if (welcome) welcome.remove();
+
+  baInputEl.value = '';
+  baBusy = true;
+  baSendEl.disabled = true;
+
+  addMsg('user', escapeHtml(text));
+  baMsgs_.push({ role: 'user', content: text });
+
+  const thinking = addMsg('ai', 'Thinking…');
+  thinking.classList.add('blakeai-thinking');
+
+  if (!WORKER_URL) {
+    setTimeout(() => {
+      thinking.remove();
+      addMsg('ai', 'The BlakeAI backend isn\'t connected yet — coming soon!');
+      baBusy = false; baSendEl.disabled = false;
+    }, 600);
+    return;
+  }
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ show: baShow, messages: baMsgs_ }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const { text: reply } = await res.json();
+    baMsgs_.push({ role: 'assistant', content: reply });
+    thinking.remove();
+    addMsg('ai', formatReply(reply));
+  } catch {
+    thinking.remove();
+    addMsg('ai', 'Something went wrong — please try again shortly.');
+  }
+
+  baBusy = false;
+  baSendEl.disabled = false;
+  baInputEl.focus();
+}
+
+/* BlakeAI events */
+document.getElementById('td-grid').addEventListener('click', e => {
+  const btn = e.target.closest('.td-blakeai');
+  if (btn) openBlakeAI(btn.dataset);
+});
+baMsgEl.addEventListener('click', e => {
+  const chip = e.target.closest('.blakeai-chip');
+  if (chip) sendMessage(chip.textContent);
+});
+document.getElementById('blakeai-close').addEventListener('click', closeBlakeAI);
+baOverlay.addEventListener('click', e => { if (e.target === baOverlay) closeBlakeAI(); });
+baSendEl.addEventListener('click', () => sendMessage());
+baInputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && baOverlay.classList.contains('open')) closeBlakeAI();
+});
 
 /* ── JUMP TO TOP ── */
 const jumpTop = document.getElementById('td-jump-top');
