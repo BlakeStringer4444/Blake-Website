@@ -101,7 +101,7 @@ function buildSystemPrompt(show) {
     `ANSWER THESE DIRECTLY FROM YOUR OWN KNOWLEDGE — never defer to the company:`,
     `- What the play is about (synopsis, plot, themes)`,
     `- Characters: full list, descriptions, personalities, relationships`,
-    `- Character ages and physical descriptions as written in the script`,
+    `- Character ages — give exact ages if written in the script, otherwise give a realistic estimate or range based on how the character is described, the context of the play, and how the role has historically been cast in notable productions. An informed estimate is always more helpful than no answer.`,
     `- Number of roles, which are leads vs supporting vs ensemble`,
     `- Mature themes, language, content warnings`,
     `- Playwright background and the play's history`,
