@@ -103,11 +103,11 @@ body {
 }
 .td-header-btn {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
   color: rgba(212,255,26,0.55);
   text-decoration: none;
   border: 1px solid rgba(212,255,26,0.25);
-  padding: 7px 14px;
+  padding: 9px 18px;
   border-radius: 2px;
   transition: all 0.2s;
   white-space: nowrap;
@@ -138,7 +138,7 @@ body {
 }
 .td-subtitle {
   font-family: 'DM Mono', monospace;
-  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
   color: rgba(212,255,26,0.5);
   margin-top: 6px;
 }
@@ -407,10 +407,10 @@ button.td-link { background: none; cursor: pointer; }
     </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
-  <p class="td-subtitle">Victorian Community Theatre — 2026 Season</p>
+  <p class="td-subtitle">Victorian Community Theatre</p>
   <div class="td-header-btns">
-    <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet ↗</a>
-    <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Auditions ↗</a>
+    <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
+    <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Current Auditions ↗</a>
   </div>
 </header>
 
@@ -578,7 +578,7 @@ function card(show) {
     <div class="td-location">📍 ${show.suburb || ''}</div>
     ${people ? `<div class="td-people">${people}</div>` : ''}
     ${links.length ? `<div class="td-links">${links.join('')}</div>` : ''}
-    <button class="td-blakeai" disabled title="Coming soon">✦ Ask BlakeAI</button>
+    <button class="td-blakeai" disabled title="Coming soon">✦ Ask BlakeAI about this play</button>
   </div>`;
 }
 
