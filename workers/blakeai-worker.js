@@ -89,37 +89,44 @@ export default {
   },
 };
 
-/* ── Serper (Google Search) — fetch snippets about this play ── */
+/* ── Serper (Google Search) — two parallel searches: play + playwright ── */
 async function searchForPlay(show, env) {
   if (!env.SERPER_API_KEY) return null;
 
-  const playwright = show.playwright ? ` ${show.playwright}` : '';
-  const query = `${show.title}${playwright} play synopsis characters`;
+  const playwright = show.playwright || '';
+  const q1 = `${show.title}${playwright ? ' ' + playwright : ''} play synopsis characters`;
+  const q2 = playwright ? `${playwright} Australian playwright plays` : null;
 
   try {
-    const res = await fetch('https://google.serper.dev/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY':    env.SERPER_API_KEY,
-      },
-      body: JSON.stringify({ q: query, num: 5 }),
-    });
+    const fetches = [serperQuery(q1, env)];
+    if (q2) fetches.push(serperQuery(q2, env));
+    const [r1, r2] = await Promise.all(fetches);
 
-    if (!res.ok) return null;
-
-    const data    = await res.json();
-    const results = data.organic ?? [];
-
-    if (results.length === 0) return null;
-
-    return results
-      .slice(0, 5)
-      .map(r => `[${r.title}]\nURL: ${r.link}\n${r.snippet ?? ''}`)
-      .join('\n\n');
+    const parts = [r1, r2].filter(Boolean);
+    return parts.length ? parts.join('\n\n---\n\n') : null;
   } catch {
     return null;
   }
+}
+
+async function serperQuery(query, env) {
+  const res = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-KEY':    env.SERPER_API_KEY,
+    },
+    body: JSON.stringify({ q: query, num: 5 }),
+  });
+
+  if (!res.ok) return null;
+
+  const data    = await res.json();
+  const results = data.organic ?? [];
+
+  return results.length
+    ? results.slice(0, 5).map(r => `[${r.title}]\nURL: ${r.link}\n${r.snippet ?? ''}`).join('\n\n')
+    : null;
 }
 
 /* ── System prompt ── */
@@ -149,9 +156,9 @@ function buildSystemPrompt(show, searchResults) {
     `RULE 1 — HOW TO ANSWER ABOUT THE PLAY:`,
     `Use two sources: (a) your training knowledge, and (b) the WEB SEARCH CONTEXT above (if present).`,
     ``,
-    `- If the web search context above contains a synopsis, character list, or other relevant details — USE THEM. Prioritise that information over guessing.`,
-    `- If you have clear, confident training knowledge of the play — use it.`,
-    `- If NEITHER source gives you solid information about this specific play (e.g. it is a niche or lesser-known Australian work), be honest: say something like "This one's a bit harder to track down — it's not a widely documented work online. Your best bet for a full synopsis would be to check with the company directly." Do NOT invent a plot or characters you are not certain of.`,
+    `- If the web search context above contains a synopsis, character list, or other relevant details — USE THEM as your primary source. Prioritise them over guessing. When you do, acknowledge it naturally (e.g. "From what I found online…" or "According to sources I pulled up…").`,
+    `- If you have clear, confident training knowledge of the play — use it confidently.`,
+    `- If NEITHER source gives you solid information about this specific play (e.g. it is a niche or lesser-known Australian work with little online documentation), be honest: say something like "This one's a bit tricky to pin down — it's not widely documented online. I'd recommend checking with the company or https://vdl.org.au/whats-on/ for a full synopsis." Do NOT invent a plot or characters you are not certain of.`,
     ``,
     `ANSWER THESE FROM YOUR KNOWLEDGE OR SEARCH CONTEXT — never defer to the company:`,
     `- What the play is about (synopsis, plot, themes)`,
