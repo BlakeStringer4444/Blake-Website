@@ -356,7 +356,7 @@ button.td-link { background: none; cursor: pointer; }
 .blakeai-modal {
   background: #111111;
   width: 100%; max-width: 680px;
-  max-height: 92vh;
+  max-height: 96vh;
   border-radius: 8px 8px 0 0;
   display: flex; flex-direction: column;
   transform: translateY(100%);
@@ -384,18 +384,18 @@ button.td-link { background: none; cursor: pointer; }
 }
 .blakeai-modal-company {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: rgba(255,255,255,0.38); margin-top: 4px;
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.5); margin-top: 5px;
 }
 .blakeai-modal-meta {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.2px;
+  font-size: 11px; letter-spacing: 1px;
   color: rgba(255,255,255,0.45); margin-top: 5px;
 }
 .blakeai-modal-dates {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.2px;
-  color: rgba(255,255,255,0.28); margin-top: 2px;
+  font-size: 10px; letter-spacing: 1px;
+  color: rgba(255,255,255,0.28); margin-top: 3px;
 }
 .blakeai-close {
   background: none; border: 1px solid rgba(255,255,255,0.15);
@@ -406,20 +406,20 @@ button.td-link { background: none; cursor: pointer; }
 }
 .blakeai-close:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 .blakeai-messages {
-  flex: 1; overflow-y: auto;
-  padding: 16px 18px;
+  flex: 1; overflow-y: auto; min-height: 0;
+  padding: 18px 20px;
   display: flex; flex-direction: column; gap: 14px;
 }
-.blakeai-welcome { display: flex; flex-direction: column; gap: 12px; }
+.blakeai-welcome { display: flex; flex-direction: column; gap: 14px; }
 .blakeai-welcome-text {
   font-family: 'DM Mono', monospace;
-  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
+  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
 }
-.blakeai-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.blakeai-chips { display: flex; flex-wrap: wrap; gap: 9px; }
 .blakeai-chip {
-  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px;
-  padding: 7px 13px; border: 1px solid rgba(212,255,26,0.3);
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
+  padding: 9px 16px; border: 1px solid rgba(212,255,26,0.3);
   border-radius: 20px; background: none; color: rgba(212,255,26,0.65);
   cursor: pointer; transition: all 0.15s; text-align: left;
 }
@@ -518,6 +518,14 @@ button.td-link { background: none; cursor: pointer; }
   .td-footer   { padding: 20px; flex-direction: column; text-align: center; }
   .td-title    { font-size: clamp(48px, 14vw, 80px); }
   .td-jump-top { bottom: 18px; right: 18px; }
+  .blakeai-modal { max-height: 94vh; }
+  /* Keep close button pinned top-right so it's never hidden by a long response */
+  .blakeai-close {
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 500;
+    background: rgba(10,10,10,0.92);
+  }
 }
 </style>
 </head>
@@ -573,7 +581,8 @@ button.td-link { background: none; cursor: pointer; }
         <div class="blakeai-badge">✦ Ask BlakeAI</div>
         <div class="blakeai-modal-title" id="blakeai-title"></div>
         <div class="blakeai-modal-company" id="blakeai-company"></div>
-        <div class="blakeai-modal-meta" id="blakeai-meta"></div>
+        <div class="blakeai-modal-meta" id="blakeai-director"></div>
+        <div class="blakeai-modal-meta" id="blakeai-playwright"></div>
         <div class="blakeai-modal-dates" id="blakeai-dates"></div>
       </div>
       <button class="blakeai-close" id="blakeai-close" aria-label="Close">✕</button>
@@ -827,14 +836,15 @@ let baShow    = null;
 let baMsgs_   = [];
 let baBusy    = false;
 
-const baOverlay  = document.getElementById('blakeai-overlay');
-const baMsgEl    = document.getElementById('blakeai-messages');
-const baInputEl  = document.getElementById('blakeai-input');
-const baSendEl   = document.getElementById('blakeai-send');
-const baTitleEl  = document.getElementById('blakeai-title');
-const baCoEl     = document.getElementById('blakeai-company');
-const baMetaEl   = document.getElementById('blakeai-meta');
-const baDatesEl  = document.getElementById('blakeai-dates');
+const baOverlay      = document.getElementById('blakeai-overlay');
+const baMsgEl        = document.getElementById('blakeai-messages');
+const baInputEl      = document.getElementById('blakeai-input');
+const baSendEl       = document.getElementById('blakeai-send');
+const baTitleEl      = document.getElementById('blakeai-title');
+const baCoEl         = document.getElementById('blakeai-company');
+const baDirectorEl   = document.getElementById('blakeai-director');
+const baPlaywrightEl = document.getElementById('blakeai-playwright');
+const baDatesEl      = document.getElementById('blakeai-dates');
 
 function openBlakeAI(dataset) {
   baShow = {
@@ -853,13 +863,12 @@ function openBlakeAI(dataset) {
   baTitleEl.textContent = baShow.title;
   baCoEl.textContent    = baShow.company;
 
-  const metaParts = [];
-  if (baShow.playwright) metaParts.push(`Written by ${baShow.playwright}`);
-  if (baShow.director)   metaParts.push(`Directed by ${baShow.director}`);
-  baMetaEl.textContent   = metaParts.join(' · ');
-  baMetaEl.style.display = metaParts.length ? '' : 'none';
-  baDatesEl.textContent  = baShow.dates || '';
-  baDatesEl.style.display = baShow.dates ? '' : 'none';
+  baDirectorEl.textContent    = baShow.director   ? `Directed by ${baShow.director}`   : '';
+  baDirectorEl.style.display  = baShow.director   ? '' : 'none';
+  baPlaywrightEl.textContent  = baShow.playwright ? `Written by ${baShow.playwright}`  : '';
+  baPlaywrightEl.style.display = baShow.playwright ? '' : 'none';
+  baDatesEl.textContent       = baShow.dates || '';
+  baDatesEl.style.display     = baShow.dates ? '' : 'none';
 
   baInputEl.value       = '';
   baSendEl.disabled     = false;
