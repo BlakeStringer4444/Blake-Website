@@ -354,14 +354,6 @@ button.td-link { background: none; cursor: pointer; }
   padding-bottom: env(safe-area-inset-bottom);
 }
 .blakeai-overlay.open { opacity: 1; pointer-events: auto; }
-.blakeai-drag-handle {
-  width: 40px; height: 4px;
-  background: rgba(255,255,255,0.22);
-  border-radius: 2px;
-  margin: 10px auto 6px;
-  flex-shrink: 0;
-  cursor: grab;
-}
 .blakeai-modal {
   background: #111111;
   width: 100%; max-width: 680px;
@@ -376,8 +368,7 @@ button.td-link { background: none; cursor: pointer; }
 .blakeai-modal-hd {
   background: #0a0a0a;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 15px 18px;
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 15px 64px 15px 18px;
   flex-shrink: 0;
 }
 .blakeai-modal-info { flex: 1; min-width: 0; }
@@ -407,13 +398,18 @@ button.td-link { background: none; cursor: pointer; }
   color: rgba(255,255,255,0.28); margin-top: 3px;
 }
 .blakeai-close {
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.65); width: 36px; height: 36px;
-  border-radius: 3px; cursor: pointer;
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top, 14px));
+  right: 16px;
+  z-index: 310;
+  background: rgba(20,20,20,0.9); border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.8); width: 40px; height: 40px;
+  border-radius: 4px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0; transition: all 0.15s;
+  font-size: 15px; transition: all 0.15s;
+  backdrop-filter: blur(4px);
 }
-.blakeai-close:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.5); color: #fff; }
+.blakeai-close:hover { background: rgba(60,60,60,0.95); border-color: rgba(255,255,255,0.55); color: #fff; }
 .blakeai-messages {
   flex: 1; overflow-y: auto; min-height: 0;
   padding: 18px 20px;
@@ -577,8 +573,8 @@ button.td-link { background: none; cursor: pointer; }
 </footer>
 
 <div class="blakeai-overlay" id="blakeai-overlay">
+  <button class="blakeai-close" id="blakeai-close" aria-label="Close">✕</button>
   <div class="blakeai-modal" id="blakeai-modal">
-    <div class="blakeai-drag-handle" id="blakeai-drag-handle"></div>
     <div class="blakeai-modal-hd">
       <div class="blakeai-modal-info">
         <div class="blakeai-badge">✦ Ask BlakeAI</div>
@@ -588,7 +584,6 @@ button.td-link { background: none; cursor: pointer; }
         <div class="blakeai-modal-meta" id="blakeai-playwright"></div>
         <div class="blakeai-modal-dates" id="blakeai-dates"></div>
       </div>
-      <button class="blakeai-close" id="blakeai-close" aria-label="Close">✕</button>
     </div>
     <div class="blakeai-messages" id="blakeai-messages"></div>
     <div class="blakeai-input-row">
@@ -984,18 +979,6 @@ baInputEl.addEventListener('keydown', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && baOverlay.classList.contains('open')) closeBlakeAI();
 });
-
-/* ── Swipe down to close (mobile bottom sheet pattern) ── */
-(function () {
-  const modal = document.getElementById('blakeai-modal');
-  let startY = 0;
-  modal.addEventListener('touchstart', e => {
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-  modal.addEventListener('touchend', e => {
-    if (e.changedTouches[0].clientY - startY > 80) closeBlakeAI();
-  }, { passive: true });
-}());
 
 /* ── JUMP TO TOP ── */
 const jumpTop = document.getElementById('td-jump-top');
