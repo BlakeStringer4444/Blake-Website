@@ -288,10 +288,12 @@ body {
 
 .td-company {
   font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted);
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(0,0,0,0.55);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+[data-theme="dark"]     .td-company { color: rgba(255,255,255,0.55); }
+[data-theme="terminal"] .td-company { color: rgba(255,255,255,0.45); }
 .td-title-text {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 21px; letter-spacing: 2px;
