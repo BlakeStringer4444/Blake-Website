@@ -200,7 +200,7 @@ body {
 .td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-upcoming-toggle.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
 [data-theme="terminal"] .td-upcoming-toggle:hover:not(.active) { border-color: var(--lime); color: var(--lime); }
-.td-upcoming-toggle .td-star-icon { font-size: 15px; line-height: 1; }
+.td-star-svg { width: 15px; height: 15px; flex-shrink: 0; display: block; }
 
 .td-select {
   font-family: 'DM Mono', monospace;
@@ -297,7 +297,7 @@ body {
 [data-theme="terminal"] .td-company { color: rgba(255,255,255,0.45); }
 .td-star-btn {
   background: none; border: none; cursor: pointer; padding: 0;
-  font-size: 15px; line-height: 1; flex-shrink: 0;
+  display: flex; align-items: center;
   color: rgba(0,0,0,0.15); transition: color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -595,7 +595,7 @@ button.td-link { background: none; cursor: pointer; }
     </select>
     <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
     <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
-    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <span class="td-star-icon">★</span></button>
+    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
@@ -683,6 +683,7 @@ const iconMap = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" str
 const iconFB  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>`;
 const iconIG  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`;
 const iconWeb = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+const iconStar = `<svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg>`;
 
 /* ── CSV PARSER ── */
 function parseCSV(text) {
@@ -825,7 +826,7 @@ function card(show) {
       </span>
       <span class="td-card-row1-right">
         <span class="td-company">${show.company}</span>
-        <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">★</button>
+        <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">${iconStar}</button>
       </span>
     </div>
     <div class="td-title-text">${show.title}</div>
