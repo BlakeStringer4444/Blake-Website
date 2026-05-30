@@ -295,6 +295,9 @@ body {
 [data-theme="terminal"] .td-badge-musical  { color: var(--lime); background: rgba(212,255,26,0.08); }
 [data-theme="terminal"] .td-badge-pantomime{ color: #ffaa44; background: rgba(255,170,68,0.08); }
 
+.td-card-row1-right {
+  display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;
+}
 .td-company {
   font-family: 'DM Mono', monospace;
   font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -303,6 +306,19 @@ body {
 }
 [data-theme="dark"]     .td-company { color: rgba(255,255,255,0.55); }
 [data-theme="terminal"] .td-company { color: rgba(255,255,255,0.45); }
+.td-star-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-size: 15px; line-height: 1; flex-shrink: 0;
+  color: rgba(0,0,0,0.15); transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.td-star-btn:hover,
+.td-star-btn.active { color: var(--purple); }
+[data-theme="dark"]     .td-star-btn { color: rgba(255,255,255,0.15); }
+[data-theme="dark"]     .td-star-btn:hover,
+[data-theme="dark"]     .td-star-btn.active,
+[data-theme="terminal"] .td-star-btn:hover,
+[data-theme="terminal"] .td-star-btn.active { color: var(--lime); }
 .td-progress-bar {
   height: 3px; background: rgba(0,0,0,0.07);
   border-radius: 2px; margin-top: 5px; overflow: hidden;
@@ -589,6 +605,7 @@ button.td-link { background: none; cursor: pointer; }
       <option value="">All Months</option>
     </select>
     <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
+    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">★ Watchlist</button>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
@@ -743,7 +760,13 @@ function isNowShowing(row) {
 }
 
 /* ── STATE ── */
-let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, searchQ = '';
+let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, activeWatchlist = false, searchQ = '';
+
+/* ── WATCHLIST ── */
+const WL_KEY  = 'theatredex-watchlist-2026';
+let watchlist = new Set(JSON.parse(localStorage.getItem(WL_KEY) || '[]'));
+function showKey(show) { return show.title + '|||' + show.company; }
+function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); }
 
 /* ── URL STATE ── */
 function pushUrlState() {
@@ -751,28 +774,35 @@ function pushUrlState() {
   if (searchQ)         p.set('q',        searchQ);
   if (activeCompany)   p.set('company',  activeCompany);
   if (activeMonth)     p.set('month',    activeMonth);
-  if (!activeUpcoming) p.set('upcoming', 'false');
+  if (!activeUpcoming)  p.set('upcoming',  'false');
+  if (activeWatchlist)  p.set('watchlist', 'true');
   history.replaceState(null, '', p.toString() ? '?' + p : location.pathname);
 }
 
 function readUrlState() {
   const p = new URLSearchParams(location.search);
-  searchQ        = p.get('q')        || '';
-  activeCompany  = p.get('company')  || '';
-  activeMonth    = p.get('month')    || '';
-  activeUpcoming = p.get('upcoming') !== 'false';
+  searchQ         = p.get('q')        || '';
+  activeCompany   = p.get('company')  || '';
+  activeMonth     = p.get('month')    || '';
+  activeUpcoming  = p.get('upcoming') !== 'false';
+  activeWatchlist = p.get('watchlist') === 'true';
   document.getElementById('td-search').value  = searchQ;
   document.getElementById('td-company').value = activeCompany;
   document.getElementById('td-month').value   = activeMonth;
   const upBtn = document.getElementById('td-upcoming');
   upBtn.classList.toggle('active', activeUpcoming);
   upBtn.setAttribute('aria-pressed', String(activeUpcoming));
+  const wlBtn = document.getElementById('td-watchlist');
+  wlBtn.classList.toggle('active', activeWatchlist);
+  wlBtn.setAttribute('aria-pressed', String(activeWatchlist));
 }
 
 /* ── RENDER CARD ── */
 function card(show) {
   const type      = show.type || 'Play';
   const badgeCls  = 'td-badge td-badge-' + type.toLowerCase();
+  const key       = showKey(show);
+  const starred   = watchlist.has(key);
   const nowShowing = isNowShowing(show);
 
   const links = [];
@@ -799,7 +829,10 @@ function card(show) {
         <span class="${badgeCls}">${type}</span>
         ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
       </span>
-      <span class="td-company">${show.company}</span>
+      <span class="td-card-row1-right">
+        <span class="td-company">${show.company}</span>
+        <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">★</button>
+      </span>
     </div>
     <div class="td-title-text">${show.title}</div>
     <div class="td-dates">${fmtRange(show)}</div>
@@ -829,6 +862,7 @@ function render() {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
       return hay.includes(q);
     }
+    if (activeWatchlist && !watchlist.has(showKey(s))) return false;
     if (activeUpcoming  && !isUpcoming(s))             return false;
     if (activeCompany   && s.company !== activeCompany) return false;
     if (month !== null  && !monthsOf(s).includes(month)) return false;
@@ -900,6 +934,13 @@ document.getElementById('td-upcoming').addEventListener('click',  () => {
   render();
 });
 document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
+document.getElementById('td-watchlist').addEventListener('click', () => {
+  activeWatchlist = !activeWatchlist;
+  const btn = document.getElementById('td-watchlist');
+  btn.classList.toggle('active', activeWatchlist);
+  btn.setAttribute('aria-pressed', String(activeWatchlist));
+  render();
+});
 
 /* ── BLAKEAI ── */
 const CHIPS = [
@@ -1050,8 +1091,16 @@ async function sendMessage(override) {
 
 /* BlakeAI events */
 document.getElementById('td-grid').addEventListener('click', e => {
-  const btn = e.target.closest('.td-blakeai');
-  if (btn) openBlakeAI(btn.dataset);
+  const blakeai = e.target.closest('.td-blakeai');
+  if (blakeai) { openBlakeAI(blakeai.dataset); return; }
+
+  const star = e.target.closest('.td-star-btn');
+  if (star) {
+    const key = star.dataset.key;
+    if (watchlist.has(key)) { watchlist.delete(key); } else { watchlist.add(key); }
+    saveWatchlist();
+    render();
+  }
 });
 baMsgEl.addEventListener('click', e => {
   const chip = e.target.closest('.blakeai-chip');
