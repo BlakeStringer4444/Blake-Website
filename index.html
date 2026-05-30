@@ -1146,10 +1146,20 @@ body[data-theme="dark"] .jump-nav {
   color: rgba(0,0,0,0.35);
   white-space: nowrap;
 }
+.music-vis {
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin: 8px 0;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.music-vis.active { opacity: 1; }
 .music-progress {
   height: 3px;
   background: rgba(153,51,255,0.15);
   cursor: pointer;
+  overflow: visible;
 }
 .music-progress-fill {
   height: 100%;
@@ -1157,6 +1167,16 @@ body[data-theme="dark"] .jump-nav {
   width: 0%;
   pointer-events: none;
   transition: width 0.1s linear;
+}
+.music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
+@keyframes music-glow {
+  0%, 100% { box-shadow: 0 0 4px 2px rgba(153,51,255,0.3); }
+  50%       { box-shadow: 0 0 14px 5px rgba(153,51,255,0.8); }
+}
+body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow-lime 2s ease-in-out infinite; }
+@keyframes music-glow-lime {
+  0%, 100% { box-shadow: 0 0 4px 2px rgba(212,255,26,0.3); }
+  50%       { box-shadow: 0 0 14px 5px rgba(212,255,26,0.8); }
 }
 .dark-toggle {
   position: absolute;
@@ -2690,6 +2710,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
           <span class="music-track-name">Proteas</span>
           <span class="music-time" id="music-time">0:00</span>
         </div>
+        <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
         <div class="music-progress" id="music-progress" title="Seek">
           <div class="music-progress-fill" id="music-progress-fill"></div>
         </div>
@@ -3584,9 +3605,10 @@ if (darkToggle) {
   const timeEl    = document.getElementById('music-time');
   const progBar   = document.getElementById('music-progress');
   const progFill  = document.getElementById('music-progress-fill');
+  const canvas    = document.getElementById('music-vis');
   const iconPlay  = playBtn.querySelector('.music-icon-play');
   const iconPause = playBtn.querySelector('.music-icon-pause');
-  let loaded = false;
+  let loaded = false, audioCtx, analyser, source, rafId;
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00';
@@ -3594,28 +3616,93 @@ if (darkToggle) {
     return m + ':' + String(sec).padStart(2, '0');
   }
 
+  function isTerminal() { return document.body.dataset.theme === 'terminal'; }
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const w   = canvas.offsetWidth;
+    const h   = canvas.offsetHeight;
+    if (w === 0 || h === 0) return;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    canvas.getContext('2d').scale(dpr, dpr);
+  }
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    analyser  = audioCtx.createAnalyser();
+    analyser.fftSize = 128;
+    source    = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  }
+
+  function drawBars() {
+    if (!analyser) return;
+    rafId = requestAnimationFrame(drawBars);
+    const ctx    = canvas.getContext('2d');
+    const W      = canvas.offsetWidth;
+    const H      = canvas.offsetHeight;
+    const bins   = analyser.frequencyBinCount;
+    const data   = new Uint8Array(bins);
+    analyser.getByteFrequencyData(data);
+    ctx.clearRect(0, 0, W, H);
+    const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
+    const gap    = 2;
+    const barW   = (W - gap * (bins - 1)) / bins;
+    for (let i = 0; i < bins; i++) {
+      const barH = (data[i] / 255) * H;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.15 + (data[i] / 255) * 0.85;
+      ctx.fillRect(i * (barW + gap), H - barH, barW, barH);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function startVis() {
+    resizeCanvas();
+    canvas.classList.add('active');
+    if (!rafId) drawBars();
+  }
+
+  function stopVis() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    canvas.classList.remove('active');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+  }
+
   playBtn.addEventListener('click', () => {
-    if (!loaded) { audio.src = '/Audio/Proteas.mp3'; loaded = true; }
-    audio.paused ? audio.play() : audio.pause();
+    if (!loaded) { audio.src = '/Audio/Proteas - Blake Stringer.mp3'; loaded = true; }
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audio.paused) { audio.play().catch(() => {}); } else { audio.pause(); }
   });
 
   audio.addEventListener('play', () => {
     iconPlay.style.display  = 'none';
     iconPause.style.display = '';
     playBtn.setAttribute('aria-label', 'Pause Proteas');
+    progFill.classList.add('playing');
+    startVis();
   });
   audio.addEventListener('pause', () => {
     iconPlay.style.display  = '';
     iconPause.style.display = 'none';
     playBtn.setAttribute('aria-label', 'Play Proteas');
+    progFill.classList.remove('playing');
+    stopVis();
   });
   audio.addEventListener('ended', () => {
     iconPlay.style.display  = '';
     iconPause.style.display = 'none';
     progFill.style.width = '0%';
+    progFill.classList.remove('playing');
     timeEl.textContent   = '0:00';
     playBtn.setAttribute('aria-label', 'Play Proteas');
     audio.currentTime = 0;
+    stopVis();
   });
   audio.addEventListener('timeupdate', () => {
     if (!audio.duration) return;
@@ -3628,6 +3715,8 @@ if (darkToggle) {
     const r = progBar.getBoundingClientRect();
     audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
   });
+
+  window.addEventListener('resize', () => { if (rafId) resizeCanvas(); });
 })();
 
 /* ── BACK TO TOP ── */
