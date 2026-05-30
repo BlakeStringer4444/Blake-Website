@@ -765,52 +765,15 @@ let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, 
 /* ── WATCHLIST ── */
 const WL_KEY  = 'theatredex-watchlist-2026';
 let watchlist = new Set(JSON.parse(localStorage.getItem(WL_KEY) || '[]'));
-
 function showKey(show) { return show.title + '|||' + show.company; }
-
 function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); }
-
-/* ── ADD TO CALENDAR (.ics) ── */
-function downloadIcs(show) {
-  const start = parseDate(show.date_start);
-  if (!start) return;
-  const end     = parseDate(show.date_end) || start;
-  const endNext = new Date(end); endNext.setDate(endNext.getDate() + 1);
-  const fmt = d => d.toISOString().slice(0, 10).replace(/-/g, '');
-  const esc = s => (s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,');
-  const desc = [
-    'Presented by ' + show.company,
-    show.director   ? 'Directed by '   + show.director   : '',
-    show.playwright ? 'Written by '    + show.playwright : '',
-  ].filter(Boolean).join('\\n');
-
-  const lines = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0',
-    'PRODID:-//Theatredex 2026//blakestringer.com//EN',
-    'BEGIN:VEVENT',
-    'DTSTART;VALUE=DATE:' + fmt(start),
-    'DTEND;VALUE=DATE:'   + fmt(endNext),
-    'SUMMARY:'            + esc(show.title),
-    'DESCRIPTION:'        + desc,
-    show.suburb  ? 'LOCATION:' + esc(show.suburb) + '\\, Victoria\\, Australia' : '',
-    show.url_web ? 'URL:'      + safeUrl(show.url_web) : '',
-    'END:VEVENT', 'END:VCALENDAR',
-  ].filter(Boolean).join('\r\n');
-
-  const blob = new Blob([lines], { type: 'text/calendar;charset=utf-8' });
-  const a    = document.createElement('a');
-  a.href     = URL.createObjectURL(blob);
-  a.download = show.title.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.ics';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(a.href);
-}
 
 /* ── URL STATE ── */
 function pushUrlState() {
   const p = new URLSearchParams();
-  if (searchQ)          p.set('q',         searchQ);
-  if (activeCompany)    p.set('company',   activeCompany);
-  if (activeMonth)      p.set('month',     activeMonth);
+  if (searchQ)         p.set('q',        searchQ);
+  if (activeCompany)   p.set('company',  activeCompany);
+  if (activeMonth)     p.set('month',    activeMonth);
   if (!activeUpcoming)  p.set('upcoming',  'false');
   if (activeWatchlist)  p.set('watchlist', 'true');
   history.replaceState(null, '', p.toString() ? '?' + p : location.pathname);
@@ -847,7 +810,6 @@ function card(show) {
   if (show.url_facebook)  links.push(`<a class="td-link" href="${safeUrl(show.url_facebook)}"  target="_blank" rel="noopener noreferrer" aria-label="Facebook (opens in new tab)">${iconFB} FB</a>`);
   if (show.url_instagram) links.push(`<a class="td-link" href="${safeUrl(show.url_instagram)}" target="_blank" rel="noopener noreferrer" aria-label="Instagram (opens in new tab)">${iconIG} IG</a>`);
   if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer" aria-label="Website (opens in new tab)">${iconWeb} Web</a>`);
-  if (show.date_start)    links.push(`<button class="td-link td-cal-btn" data-key="${key.replace(/"/g,'&quot;')}" aria-label="Add to calendar">📅 Cal</button>`);
 
   const people = [
     show.director   ? 'Director: '   + show.director   : '',
@@ -1135,20 +1097,9 @@ document.getElementById('td-grid').addEventListener('click', e => {
   const star = e.target.closest('.td-star-btn');
   if (star) {
     const key = star.dataset.key;
-    if (watchlist.has(key)) {
-      watchlist.delete(key);
-    } else {
-      watchlist.add(key);
-    }
+    if (watchlist.has(key)) { watchlist.delete(key); } else { watchlist.add(key); }
     saveWatchlist();
     render();
-    return;
-  }
-
-  const cal = e.target.closest('.td-cal-btn');
-  if (cal) {
-    const show = allShows.find(s => showKey(s) === cal.dataset.key);
-    if (show) downloadIcs(show);
   }
 });
 baMsgEl.addEventListener('click', e => {
