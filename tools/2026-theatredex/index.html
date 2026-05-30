@@ -751,7 +751,7 @@ function isNowShowing(row) {
 }
 
 /* ── STATE ── */
-let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, activeWatchlist = false, activeNowShowing = false, searchQ = '';
+let allShows = [], activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
 
 /* ── WATCHLIST ── */
 const WL_KEY  = 'theatredex-watchlist-2026';
@@ -762,35 +762,31 @@ function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watch
 /* ── URL STATE ── */
 function pushUrlState() {
   const p = new URLSearchParams();
-  if (searchQ)         p.set('q',        searchQ);
-  if (activeCompany)   p.set('company',  activeCompany);
-  if (activeMonth)     p.set('month',    activeMonth);
-  if (!activeUpcoming)   p.set('upcoming',    'false');
-  if (activeNowShowing)  p.set('nowshowing',  'true');
-  if (activeWatchlist)   p.set('watchlist',   'true');
+  if (searchQ)                      p.set('q',       searchQ);
+  if (activeCompany)                p.set('company', activeCompany);
+  if (activeMonth)                  p.set('month',   activeMonth);
+  if (activeFilter !== 'upcoming')  p.set('filter',  activeFilter || '');
   history.replaceState(null, '', p.toString() ? '?' + p : location.pathname);
+}
+
+function setFilterButtons(active) {
+  ['upcoming', 'nowshowing', 'watchlist'].forEach(id => {
+    const btn = document.getElementById('td-' + id);
+    btn.classList.toggle('active', active === id);
+    btn.setAttribute('aria-pressed', String(active === id));
+  });
 }
 
 function readUrlState() {
   const p = new URLSearchParams(location.search);
-  searchQ         = p.get('q')        || '';
-  activeCompany   = p.get('company')  || '';
-  activeMonth     = p.get('month')    || '';
-  activeUpcoming   = p.get('upcoming')   !== 'false';
-  activeNowShowing = p.get('nowshowing') === 'true';
-  activeWatchlist  = p.get('watchlist')  === 'true';
+  searchQ       = p.get('q')       || '';
+  activeCompany = p.get('company') || '';
+  activeMonth   = p.get('month')   || '';
+  activeFilter  = p.get('filter') ?? 'upcoming';
   document.getElementById('td-search').value  = searchQ;
   document.getElementById('td-company').value = activeCompany;
   document.getElementById('td-month').value   = activeMonth;
-  const upBtn = document.getElementById('td-upcoming');
-  upBtn.classList.toggle('active', activeUpcoming);
-  upBtn.setAttribute('aria-pressed', String(activeUpcoming));
-  const nsBtn = document.getElementById('td-nowshowing');
-  nsBtn.classList.toggle('active', activeNowShowing);
-  nsBtn.setAttribute('aria-pressed', String(activeNowShowing));
-  const wlBtn = document.getElementById('td-watchlist');
-  wlBtn.classList.toggle('active', activeWatchlist);
-  wlBtn.setAttribute('aria-pressed', String(activeWatchlist));
+  setFilterButtons(activeFilter);
 }
 
 /* ── RENDER CARD ── */
@@ -858,9 +854,9 @@ function render() {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
       return hay.includes(q);
     }
-    if (activeWatchlist  && !watchlist.has(showKey(s))) return false;
-    if (activeNowShowing && !isNowShowing(s))           return false;
-    if (activeUpcoming   && !isUpcoming(s))             return false;
+    if (activeFilter === 'watchlist'  && !watchlist.has(showKey(s))) return false;
+    if (activeFilter === 'nowshowing' && !isNowShowing(s))           return false;
+    if (activeFilter === 'upcoming'   && !isUpcoming(s))             return false;
     if (activeCompany   && s.company !== activeCompany) return false;
     if (month !== null  && !monthsOf(s).includes(month)) return false;
     return true;
@@ -916,27 +912,14 @@ async function init() {
 document.getElementById('td-search').addEventListener('input',   e  => { searchQ = e.target.value; render(); });
 document.getElementById('td-company').addEventListener('change',  e  => { activeCompany = e.target.value; render(); });
 document.getElementById('td-month').addEventListener('change',    e  => { activeMonth = e.target.value; render(); });
-document.getElementById('td-upcoming').addEventListener('click', () => {
-  activeUpcoming = !activeUpcoming;
-  const btn = document.getElementById('td-upcoming');
-  btn.classList.toggle('active', activeUpcoming);
-  btn.setAttribute('aria-pressed', String(activeUpcoming));
+function setActiveFilter(name) {
+  activeFilter = (activeFilter === name) ? null : name;
+  setFilterButtons(activeFilter);
   render();
-});
-document.getElementById('td-nowshowing').addEventListener('click', () => {
-  activeNowShowing = !activeNowShowing;
-  const btn = document.getElementById('td-nowshowing');
-  btn.classList.toggle('active', activeNowShowing);
-  btn.setAttribute('aria-pressed', String(activeNowShowing));
-  render();
-});
-document.getElementById('td-watchlist').addEventListener('click', () => {
-  activeWatchlist = !activeWatchlist;
-  const btn = document.getElementById('td-watchlist');
-  btn.classList.toggle('active', activeWatchlist);
-  btn.setAttribute('aria-pressed', String(activeWatchlist));
-  render();
-});
+}
+document.getElementById('td-upcoming').addEventListener('click',   () => setActiveFilter('upcoming'));
+document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
+document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 
 /* ── BLAKEAI ── */
 const CHIPS = [
@@ -1106,7 +1089,7 @@ document.getElementById('td-grid').addEventListener('click', e => {
       star.setAttribute('aria-label', 'Remove from watchlist');
     }
     saveWatchlist();
-    if (activeWatchlist) render();
+    if (activeFilter === 'watchlist') render();
   }
 });
 baMsgEl.addEventListener('click', e => {
