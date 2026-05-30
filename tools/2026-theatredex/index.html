@@ -489,6 +489,8 @@ button.td-link { background: none; cursor: pointer; }
 }
 .blakeai-msg.user .blakeai-msg-bubble { background: var(--purple); color: #fff; }
 .blakeai-msg.ai   .blakeai-msg-bubble { background: #1c1c1c; color: #f0f0eb; }
+.blakeai-msg.ai   .blakeai-msg-bubble a { color: var(--lime); text-decoration: underline; }
+.blakeai-msg.ai   .blakeai-msg-bubble a:hover { opacity: 0.8; }
 .blakeai-thinking .blakeai-msg-bubble { color: rgba(255,255,255,0.35); font-style: italic; }
 .blakeai-input-row {
   padding: 12px 18px 20px;
@@ -1056,6 +1058,12 @@ function escapeHtml(str) {
 
 function formatReply(text) {
   return escapeHtml(text)
+    // ## Headings → bold (strip the # symbols)
+    .replace(/^#{1,6}\s+(.+)/gm, '<strong>$1</strong>')
+    // [link text](https://url) → clickable anchor
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    // **bold**
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g,   '<br>');
