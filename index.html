@@ -1106,7 +1106,58 @@ body[data-theme="dark"] .jump-nav {
   color: var(--lime);
 }
 
-  /* ── DARK MODE TOGGLE ── */
+/* ── MUSIC PLAYER ── */
+.music-player {
+  border: 1px solid var(--purple);
+  padding: 14px 16px;
+  margin-bottom: 32px;
+}
+.music-player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.music-play-btn {
+  background: var(--purple);
+  color: var(--lime);
+  border: none;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.music-play-btn:hover { opacity: 0.8; }
+.music-track-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  flex: 1;
+}
+.music-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(0,0,0,0.35);
+  white-space: nowrap;
+}
+.music-progress {
+  height: 3px;
+  background: rgba(153,51,255,0.15);
+  cursor: pointer;
+}
+.music-progress-fill {
+  height: 100%;
+  background: var(--purple);
+  width: 0%;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
 .dark-toggle {
   position: absolute;
   top: 32px;
@@ -1313,6 +1364,10 @@ body[data-theme="dark"] .video-title { color: #f0f0eb; }
 body[data-theme="dark"] .jump-btn { color: var(--purple); border-color: var(--purple); }
 body[data-theme="dark"] .jump-btn:hover,
 body[data-theme="dark"] .jump-btn--active { background: var(--purple); color: var(--lime); }
+body[data-theme="dark"] .music-player { border-color: rgba(255,255,255,0.12); }
+body[data-theme="dark"] .music-track-name { color: rgba(240,240,235,0.6); }
+body[data-theme="dark"] .music-time { color: rgba(240,240,235,0.3); }
+body[data-theme="dark"] .music-progress { background: rgba(255,255,255,0.08); }
 body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
@@ -1507,6 +1562,12 @@ body[data-theme="terminal"] .jump-nav { background: #000000; border-color: rgba(
 body[data-theme="terminal"] .jump-btn { color: #FFFFFF; border-color: rgba(255,255,255,0.2); }
 body[data-theme="terminal"] .jump-btn:hover,
 body[data-theme="terminal"] .jump-btn--active { background: #FFFFFF; color: #000000; border-color: #FFFFFF; }
+body[data-theme="terminal"] .music-player { border-color: rgba(255,255,255,0.15); }
+body[data-theme="terminal"] .music-play-btn { background: var(--lime); color: #000; }
+body[data-theme="terminal"] .music-track-name { color: rgba(255,255,255,0.55); }
+body[data-theme="terminal"] .music-time { color: rgba(255,255,255,0.3); }
+body[data-theme="terminal"] .music-progress { background: rgba(212,255,26,0.1); }
+body[data-theme="terminal"] .music-progress-fill { background: var(--lime); }
 body[data-theme="terminal"] footer { border-top-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .footer-hint { color: rgba(255,255,255,0.2); }
 body[data-theme="terminal"] .now-banner { background: rgba(255,255,255,0.06); color: #FFFFFF; border-color: rgba(255,255,255,0.15); animation: none; }
@@ -2620,6 +2681,21 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         <a class="jump-btn" href="#mus-genres">Genres</a>
       </div>
 
+      <div class="music-player" id="music-player">
+        <div class="music-player-row">
+          <button class="music-play-btn" id="music-play-btn" aria-label="Play Proteas">
+            <svg class="music-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+            <svg class="music-icon-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <span class="music-track-name">Proteas</span>
+          <span class="music-time" id="music-time">0:00</span>
+        </div>
+        <div class="music-progress" id="music-progress" title="Seek">
+          <div class="music-progress-fill" id="music-progress-fill"></div>
+        </div>
+        <audio id="music-audio" preload="none"></audio>
+      </div>
+
       <div class="section-sublabel" id="mus-releases">Releases</div>
       <div class="album-grid">
 
@@ -3499,6 +3575,59 @@ if (darkToggle) {
   });
 
   window.addEventListener('scroll', updateActiveJumpBtn, { passive: true });
+})();
+
+/* ── MUSIC PLAYER ── */
+(function () {
+  const audio     = document.getElementById('music-audio');
+  const playBtn   = document.getElementById('music-play-btn');
+  const timeEl    = document.getElementById('music-time');
+  const progBar   = document.getElementById('music-progress');
+  const progFill  = document.getElementById('music-progress-fill');
+  const iconPlay  = playBtn.querySelector('.music-icon-play');
+  const iconPause = playBtn.querySelector('.music-icon-pause');
+  let loaded = false;
+
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (!loaded) { audio.src = '/Audio/Proteas.mp3'; loaded = true; }
+    audio.paused ? audio.play() : audio.pause();
+  });
+
+  audio.addEventListener('play', () => {
+    iconPlay.style.display  = 'none';
+    iconPause.style.display = '';
+    playBtn.setAttribute('aria-label', 'Pause Proteas');
+  });
+  audio.addEventListener('pause', () => {
+    iconPlay.style.display  = '';
+    iconPause.style.display = 'none';
+    playBtn.setAttribute('aria-label', 'Play Proteas');
+  });
+  audio.addEventListener('ended', () => {
+    iconPlay.style.display  = '';
+    iconPause.style.display = 'none';
+    progFill.style.width = '0%';
+    timeEl.textContent   = '0:00';
+    playBtn.setAttribute('aria-label', 'Play Proteas');
+    audio.currentTime = 0;
+  });
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    progFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+    timeEl.textContent   = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+  });
+
+  progBar.addEventListener('click', e => {
+    if (!audio.duration) return;
+    const r = progBar.getBoundingClientRect();
+    audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+  });
 })();
 
 /* ── BACK TO TOP ── */
