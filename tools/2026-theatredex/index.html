@@ -535,23 +535,26 @@ button.td-link { background: none; cursor: pointer; }
 /* ── JUMP TO TOP ── */
 .td-jump-top {
   position: fixed;
-  bottom: 28px;
-  right: 28px;
-  width: 42px; height: 42px;
+  bottom: 24px;
+  right: 24px;
   background: var(--purple);
-  color: #fff;
+  color: var(--lime);
   border: none;
-  border-radius: 50%;
+  padding: 9px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none;
   transition: opacity 0.25s, transform 0.2s;
   z-index: 200;
-  box-shadow: 0 4px 18px rgba(153,51,255,0.35);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .td-jump-top.visible { opacity: 1; pointer-events: auto; }
-.td-jump-top:hover { transform: translateY(-3px); }
-[data-theme="terminal"] .td-jump-top { background: var(--lime); color: var(--black); box-shadow: 0 4px 18px rgba(212,255,26,0.2); }
+.td-jump-top:hover { transform: translateY(-2px); }
+[data-theme="terminal"] .td-jump-top { background: #fff; color: #000; }
 
 /* ── FOOTER ── */
 .td-footer {
@@ -578,7 +581,7 @@ button.td-link { background: none; cursor: pointer; }
   .td-grid     { grid-template-columns: 1fr; }
   .td-footer   { padding: 20px; }
   .td-title    { font-size: clamp(48px, 14vw, 80px); }
-  .td-jump-top { bottom: 18px; right: 18px; }
+  .td-jump-top { bottom: 16px; right: 16px; }
   .blakeai-modal { max-height: 94vh; max-height: 94dvh; }
 }
 </style>
@@ -654,9 +657,7 @@ button.td-link { background: none; cursor: pointer; }
   </div>
 </div>
 
-<button class="td-jump-top" id="td-jump-top" title="Back to top">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-</button>
+<button class="td-jump-top" id="td-jump-top" aria-label="Back to top">↑ Top</button>
 
 <script>
 /* ── THEME ── */
