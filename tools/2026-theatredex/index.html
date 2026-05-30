@@ -200,7 +200,7 @@ body {
 .td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-upcoming-toggle.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
 [data-theme="terminal"] .td-upcoming-toggle:hover:not(.active) { border-color: var(--lime); color: var(--lime); }
-.td-upcoming-toggle .td-star-icon { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1; }
+.td-upcoming-toggle .td-star-icon { font-size: 15px; line-height: 1; }
 
 .td-select {
   font-family: 'DM Mono', monospace;
@@ -595,7 +595,7 @@ button.td-link { background: none; cursor: pointer; }
     </select>
     <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
     <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
-    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only"><span class="td-star-icon">★</span> Watchlist</button>
+    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <span class="td-star-icon">★</span></button>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
