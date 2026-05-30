@@ -186,7 +186,9 @@ body {
 .td-upcoming-toggle {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 5px 12px;
+  padding: 0 12px;
+  height: 24px;
+  display: inline-flex; align-items: center; gap: 4px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
   background: none;
@@ -198,7 +200,7 @@ body {
 .td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-upcoming-toggle.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
 [data-theme="terminal"] .td-upcoming-toggle:hover:not(.active) { border-color: var(--lime); color: var(--lime); }
-.td-upcoming-toggle .td-star-icon { display: inline-block; transform: scale(1.6); transform-origin: center; vertical-align: middle; }
+.td-upcoming-toggle .td-star-icon { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1; }
 
 .td-select {
   font-family: 'DM Mono', monospace;
