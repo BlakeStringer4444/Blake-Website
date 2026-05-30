@@ -3595,8 +3595,8 @@ if (darkToggle) {
   }
 
   playBtn.addEventListener('click', () => {
-    if (!loaded) { audio.src = '/Audio/Proteas.mp3'; loaded = true; }
-    audio.paused ? audio.play() : audio.pause();
+    if (!loaded) { audio.src = '/Audio/Proteas - Blake Stringer.mp3'; loaded = true; }
+    if (audio.paused) { audio.play().catch(() => {}); } else { audio.pause(); }
   });
 
   audio.addEventListener('play', () => {
