@@ -301,13 +301,15 @@ body {
   color: rgba(0,0,0,0.15); transition: color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.td-star-btn:hover,
 .td-star-btn.active { color: var(--purple); }
+@media (hover: hover) { .td-star-btn:hover { color: var(--purple); } }
 [data-theme="dark"]     .td-star-btn { color: rgba(255,255,255,0.15); }
-[data-theme="dark"]     .td-star-btn:hover,
 [data-theme="dark"]     .td-star-btn.active,
-[data-theme="terminal"] .td-star-btn:hover,
 [data-theme="terminal"] .td-star-btn.active { color: var(--lime); }
+@media (hover: hover) {
+  [data-theme="dark"]     .td-star-btn:hover,
+  [data-theme="terminal"] .td-star-btn:hover { color: var(--lime); }
+}
 .td-progress-bar {
   height: 3px; background: rgba(0,0,0,0.07);
   border-radius: 2px; margin-top: 5px; overflow: hidden;
@@ -870,6 +872,26 @@ function render() {
   grid.innerHTML    = results.length ? results.map(card).join('') : '<div class="td-empty">No shows match — try adjusting your filters</div>';
   count.textContent = `Showing ${results.length} of ${allShows.length} productions`;
   pushUrlState();
+
+  grid.querySelectorAll('.td-star-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key   = btn.dataset.key;
+      const isNow = watchlist.has(key);
+      if (isNow) {
+        watchlist.delete(key);
+        btn.classList.remove('active');
+        btn.title = 'Save to watchlist';
+        btn.setAttribute('aria-label', 'Save to watchlist');
+      } else {
+        watchlist.add(key);
+        btn.classList.add('active');
+        btn.title = 'Remove from watchlist';
+        btn.setAttribute('aria-label', 'Remove from watchlist');
+      }
+      saveWatchlist();
+      if (activeFilter === 'watchlist') render();
+    });
+  });
 }
 
 /* ── POPULATE DROPDOWNS ── */
@@ -1074,26 +1096,7 @@ async function sendMessage(override) {
 /* BlakeAI events */
 document.getElementById('td-grid').addEventListener('click', e => {
   const blakeai = e.target.closest('.td-blakeai');
-  if (blakeai) { openBlakeAI(blakeai.dataset); return; }
-
-  const star = e.target.closest('.td-star-btn');
-  if (star) {
-    const key      = star.dataset.key;
-    const isNow    = watchlist.has(key);
-    if (isNow) {
-      watchlist.delete(key);
-      star.classList.remove('active');
-      star.title = 'Save to watchlist';
-      star.setAttribute('aria-label', 'Save to watchlist');
-    } else {
-      watchlist.add(key);
-      star.classList.add('active');
-      star.title = 'Remove from watchlist';
-      star.setAttribute('aria-label', 'Remove from watchlist');
-    }
-    saveWatchlist();
-    if (activeFilter === 'watchlist') render();
-  }
+  if (blakeai) openBlakeAI(blakeai.dataset);
 });
 baMsgEl.addEventListener('click', e => {
   const chip = e.target.closest('.blakeai-chip');
