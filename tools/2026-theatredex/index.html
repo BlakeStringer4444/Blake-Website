@@ -261,6 +261,17 @@ body {
 .td-card-row1 {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
+.td-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+@keyframes td-now-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+.td-badge-nowshowing {
+  background: rgba(220,38,38,0.1); color: #dc2626;
+  animation: td-now-pulse 1.4s ease-in-out infinite;
+}
+[data-theme="dark"]     .td-badge-nowshowing { background: rgba(255,80,80,0.1);  color: #ff6b6b; }
+[data-theme="terminal"] .td-badge-nowshowing { background: rgba(212,255,26,0.08); color: var(--lime); }
 .td-badge {
   font-family: 'DM Mono', monospace;
   font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -704,6 +715,13 @@ function isUpcoming(row) {
   return !end || end >= TODAY;
 }
 
+function isNowShowing(row) {
+  const start = parseDate(row.date_start);
+  const end   = parseDate(row.date_end) || start;
+  if (!start) return false;
+  return start <= TODAY && TODAY <= end;
+}
+
 /* ── STATE ── */
 let allShows = [], activeCompany = '', activeMonth = '', activeUpcoming = true, searchQ = '';
 
@@ -721,9 +739,13 @@ function card(show) {
     show.playwright ? 'Playwright: ' + show.playwright : '',
   ].filter(Boolean).join('<br>');
 
+  const nowShowing = isNowShowing(show);
   return `<div class="td-card">
     <div class="td-card-row1">
-      <span class="${badgeCls}">${type}</span>
+      <span class="td-badges">
+        <span class="${badgeCls}">${type}</span>
+        ${nowShowing ? '<span class="td-badge td-badge-nowshowing">● Now Showing</span>' : ''}
+      </span>
       <span class="td-company">${show.company}</span>
     </div>
     <div class="td-title-text">${show.title}</div>
