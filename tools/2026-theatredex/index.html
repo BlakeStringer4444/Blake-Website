@@ -144,6 +144,12 @@ body {
   margin-top: 6px;
 }
 
+/* ── SCREEN-READER ONLY UTILITY ── */
+.td-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
 /* ── CONTROLS ── */
 .td-controls {
   padding: 18px 48px 14px;
@@ -265,6 +271,9 @@ body {
 @keyframes td-now-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .td-badge-nowshowing { animation: none; }
 }
 .td-badge-nowshowing {
   background: rgba(220,38,38,0.1); color: #dc2626;
@@ -557,18 +566,21 @@ button.td-link { background: none; cursor: pointer; }
 </header>
 
 <div class="td-controls">
+  <label for="td-search" class="td-sr-only">Search shows</label>
   <input type="search" class="td-search" id="td-search" placeholder="Search title, company, playwright, director…">
   <div class="td-filter-row">
+    <label for="td-company" class="td-sr-only">Filter by company</label>
     <select class="td-select" id="td-company">
       <option value="">All Companies</option>
     </select>
+    <label for="td-month" class="td-sr-only">Filter by month</label>
     <select class="td-select" id="td-month">
       <option value="">All Months</option>
     </select>
-    <button class="td-upcoming-toggle active" id="td-upcoming" title="Show only current &amp; future productions">Upcoming</button>
+    <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
   </div>
   <div class="td-controls-bottom">
-    <div class="td-count" id="td-count"></div>
+    <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
     <button class="td-refresh-btn" id="td-refresh-btn" title="Re-fetch data from Google Sheets">↻ Refresh Data</button>
   </div>
 </div>
@@ -727,10 +739,10 @@ function card(show) {
   const type     = show.type || 'Play';
   const badgeCls = 'td-badge td-badge-' + type.toLowerCase();
   const links    = [];
-  if (show.url_map)       links.push(`<a class="td-link" href="${safeUrl(show.url_map)}" target="_blank" rel="noopener noreferrer">${iconMap} Map</a>`);
-  if (show.url_facebook)  links.push(`<a class="td-link" href="${safeUrl(show.url_facebook)}"  target="_blank" rel="noopener noreferrer">${iconFB} FB</a>`);
-  if (show.url_instagram) links.push(`<a class="td-link" href="${safeUrl(show.url_instagram)}" target="_blank" rel="noopener noreferrer">${iconIG} IG</a>`);
-  if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer">${iconWeb} Web</a>`);
+  if (show.url_map)       links.push(`<a class="td-link" href="${safeUrl(show.url_map)}" target="_blank" rel="noopener noreferrer" aria-label="Map (opens in new tab)">${iconMap} Map</a>`);
+  if (show.url_facebook)  links.push(`<a class="td-link" href="${safeUrl(show.url_facebook)}"  target="_blank" rel="noopener noreferrer" aria-label="Facebook (opens in new tab)">${iconFB} FB</a>`);
+  if (show.url_instagram) links.push(`<a class="td-link" href="${safeUrl(show.url_instagram)}" target="_blank" rel="noopener noreferrer" aria-label="Instagram (opens in new tab)">${iconIG} IG</a>`);
+  if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer" aria-label="Website (opens in new tab)">${iconWeb} Web</a>`);
   const people = [
     show.director  ? 'Director: '   + show.director  : '',
     show.playwright ? 'Playwright: ' + show.playwright : '',
@@ -741,7 +753,7 @@ function card(show) {
     <div class="td-card-row1">
       <span class="td-badges">
         <span class="${badgeCls}">${type}</span>
-        ${nowShowing ? '<span class="td-badge td-badge-nowshowing">● Now Showing</span>' : ''}
+        ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
       </span>
       <span class="td-company">${show.company}</span>
     </div>
@@ -836,7 +848,9 @@ document.getElementById('td-company').addEventListener('change',  e  => { active
 document.getElementById('td-month').addEventListener('change',    e  => { activeMonth = e.target.value; render(); });
 document.getElementById('td-upcoming').addEventListener('click',  () => {
   activeUpcoming = !activeUpcoming;
-  document.getElementById('td-upcoming').classList.toggle('active', activeUpcoming);
+  const btn = document.getElementById('td-upcoming');
+  btn.classList.toggle('active', activeUpcoming);
+  btn.setAttribute('aria-pressed', activeUpcoming);
   render();
 });
 document.getElementById('td-refresh-btn').addEventListener('click', () => init(true));
@@ -851,6 +865,7 @@ const CHIPS = [
 let baShow    = null;
 let baMsgs_   = [];
 let baBusy    = false;
+let baOpener  = null;
 
 const baOverlay      = document.getElementById('blakeai-overlay');
 const baMsgEl        = document.getElementById('blakeai-messages');
@@ -863,6 +878,7 @@ const baPlaywrightEl = document.getElementById('blakeai-playwright');
 const baDatesEl      = document.getElementById('blakeai-dates');
 
 function openBlakeAI(dataset) {
+  baOpener = document.activeElement;
   baShow = {
     title:      dataset.title      || '',
     company:    dataset.company    || '',
@@ -898,6 +914,7 @@ function openBlakeAI(dataset) {
 function closeBlakeAI() {
   baOverlay.classList.remove('open');
   document.body.style.overflow = '';
+  if (baOpener) { baOpener.focus(); baOpener = null; }
 }
 
 function buildWelcome() {
