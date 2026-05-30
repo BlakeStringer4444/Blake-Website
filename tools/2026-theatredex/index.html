@@ -198,7 +198,7 @@ body {
 .td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
 [data-theme="terminal"] .td-upcoming-toggle.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
 [data-theme="terminal"] .td-upcoming-toggle:hover:not(.active) { border-color: var(--lime); color: var(--lime); }
-.td-upcoming-toggle .td-star-icon { font-size: 15px; line-height: 1; vertical-align: middle; }
+.td-upcoming-toggle .td-star-icon { display: inline-block; transform: scale(1.6); transform-origin: center; vertical-align: middle; }
 
 .td-select {
   font-family: 'DM Mono', monospace;
@@ -555,7 +555,7 @@ button.td-link { background: none; cursor: pointer; }
   .td-controls { padding: 14px 20px 12px; position: relative; }
   .td-main     { padding: 20px 20px 56px; }
   .td-grid     { grid-template-columns: 1fr; }
-  .td-footer   { padding: 20px; flex-direction: column; text-align: center; }
+  .td-footer   { padding: 20px; }
   .td-title    { font-size: clamp(48px, 14vw, 80px); }
   .td-jump-top { bottom: 18px; right: 18px; }
   .blakeai-modal { max-height: 94vh; max-height: 94dvh; }
