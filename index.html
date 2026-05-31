@@ -1160,6 +1160,7 @@ body[data-theme="dark"] .jump-nav {
   background: rgba(153,51,255,0.15);
   cursor: pointer;
   overflow: visible;
+  position: relative;
 }
 .music-progress-fill {
   height: 100%;
@@ -1168,6 +1169,20 @@ body[data-theme="dark"] .jump-nav {
   pointer-events: none;
   transition: width 0.1s linear;
 }
+.music-progress-thumb {
+  position: absolute;
+  top: 50%; left: 0%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--purple);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.music-progress:hover .music-progress-thumb,
+.music-progress.dragging .music-progress-thumb { opacity: 1; }
+body[data-theme="terminal"] .music-progress-thumb { background: var(--lime); }
 .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
 @keyframes music-glow {
   0%, 100% { box-shadow: 0 0 4px 2px rgba(153,51,255,0.3); }
@@ -2713,6 +2728,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
         <div class="music-progress" id="music-progress" title="Seek">
           <div class="music-progress-fill" id="music-progress-fill"></div>
+          <div class="music-progress-thumb" id="music-progress-thumb"></div>
         </div>
         <audio id="music-audio" preload="none"></audio>
       </div>
@@ -3605,10 +3621,11 @@ if (darkToggle) {
   const timeEl    = document.getElementById('music-time');
   const progBar   = document.getElementById('music-progress');
   const progFill  = document.getElementById('music-progress-fill');
+  const thumb     = document.getElementById('music-progress-thumb');
   const canvas    = document.getElementById('music-vis');
   const iconPlay  = playBtn.querySelector('.music-icon-play');
   const iconPause = playBtn.querySelector('.music-icon-pause');
-  let loaded = false, audioCtx, analyser, source, rafId;
+  let loaded = false, audioCtx, analyser, source, rafId, dragging = false;
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00';
@@ -3618,22 +3635,28 @@ if (darkToggle) {
 
   function isTerminal() { return document.body.dataset.theme === 'terminal'; }
 
+  function setProgress(pct) {
+    progFill.style.width = pct + '%';
+    thumb.style.left     = pct + '%';
+  }
+
+  /* ── Visualiser ── */
   function resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const w   = canvas.offsetWidth;
-    const h   = canvas.offsetHeight;
-    if (w === 0 || h === 0) return;
-    canvas.width  = w * dpr;
-    canvas.height = h * dpr;
-    canvas.getContext('2d').scale(dpr, dpr);
+    const dpr  = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w    = Math.round(rect.width  * dpr);
+    const h    = Math.round(rect.height * dpr);
+    if (w === 0 || h === 0 || (canvas.width === w && canvas.height === h)) return;
+    canvas.width  = w;
+    canvas.height = h;
   }
 
   function initAudio() {
     if (audioCtx) return;
-    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-    analyser  = audioCtx.createAnalyser();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
     analyser.fftSize = 128;
-    source    = audioCtx.createMediaElementSource(audio);
+    source   = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
   }
@@ -3641,19 +3664,22 @@ if (darkToggle) {
   function drawBars() {
     if (!analyser) return;
     rafId = requestAnimationFrame(drawBars);
-    const ctx    = canvas.getContext('2d');
-    const W      = canvas.offsetWidth;
-    const H      = canvas.offsetHeight;
-    const bins   = analyser.frequencyBinCount;
-    const data   = new Uint8Array(bins);
-    analyser.getByteFrequencyData(data);
+    resizeCanvas();
+    const dpr  = window.devicePixelRatio || 1;
+    const W    = canvas.width  / dpr;
+    const H    = canvas.height / dpr;
+    const ctx  = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
-    const gap    = 2;
-    const barW   = (W - gap * (bins - 1)) / bins;
+    const bins = analyser.frequencyBinCount;
+    const data = new Uint8Array(bins);
+    analyser.getByteFrequencyData(data);
+    const color = isTerminal() ? '#D4FF1A' : '#9933FF';
+    const gap   = 2;
+    const barW  = Math.max(1, (W - gap * (bins - 1)) / bins);
     for (let i = 0; i < bins; i++) {
       const barH = (data[i] / 255) * H;
-      ctx.fillStyle = color;
+      ctx.fillStyle   = color;
       ctx.globalAlpha = 0.15 + (data[i] / 255) * 0.85;
       ctx.fillRect(i * (barW + gap), H - barH, barW, barH);
     }
@@ -3661,7 +3687,6 @@ if (darkToggle) {
   }
 
   function startVis() {
-    resizeCanvas();
     canvas.classList.add('active');
     if (!rafId) drawBars();
   }
@@ -3669,10 +3694,11 @@ if (darkToggle) {
   function stopVis() {
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     canvas.classList.remove('active');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.getContext('2d').clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   }
 
+  /* ── Play / Pause ── */
   playBtn.addEventListener('click', () => {
     if (!loaded) { audio.src = '/Audio/Proteas - Blake Stringer.mp3'; loaded = true; }
     initAudio();
@@ -3697,26 +3723,56 @@ if (darkToggle) {
   audio.addEventListener('ended', () => {
     iconPlay.style.display  = '';
     iconPause.style.display = 'none';
-    progFill.style.width = '0%';
+    setProgress(0);
     progFill.classList.remove('playing');
-    timeEl.textContent   = '0:00';
+    timeEl.textContent = '0:00';
     playBtn.setAttribute('aria-label', 'Play Proteas');
     audio.currentTime = 0;
     stopVis();
   });
   audio.addEventListener('timeupdate', () => {
-    if (!audio.duration) return;
-    progFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
-    timeEl.textContent   = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+    if (!audio.duration || dragging) return;
+    const pct = audio.currentTime / audio.duration * 100;
+    setProgress(pct);
+    timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
   });
 
-  progBar.addEventListener('click', e => {
-    if (!audio.duration) return;
+  /* ── Scrubber (click + drag) ── */
+  function seekFromEvent(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const r = progBar.getBoundingClientRect();
-    audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
-  });
+    const pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    setProgress(pct * 100);
+    if (audio.duration) {
+      audio.currentTime = pct * audio.duration;
+      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+    }
+  }
 
-  window.addEventListener('resize', () => { if (rafId) resizeCanvas(); });
+  progBar.addEventListener('mousedown', e => {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  });
+  progBar.addEventListener('touchstart', e => {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  }, { passive: true });
+
+  document.addEventListener('mousemove', e => { if (dragging) seekFromEvent(e); });
+  document.addEventListener('touchmove', e => { if (dragging) seekFromEvent(e); }, { passive: true });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    progBar.classList.remove('dragging');
+    progFill.style.transition = '';
+  }
+  document.addEventListener('mouseup',  endDrag);
+  document.addEventListener('touchend', endDrag);
 })();
 
 /* ── BACK TO TOP ── */
