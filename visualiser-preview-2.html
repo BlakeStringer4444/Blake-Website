@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualiser Preview 2 — Blake Stringer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --purple: #9933FF; --lime: #D4FF1A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: #f5f5f0;
+    color: #111;
+    padding: 40px 32px 60px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--purple); margin-bottom: 4px; }
+  .subtitle { font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.38); margin-bottom: 44px; }
+  .vis-block { margin-bottom: 36px; }
+  .vis-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(0,0,0,0.38); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .vis-num {
+    background: var(--purple); color: var(--lime);
+    width: 16px; height: 16px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 8px;
+  }
+  .vis-name { color: #111; }
+  .player-mock { border: 1px solid var(--purple); padding: 14px 16px; }
+  .player-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .play-btn {
+    background: var(--purple); color: var(--lime);
+    width: 32px; height: 32px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .track-name { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--purple); flex: 1; }
+  .time { font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.35); white-space: nowrap; }
+  canvas.vc { display: block; width: 100%; }
+  .prog-wrap { position: relative; height: 28px; display: flex; align-items: center; margin-top: 2px; }
+  .prog-wrap::before { content: ''; position: absolute; left: 0; right: 0; height: 3px; background: rgba(153,51,255,0.15); top: 50%; transform: translateY(-50%); }
+  .prog-fill { height: 3px; background: var(--purple); width: 0%; position: relative; z-index: 1; box-shadow: 0 0 8px 2px rgba(153,51,255,0.4); }
+  .prog-thumb { position: absolute; top: 50%; left: 0%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--purple); z-index: 2; }
+  .desc { font-size: 9px; letter-spacing: 0.5px; color: rgba(0,0,0,0.38); margin-top: 8px; line-height: 1.6; }
+  .footer { font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.25); text-align: center; margin-top: 48px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Visualiser Preview 2</h1>
+<p class="subtitle">Wide-spread options · Simulated audio running live</p>
+
+<!-- A: Mirrored Waveform -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">A</span><span class="vis-name">Mirrored Waveform</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="tA">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="cA" height="72"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="pA"></div><div class="prog-thumb" id="ptA"></div></div>
+  </div>
+  <p class="desc">Two waveforms mirrored top and bottom, with the space between them filled. Full width, completely symmetric. Like a heartbeat monitor reflected in water.</p>
+</div>
+
+<!-- B: Symmetric Bars -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">B</span><span class="vis-name">Symmetric Bars</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="tB">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="cB" height="72"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="pB"></div><div class="prog-thumb" id="ptB"></div></div>
+  </div>
+  <p class="desc">Bars grow both up and down from a centre line — a butterfly/diamond shape. Same full-width coverage as before, but twice as dramatic. Very Shazam-esque.</p>
+</div>
+
+<!-- C: Circle + Wings -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">C</span><span class="vis-name">Circle + Waveform Wings</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="tC">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="cC" height="90"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="pC"></div><div class="prog-thumb" id="ptC"></div></div>
+  </div>
+  <p class="desc">The circular visualiser in the centre with waveform “wings” flowing left and right from it. Circle pulses with the beat; wings carry the melody across the full width.</p>
+</div>
+
+<!-- D: Sunrise Fan -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">D</span><span class="vis-name">Sunrise Fan</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="tD">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="cD" height="90"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="pD"></div><div class="prog-thumb" id="ptD"></div></div>
+  </div>
+  <p class="desc">Radial bars in a half-circle fanning from the bottom centre — like a sunrise or a speaker grille. Spreads edge-to-edge. The circular look, but fully wide.</p>
+</div>
+
+<p class="footer">Simulated audio · Actual visualiser responds to Proteas by Blake Stringer</p>
+
+<script>
+(function () {
+  const PURPLE = '#9933FF';
+  const BPM    = 118;
+  const TOTAL  = 273;
+  const t0     = performance.now();
+  function elapsed() { return (performance.now() - t0) / 1000; }
+
+  const smoothed = {};
+  function syntheticFreq(id, bins, t) {
+    const beat4  = (t * BPM / 60) % 1;
+    const beat16 = (t * BPM * 4 / 60) % 1;
+    const kick   = Math.pow(Math.max(0, 1 - beat4 * 6), 3);
+    const hihat  = Math.pow(Math.max(0, 1 - beat16 * 10), 5) * 0.55;
+    const raw    = new Float32Array(bins);
+    for (let i = 0; i < bins; i++) {
+      const f = i / bins;
+      raw[i] = Math.min(1,
+        (f < 0.06  ? kick * 0.95 : 0) +
+        (f < 0.18  ? (Math.sin(t * 4.7 + f * 22) * 0.22 + 0.38) * 0.65 : 0) +
+        (f > 0.04 && f < 0.38 ? (Math.sin(t * 6.1 + f * 17 + 1.3) * 0.18 + 0.26) * 0.5 : 0) +
+        (f > 0.12 && f < 0.58 ? (Math.sin(t * 9.3 + f * 42) * 0.09 + 0.14) * 0.38 : 0) +
+        (f > 0.48  ? hihat * (0.18 + Math.random() * 0.12) : 0) +
+        Math.random() * 0.03
+      );
+    }
+    if (!smoothed[id]) smoothed[id] = new Float32Array(bins);
+    for (let i = 0; i < bins; i++)
+      smoothed[id][i] = smoothed[id][i] * 0.75 + raw[i] * 0.25;
+    return smoothed[id];
+  }
+
+  function syntheticWave(samples, t) {
+    const beat4 = (t * BPM / 60) % 1;
+    const amp   = 0.20 + Math.pow(Math.max(0, 1 - beat4 * 4), 2) * 0.62;
+    const out   = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const p = i / samples;
+      out[i] = (
+        Math.sin(p * Math.PI * 48 + t * 24) * 0.40 +
+        Math.sin(p * Math.PI * 20 + t * 15) * 0.35 +
+        Math.sin(p * Math.PI * 7  + t * 8)  * 0.25
+      ) * amp;
+    }
+    return out;
+  }
+
+  function setup(id) {
+    const canvas = document.getElementById(id);
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = canvas.offsetWidth  * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      canvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    return { canvas, get ctx() { return canvas.getContext('2d'); }, get W() { return canvas.offsetWidth; }, get H() { return canvas.offsetHeight; } };
+  }
+
+  function drawMirrored({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const wave = syntheticWave(W, t);
+    const amp  = H * 0.40;
+    ctx.beginPath();
+    for (let i = 0; i < W; i++) {
+      const y = H / 2 - wave[i] * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    }
+    for (let i = W - 1; i >= 0; i--) { ctx.lineTo(i, H / 2 + wave[i] * amp); }
+    ctx.closePath();
+    ctx.fillStyle = PURPLE + '22';
+    ctx.fill();
+    ctx.beginPath();
+    for (let i = 0; i < W; i++) {
+      const y = H / 2 - wave[i] * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    }
+    ctx.strokeStyle = PURPLE; ctx.lineWidth = 1.5; ctx.shadowColor = PURPLE; ctx.shadowBlur = 6; ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i < W; i++) {
+      const y = H / 2 + wave[i] * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawSymmetric({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const bins = 128, freq = syntheticFreq('sym', bins, t);
+    const nBars = bins, gap = 1;
+    const barW = Math.max(1, (W - gap * (nBars - 1)) / nBars);
+    const maxBin = Math.floor(bins * 0.72), maxH = H * 0.46;
+    for (let i = 0; i < nBars; i++) {
+      const tt = i / (nBars - 1);
+      const binIdx = Math.min(bins - 1, Math.round(Math.pow(maxBin, tt)));
+      let sum = 0, cnt = 0;
+      for (let b = Math.max(0, binIdx-1); b <= Math.min(bins-1, binIdx+1); b++) { sum += freq[b]; cnt++; }
+      const val = sum / cnt, barH = Math.max(1, val * maxH), x = i * (barW + gap);
+      ctx.fillStyle = PURPLE; ctx.globalAlpha = 0.2 + val * 0.8;
+      ctx.fillRect(x, H/2 - barH, barW, barH);
+      ctx.fillRect(x, H/2,        barW, barH);
+    }
+    ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2);
+    ctx.strokeStyle = PURPLE + '30'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  function drawCircleWings({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const cx = W/2, cy = H/2, r = H * 0.28;
+    const bins = 64, freq = syntheticFreq('wings', bins, t);
+    const nWing = Math.floor(W/2 - r - 4);
+    const wave = syntheticWave(nWing, t), wAmp = H * 0.35;
+    [1, -1].forEach(side => {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * r, cy);
+      for (let i = 0; i < nWing; i++) { ctx.lineTo(cx + side * (r + i), cy - wave[i] * wAmp); }
+      ctx.lineTo(side > 0 ? W : 0, cy);
+      ctx.lineTo(cx + side * r, cy);
+      ctx.closePath();
+      ctx.fillStyle = PURPLE + '1A'; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + side * r, cy);
+      for (let i = 0; i < nWing; i++) { ctx.lineTo(cx + side * (r + i), cy - wave[i] * wAmp); }
+      ctx.strokeStyle = PURPLE; ctx.lineWidth = 1.5; ctx.shadowColor = PURPLE; ctx.shadowBlur = 5; ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+    const nPts = 48, pts = [];
+    for (let i = 0; i < nPts; i++) {
+      const angle = (i/nPts)*Math.PI*2 - Math.PI/2;
+      const rr = r + freq[Math.floor((i/nPts)*bins)] * r * 0.45;
+      pts.push({ x: cx + Math.cos(angle)*rr, y: cy + Math.sin(angle)*rr });
+    }
+    ctx.beginPath();
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+      const cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6;
+      const cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;
+      i===0?ctx.moveTo(p1.x,p1.y):void 0;
+      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2.x,p2.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle=PURPLE+'2A'; ctx.fill();
+    ctx.strokeStyle=PURPLE; ctx.lineWidth=2; ctx.shadowColor=PURPLE; ctx.shadowBlur=12; ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  function drawSunrise({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const bins=80, freq=syntheticFreq('sunrise',bins,t);
+    const maxBin=Math.floor(bins*0.72);
+    const ox=W/2, oy=H+H*0.08, rInner=H*0.08, rOuter=H*1.02;
+    ctx.beginPath(); ctx.arc(ox,oy,rInner,Math.PI,0,false);
+    ctx.strokeStyle=PURPLE+'30'; ctx.lineWidth=1; ctx.stroke();
+    for (let i=0;i<bins;i++) {
+      const tt=i/(bins-1);
+      const binIdx=Math.min(bins-1,Math.round(Math.pow(maxBin,tt)));
+      let sum=0,cnt=0;
+      for(let b=Math.max(0,binIdx-1);b<=Math.min(bins-1,binIdx+1);b++){sum+=freq[b];cnt++;}
+      const val=sum/cnt, angle=Math.PI-tt*Math.PI;
+      const len=rInner+Math.max(2,val*(rOuter-rInner));
+      ctx.beginPath();
+      ctx.moveTo(ox+Math.cos(angle)*rInner,oy+Math.sin(angle)*rInner);
+      ctx.lineTo(ox+Math.cos(angle)*len,   oy+Math.sin(angle)*len);
+      ctx.strokeStyle=PURPLE; ctx.lineWidth=2; ctx.globalAlpha=0.2+val*0.8; ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function fmt(s){s=Math.floor(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+  function updateUI(id,pct){
+    document.getElementById('p'+id).style.width=(pct*100).toFixed(1)+'%';
+    document.getElementById('pt'+id).style.left=(pct*100).toFixed(1)+'%';
+    document.getElementById('t'+id).textContent=fmt(pct*TOTAL)+' / 4:33';
+  }
+
+  const v={A:setup('cA'),B:setup('cB'),C:setup('cC'),D:setup('cD')};
+  function loop(){
+    const t=elapsed(),pct=(t%TOTAL)/TOTAL;
+    drawMirrored(v.A,t); drawSymmetric(v.B,t); drawCircleWings(v.C,t); drawSunrise(v.D,t);
+    ['A','B','C','D'].forEach(id=>updateUI(id,pct));
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
