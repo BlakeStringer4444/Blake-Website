@@ -3653,7 +3653,7 @@ if (darkToggle) {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 128;
+    analyser.fftSize = 256;
     source   = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
@@ -3672,14 +3672,27 @@ if (darkToggle) {
     const bins = analyser.frequencyBinCount;
     const data = new Uint8Array(bins);
     analyser.getByteFrequencyData(data);
-    const color = isTerminal() ? '#D4FF1A' : '#9933FF';
-    const gap   = 2;
-    const barW  = Math.max(1, (W - gap * (bins - 1)) / bins);
-    for (let i = 0; i < bins; i++) {
-      const rawH  = (data[i] / 255) * H;
-      const barH  = Math.max(2, rawH);
+    const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
+    const gap    = 2;
+    const nBars  = bins;
+    const barW   = Math.max(1, (W - gap * (nBars - 1)) / nBars);
+    // Log-scale frequency mapping: bar 0 → ~20 Hz, bar N → ~16 kHz.
+    // Covers the musical range rather than the full linear 0–22 kHz range
+    // (where the top third has near-zero energy in all music).
+    const maxBin = Math.floor(bins * 0.72);
+    for (let i = 0; i < nBars; i++) {
+      const t      = i / (nBars - 1);
+      const binIdx = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
+      // Average with neighbours for smoothness across the log-mapped bins
+      let sum = 0, cnt = 0;
+      for (let b = Math.max(0, binIdx - 1); b <= Math.min(bins - 1, binIdx + 1); b++) {
+        sum += data[b]; cnt++;
+      }
+      const val  = sum / cnt;
+      const rawH = (val / 255) * H;
+      const barH = Math.max(2, rawH);
       ctx.fillStyle   = color;
-      ctx.globalAlpha = rawH > 2 ? 0.15 + (data[i] / 255) * 0.85 : 0.12;
+      ctx.globalAlpha = rawH > 2 ? 0.15 + (val / 255) * 0.85 : 0.12;
       ctx.fillRect(i * (barW + gap), H - barH, barW, barH);
     }
     ctx.globalAlpha = 1;
