@@ -3632,6 +3632,7 @@ if (darkToggle) {
   const iconPlay  = playBtn.querySelector('.music-icon-play');
   const iconPause = playBtn.querySelector('.music-icon-pause');
   let loaded = false, audioCtx, analyser, source, rafId, dragging = false;
+  let smoothedWave = new Float32Array(0);
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00';
@@ -3679,8 +3680,12 @@ if (darkToggle) {
     const color = isTerminal() ? '#D4FF1A' : '#9933FF';
     const iW    = Math.round(W);
     const amp   = H * 0.22;
-    const raw   = new Float32Array(iW);
 
+    // Reinitialise persistent array if width changed
+    if (smoothedWave.length !== iW) smoothedWave = new Float32Array(iW);
+
+    // Build raw target values for this frame
+    const raw = new Float32Array(iW);
     if (analyser && !audio.paused) {
       const samples = analyser.fftSize;
       const data    = new Uint8Array(samples);
@@ -3696,10 +3701,17 @@ if (darkToggle) {
       }
     }
 
-    // 3-sample smoothing to reduce jitter
-    const wave = new Float32Array(iW);
+    // Temporal smoothing: blend 10% of new data into persistent array each frame
     for (let i = 0; i < iW; i++)
-      wave[i] = (raw[Math.max(0, i-1)] + raw[i] + raw[Math.min(iW-1, i+1)]) / 3;
+      smoothedWave[i] = smoothedWave[i] * 0.90 + raw[i] * 0.10;
+
+    // Spatial smoothing: 5-sample box filter on top
+    const wave = new Float32Array(iW);
+    for (let i = 0; i < iW; i++) {
+      let s = 0;
+      for (let d = -2; d <= 2; d++) s += smoothedWave[Math.max(0, Math.min(iW-1, i+d))];
+      wave[i] = s / 5;
+    }
 
     // Filled area
     ctx.beginPath();
