@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualiser Preview — Blake Stringer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --purple: #9933FF; --lime: #D4FF1A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: #f5f5f0;
+    color: #111;
+    padding: 40px 32px 60px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.38);
+    margin-bottom: 44px;
+  }
+  .vis-block { margin-bottom: 36px; }
+  .vis-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(0,0,0,0.38); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .vis-num {
+    background: var(--purple); color: var(--lime);
+    width: 16px; height: 16px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 8px;
+  }
+  .vis-name { color: #111; }
+  .player-mock {
+    border: 1px solid var(--purple);
+    padding: 14px 16px;
+  }
+  .player-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .play-btn {
+    background: var(--purple); color: var(--lime);
+    width: 32px; height: 32px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .track-name {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--purple); flex: 1;
+  }
+  .time { font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.35); white-space: nowrap; }
+  canvas.vc { display: block; width: 100%; }
+  .prog-wrap { position: relative; height: 3px; background: rgba(153,51,255,0.15); margin-top: 8px; }
+  .prog-fill { height: 100%; background: var(--purple); width: 0%; box-shadow: 0 0 8px 3px rgba(153,51,255,0.5); }
+  .prog-thumb {
+    position: absolute; top: 50%; left: 0%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px; border-radius: 50%; background: var(--purple);
+  }
+  .desc {
+    font-size: 9px; letter-spacing: 0.5px; color: rgba(0,0,0,0.38);
+    margin-top: 8px; line-height: 1.6;
+  }
+  .footer {
+    font-size: 9px; letter-spacing: 1px; color: rgba(0,0,0,0.25);
+    text-align: center; margin-top: 48px;
+    border-top: 1px solid rgba(0,0,0,0.08); padding-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Visualiser Preview</h1>
+<p class="subtitle">Simulated audio · All five options running live</p>
+
+<!-- 1: Oscilloscope -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">1</span><span class="vis-name">Oscilloscope Wave</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="t1">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="c1" height="56"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="p1"></div><div class="prog-thumb" id="pt1"></div></div>
+  </div>
+  <p class="desc">A single smooth line tracing the raw audio waveform. Flat when silent, undulating with the music. Minimal and elegant — very "audiophile."</p>
+</div>
+
+<!-- 2: Morphing Blob -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">2</span><span class="vis-name">Morphing Blob</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="t2">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="c2" height="150"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="p2"></div><div class="prog-thumb" id="pt2"></div></div>
+  </div>
+  <p class="desc">A filled circle that deforms organically — frequency bins push the edge outward. Looks like a living organism. Very Spotify/modern music app.</p>
+</div>
+
+<!-- 3: Circular Radial -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">3</span><span class="vis-name">Circular Radial Bars</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="t3">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="c3" height="150"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="p3"></div><div class="prog-thumb" id="pt3"></div></div>
+  </div>
+  <p class="desc">Bars radiating outward from a center point in a full circle. The existing vertical bars, but in a ring — iconic "flower that dances" look.</p>
+</div>
+
+<!-- 4: Scrolling Waveform -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">4</span><span class="vis-name">Scrolling Waveform</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="t4">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="c4" height="56"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="p4"></div><div class="prog-thumb" id="pt4"></div></div>
+  </div>
+  <p class="desc">The waveform scrolls continuously from right to left, like a seismograph or audio editor. Always moving — even quiet passages draw a thin line.</p>
+</div>
+
+<!-- 5: Floating Particles -->
+<div class="vis-block">
+  <div class="vis-label"><span class="vis-num">5</span><span class="vis-name">Floating Particles</span></div>
+  <div class="player-mock">
+    <div class="player-row">
+      <div class="play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="#D4FF1A"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
+      <span class="track-name">Proteas</span>
+      <span class="time" id="t5">0:00 / 4:33</span>
+    </div>
+    <canvas class="vc" id="c5" height="90"></canvas>
+    <div class="prog-wrap"><div class="prog-fill" id="p5"></div><div class="prog-thumb" id="pt5"></div></div>
+  </div>
+  <p class="desc">Dots emitted from the bottom, quantity and speed driven by amplitude. They float upward and fade out. Ethereal — pure vibes, not frequency-accurate.</p>
+</div>
+
+<p class="footer">Simulated audio · Actual visualiser responds to Proteas by Blake Stringer</p>
+
+<script>
+(function () {
+  const PURPLE = '#9933FF';
+  const BPM    = 118;
+  const TOTAL  = 273;
+  const t0     = performance.now();
+
+  function elapsed() { return (performance.now() - t0) / 1000; }
+
+  const smoothed = {};
+  function syntheticFreq(id, bins, t) {
+    const beat4  = (t * BPM / 60) % 1;
+    const beat16 = (t * BPM * 4 / 60) % 1;
+    const kick   = Math.pow(Math.max(0, 1 - beat4 * 6), 3);
+    const hihat  = Math.pow(Math.max(0, 1 - beat16 * 10), 5) * 0.55;
+    const raw    = new Float32Array(bins);
+    for (let i = 0; i < bins; i++) {
+      const f = i / bins;
+      raw[i] = Math.min(1,
+        (f < 0.06  ? kick * 0.95 : 0) +
+        (f < 0.18  ? (Math.sin(t * 4.7 + f * 22) * 0.22 + 0.38) * 0.65 : 0) +
+        (f > 0.04 && f < 0.38 ? (Math.sin(t * 6.1 + f * 17 + 1.3) * 0.18 + 0.26) * 0.5 : 0) +
+        (f > 0.12 && f < 0.58 ? (Math.sin(t * 9.3 + f * 42) * 0.09 + 0.14) * 0.38 : 0) +
+        (f > 0.48  ? hihat * (0.18 + Math.random() * 0.12) : 0) +
+        Math.random() * 0.03
+      );
+    }
+    if (!smoothed[id]) smoothed[id] = new Float32Array(bins);
+    for (let i = 0; i < bins; i++)
+      smoothed[id][i] = smoothed[id][i] * 0.72 + raw[i] * 0.28;
+    return smoothed[id];
+  }
+
+  function syntheticWave(samples, t) {
+    const beat4 = (t * BPM / 60) % 1;
+    const amp   = 0.22 + Math.pow(Math.max(0, 1 - beat4 * 4), 2) * 0.6;
+    const out   = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const p = i / samples;
+      out[i] = (
+        Math.sin(p * Math.PI * 46 + t * 23) * 0.42 +
+        Math.sin(p * Math.PI * 19 + t * 14) * 0.33 +
+        Math.sin(p * Math.PI * 8  + t * 7)  * 0.25
+      ) * amp;
+    }
+    return out;
+  }
+
+  function setup(id) {
+    const canvas = document.getElementById(id);
+    function resize() {
+      const dpr  = window.devicePixelRatio || 1;
+      const w    = canvas.offsetWidth;
+      const h    = canvas.offsetHeight;
+      canvas.width  = w * dpr;
+      canvas.height = h * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    return {
+      canvas,
+      get ctx() { return canvas.getContext('2d'); },
+      get W()   { return canvas.offsetWidth; },
+      get H()   { return canvas.offsetHeight; },
+    };
+  }
+
+  function drawOscilloscope({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const wave = syntheticWave(256, t);
+    ctx.beginPath();
+    for (let i = 0; i < wave.length; i++) {
+      const x = (i / (wave.length - 1)) * W;
+      const y = H / 2 - wave[i] * H * 0.82;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = PURPLE;
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = PURPLE;
+    ctx.shadowBlur  = 7;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
+  }
+
+  function drawBlob({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const bins  = 64;
+    const freq  = syntheticFreq('blob', bins, t);
+    const cx    = W / 2, cy = H / 2;
+    const rBase = Math.min(W, H) * 0.25;
+    const rMax  = rBase * 0.7;
+    const nPts  = 64;
+    const pts   = [];
+    for (let i = 0; i < nPts; i++) {
+      const angle  = (i / nPts) * Math.PI * 2 - Math.PI / 2;
+      const binIdx = Math.floor((i / nPts) * bins);
+      const r      = rBase + freq[binIdx] * rMax;
+      pts.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+    }
+    ctx.beginPath();
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[(i - 1 + n) % n];
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % n];
+      const p3 = pts[(i + 2) % n];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      i === 0 ? ctx.moveTo(p1.x, p1.y) : void 0;
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle   = PURPLE + '28';
+    ctx.fill();
+    ctx.strokeStyle = PURPLE;
+    ctx.lineWidth   = 2;
+    ctx.shadowColor = PURPLE;
+    ctx.shadowBlur  = 14;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = PURPLE;
+    ctx.fill();
+  }
+
+  function drawRadial({ ctx, W, H }, t) {
+    ctx.clearRect(0, 0, W, H);
+    const bins   = 80;
+    const freq   = syntheticFreq('radial', bins, t);
+    const cx     = W / 2, cy = H / 2;
+    const rInner = Math.min(W, H) * 0.19;
+    const rOuter = Math.min(W, H) * 0.44;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
+    ctx.strokeStyle = PURPLE + '40';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    for (let i = 0; i < bins; i++) {
+      const angle = (i / bins) * Math.PI * 2 - Math.PI / 2;
+      const len   = rInner + freq[i] * (rOuter - rInner);
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * rInner, cy + Math.sin(angle) * rInner);
+      ctx.lineTo(cx + Math.cos(angle) * len,    cy + Math.sin(angle) * len);
+      ctx.strokeStyle  = PURPLE;
+      ctx.lineWidth    = 1.8;
+      ctx.globalAlpha  = 0.25 + freq[i] * 0.75;
+      ctx.shadowColor  = PURPLE;
+      ctx.shadowBlur   = freq[i] > 0.4 ? 6 : 0;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur  = 0;
+  }
+
+  const scrollHist = [];
+  function drawScrolling({ ctx, W, H }, t) {
+    const val = syntheticWave(1, t)[0];
+    scrollHist.push(val);
+    while (scrollHist.length > W + 2) scrollHist.shift();
+    ctx.clearRect(0, 0, W, H);
+    ctx.beginPath();
+    ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
+    ctx.strokeStyle = PURPLE + '1A';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+    ctx.beginPath();
+    const n = scrollHist.length;
+    for (let i = 0; i < n; i++) {
+      const x = W - (n - 1 - i);
+      const y = H / 2 - scrollHist[i] * H * 0.8;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = PURPLE;
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = PURPLE;
+    ctx.shadowBlur  = 5;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
+    const fade = ctx.createLinearGradient(0, 0, W * 0.12, 0);
+    fade.addColorStop(0,   '#f5f5f0');
+    fade.addColorStop(1,   'rgba(245,245,240,0)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 0, W * 0.12, H);
+  }
+
+  const parts = [];
+  function drawParticles({ ctx, W, H }, t) {
+    const bins = 32;
+    const freq = syntheticFreq('parts', bins, t);
+    const avg  = freq.reduce((s, v) => s + v, 0) / bins;
+    const spawn = Math.floor(avg * 5);
+    for (let s = 0; s < spawn; s++) {
+      const bi  = Math.floor(Math.random() * bins);
+      const val = freq[bi];
+      if (val < 0.08) continue;
+      parts.push({
+        x:     (bi / bins + (Math.random() - 0.5) * (1.5 / bins)) * W,
+        y:     H + 2,
+        vy:   -(0.6 + val * 3 + Math.random() * 1.2),
+        vx:    (Math.random() - 0.5) * 0.4,
+        alpha: 0.55 + val * 0.45,
+        r:     1.2 + val * 3.5,
+      });
+    }
+    while (parts.length > 250) parts.shift();
+    ctx.clearRect(0, 0, W, H);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.x    += p.vx; p.y += p.vy;
+      p.alpha -= 0.013;
+      if (p.alpha <= 0 || p.y < -p.r) { parts.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(Math.min(W, Math.max(0, p.x)), p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle   = PURPLE;
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function fmt(s) {
+    s = Math.floor(s);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+  function updateUI(idx, pct) {
+    const fill  = document.getElementById('p'  + idx);
+    const thumb = document.getElementById('pt' + idx);
+    const time  = document.getElementById('t'  + idx);
+    const p     = (pct * 100).toFixed(1) + '%';
+    fill.style.width  = p;
+    thumb.style.left  = p;
+    time.textContent  = fmt(pct * TOTAL) + ' / 4:33';
+  }
+
+  const v = [
+    setup('c1'), setup('c2'), setup('c3'), setup('c4'), setup('c5'),
+  ];
+
+  function loop() {
+    const t   = elapsed();
+    const pct = (t % TOTAL) / TOTAL;
+    drawOscilloscope(v[0], t);
+    drawBlob        (v[1], t);
+    drawRadial      (v[2], t);
+    drawScrolling   (v[3], t);
+    drawParticles   (v[4], t);
+    for (let i = 1; i <= 5; i++) updateUI(i, pct);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
