@@ -1149,36 +1149,47 @@ body[data-theme="dark"] .jump-nav {
 .music-vis {
   display: block;
   width: 100%;
-  height: 48px;
+  height: 80px;
   margin: 8px 0;
   opacity: 0;
   transition: opacity 0.4s;
 }
 .music-vis.active { opacity: 1; }
 .music-progress {
-  height: 3px;
-  background: rgba(153,51,255,0.15);
+  height: 28px;
   cursor: pointer;
   overflow: visible;
   position: relative;
+  display: flex;
+  align-items: center;
+}
+.music-progress::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: rgba(153,51,255,0.15);
+  top: 50%; transform: translateY(-50%);
 }
 .music-progress-fill {
-  height: 100%;
+  height: 3px;
   background: var(--purple);
   width: 0%;
   pointer-events: none;
   transition: width 0.1s linear;
+  position: relative;
+  z-index: 1;
 }
 .music-progress-thumb {
   position: absolute;
   top: 50%; left: 0%;
   transform: translate(-50%, -50%);
-  width: 10px; height: 10px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   background: var(--purple);
   pointer-events: none;
   opacity: 1;
-  transition: opacity 0.15s;
+  z-index: 2;
 }
 body[data-theme="terminal"] .music-progress-thumb { background: var(--lime); }
 .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
@@ -1400,7 +1411,7 @@ body[data-theme="dark"] .jump-btn--active { background: var(--purple); color: va
 body[data-theme="dark"] .music-player { border-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .music-track-name { color: rgba(240,240,235,0.6); }
 body[data-theme="dark"] .music-time { color: rgba(240,240,235,0.3); }
-body[data-theme="dark"] .music-progress { background: rgba(255,255,255,0.08); }
+body[data-theme="dark"] .music-progress::before { background: rgba(255,255,255,0.08); }
 body[data-theme="dark"] footer { border-top-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .footer-hint { color: rgba(240,240,235,0.35); }
 body[data-theme="dark"] .skill-track { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
@@ -1599,7 +1610,7 @@ body[data-theme="terminal"] .music-player { border-color: rgba(255,255,255,0.15)
 body[data-theme="terminal"] .music-play-btn { background: var(--lime); color: #000; }
 body[data-theme="terminal"] .music-track-name { color: rgba(255,255,255,0.55); }
 body[data-theme="terminal"] .music-time { color: rgba(255,255,255,0.3); }
-body[data-theme="terminal"] .music-progress { background: rgba(212,255,26,0.1); }
+body[data-theme="terminal"] .music-progress::before { background: rgba(212,255,26,0.1); }
 body[data-theme="terminal"] .music-progress-fill { background: var(--lime); }
 body[data-theme="terminal"] footer { border-top-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .footer-hint { color: rgba(255,255,255,0.2); }
@@ -3663,37 +3674,46 @@ if (darkToggle) {
     if (!analyser) return;
     rafId = requestAnimationFrame(drawBars);
     resizeCanvas();
-    const dpr  = window.devicePixelRatio || 1;
-    const W    = canvas.width  / dpr;
-    const H    = canvas.height / dpr;
-    const ctx  = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const W      = canvas.width  / dpr;
+    const H      = canvas.height / dpr;
+    const ctx    = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    const bins = analyser.frequencyBinCount;
-    const data = new Uint8Array(bins);
+    const bins   = analyser.frequencyBinCount;
+    const data   = new Uint8Array(bins);
     analyser.getByteFrequencyData(data);
     const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
-    const gap    = 2;
-    const nBars  = bins;
-    const barW   = Math.max(1, (W - gap * (nBars - 1)) / nBars);
-    // Log-scale frequency mapping: bar 0 → ~20 Hz, bar N → ~16 kHz.
-    // Covers the musical range rather than the full linear 0–22 kHz range
-    // (where the top third has near-zero energy in all music).
+    const cx     = W / 2;
+    const cy     = H / 2;
+    const rInner = H * 0.16;
+    const rOuter = H * 0.46;
+    const nBars  = 80;
     const maxBin = Math.floor(bins * 0.72);
+    // Subtle inner ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
+    ctx.strokeStyle = color + '35';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+    // Radial bars with log-scale frequency mapping
     for (let i = 0; i < nBars; i++) {
       const t      = i / (nBars - 1);
       const binIdx = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
-      // Average with neighbours for smoothness across the log-mapped bins
       let sum = 0, cnt = 0;
       for (let b = Math.max(0, binIdx - 1); b <= Math.min(bins - 1, binIdx + 1); b++) {
         sum += data[b]; cnt++;
       }
-      const val  = sum / cnt;
-      const rawH = (val / 255) * H;
-      const barH = Math.max(2, rawH);
-      ctx.fillStyle   = color;
-      ctx.globalAlpha = rawH > 2 ? 0.15 + (val / 255) * 0.85 : 0.12;
-      ctx.fillRect(i * (barW + gap), H - barH, barW, barH);
+      const val   = sum / cnt / 255;
+      const angle = (i / nBars) * Math.PI * 2 - Math.PI / 2;
+      const len   = rInner + Math.max(1, val * (rOuter - rInner));
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * rInner, cy + Math.sin(angle) * rInner);
+      ctx.lineTo(cx + Math.cos(angle) * len,    cy + Math.sin(angle) * len);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 1.8;
+      ctx.globalAlpha = 0.2 + val * 0.8;
+      ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
