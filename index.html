@@ -3632,7 +3632,6 @@ if (darkToggle) {
   const iconPlay  = playBtn.querySelector('.music-icon-play');
   const iconPause = playBtn.querySelector('.music-icon-pause');
   let loaded = false, audioCtx, analyser, source, rafId, dragging = false;
-  let smoothedWave = new Float32Array(0);
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00';
@@ -3662,7 +3661,8 @@ if (darkToggle) {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 1024;
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.92;
     source   = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
@@ -3678,70 +3678,68 @@ if (darkToggle) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
     const color = isTerminal() ? '#D4FF1A' : '#9933FF';
-    const iW    = Math.round(W);
-    const amp   = H * 0.22;
 
-    // Reinitialise persistent array if width changed
-    if (smoothedWave.length !== iW) smoothedWave = new Float32Array(iW);
+    const nPts = 48;
+    const vals = new Float32Array(nPts); // 0..1 per control point
 
-    // Build raw target values for this frame
-    const raw = new Float32Array(iW);
     if (analyser && !audio.paused) {
-      const samples = analyser.fftSize;
-      const data    = new Uint8Array(samples);
-      analyser.getByteTimeDomainData(data);
-      for (let i = 0; i < iW; i++)
-        raw[i] = (data[Math.floor(i / (iW - 1) * (samples - 1))] - 128) / 128;
+      const bins = analyser.frequencyBinCount; // 128
+      const data = new Uint8Array(bins);
+      analyser.getByteFrequencyData(data);      // browser smoothing via smoothingTimeConstant
+      const maxBin = Math.floor(bins * 0.75);
+      for (let i = 0; i < nPts; i++) {
+        const t = i / (nPts - 1);
+        const b = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
+        let sum = 0, cnt = 0;
+        for (let d = -1; d <= 1; d++) { const idx = Math.max(0, Math.min(bins-1, b+d)); sum += data[idx]; cnt++; }
+        vals[i] = sum / cnt / 255;
+      }
     } else {
       const t = performance.now() / 1000;
-      for (let i = 0; i < iW; i++) {
-        const x = i / (iW - 1);
-        raw[i] = Math.sin(x * Math.PI * 3 + t * 0.65) * 0.10
-               + Math.sin(x * Math.PI * 1.6 + t * 0.38) * 0.07;
+      for (let i = 0; i < nPts; i++) {
+        const x = i / (nPts - 1);
+        vals[i] = (Math.sin(x * Math.PI * 2.5 + t * 0.5) * 0.5 + 0.5) * 0.18;
       }
     }
 
-    // Temporal smoothing: blend 10% of new data into persistent array each frame
-    for (let i = 0; i < iW; i++)
-      smoothedWave[i] = smoothedWave[i] * 0.90 + raw[i] * 0.10;
-
-    // Spatial smoothing: 5-sample box filter on top
-    const wave = new Float32Array(iW);
-    for (let i = 0; i < iW; i++) {
-      let s = 0;
-      for (let d = -2; d <= 2; d++) s += smoothedWave[Math.max(0, Math.min(iW-1, i+d))];
-      wave[i] = s / 5;
+    const peakH = H * 0.42;
+    const xs = new Float32Array(nPts);
+    const yt = new Float32Array(nPts);
+    const yb = new Float32Array(nPts);
+    for (let i = 0; i < nPts; i++) {
+      xs[i] = i * W / (nPts - 1);
+      yt[i] = H / 2 - vals[i] * peakH;
+      yb[i] = H / 2 + vals[i] * peakH;
     }
 
-    // Filled area
-    ctx.beginPath();
-    for (let i = 0; i < iW; i++) {
-      const y = H / 2 - wave[i] * amp;
-      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    function drawSmooth(ys) {
+      ctx.beginPath();
+      ctx.moveTo(xs[0], ys[0]);
+      for (let i = 1; i < nPts - 1; i++) {
+        const mx = (xs[i] + xs[i+1]) / 2;
+        const my = (ys[i] + ys[i+1]) / 2;
+        ctx.quadraticCurveTo(xs[i], ys[i], mx, my);
+      }
+      ctx.lineTo(xs[nPts-1], ys[nPts-1]);
     }
-    for (let i = iW - 1; i >= 0; i--) { ctx.lineTo(i, H / 2 + wave[i] * amp); }
+
+    // Filled silhouette between top and bottom curves
+    drawSmooth(yt);
+    for (let i = nPts - 1; i >= 0; i--) ctx.lineTo(xs[i], yb[i]);
     ctx.closePath();
-    ctx.fillStyle = color + '15';
+    ctx.fillStyle = color + '18';
     ctx.fill();
 
-    // Top line
-    ctx.beginPath();
-    for (let i = 0; i < iW; i++) {
-      const y = H / 2 - wave[i] * amp;
-      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
-    }
+    // Top stroke with glow
+    drawSmooth(yt);
     ctx.strokeStyle = color;
     ctx.lineWidth   = 1.5;
     ctx.shadowColor = color;
-    ctx.shadowBlur  = 3;
+    ctx.shadowBlur  = 5;
     ctx.stroke();
 
-    // Bottom line (mirror)
-    ctx.beginPath();
-    for (let i = 0; i < iW; i++) {
-      const y = H / 2 + wave[i] * amp;
-      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
-    }
+    // Bottom stroke (mirror)
+    drawSmooth(yb);
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
