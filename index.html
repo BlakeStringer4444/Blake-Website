@@ -1149,7 +1149,7 @@ body[data-theme="dark"] .jump-nav {
 .music-vis {
   display: block;
   width: 100%;
-  height: 80px;
+  height: 72px;
   margin: 8px 0;
   opacity: 0;
   transition: opacity 0.4s;
@@ -3664,63 +3664,63 @@ if (darkToggle) {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
+    analyser.fftSize = 1024;
     source   = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
   }
 
-  function drawBars() {
+  function drawMirrored() {
     if (!analyser) return;
-    rafId = requestAnimationFrame(drawBars);
+    rafId = requestAnimationFrame(drawMirrored);
     resizeCanvas();
-    const dpr    = window.devicePixelRatio || 1;
-    const W      = canvas.width  / dpr;
-    const H      = canvas.height / dpr;
-    const ctx    = canvas.getContext('2d');
+    const dpr     = window.devicePixelRatio || 1;
+    const W       = canvas.width  / dpr;
+    const H       = canvas.height / dpr;
+    const ctx     = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    const bins   = analyser.frequencyBinCount;
-    const data   = new Uint8Array(bins);
-    analyser.getByteFrequencyData(data);
-    const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
-    const cx     = W / 2;
-    const cy     = H / 2;
-    const rInner = H * 0.16;
-    const rOuter = H * 0.46;
-    const nBars  = 80;
-    const maxBin = Math.floor(bins * 0.72);
-    // Subtle inner ring
+    const color   = isTerminal() ? '#D4FF1A' : '#9933FF';
+    const samples = analyser.fftSize;
+    const data    = new Uint8Array(samples);
+    analyser.getByteTimeDomainData(data);
+    const amp     = H * 0.40;
+    const iW      = Math.round(W);
+    function v(i) { return (data[Math.floor(i / (iW - 1) * (samples - 1))] - 128) / 128; }
+    // Filled area between mirrored waveforms
     ctx.beginPath();
-    ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
-    ctx.strokeStyle = color + '35';
-    ctx.lineWidth   = 1;
-    ctx.stroke();
-    // Radial bars with log-scale frequency mapping
-    for (let i = 0; i < nBars; i++) {
-      const t      = i / (nBars - 1);
-      const binIdx = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
-      let sum = 0, cnt = 0;
-      for (let b = Math.max(0, binIdx - 1); b <= Math.min(bins - 1, binIdx + 1); b++) {
-        sum += data[b]; cnt++;
-      }
-      const val   = sum / cnt / 255;
-      const angle = (i / nBars) * Math.PI * 2 - Math.PI / 2;
-      const len   = rInner + Math.max(1, val * (rOuter - rInner));
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(angle) * rInner, cy + Math.sin(angle) * rInner);
-      ctx.lineTo(cx + Math.cos(angle) * len,    cy + Math.sin(angle) * len);
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 1.8;
-      ctx.globalAlpha = 0.2 + val * 0.8;
-      ctx.stroke();
+    for (let i = 0; i < iW; i++) {
+      const y = H / 2 - v(i) * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
     }
-    ctx.globalAlpha = 1;
+    for (let i = iW - 1; i >= 0; i--) { ctx.lineTo(i, H / 2 + v(i) * amp); }
+    ctx.closePath();
+    ctx.fillStyle = color + '22';
+    ctx.fill();
+    // Top waveform line
+    ctx.beginPath();
+    for (let i = 0; i < iW; i++) {
+      const y = H / 2 - v(i) * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 6;
+    ctx.stroke();
+    // Bottom waveform line (mirror)
+    ctx.beginPath();
+    for (let i = 0; i < iW; i++) {
+      const y = H / 2 + v(i) * amp;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   function startVis() {
     canvas.classList.add('active');
-    if (!rafId) drawBars();
+    if (!rafId) drawMirrored();
   }
 
   function stopVis() {
