@@ -2464,52 +2464,112 @@ body[data-theme="terminal"] .lost-section { border-top-color: rgba(255,255,255,0
 }
 body[data-theme="dark"]     .lost-hint { color: rgba(255,255,255,0.14); }
 body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
-.lost-btn {
+/* ── LOST timer display ── */
+.lost-countdown {
+  display: flex;
+  align-items: stretch;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+  border: 2px solid #000;
+}
+.lost-cd-mins {
+  display: flex;
+  gap: 3px;
+  background: #0a0a0a;
+  padding: 10px 14px;
+}
+.lost-cd-sep {
+  background: #1f1f1f;
+  color: #666;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 50px;
+  line-height: 1;
+  padding: 6px 5px 0;
+  display: flex;
+  align-items: center;
+}
+.lost-cd-secs {
+  display: flex;
+  gap: 3px;
+  background: #d8d8d8;
+  padding: 10px 14px;
+}
+.lost-cd-digit {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 1;
+  width: 38px;
+  text-align: center;
+  border-radius: 2px;
   position: relative;
-  width: 164px; height: 164px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #1c1400, #080600);
-  border: 4px solid #2a1c00;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 6px;
+}
+.lost-cd-digit::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%; height: 1px;
+  opacity: 0.25;
+}
+.lost-cd-mins .lost-cd-digit {
+  color: #fff;
+  background: linear-gradient(180deg, #1c1c1c 50%, #111 50%);
+  border: 1px solid #333;
+}
+.lost-cd-mins .lost-cd-digit::after { background: #000; }
+.lost-cd-secs .lost-cd-digit {
+  color: #111;
+  background: linear-gradient(180deg, #f2f2f2 50%, #ddd 50%);
+  border: 1px solid #bbb;
+}
+.lost-cd-secs .lost-cd-digit::after { background: #bbb; }
+
+/* ── Execute keyboard key ── */
+.lost-btn {
+  background: linear-gradient(180deg, #2e2e2e 0%, #1a1a1a 100%);
+  color: #e0e0e0;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  padding: 13px 44px 16px;
+  border: 1px solid #555;
+  border-bottom-color: #111;
+  border-radius: 6px 6px 4px 4px;
+  box-shadow:
+    0 4px 0 #111,
+    0 5px 0 #000,
+    0 7px 10px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.07);
   cursor: not-allowed;
-  transition: border-color 0.4s, box-shadow 0.4s;
+  opacity: 0.45;
+  transition: opacity 0.35s, box-shadow 0.08s, transform 0.08s;
   outline: none;
 }
-.lost-btn::before {
-  content: '';
-  position: absolute; inset: 6px;
-  border-radius: 50%;
-  border: 1px solid #1a1000;
-  transition: border-color 0.4s;
-}
 .lost-btn--active {
-  border-color: #c8960c;
+  opacity: 1;
   cursor: pointer;
   animation: lost-pulse 2.16s ease-in-out infinite;
 }
-.lost-btn--active::before { border-color: rgba(200,150,12,0.3); }
-.lost-btn--active:hover   { box-shadow: 0 0 44px rgba(200,150,12,0.55); }
-.lost-btn-label {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 17px; letter-spacing: 2.5px;
-  color: #2a1c00;
-  transition: color 0.4s;
-  text-align: center; line-height: 1.2;
+.lost-btn--active:hover {
+  box-shadow:
+    0 4px 0 #111,
+    0 5px 0 #000,
+    0 7px 10px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 0 28px rgba(200,150,12,0.5);
 }
-.lost-btn--active .lost-btn-label { color: #c8960c; }
-.lost-countdown {
-  font-family: 'DM Mono', monospace;
-  font-size: 30px; letter-spacing: 1px;
-  color: #0d1f14;
-  font-variant-numeric: tabular-nums;
-  transition: color 0.4s;
-  line-height: 1;
+.lost-btn--active:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 1px 0 #111,
+    0 2px 0 #000,
+    0 3px 5px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.lost-btn--active .lost-countdown { color: #20b860; }
 @keyframes lost-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(200,150,12,0.2), inset 0 0 20px rgba(200,150,12,0.04); }
-  50%       { box-shadow: 0 0 38px rgba(200,150,12,0.55), inset 0 0 28px rgba(200,150,12,0.1); }
+  0%, 100% { box-shadow: 0 4px 0 #111, 0 5px 0 #000, 0 7px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 8px rgba(200,150,12,0.15); }
+  50%       { box-shadow: 0 4px 0 #111, 0 5px 0 #000, 0 7px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 28px rgba(200,150,12,0.5); }
 }
 
 /* ── BROKEN SCREEN ── */
@@ -3269,10 +3329,8 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
       <!-- BLAKE IS LOST — hidden until 108-click trigger -->
       <div class="lost-section" id="lost-section" style="display:none">
         <p class="lost-hint">execute the subroutine</p>
-        <button class="lost-btn" id="lost-btn">
-          <span class="lost-btn-label">Push the Button</span>
-          <span class="lost-countdown" id="lost-countdown">108:00</span>
-        </button>
+        <div class="lost-countdown" id="lost-countdown"><span class="lost-cd-mins"><span class="lost-cd-digit">1</span><span class="lost-cd-digit">0</span><span class="lost-cd-digit">8</span></span><span class="lost-cd-sep">:</span><span class="lost-cd-secs"><span class="lost-cd-digit">0</span><span class="lost-cd-digit">0</span></span></div>
+        <button class="lost-btn" id="lost-btn">Execute</button>
       </div>
     </div>
 
@@ -5919,7 +5977,9 @@ if (siteName) {
     const total = Math.max(0, Math.ceil(ms / 1000));
     const m = Math.floor(total / 60);
     const s = total % 60;
-    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    const mD = String(m).padStart(3, '0').split('').map(d => `<span class="lost-cd-digit">${d}</span>`).join('');
+    const sD = String(s).padStart(2, '0').split('').map(d => `<span class="lost-cd-digit">${d}</span>`).join('');
+    return `<span class="lost-cd-mins">${mD}</span><span class="lost-cd-sep">:</span><span class="lost-cd-secs">${sD}</span>`;
   }
 
   /* ── Broken screen ── */
@@ -5946,7 +6006,7 @@ if (siteName) {
       if (!deadline) { clearInterval(ticker); return; }
       const rem = deadline - Date.now();
       if (rem <= 0) { clearInterval(ticker); showBroken(); return; }
-      lostCountdown.textContent = fmt(rem);
+      lostCountdown.innerHTML = fmt(rem);
       const canClick = rem <= WINDOW_MS;
       lostBtn.disabled = !canClick;
       lostBtn.classList.toggle('lost-btn--active', canClick);
@@ -5958,7 +6018,7 @@ if (siteName) {
     lostSection.style.display = '';
     const deadline = parseInt(localStorage.getItem(LS_DEADLINE) || '0');
     if (deadline && Date.now() < deadline) {
-      lostCountdown.textContent = fmt(deadline - Date.now());
+      lostCountdown.innerHTML = fmt(deadline - Date.now());
       const canClick = (deadline - Date.now()) <= WINDOW_MS;
       lostBtn.disabled = !canClick;
       lostBtn.classList.toggle('lost-btn--active', canClick);
@@ -5966,7 +6026,7 @@ if (siteName) {
     } else {
       lostBtn.disabled = false;
       lostBtn.classList.add('lost-btn--active');
-      lostCountdown.textContent = '108:00';
+      lostCountdown.innerHTML = fmt(108 * 60 * 1000);
     }
   }
 
