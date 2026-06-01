@@ -3342,6 +3342,21 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
     <span class="footer-hint">BLAKE STRINGER // <span>2026</span></span>
 </footer>
 
+<div id="broken-overlay" class="broken-overlay">
+  <div class="broken-scanlines"></div>
+  <div class="broken-inner">
+    <div class="broken-glitch-wrap" data-text="SYSTEM FAILURE">SYSTEM FAILURE</div>
+    <div class="broken-numbers">4 &nbsp;&nbsp; 8 &nbsp;&nbsp; 15 &nbsp;&nbsp; 16 &nbsp;&nbsp; 23 &nbsp;&nbsp; 42</div>
+    <div class="broken-msg">
+      Blake's website is broken and <span id="broken-trigger">Swan Station is now destroyed</span>
+      because you let the timer elapse, you idiot.
+    </div>
+    <div class="broken-sub">We're all going to die.</div>
+    <div class="broken-sub">Please do not attempt to leave the island.</div>
+    <div class="broken-dhsymbol">☯</div>
+  </div>
+</div>
+
 <script>
 /* ── GLOBAL LEADERBOARD SYSTEM ── */
 (function () {
@@ -3359,6 +3374,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
     db = firebase.firestore();
   } catch (e) {
     window.showLeaderboard = function () {};
+    window.loadInlineLB  = function () {};
     window.fmtTime = function (s) { return s + 's'; };
     return;
   }
@@ -6080,19 +6096,5 @@ if (siteName) {
 
 </script>
 
-<div id="broken-overlay" class="broken-overlay">
-  <div class="broken-scanlines"></div>
-  <div class="broken-inner">
-    <div class="broken-glitch-wrap" data-text="SYSTEM FAILURE">SYSTEM FAILURE</div>
-    <div class="broken-numbers">4 &nbsp;&nbsp; 8 &nbsp;&nbsp; 15 &nbsp;&nbsp; 16 &nbsp;&nbsp; 23 &nbsp;&nbsp; 42</div>
-    <div class="broken-msg">
-      Blake's website is broken and <span id="broken-trigger">Swan Station is now destroyed</span>
-      because you let the timer elapse, you idiot.
-    </div>
-    <div class="broken-sub">We're all going to die.</div>
-    <div class="broken-sub">Please do not attempt to leave the island.</div>
-    <div class="broken-dhsymbol">☯</div>
-  </div>
-</div>
 </body>
 </html>
