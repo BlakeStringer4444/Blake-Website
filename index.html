@@ -1022,11 +1022,14 @@ footer {
   }
   .site-wrap   { margin-left: 72px; }
   header       { padding-left: 104px; } /* 72px sidebar + 32px original gap */
+  /* When Aa zoom (1.25×) is active, counteract its effect on the fixed sidebar */
+  body.font-zoomed .tab-sidebar { height: calc((100vh - 5px) / 1.25); }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
   .tab-sidebar { display: none; }
   .tab-mobile { display: flex; }
+  .font-size-toggle { display: none; }
   .site-wrap { flex-direction: column; }
   .main-content { padding: 24px 20px 48px; }
 }
@@ -2497,6 +2500,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
         </div>
         <div class="about-bio">
           <p>I'm a Melbourne-based actor whose primary focus is theatre and stage performance. Alongside my work as a performer, I'm a musician and sound designer, lending strong creative input to community productions.</p>
+          <p>I also enjoy developing resources that make it easier for friends, fellow actors, and newcomers to explore Victoria's vibrant community theatre scene, which you can discover via my "Tools" page.</p>
         </div>
       </div>
 
@@ -3605,7 +3609,8 @@ if (darkToggle) {
   const btn = document.getElementById('font-size-toggle');
   let zoomed = localStorage.getItem('font-zoom') === '1';
   function apply() {
-    document.documentElement.style.zoom = zoomed ? '1.15' : '';
+    document.documentElement.style.zoom = zoomed ? '1.25' : '';
+    document.body.classList.toggle('font-zoomed', zoomed);
     btn.classList.toggle('active', zoomed);
   }
   apply();
