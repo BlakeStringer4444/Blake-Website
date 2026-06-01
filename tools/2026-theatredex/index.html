@@ -1158,6 +1158,303 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
+/* ── BLAKE INVADERS ── Easter egg: click "Now Showing" 5× within 5 s */
+(function () {
+
+  /* ── Trigger ── */
+  let taps = 0, tapTimer = null;
+  document.getElementById('td-nowshowing').addEventListener('click', () => {
+    if (++taps >= 5) { taps = 0; clearTimeout(tapTimer); openGame(); return; }
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 5000);
+  });
+
+  /* ── Inject overlay ── */
+  const LIME = '#D4FF1A', PURPLE_DIM = '#6622bb', RED = '#ff5555';
+  const btnStyle = 'background:none;border:1px solid rgba(212,255,26,0.3);color:rgba(212,255,26,0.75);' +
+                   'font-family:"DM Mono",monospace;font-size:11px;letter-spacing:1px;cursor:pointer;' +
+                   'padding:6px 14px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bi-overlay';
+  Object.assign(overlay.style, {
+    position:'fixed', inset:'0', background:'#000', zIndex:'9100',
+    display:'none', flexDirection:'column', alignItems:'stretch',
+  });
+  overlay.innerHTML = `
+    <div style="flex-shrink:0;padding:10px 14px;display:flex;align-items:center;gap:10px;
+         font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;
+         color:rgba(212,255,26,0.5);text-transform:uppercase;border-bottom:1px solid rgba(212,255,26,0.1);">
+      <span style="color:${LIME};font-size:11px;letter-spacing:3px;">▼ BLAKE INVADERS</span>
+      <span style="flex:1"></span>
+      <span id="bi-wave">Wave 1</span>
+      <span id="bi-score">Score: 0</span>
+      <span id="bi-lives">♥♥♥</span>
+      <button id="bi-close" style="${btnStyle}">✕ ESC</button>
+    </div>
+    <canvas id="bi-canvas" style="display:block;flex:1;"></canvas>
+    <div id="bi-mob" style="display:none;flex-shrink:0;padding:8px 16px 20px;
+         gap:8px;justify-content:space-between;align-items:center;">
+      <button id="bi-ml" style="${btnStyle}width:72px;font-size:20px;padding:10px 0;">◀</button>
+      <button id="bi-mf" style="${btnStyle}flex:1;font-size:11px;letter-spacing:2px;padding:12px 0;">▲ FIRE</button>
+      <button id="bi-mr" style="${btnStyle}width:72px;font-size:20px;padding:10px 0;">▶</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const canvas  = document.getElementById('bi-canvas');
+  const ctx     = canvas.getContext('2d');
+  const scoreEl = document.getElementById('bi-score');
+  const livesEl = document.getElementById('bi-lives');
+  const waveEl  = document.getElementById('bi-wave');
+  const mobEl   = document.getElementById('bi-mob');
+
+  /* ── Canvas sizing ── */
+  let W = 0, H = 0;
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width  || overlay.clientWidth;
+    H = rect.height || overlay.clientHeight - 44;
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ── Word pool from loaded shows ── */
+  const STOP = new Set('the,and,a,an,of,in,to,for,is,it,at,on,by,as,or,not,but,be,with,that,this,from,are,was,were,will,have,has,had,i,you,we,they,he,she,my,your,our,its,do,did,can,could,would,should,may,might,all,any,more,most,one,two,three,four,five,six,seven,eight,nine,ten,some'.split(','));
+  const FALLBACK = ['Theatre','Drama','Stage','Comedy','Actor','Script','Curtain','Musical','Tragedy','Hamlet','Encore','Chorus','Cabaret'];
+
+  function getWords(n) {
+    const seen = new Set(), pool = [];
+    for (const s of allShows) {
+      for (const w of (s.title || '').split(/\s+/)) {
+        const c = w.replace(/[^a-zA-Z]/g, '');
+        const l = c.toLowerCase();
+        if (c.length >= 4 && c.length <= 9 && !STOP.has(l) && !seen.has(l)) {
+          pool.push(c); seen.add(l);
+        }
+      }
+    }
+    if (pool.length < 4) pool.push(...FALLBACK);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(pool[i % pool.length]);
+    return out;
+  }
+
+  /* ── Game constants & state ── */
+  const ROWS = 4, SHIP_H = 18, SHIP_W = 26;
+  let COLS, INV_W, INV_H;
+  let invaders, bullets, eBullets, player;
+  let score, lives, wave, gameOver;
+  let groupX, groupY, groupDir, stepTimer, stepInterval, shotCd;
+  let keys = {}, rafId;
+
+  function initWave() {
+    resize();
+    COLS  = W > 480 ? 8 : 5;
+    INV_W = Math.floor((W - 30) / COLS);
+    INV_H = 30;
+    const words = getWords(COLS * ROWS);
+    invaders = [];
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        invaders.push({ word: words[r * COLS + c], col: c, row: r, alive: true });
+    groupX = 15; groupY = 54; groupDir = 1;
+    stepTimer = 0; stepInterval = Math.max(12, 48 - (wave - 1) * 8);
+    waveEl.textContent = 'Wave ' + wave;
+  }
+
+  function newGame() {
+    score = 0; lives = 3; wave = 1;
+    scoreEl.textContent = 'Score: 0'; livesEl.textContent = '♥♥♥';
+    bullets = []; eBullets = []; gameOver = false; shotCd = 0;
+    initWave();
+    player = { x: W / 2 };
+  }
+
+  /* ── Update ── */
+  function update() {
+    if (gameOver) return;
+
+    // Player move
+    if (keys['ArrowLeft']  || keys['a']     || keys['ml']) player.x = Math.max(SHIP_W / 2,     player.x - 5);
+    if (keys['ArrowRight'] || keys['d']     || keys['mr']) player.x = Math.min(W - SHIP_W / 2, player.x + 5);
+
+    // Shoot
+    if (shotCd > 0) shotCd--;
+    if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['mf']) && shotCd === 0) {
+      bullets.push({ x: player.x, y: H - SHIP_H - 34 });
+      shotCd = 16;
+    }
+
+    // Move bullets
+    bullets  = bullets.filter(b => b.y > -10);
+    eBullets = eBullets.filter(b => b.y < H + 10);
+    for (const b of bullets)  b.y -= 8;
+    for (const b of eBullets) b.y += 5 + wave * 0.4;
+
+    // Step invaders
+    const alive = invaders.filter(i => i.alive);
+    if (!alive.length) { wave++; initWave(); player.x = W / 2; return; }
+
+    if (++stepTimer >= stepInterval) {
+      stepTimer = 0;
+      const minC = Math.min(...alive.map(i => i.col));
+      const maxC = Math.max(...alive.map(i => i.col));
+      if      (groupDir ===  1 && groupX + (maxC + 1) * INV_W >= W - 8) { groupDir = -1; groupY += INV_H * 0.55; }
+      else if (groupDir === -1 && groupX +  minC      * INV_W <= 8)      { groupDir =  1; groupY += INV_H * 0.55; }
+      else groupX += groupDir * Math.ceil(INV_W * 0.22);
+      // Speed up as fewer invaders remain
+      stepInterval = Math.max(6, Math.floor(48 * alive.length / (COLS * ROWS)) - (wave - 1) * 6);
+    }
+
+    // Enemy shoot (bottom-most per column)
+    if (Math.random() < 0.018 + wave * 0.004) {
+      const front = {};
+      for (const i of alive) { if (!front[i.col] || i.row > front[i.col].row) front[i.col] = i; }
+      const shooters = Object.values(front);
+      const sh = shooters[Math.floor(Math.random() * shooters.length)];
+      eBullets.push({ x: groupX + sh.col * INV_W + INV_W / 2, y: groupY + sh.row * INV_H + INV_H });
+    }
+
+    // Player bullet hits invader
+    const hitSet = new Set();
+    for (let bi = 0; bi < bullets.length; bi++) {
+      const b = bullets[bi];
+      for (const inv of invaders) {
+        if (!inv.alive) continue;
+        const ix = groupX + inv.col * INV_W, iy = groupY + inv.row * INV_H;
+        if (b.x >= ix && b.x <= ix + INV_W && b.y >= iy && b.y <= iy + INV_H) {
+          inv.alive = false; hitSet.add(bi);
+          score += (ROWS - inv.row + 1) * 10 * wave;
+          scoreEl.textContent = 'Score: ' + score;
+        }
+      }
+    }
+    bullets = bullets.filter((_, i) => !hitSet.has(i));
+
+    // Enemy bullet hits player
+    const py = H - SHIP_H - 30;
+    for (const b of eBullets) {
+      if (Math.abs(b.x - player.x) < 20 && Math.abs(b.y - py) < 20) {
+        b.y = H + 999; lives--;
+        livesEl.textContent = '♥'.repeat(Math.max(0, lives));
+        if (lives <= 0) { gameOver = true; return; }
+      }
+    }
+
+    // Invaders breach the bottom
+    if (groupY + (Math.max(...alive.map(i => i.row)) + 1) * INV_H >= H - SHIP_H - 50) {
+      gameOver = true;
+    }
+  }
+
+  /* ── Draw ── */
+  function draw() {
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+
+    if (gameOver) {
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = LIME;
+      ctx.font = 'bold 32px "DM Mono",monospace';
+      ctx.fillText('GAME OVER', W / 2, H / 2 - 28);
+      ctx.font = '14px "DM Mono",monospace';
+      ctx.fillStyle = 'rgba(212,255,26,0.65)';
+      ctx.fillText('Score: ' + score, W / 2, H / 2 + 8);
+      ctx.fillStyle = LIME;
+      ctx.font = '11px "DM Mono",monospace';
+      ctx.fillText('SPACE · tap to play again', W / 2, H / 2 + 38);
+      return;
+    }
+
+    // Invaders
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const inv of invaders) {
+      if (!inv.alive) continue;
+      const x = groupX + inv.col * INV_W + 3, y = groupY + inv.row * INV_H + 3;
+      const iw = INV_W - 6, ih = INV_H - 6;
+      ctx.strokeStyle = PURPLE_DIM; ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, iw, ih);
+      ctx.fillStyle = 'rgba(153,51,255,0.08)';
+      ctx.fillRect(x, y, iw, ih);
+      const fs = Math.max(8, Math.min(11, (iw * 1.55) / inv.word.length));
+      ctx.fillStyle = '#cccccc';
+      ctx.font = `${fs}px "DM Mono",monospace`;
+      ctx.fillText(inv.word, x + iw / 2, y + ih / 2);
+    }
+
+    // Player bullets
+    ctx.fillStyle = LIME;
+    for (const b of bullets) ctx.fillRect(b.x - 2, b.y - 10, 4, 14);
+
+    // Enemy bullets
+    ctx.fillStyle = RED;
+    for (const b of eBullets) {
+      ctx.beginPath(); ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Player ship
+    const px = player.x, sy = H - SHIP_H - 30;
+    ctx.fillStyle = LIME;
+    ctx.beginPath();
+    ctx.moveTo(px, sy);
+    ctx.lineTo(px - SHIP_W / 2, sy + SHIP_H);
+    ctx.lineTo(px + SHIP_W / 2, sy + SHIP_H);
+    ctx.closePath(); ctx.fill();
+    ctx.fillRect(px - 2, sy - 7, 4, 9); // cannon nub
+
+    // Ground line
+    ctx.strokeStyle = 'rgba(212,255,26,0.12)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, H - 26); ctx.lineTo(W, H - 26); ctx.stroke();
+  }
+
+  /* ── Game loop ── */
+  function loop() { update(); draw(); rafId = requestAnimationFrame(loop); }
+
+  /* ── Open / Close ── */
+  function openGame() {
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    newGame();
+    cancelAnimationFrame(rafId);
+    loop();
+    const isMobile = window.innerWidth < 600 || 'ontouchstart' in window;
+    mobEl.style.display = isMobile ? 'flex' : 'none';
+  }
+  function closeGame() {
+    cancelAnimationFrame(rafId); rafId = null;
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    keys = {};
+  }
+
+  /* ── Input ── */
+  window.addEventListener('keydown', e => {
+    if (overlay.style.display === 'none') return;
+    keys[e.key] = true;
+    if (e.key === ' ') e.preventDefault();
+    if (e.key === 'Escape') { closeGame(); return; }
+    if (gameOver && (e.key === ' ' || e.key === 'Enter')) { gameOver = false; newGame(); }
+  });
+  window.addEventListener('keyup', e => { if (e.key) keys[e.key] = false; });
+
+  document.getElementById('bi-close').addEventListener('click', closeGame);
+  canvas.addEventListener('click', () => { if (gameOver) { gameOver = false; newGame(); } });
+
+  // Mobile hold buttons
+  [['bi-ml','ml'],['bi-mr','mr'],['bi-mf','mf']].forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    el.addEventListener('pointerdown', e => { e.preventDefault(); keys[key] = true; });
+    el.addEventListener('pointerup',   () => { keys[key] = false; });
+    el.addEventListener('pointerleave',() => { keys[key] = false; });
+  });
+
+})();
+
 init();
 </script>
 </body>
