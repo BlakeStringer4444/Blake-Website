@@ -678,7 +678,7 @@ button.td-link { background: none; cursor: pointer; }
   color: var(--purple);
   font-family: 'DM Mono', monospace;
   font-size: 24px;
-  min-width: 72px;
+  flex: 1;
   height: 60px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
@@ -688,7 +688,6 @@ button.td-link { background: none; cursor: pointer; }
   transition: background 0.1s, color 0.1s;
 }
 .bi-btn:active { background: var(--purple); color: var(--lime); }
-.bi-btn--fire { font-size: 12px; letter-spacing: 2px; flex: 1; }
 .bi-gameover {
   display: none;
   flex-direction: column;
@@ -1441,10 +1440,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         <div class="bi-stat"><div class="bi-stat-label">Lives</div><div class="bi-stat-val" id="bi-lives">♥♥♥♥</div></div>
       </div>
       <canvas id="bi-canvas"></canvas>
-      <div class="bi-hint" id="bi-hint" style="display:none">← &nbsp;&nbsp; space &nbsp;&nbsp; →</div>
+      <div class="bi-hint" id="bi-hint" style="display:none">← &nbsp;&nbsp; →</div>
       <div id="bi-mob" class="bi-mob" style="display:none">
         <button id="bi-ml" class="bi-btn">←</button>
-        <button id="bi-mf" class="bi-btn bi-btn--fire">▲ FIRE</button>
         <button id="bi-mr" class="bi-btn">→</button>
       </div>
       <div class="bi-gameover" id="bi-gameover">
@@ -1646,7 +1644,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (keys['ArrowRight'] || keys['d'] || keys['mr']) player.x = Math.min(W - SHIP_W / 2, player.x + 5);
 
     if (shotCd > 0) shotCd--;
-    if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['mf']) && shotCd === 0) {
+    if (shotCd === 0) {
       bullets.push({ x: player.x, y: H - SHIP_H - 34 });
       shotCd = 16;
     }
@@ -1818,7 +1816,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   restartBtn.addEventListener('click', () => { gameOver = false; newGame(); });
 
   /* ── Mobile buttons ── */
-  [['bi-ml','ml'], ['bi-mr','mr'], ['bi-mf','mf']].forEach(([id, key]) => {
+  [['bi-ml','ml'], ['bi-mr','mr']].forEach(([id, key]) => {
     const el = document.getElementById(id);
     el.addEventListener('touchstart',  e => { e.preventDefault(); keys[key] = true;  }, { passive: false });
     el.addEventListener('touchend',    e => { e.preventDefault(); keys[key] = false; }, { passive: false });
