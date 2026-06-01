@@ -762,8 +762,69 @@ button.td-link { background: none; cursor: pointer; }
 .bi-hint {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-  color: rgba(255,255,255,0.22); text-align: center;
+  color: rgba(255,255,255,0.38); text-align: center;
 }
+/* ── BLAKE INVADERS LEADERBOARD MODAL ── */
+.bi-lbm {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999;
+  font-family: 'DM Mono', monospace;
+  padding: 16px; box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+.bi-lbm-card {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  padding: 28px 24px;
+  width: 100%; max-width: 380px;
+  max-height: 85vh; overflow-y: auto;
+  position: relative; box-sizing: border-box;
+}
+@media (max-width: 420px) {
+  .bi-lbm-card { padding: 20px 16px; }
+  .bi-lbm { padding: 12px; align-items: flex-start; padding-top: 40px; }
+}
+.bi-lbm-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none;
+  color: #555; font-family: 'DM Mono', monospace;
+  font-size: 11px; cursor: pointer; letter-spacing: 1px;
+}
+.bi-lbm-close:hover { color: #D4FF1A; }
+.bi-lbm-super { font-size: 9px; letter-spacing: 3px; color: #555; margin-bottom: 4px; }
+.bi-lbm-title { font-size: 14px; letter-spacing: 2px; color: #D4FF1A; margin-bottom: 12px; }
+.bi-lbm-your { font-size: 11px; color: #888; margin-bottom: 18px; letter-spacing: 1px; }
+.bi-lbm-your strong { color: #fff; }
+.bi-lbm-qualify-label { font-size: 10px; letter-spacing: 1.5px; color: #D4FF1A; margin-bottom: 8px; line-height: 1.5; }
+.bi-lbm-input-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.bi-lbm-name-input {
+  flex: 1; background: #000; border: 1px solid #D4FF1A;
+  color: #fff; font-family: 'DM Mono', monospace;
+  font-size: 16px; padding: 8px 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  outline: none; box-sizing: border-box;
+}
+.bi-lbm-submit-btn {
+  background: #D4FF1A; color: #000; border: none;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 1px; padding: 9px 12px;
+  cursor: pointer; font-weight: bold; white-space: nowrap;
+}
+.bi-lbm-submit-btn:disabled { opacity: 0.5; cursor: default; }
+.bi-lbm-cols {
+  font-size: 9px; letter-spacing: 2px; color: #333;
+  display: flex; justify-content: space-between;
+  padding-bottom: 6px; border-bottom: 1px solid #1e1e1e; margin-bottom: 6px;
+}
+.bi-lbm-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid #141414;
+  font-size: 12px; letter-spacing: 1px;
+}
+.bi-lbm-row--hl { background: rgba(212,255,26,0.07); margin: 0 -8px; padding: 7px 8px; }
+.bi-lbm-row-name { flex: 1; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1388,10 +1449,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       </div>
       <div class="bi-gameover" id="bi-gameover">
         <div class="bi-go-score" id="bi-go-score"></div>
-        <div class="bi-go-row" id="bi-go-input-row">
-          <input class="bi-name-input" id="bi-name-input" type="text" placeholder="YOUR NAME" maxlength="20" autocomplete="off">
-          <button class="bi-submit-btn" id="bi-lb-submit">Submit</button>
-        </div>
         <button class="bi-restart-btn" id="bi-restart">▶ Play Again</button>
       </div>
       <div class="bi-lb-section">
@@ -1411,9 +1468,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const hintEl     = document.getElementById('bi-hint');
   const gameOverEl = document.getElementById('bi-gameover');
   const goScoreEl  = document.getElementById('bi-go-score');
-  const goInputRow = document.getElementById('bi-go-input-row');
-  const nameInput  = document.getElementById('bi-name-input');
-  const submitBtn  = document.getElementById('bi-lb-submit');
   const restartBtn = document.getElementById('bi-restart');
   const lbRowsEl   = document.getElementById('bi-lb-rows');
 
@@ -1447,16 +1501,82 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     } catch { lbRowsEl.innerHTML = ''; }
   }
 
-  async function saveAndRefresh(rawName, sc) {
-    if (!db) return;
-    const name = rawName.trim().replace(/[^A-Z0-9 _\-]/gi, '').slice(0, 8).toUpperCase() || 'ANON';
-    try {
-      await db.collection(INVADERS_COL).add({
-        name, score: sc,
-        ts: firebase.firestore.FieldValue.serverTimestamp(),
+  async function showLeaderboardModal(playerScore) {
+    if (document.getElementById('bi-lbm')) return;
+    let allRows = [];
+    if (db) {
+      try {
+        const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(50).get();
+        allRows = snap.docs.map(d => d.data());
+      } catch {}
+    }
+    const top10 = allRows.slice(0, 10);
+    const canQualify = db && (top10.length < 10 || playerScore > (top10[9]?.score ?? -1));
+
+    function renderModalRows(rows, hlName) {
+      if (!rows.length) return '<div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">NO SCORES YET — BE FIRST</div>';
+      return rows.slice(0, 10).map((s, i) => {
+        const hl = hlName && s.name === hlName;
+        const rc = i === 0 ? '#D4FF1A' : i < 3 ? '#FFFFFF' : '#555555';
+        return `<div class="bi-lbm-row${hl ? ' bi-lbm-row--hl' : ''}">
+          <span style="color:${rc};min-width:18px;">${i + 1}</span>
+          <span class="bi-lbm-row-name" style="color:${hl ? '#D4FF1A' : '#FFF'}">${s.name}</span>
+          <span style="color:${hl ? '#D4FF1A' : i < 3 ? '#CCC' : '#555'}">${s.score}</span>
+        </div>`;
+      }).join('');
+    }
+
+    const ov = document.createElement('div');
+    ov.id = 'bi-lbm';
+    ov.className = 'bi-lbm';
+    ov.innerHTML = `
+      <div class="bi-lbm-card">
+        <button class="bi-lbm-close" id="bi-lbm-close">✕ CLOSE</button>
+        <div class="bi-lbm-super">GLOBAL LEADERBOARD</div>
+        <div class="bi-lbm-title">BLAKE INVADERS</div>
+        <div class="bi-lbm-your">YOUR SCORE: <strong>${playerScore}</strong></div>
+        ${canQualify ? `<div id="bi-lbm-qualify">
+          <div class="bi-lbm-qualify-label">YOU MADE THE TOP 10 — ENTER YOUR NAME</div>
+          <div class="bi-lbm-input-row">
+            <input id="bi-lbm-name" class="bi-lbm-name-input" maxlength="8" placeholder="YOUR NAME" autocomplete="off" spellcheck="false">
+            <button id="bi-lbm-submit" class="bi-lbm-submit-btn">SUBMIT →</button>
+          </div>
+        </div>` : ''}
+        <div class="bi-lbm-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>
+        <div id="bi-lbm-list">${renderModalRows(top10, null)}</div>
+      </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('bi-lbm-close').onclick = () => ov.remove();
+
+    if (canQualify) {
+      const ni = document.getElementById('bi-lbm-name');
+      const sb = document.getElementById('bi-lbm-submit');
+      const qe = document.getElementById('bi-lbm-qualify');
+      const le = document.getElementById('bi-lbm-list');
+      ni.addEventListener('input', () => {
+        ni.value = ni.value.toUpperCase().replace(/[^A-Z0-9 _\-]/g, '');
       });
-      await renderLeaderboard(name);
-    } catch { await renderLeaderboard(); }
+      async function doSubmit() {
+        const raw = ni.value.trim();
+        if (!raw) { ni.focus(); return; }
+        sb.disabled = true; sb.textContent = '...';
+        const name = raw.toUpperCase().slice(0, 8);
+        try {
+          await db.collection(INVADERS_COL).add({
+            name, score: playerScore,
+            ts: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          const newSnap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(10).get();
+          const newRows = newSnap.docs.map(d => d.data());
+          qe.style.display = 'none';
+          le.innerHTML = renderModalRows(newRows, name);
+          renderLeaderboard(name);
+        } catch { sb.disabled = false; sb.textContent = 'SUBMIT →'; }
+      }
+      sb.addEventListener('click', doSubmit);
+      ni.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+      setTimeout(() => ni.focus(), 50);
+    }
   }
 
   /* ── Word pool from loaded shows ── */
@@ -1644,10 +1764,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         ? `<span style="font-size:9px;letter-spacing:2px;color:rgba(212,255,26,0.55);display:block;margin-bottom:4px;">108% complete — are you actually for real happy now? Find the "More to Come" button and click it 108 times.</span>`
         : '';
       goScoreEl.innerHTML = secretLine + 'Score: ' + score;
-      goInputRow.style.display = '';
-      submitBtn.disabled = false;
-      nameInput.value = '';
       gameOverEl.classList.add('active');
+      setTimeout(() => showLeaderboardModal(score), 700);
     }
     rafId = requestAnimationFrame(loop);
   }
@@ -1681,17 +1799,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   window.addEventListener('keyup', e => { if (e.key) keys[e.key] = false; });
 
   document.getElementById('bi-close').addEventListener('click', closeGame);
-
-  /* ── Score submission ── */
-  submitBtn.addEventListener('click', async () => {
-    const name = nameInput.value.trim() || 'ANON';
-    submitBtn.disabled = true;
-    submitBtn.textContent = '...';
-    goInputRow.style.display = 'none';
-    await saveAndRefresh(name, score);
-    submitBtn.textContent = 'Submit';
-  });
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
 
   /* ── Restart ── */
   restartBtn.addEventListener('click', () => { gameOver = false; newGame(); });
