@@ -1022,6 +1022,8 @@ footer {
   }
   .site-wrap   { margin-left: 72px; }
   header       { padding-left: 104px; } /* 72px sidebar + 32px original gap */
+  /* When Aa zoom (1.25×) is active, counteract its effect on the fixed sidebar */
+  body.font-zoomed .tab-sidebar { height: calc((100vh - 5px) / 1.25); }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -3605,7 +3607,8 @@ if (darkToggle) {
   const btn = document.getElementById('font-size-toggle');
   let zoomed = localStorage.getItem('font-zoom') === '1';
   function apply() {
-    document.documentElement.style.zoom = zoomed ? '1.15' : '';
+    document.documentElement.style.zoom = zoomed ? '1.25' : '';
+    document.body.classList.toggle('font-zoomed', zoomed);
     btn.classList.toggle('active', zoomed);
   }
   apply();
