@@ -590,6 +590,175 @@ button.td-link { background: none; cursor: pointer; }
   .td-jump-top { bottom: 16px; right: 16px; }
   .blakeai-modal { max-height: 94vh; max-height: 94dvh; }
 }
+
+/* ── BLAKE INVADERS ── */
+.bi-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,10,10,0.97);
+  z-index: 9100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.bi-overlay.active { display: flex; }
+@media (max-width: 639px) {
+  .bi-overlay { align-items: flex-start; padding: 16px 12px 32px; }
+}
+.bi-box {
+  background: #111;
+  border: 1px solid var(--purple);
+  padding: 32px 28px 28px;
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.bi-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.4);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  width: 52px; height: 52px; padding: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  line-height: 1.4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.bi-close:hover { background: var(--purple); color: var(--lime); border-color: var(--purple); }
+.bi-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(22px, 5vw, 32px);
+  letter-spacing: 5px;
+  color: var(--lime);
+  text-align: center;
+  text-transform: uppercase;
+}
+.bi-hud { display: flex; gap: 28px; }
+.bi-stat { text-align: center; }
+.bi-stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; letter-spacing: 2px;
+  color: var(--purple); text-transform: uppercase; margin-bottom: 2px;
+}
+.bi-stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 1px;
+  color: var(--lime);
+}
+#bi-canvas {
+  border: 2px solid var(--purple);
+  display: block;
+  width: 100%;
+  height: 300px;
+  background: #000;
+}
+@media (max-width: 639px) { #bi-canvas { height: 220px; } }
+@media (max-height: 600px) { #bi-canvas { height: 180px; } }
+.bi-mob {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+}
+.bi-btn {
+  background: transparent;
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  font-family: 'DM Mono', monospace;
+  font-size: 24px;
+  min-width: 72px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: background 0.1s, color 0.1s;
+}
+.bi-btn:active { background: var(--purple); color: var(--lime); }
+.bi-btn--fire { font-size: 12px; letter-spacing: 2px; flex: 1; }
+.bi-gameover {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.bi-gameover.active { display: flex; }
+.bi-go-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--lime);
+}
+.bi-go-row { display: flex; gap: 8px; width: 100%; }
+.bi-name-input {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid var(--purple);
+  color: #f0f0eb;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; padding: 7px 10px; letter-spacing: 1px; outline: none;
+}
+.bi-name-input:focus { border-color: var(--lime); }
+.bi-name-input::placeholder { color: rgba(255,255,255,0.3); }
+.bi-submit-btn {
+  background: var(--purple);
+  color: var(--lime);
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 7px 14px; cursor: pointer;
+  transition: background 0.2s; white-space: nowrap;
+}
+.bi-submit-btn:hover { background: #7700DD; }
+.bi-submit-btn:disabled { opacity: 0.5; cursor: default; }
+.bi-restart-btn {
+  width: 100%;
+  background: var(--purple);
+  color: var(--lime);
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 10px; cursor: pointer;
+  transition: background 0.2s;
+}
+.bi-restart-btn:hover { background: #7700DD; }
+.bi-lb-section {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  width: 100%;
+}
+.bi-lb-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 3px;
+  color: #444; text-align: center; margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.bi-lb-cols {
+  display: flex; justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; color: #2a2a2a;
+  padding-bottom: 5px; border-bottom: 1px solid #181818; margin-bottom: 4px;
+}
+.bi-lb-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid #111;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+  color: rgba(255,255,255,0.55);
+}
+.bi-lb-row:first-child { color: var(--lime); }
 </style>
 </head>
 <body>
@@ -1173,53 +1342,85 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   /* ── Inject overlay ── */
   const LIME = '#D4FF1A', PURPLE_DIM = '#6622bb', RED = '#ff5555';
-  const btnStyle = 'background:none;border:1px solid rgba(212,255,26,0.3);color:rgba(212,255,26,0.75);' +
-                   'font-family:"DM Mono",monospace;font-size:11px;letter-spacing:1px;cursor:pointer;' +
-                   'padding:6px 14px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
 
   const overlay = document.createElement('div');
   overlay.id = 'bi-overlay';
-  Object.assign(overlay.style, {
-    position:'fixed', inset:'0', background:'#000', zIndex:'9100',
-    display:'none', flexDirection:'column', alignItems:'stretch',
-  });
+  overlay.className = 'bi-overlay';
   overlay.innerHTML = `
-    <div style="flex-shrink:0;padding:10px 14px;display:flex;align-items:center;gap:10px;
-         font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;
-         color:rgba(212,255,26,0.5);text-transform:uppercase;border-bottom:1px solid rgba(212,255,26,0.1);">
-      <span style="color:${LIME};font-size:11px;letter-spacing:3px;">▼ BLAKE INVADERS</span>
-      <span style="flex:1"></span>
-      <span id="bi-wave">Wave 1</span>
-      <span id="bi-score">Score: 0</span>
-      <span id="bi-lives">♥♥♥</span>
-      <button id="bi-close" style="${btnStyle}">✕ ESC</button>
-    </div>
-    <canvas id="bi-canvas" style="display:block;flex:1;"></canvas>
-    <div id="bi-mob" style="display:none;flex-shrink:0;padding:8px 16px 20px;
-         gap:8px;justify-content:space-between;align-items:center;">
-      <button id="bi-ml" style="${btnStyle}width:72px;font-size:20px;padding:10px 0;">◀</button>
-      <button id="bi-mf" style="${btnStyle}flex:1;font-size:11px;letter-spacing:2px;padding:12px 0;">▲ FIRE</button>
-      <button id="bi-mr" style="${btnStyle}width:72px;font-size:20px;padding:10px 0;">▶</button>
+    <div class="bi-box">
+      <button class="bi-close" id="bi-close">✕<br><span style="font-size:8px;letter-spacing:1px;">ESC</span></button>
+      <div class="bi-title">Blake Invaders</div>
+      <div class="bi-hud">
+        <div class="bi-stat"><div class="bi-stat-label">Wave</div><div class="bi-stat-val" id="bi-wave">1</div></div>
+        <div class="bi-stat"><div class="bi-stat-label">Score</div><div class="bi-stat-val" id="bi-score">0</div></div>
+        <div class="bi-stat"><div class="bi-stat-label">Lives</div><div class="bi-stat-val" id="bi-lives">♥♥♥</div></div>
+      </div>
+      <canvas id="bi-canvas"></canvas>
+      <div id="bi-mob" class="bi-mob" style="display:none">
+        <button id="bi-ml" class="bi-btn">←</button>
+        <button id="bi-mf" class="bi-btn bi-btn--fire">▲ FIRE</button>
+        <button id="bi-mr" class="bi-btn">→</button>
+      </div>
+      <div class="bi-gameover" id="bi-gameover">
+        <div class="bi-go-score" id="bi-go-score"></div>
+        <div class="bi-go-row" id="bi-go-input-row">
+          <input class="bi-name-input" id="bi-name-input" type="text" placeholder="YOUR NAME" maxlength="20" autocomplete="off">
+          <button class="bi-submit-btn" id="bi-lb-submit">Submit</button>
+        </div>
+        <button class="bi-restart-btn" id="bi-restart">▶ Play Again</button>
+      </div>
+      <div class="bi-lb-section">
+        <div class="bi-lb-title">High Scores</div>
+        <div class="bi-lb-cols"><span>RANK · NAME</span><span>SCORE</span></div>
+        <div id="bi-lb-rows"></div>
+      </div>
     </div>`;
   document.body.appendChild(overlay);
 
-  const canvas  = document.getElementById('bi-canvas');
-  const ctx     = canvas.getContext('2d');
-  const scoreEl = document.getElementById('bi-score');
-  const livesEl = document.getElementById('bi-lives');
-  const waveEl  = document.getElementById('bi-wave');
-  const mobEl   = document.getElementById('bi-mob');
+  const canvas     = document.getElementById('bi-canvas');
+  const ctx        = canvas.getContext('2d');
+  const scoreEl    = document.getElementById('bi-score');
+  const livesEl    = document.getElementById('bi-lives');
+  const waveEl     = document.getElementById('bi-wave');
+  const mobEl      = document.getElementById('bi-mob');
+  const gameOverEl = document.getElementById('bi-gameover');
+  const goScoreEl  = document.getElementById('bi-go-score');
+  const goInputRow = document.getElementById('bi-go-input-row');
+  const nameInput  = document.getElementById('bi-name-input');
+  const submitBtn  = document.getElementById('bi-lb-submit');
+  const restartBtn = document.getElementById('bi-restart');
+  const lbRowsEl   = document.getElementById('bi-lb-rows');
 
   /* ── Canvas sizing ── */
   let W = 0, H = 0;
   function resize() {
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    W = rect.width  || overlay.clientWidth;
-    H = rect.height || overlay.clientHeight - 44;
+    W = Math.round(rect.width);
+    H = Math.round(rect.height);
     canvas.width  = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ── Leaderboard (localStorage) ── */
+  const LB_KEY = 'bi-hiscores';
+  function loadScores() {
+    try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveScore(name, sc) {
+    const scores = loadScores();
+    scores.push({ name: name.toUpperCase().slice(0, 20), score: sc });
+    scores.sort((a, b) => b.score - a.score);
+    scores.splice(10);
+    localStorage.setItem(LB_KEY, JSON.stringify(scores));
+  }
+  function renderLeaderboard() {
+    const scores = loadScores().slice(0, 5);
+    lbRowsEl.innerHTML = scores.length === 0
+      ? '<div class="bi-lb-row" style="color:#333;justify-content:center;font-size:10px;">No scores yet</div>'
+      : scores.map((s, i) => `<div class="bi-lb-row"><span>#${i+1} · ${s.name}</span><span>${s.score}</span></div>`).join('');
   }
 
   /* ── Word pool from loaded shows ── */
@@ -1247,59 +1448,59 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return out;
   }
 
-  /* ── Game constants & state ── */
+  /* ── Game state ── */
   const ROWS = 4, SHIP_H = 18, SHIP_W = 26;
   let COLS, INV_W, INV_H;
   let invaders, bullets, eBullets, player;
-  let score, lives, wave, gameOver;
+  let score, lives, wave, gameOver, gameOverShown;
   let groupX, groupY, groupDir, stepTimer, stepInterval, shotCd;
   let keys = {}, rafId;
 
   function initWave() {
     resize();
-    COLS  = W > 480 ? 8 : 5;
+    COLS  = W > 400 ? 8 : 5;
     INV_W = Math.floor((W - 30) / COLS);
-    INV_H = 30;
+    INV_H = H > 250 ? 30 : 22;
     const words = getWords(COLS * ROWS);
     invaders = [];
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++)
         invaders.push({ word: words[r * COLS + c], col: c, row: r, alive: true });
-    groupX = 15; groupY = 54; groupDir = 1;
+    groupX = 15; groupY = Math.round(H * 0.14); groupDir = 1;
     stepTimer = 0; stepInterval = Math.max(12, 48 - (wave - 1) * 8);
-    waveEl.textContent = 'Wave ' + wave;
+    waveEl.textContent = wave;
   }
 
   function newGame() {
     score = 0; lives = 3; wave = 1;
-    scoreEl.textContent = 'Score: 0'; livesEl.textContent = '♥♥♥';
-    bullets = []; eBullets = []; gameOver = false; shotCd = 0;
+    gameOver = false; gameOverShown = false; shotCd = 0;
+    scoreEl.textContent = '0';
+    livesEl.textContent = '♥♥♥';
+    gameOverEl.classList.remove('active');
+    bullets = []; eBullets = [];
     initWave();
     player = { x: W / 2 };
+    renderLeaderboard();
   }
 
   /* ── Update ── */
   function update() {
     if (gameOver) return;
 
-    // Player move
-    if (keys['ArrowLeft']  || keys['a']     || keys['ml']) player.x = Math.max(SHIP_W / 2,     player.x - 5);
-    if (keys['ArrowRight'] || keys['d']     || keys['mr']) player.x = Math.min(W - SHIP_W / 2, player.x + 5);
+    if (keys['ArrowLeft']  || keys['a'] || keys['ml']) player.x = Math.max(SHIP_W / 2,     player.x - 5);
+    if (keys['ArrowRight'] || keys['d'] || keys['mr']) player.x = Math.min(W - SHIP_W / 2, player.x + 5);
 
-    // Shoot
     if (shotCd > 0) shotCd--;
     if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['mf']) && shotCd === 0) {
       bullets.push({ x: player.x, y: H - SHIP_H - 34 });
       shotCd = 16;
     }
 
-    // Move bullets
     bullets  = bullets.filter(b => b.y > -10);
     eBullets = eBullets.filter(b => b.y < H + 10);
     for (const b of bullets)  b.y -= 8;
     for (const b of eBullets) b.y += 5 + wave * 0.4;
 
-    // Step invaders
     const alive = invaders.filter(i => i.alive);
     if (!alive.length) { wave++; initWave(); player.x = W / 2; return; }
 
@@ -1310,11 +1511,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       if      (groupDir ===  1 && groupX + (maxC + 1) * INV_W >= W - 8) { groupDir = -1; groupY += INV_H * 0.55; }
       else if (groupDir === -1 && groupX +  minC      * INV_W <= 8)      { groupDir =  1; groupY += INV_H * 0.55; }
       else groupX += groupDir * Math.ceil(INV_W * 0.22);
-      // Speed up as fewer invaders remain
       stepInterval = Math.max(6, Math.floor(48 * alive.length / (COLS * ROWS)) - (wave - 1) * 6);
     }
 
-    // Enemy shoot (bottom-most per column)
     if (Math.random() < 0.018 + wave * 0.004) {
       const front = {};
       for (const i of alive) { if (!front[i.col] || i.row > front[i.col].row) front[i.col] = i; }
@@ -1323,7 +1522,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       eBullets.push({ x: groupX + sh.col * INV_W + INV_W / 2, y: groupY + sh.row * INV_H + INV_H });
     }
 
-    // Player bullet hits invader
     const hitSet = new Set();
     for (let bi = 0; bi < bullets.length; bi++) {
       const b = bullets[bi];
@@ -1333,13 +1531,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         if (b.x >= ix && b.x <= ix + INV_W && b.y >= iy && b.y <= iy + INV_H) {
           inv.alive = false; hitSet.add(bi);
           score += (ROWS - inv.row + 1) * 10 * wave;
-          scoreEl.textContent = 'Score: ' + score;
+          scoreEl.textContent = score;
         }
       }
     }
     bullets = bullets.filter((_, i) => !hitSet.has(i));
 
-    // Enemy bullet hits player
     const py = H - SHIP_H - 30;
     for (const b of eBullets) {
       if (Math.abs(b.x - player.x) < 20 && Math.abs(b.y - py) < 20) {
@@ -1349,8 +1546,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       }
     }
 
-    // Invaders breach the bottom
-    if (groupY + (Math.max(...alive.map(i => i.row)) + 1) * INV_H >= H - SHIP_H - 50) {
+    if (groupY + (Math.max(...alive.map(i => i.row)) + 1) * INV_H >= H - SHIP_H - 40) {
       gameOver = true;
     }
   }
@@ -1362,18 +1558,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (gameOver) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = LIME;
-      ctx.font = 'bold 32px "DM Mono",monospace';
-      ctx.fillText('GAME OVER', W / 2, H / 2 - 28);
-      ctx.font = '14px "DM Mono",monospace';
-      ctx.fillStyle = 'rgba(212,255,26,0.65)';
-      ctx.fillText('Score: ' + score, W / 2, H / 2 + 8);
-      ctx.fillStyle = LIME;
-      ctx.font = '11px "DM Mono",monospace';
-      ctx.fillText('SPACE · tap to play again', W / 2, H / 2 + 38);
+      ctx.font = 'bold 26px "DM Mono",monospace';
+      ctx.fillText('GAME OVER', W / 2, H / 2);
       return;
     }
 
-    // Invaders
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const inv of invaders) {
       if (!inv.alive) continue;
@@ -1389,17 +1578,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       ctx.fillText(inv.word, x + iw / 2, y + ih / 2);
     }
 
-    // Player bullets
     ctx.fillStyle = LIME;
     for (const b of bullets) ctx.fillRect(b.x - 2, b.y - 10, 4, 14);
 
-    // Enemy bullets
     ctx.fillStyle = RED;
     for (const b of eBullets) {
       ctx.beginPath(); ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Player ship
     const px = player.x, sy = H - SHIP_H - 30;
     ctx.fillStyle = LIME;
     ctx.beginPath();
@@ -1407,36 +1593,47 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     ctx.lineTo(px - SHIP_W / 2, sy + SHIP_H);
     ctx.lineTo(px + SHIP_W / 2, sy + SHIP_H);
     ctx.closePath(); ctx.fill();
-    ctx.fillRect(px - 2, sy - 7, 4, 9); // cannon nub
+    ctx.fillRect(px - 2, sy - 7, 4, 9);
 
-    // Ground line
     ctx.strokeStyle = 'rgba(212,255,26,0.12)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, H - 26); ctx.lineTo(W, H - 26); ctx.stroke();
   }
 
   /* ── Game loop ── */
-  function loop() { update(); draw(); rafId = requestAnimationFrame(loop); }
+  function loop() {
+    update();
+    draw();
+    if (gameOver && !gameOverShown) {
+      gameOverShown = true;
+      goScoreEl.textContent = 'Score: ' + score;
+      goInputRow.style.display = '';
+      submitBtn.disabled = false;
+      nameInput.value = '';
+      gameOverEl.classList.add('active');
+    }
+    rafId = requestAnimationFrame(loop);
+  }
 
   /* ── Open / Close ── */
   function openGame() {
-    overlay.style.display = 'flex';
+    overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     const isMobile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
     mobEl.style.display = isMobile ? 'flex' : 'none';
     cancelAnimationFrame(rafId);
-    // Defer one frame so the overlay is fully laid out before resize() reads dimensions
+    renderLeaderboard();
     requestAnimationFrame(() => { newGame(); loop(); });
   }
   function closeGame() {
     cancelAnimationFrame(rafId); rafId = null;
-    overlay.style.display = 'none';
+    overlay.classList.remove('active');
     document.body.style.overflow = '';
     keys = {};
   }
 
-  /* ── Keyboard input ── */
+  /* ── Keyboard ── */
   window.addEventListener('keydown', e => {
-    if (overlay.style.display === 'none') return;
+    if (!overlay.classList.contains('active')) return;
     keys[e.key] = true;
     if (e.key === ' ') e.preventDefault();
     if (e.key === 'Escape') { closeGame(); return; }
@@ -1446,7 +1643,20 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   document.getElementById('bi-close').addEventListener('click', closeGame);
 
-  /* ── Mobile button input (touchstart/end — reliable on iOS) ── */
+  /* ── Score submission ── */
+  submitBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim() || 'ANON';
+    saveScore(name, score);
+    renderLeaderboard();
+    goInputRow.style.display = 'none';
+    submitBtn.disabled = true;
+  });
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
+
+  /* ── Restart ── */
+  restartBtn.addEventListener('click', () => { gameOver = false; newGame(); });
+
+  /* ── Mobile buttons ── */
   [['bi-ml','ml'], ['bi-mr','mr'], ['bi-mf','mf']].forEach(([id, key]) => {
     const el = document.getElementById(id);
     el.addEventListener('touchstart',  e => { e.preventDefault(); keys[key] = true;  }, { passive: false });
