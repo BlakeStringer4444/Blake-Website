@@ -1641,7 +1641,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (gameOver && !gameOverShown) {
       gameOverShown = true;
       const secretLine = score > 4444
-        ? `<span style="font-size:9px;letter-spacing:2px;color:rgba(212,255,26,0.55);display:block;margin-bottom:4px;">108% complete — are you actually for real happy now?</span>`
+        ? `<span style="font-size:9px;letter-spacing:2px;color:rgba(212,255,26,0.55);display:block;margin-bottom:4px;">108% complete — are you actually for real happy now? Find the "More to Come" button and click it 108 times.</span>`
         : '';
       goScoreEl.innerHTML = secretLine + 'Score: ' + score;
       goInputRow.style.display = '';
