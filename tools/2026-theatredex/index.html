@@ -663,8 +663,8 @@ button.td-link { background: none; cursor: pointer; }
   height: 380px;
   background: #000;
 }
-@media (max-width: 639px) { #bi-canvas { height: 260px; } }
-@media (max-height: 600px) { #bi-canvas { height: 200px; } }
+@media (max-width: 639px) { #bi-canvas { height: 340px; } }
+@media (max-height: 600px) { #bi-canvas { height: 220px; } }
 .bi-mob {
   display: flex;
   gap: 6px;
@@ -776,22 +776,30 @@ button.td-link { background: none; cursor: pointer; }
 .bi-lbm-card {
   background: #0f0f0f;
   border: 1px solid #2a2a2a;
-  padding: 28px 24px;
   width: 100%; max-width: 380px;
-  max-height: 85vh; overflow-y: auto;
+  max-height: 90vh; overflow: hidden;
+  display: flex; flex-direction: column;
   position: relative; box-sizing: border-box;
 }
-@media (max-width: 420px) {
-  .bi-lbm-card { padding: 20px 16px; }
-  .bi-lbm { padding: 12px; align-items: flex-start; padding-top: 40px; }
-}
 .bi-lbm-close {
-  position: absolute; top: 12px; right: 14px;
+  flex-shrink: 0; align-self: flex-end;
   background: none; border: none;
   color: #555; font-family: 'DM Mono', monospace;
   font-size: 11px; cursor: pointer; letter-spacing: 1px;
+  padding: 14px 16px 6px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.bi-lbm-close:hover { color: #D4FF1A; }
+.bi-lbm-close:hover, .bi-lbm-close:active { color: #D4FF1A; }
+.bi-lbm-scroll {
+  overflow-y: auto; flex: 1;
+  padding: 0 24px 28px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 420px) {
+  .bi-lbm { padding: 12px; align-items: flex-start; padding-top: 24px; }
+  .bi-lbm-scroll { padding: 0 16px 24px; }
+}
 .bi-lbm-super { font-size: 9px; letter-spacing: 3px; color: #555; margin-bottom: 4px; }
 .bi-lbm-title { font-size: 14px; letter-spacing: 2px; color: #D4FF1A; margin-bottom: 12px; }
 .bi-lbm-your { font-size: 11px; color: #888; margin-bottom: 18px; letter-spacing: 1px; }
@@ -1501,15 +1509,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   async function showLeaderboardModal(playerScore) {
     if (document.getElementById('bi-lbm')) return;
-    let allRows = [];
-    if (db) {
-      try {
-        const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(50).get();
-        allRows = snap.docs.map(d => d.data());
-      } catch {}
-    }
-    const top10 = allRows.slice(0, 10);
-    const canQualify = db && (top10.length < 10 || playerScore > (top10[9]?.score ?? -1));
 
     function renderModalRows(rows, hlName) {
       if (!rows.length) return '<div style="color:#333;font-size:11px;padding:20px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">NO SCORES YET — BE FIRST</div>';
@@ -1524,33 +1523,52 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       }).join('');
     }
 
+    /* Show modal immediately with loading state */
     const ov = document.createElement('div');
     ov.id = 'bi-lbm';
     ov.className = 'bi-lbm';
     ov.innerHTML = `
       <div class="bi-lbm-card">
         <button class="bi-lbm-close" id="bi-lbm-close">✕ CLOSE</button>
-        <div class="bi-lbm-super">GLOBAL LEADERBOARD</div>
-        <div class="bi-lbm-title">BLAKE INVADERS</div>
-        <div class="bi-lbm-your">YOUR SCORE: <strong>${playerScore}</strong></div>
-        ${canQualify ? `<div id="bi-lbm-qualify">
-          <div class="bi-lbm-qualify-label">YOU MADE THE TOP 10 — ENTER YOUR NAME</div>
-          <div class="bi-lbm-input-row">
-            <input id="bi-lbm-name" class="bi-lbm-name-input" maxlength="8" placeholder="YOUR NAME" autocomplete="off" spellcheck="false">
-            <button id="bi-lbm-submit" class="bi-lbm-submit-btn">SUBMIT →</button>
-          </div>
-        </div>` : ''}
-        <div class="bi-lbm-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>
-        <div id="bi-lbm-list">${renderModalRows(top10, null)}</div>
+        <div class="bi-lbm-scroll">
+          <div class="bi-lbm-super">GLOBAL LEADERBOARD</div>
+          <div class="bi-lbm-title">BLAKE INVADERS</div>
+          <div class="bi-lbm-your">YOUR SCORE: <strong>${playerScore}</strong></div>
+          <div class="bi-lbm-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>
+          <div id="bi-lbm-list"><div style="color:#333;font-size:10px;padding:16px 0;text-align:center;letter-spacing:1px;font-family:'DM Mono',monospace;">LOADING...</div></div>
+        </div>
       </div>`;
     document.body.appendChild(ov);
     document.getElementById('bi-lbm-close').onclick = () => ov.remove();
 
+    /* Fetch scores in background */
+    let allRows = [];
+    if (db) {
+      try {
+        const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(50).get();
+        allRows = snap.docs.map(d => d.data());
+      } catch {}
+    }
+    if (!document.getElementById('bi-lbm')) return; /* closed while loading */
+
+    const top10 = allRows.slice(0, 10);
+    const canQualify = db && (top10.length < 10 || playerScore > (top10[9]?.score ?? -1));
+    const scrollEl = ov.querySelector('.bi-lbm-scroll');
+    const listEl   = document.getElementById('bi-lbm-list');
+
     if (canQualify) {
+      const qualDiv = document.createElement('div');
+      qualDiv.id = 'bi-lbm-qualify';
+      qualDiv.innerHTML = `
+        <div class="bi-lbm-qualify-label">YOU MADE THE TOP 10 — ENTER YOUR NAME</div>
+        <div class="bi-lbm-input-row">
+          <input id="bi-lbm-name" class="bi-lbm-name-input" maxlength="8" placeholder="YOUR NAME" autocomplete="off" spellcheck="false">
+          <button id="bi-lbm-submit" class="bi-lbm-submit-btn">SUBMIT →</button>
+        </div>`;
+      scrollEl.insertBefore(qualDiv, listEl.previousElementSibling);
+
       const ni = document.getElementById('bi-lbm-name');
       const sb = document.getElementById('bi-lbm-submit');
-      const qe = document.getElementById('bi-lbm-qualify');
-      const le = document.getElementById('bi-lbm-list');
       ni.addEventListener('input', () => {
         ni.value = ni.value.toUpperCase().replace(/[^A-Z0-9 _\-]/g, '');
       });
@@ -1566,8 +1584,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           });
           const newSnap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(10).get();
           const newRows = newSnap.docs.map(d => d.data());
-          qe.style.display = 'none';
-          le.innerHTML = renderModalRows(newRows, name);
+          qualDiv.style.display = 'none';
+          listEl.innerHTML = renderModalRows(newRows, name);
           renderLeaderboard(name);
         } catch { sb.disabled = false; sb.textContent = 'SUBMIT →'; }
       }
@@ -1575,6 +1593,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       ni.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
       setTimeout(() => ni.focus(), 50);
     }
+
+    listEl.innerHTML = renderModalRows(top10, null);
   }
 
   /* ── Word pool from loaded shows ── */
@@ -1612,9 +1632,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   function initWave() {
     resize();
-    COLS  = W > 400 ? 8 : 5;
+    COLS  = W > 400 ? 8 : W > 280 ? 6 : 5;
     INV_W = Math.floor((W - 30) / COLS);
-    INV_H = H > 250 ? 30 : 22;
+    INV_H = H > 360 ? 30 : H > 200 ? 22 : 18;
     const words = getWords(COLS * ROWS);
     invaders = [];
     for (let r = 0; r < ROWS; r++)
@@ -1777,7 +1797,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       gameOverShown = true;
       goScoreEl.textContent = 'Score: ' + score;
       gameOverEl.classList.add('active');
-      setTimeout(() => showLeaderboardModal(score), 700);
+      setTimeout(() => showLeaderboardModal(score), 200);
     }
     rafId = requestAnimationFrame(loop);
   }
@@ -1843,7 +1863,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     const movedFar = Math.abs((e.changedTouches[0]?.clientX ?? tcStartX) - tcStartX) > 18;
     if (!movedFar && Date.now() - tcStartT < 280) {
       if (gameOver) { gameOver = false; newGame(); }
-      else { keys['mf'] = true; setTimeout(() => { keys['mf'] = false; }, 60); }
     }
   }, { passive: false });
 
