@@ -1012,6 +1012,16 @@ footer {
 
 @media (min-width: 640px) {
   .site-wrap { flex-direction: row; }
+  /* Fix sidebar so all tabs are always visible on first load */
+  .tab-sidebar {
+    position: fixed;
+    left: 0;
+    top: 5px; /* clear the top-bar */
+    height: calc(100vh - 5px);
+    z-index: 10;
+  }
+  .site-wrap   { margin-left: 72px; }
+  header       { padding-left: 104px; } /* 72px sidebar + 32px original gap */
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -1238,6 +1248,39 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   .dark-toggle { width: 34px; height: 34px; font-size: 16px; padding: 0; }
 }
 
+/* ── TEXT SIZE TOGGLE (desktop only) ── */
+.font-size-toggle {
+  position: absolute;
+  top: 32px;
+  right: 88px; /* 32px + 44px dark-toggle + 12px gap */
+  z-index: 500;
+  background: none;
+  border: 1px solid rgba(0,0,0,0.25);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.5px;
+  color: var(--black);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.font-size-toggle:hover,
+.font-size-toggle.active {
+  background: var(--purple);
+  color: var(--lime);
+  border-color: var(--purple);
+}
+@media (max-width: 639px) {
+  .font-size-toggle { display: none; }
+}
+
 /* ── JUMP NAV ACTIVE STATE ── */
 .jump-btn--active {
   background: var(--purple);
@@ -1376,6 +1419,8 @@ body[data-theme="dark"] .tab-text { color: rgba(240,240,235,0.45); }
 body[data-theme="dark"] .tab-mobile { border-bottom-color: rgba(255,255,255,0.12); }
 body[data-theme="dark"] .tab-mobile-btn { color: rgba(240,240,235,0.45); border-right-color: rgba(255,255,255,0.08); }
 body[data-theme="dark"] .dark-toggle { border-color: rgba(212,255,26,0.4); color: var(--lime); }
+body[data-theme="dark"] .font-size-toggle { border-color: rgba(212,255,26,0.4); color: var(--lime); }
+body[data-theme="dark"] .font-size-toggle.active { background: var(--purple); color: var(--lime); border-color: var(--purple); }
 body[data-theme="dark"] .section-label { color: var(--purple); border-color: var(--purple); }
 body[data-theme="dark"] .section-sublabel { color: rgba(240,240,235,0.45); }
 body[data-theme="dark"] .about-bio p { color: rgba(240,240,235,0.75); }
@@ -1551,6 +1596,8 @@ body[data-theme="terminal"] header { border-bottom-color: rgba(255,255,255,0.1);
 body[data-theme="terminal"] .site-tagline { color: rgba(255,255,255,0.35); }
 body[data-theme="terminal"] .header-location { color: rgba(255,255,255,0.2); }
 body[data-theme="terminal"] .dark-toggle { background: #000000; border-color: rgba(255,255,255,0.25); color: #FFFFFF; }
+body[data-theme="terminal"] .font-size-toggle { background: #000000; border-color: rgba(255,255,255,0.25); color: #FFFFFF; }
+body[data-theme="terminal"] .font-size-toggle.active { background: var(--lime); color: #000000; border-color: var(--lime); }
 body[data-theme="terminal"] .tab-sidebar { background: #000000; border-right-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .tab-mobile { background: #000000; border-bottom-color: rgba(255,255,255,0.08); }
 body[data-theme="terminal"] .tab-btn { border-bottom-color: rgba(255,255,255,0.06); color: rgba(255,255,255,0.25); }
@@ -2420,6 +2467,7 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
   <div class="header-right">
     <div class="header-location">Melbourne, VIC, Australia</div>
   </div>
+  <button class="font-size-toggle" id="font-size-toggle" aria-label="Adjust text size">Aa</button>
   <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">☾</button>
 </header>
 
@@ -3551,6 +3599,22 @@ if (darkToggle) {
     setTheme(current === 'dark' ? 'light' : 'dark');
   });
 }
+
+/* ── TEXT SIZE TOGGLE ── */
+(function () {
+  const btn = document.getElementById('font-size-toggle');
+  let zoomed = localStorage.getItem('font-zoom') === '1';
+  function apply() {
+    document.documentElement.style.zoom = zoomed ? '1.15' : '';
+    btn.classList.toggle('active', zoomed);
+  }
+  apply();
+  btn.addEventListener('click', () => {
+    zoomed = !zoomed;
+    localStorage.setItem('font-zoom', zoomed ? '1' : '0');
+    apply();
+  });
+})();
 
 /* ── SCROLL-AWARE JUMP NAV ── */
 // Jump button active state: scroll-position based + click-lock
