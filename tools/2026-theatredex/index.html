@@ -131,22 +131,26 @@ body {
 }
 .td-header-btn:hover { color: var(--lime); border-color: var(--lime); }
 
-.td-theme-btn {
+.td-theme-btn,
+.td-font-btn {
   background: none;
   border: 1px solid rgba(212,255,26,0.25);
   color: rgba(212,255,26,0.7);
-  width: 34px; height: 34px;
+  width: 44px; height: 44px;
   border-radius: 2px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
   flex-shrink: 0;
-  font-size: 16px;
   line-height: 1;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.td-theme-btn:hover { border-color: var(--lime); color: var(--lime); }
+.td-theme-btn { font-size: 16px; }
+.td-font-btn  { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+.td-theme-btn:hover,
+.td-font-btn:hover   { border-color: var(--lime); color: var(--lime); }
+.td-font-btn.active  { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
 .td-title {
   font-family: 'Bebas Neue', sans-serif;
   font-size: clamp(52px, 9vw, 104px);
@@ -592,6 +596,7 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-header-top">
     <a class="td-back" href="/">← blakestringer.com</a>
     <div class="td-header-actions">
+      <button class="td-font-btn"  id="td-font-btn"  title="Adjust text size">Aa</button>
       <button class="td-theme-btn" id="td-theme-btn" title="Toggle theme"></button>
     </div>
   </div>
@@ -686,6 +691,22 @@ themeBtn.addEventListener('click', () => {
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
   setTheme(themes[(themes.indexOf(cur) + 1) % themes.length]);
 });
+
+/* ── TEXT SIZE TOGGLE ── */
+(function () {
+  const btn = document.getElementById('td-font-btn');
+  let zoomed = localStorage.getItem('font-zoom') === '1';
+  function apply() {
+    document.documentElement.style.zoom = zoomed ? '1.25' : '';
+    btn.classList.toggle('active', zoomed);
+  }
+  apply();
+  btn.addEventListener('click', () => {
+    zoomed = !zoomed;
+    localStorage.setItem('font-zoom', zoomed ? '1' : '0');
+    apply();
+  });
+})();
 
 /* ── CONFIG ── */
 const CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfBhALi9j_StQcvcxjy7Iyj6xNOejrkT5cLK4NHUiikmuoKoPXZxdOPeQJTpwrjD5tgUNQ0iKV9UIP/pub?gid=1603898813&single=true&output=csv';

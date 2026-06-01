@@ -3757,7 +3757,7 @@ if (darkToggle) {
       const bins = analyser.frequencyBinCount;
       const data = new Uint8Array(bins);
       analyser.getByteFrequencyData(data);
-      const maxBin = Math.floor(bins * 0.75);
+      const maxBin = Math.floor(bins * 0.40); // cap at ~8.8kHz so all bars land on musically active frequencies
       for (let i = 0; i < nBars; i++) {
         const t = i / (nBars - 1);
         const b = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
