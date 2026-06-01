@@ -660,11 +660,11 @@ button.td-link { background: none; cursor: pointer; }
   border: 2px solid var(--purple);
   display: block;
   width: 100%;
-  height: 300px;
+  height: 380px;
   background: #000;
 }
-@media (max-width: 639px) { #bi-canvas { height: 220px; } }
-@media (max-height: 600px) { #bi-canvas { height: 180px; } }
+@media (max-width: 639px) { #bi-canvas { height: 260px; } }
+@media (max-height: 600px) { #bi-canvas { height: 200px; } }
 .bi-mob {
   display: flex;
   gap: 6px;
@@ -759,7 +759,14 @@ button.td-link { background: none; cursor: pointer; }
   color: rgba(255,255,255,0.55);
 }
 .bi-lb-row:first-child { color: var(--lime); }
+.bi-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(255,255,255,0.22); text-align: center;
+}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -836,6 +843,23 @@ button.td-link { background: none; cursor: pointer; }
 <button class="td-jump-top" id="td-jump-top" aria-label="Back to top">↑ Top</button>
 
 <script>
+/* ── FIREBASE ── */
+let db = null;
+(function () {
+  try {
+    const cfg = {
+      apiKey:            'AIzaSyCQxq2a-LCydrobpW_d8XI4CRB5KDO1YBs',
+      authDomain:        'scoreboardsblake.firebaseapp.com',
+      projectId:         'scoreboardsblake',
+      storageBucket:     'scoreboardsblake.firebasestorage.app',
+      messagingSenderId: '472684920212',
+      appId:             '1:472684920212:web:d559e9521a877482992381',
+    };
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    db = firebase.firestore();
+  } catch (e) { /* leaderboard unavailable offline */ }
+})();
+
 /* ── THEME ── */
 const themeBtn = document.getElementById('td-theme-btn');
 const sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
@@ -1353,9 +1377,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       <div class="bi-hud">
         <div class="bi-stat"><div class="bi-stat-label">Wave</div><div class="bi-stat-val" id="bi-wave">1</div></div>
         <div class="bi-stat"><div class="bi-stat-label">Score</div><div class="bi-stat-val" id="bi-score">0</div></div>
-        <div class="bi-stat"><div class="bi-stat-label">Lives</div><div class="bi-stat-val" id="bi-lives">♥♥♥</div></div>
+        <div class="bi-stat"><div class="bi-stat-label">Lives</div><div class="bi-stat-val" id="bi-lives">♥♥♥♥</div></div>
       </div>
       <canvas id="bi-canvas"></canvas>
+      <div class="bi-hint" id="bi-hint" style="display:none">← &nbsp;&nbsp; space &nbsp;&nbsp; →</div>
       <div id="bi-mob" class="bi-mob" style="display:none">
         <button id="bi-ml" class="bi-btn">←</button>
         <button id="bi-mf" class="bi-btn bi-btn--fire">▲ FIRE</button>
@@ -1383,6 +1408,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const livesEl    = document.getElementById('bi-lives');
   const waveEl     = document.getElementById('bi-wave');
   const mobEl      = document.getElementById('bi-mob');
+  const hintEl     = document.getElementById('bi-hint');
   const gameOverEl = document.getElementById('bi-gameover');
   const goScoreEl  = document.getElementById('bi-go-score');
   const goInputRow = document.getElementById('bi-go-input-row');
@@ -1403,24 +1429,34 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  /* ── Leaderboard (localStorage) ── */
-  const LB_KEY = 'bi-hiscores';
-  function loadScores() {
-    try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; }
-    catch { return []; }
+  /* ── Leaderboard (Firebase) ── */
+  const INVADERS_COL = 'invaders_scores';
+
+  async function renderLeaderboard(highlightName) {
+    if (!db) { lbRowsEl.innerHTML = ''; return; }
+    lbRowsEl.innerHTML = '<div class="bi-lb-row" style="color:#333;justify-content:center;font-size:10px;">Loading...</div>';
+    try {
+      const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(5).get();
+      const rows = snap.docs.map(d => d.data());
+      lbRowsEl.innerHTML = rows.length === 0
+        ? '<div class="bi-lb-row" style="color:#333;justify-content:center;font-size:10px;">No scores yet — be first!</div>'
+        : rows.map((s, i) => {
+            const hl = highlightName && s.name === highlightName;
+            return `<div class="bi-lb-row" style="${hl ? 'color:var(--lime)' : ''}"><span>#${i+1} · ${s.name}</span><span>${s.score}</span></div>`;
+          }).join('');
+    } catch { lbRowsEl.innerHTML = ''; }
   }
-  function saveScore(name, sc) {
-    const scores = loadScores();
-    scores.push({ name: name.toUpperCase().slice(0, 20), score: sc });
-    scores.sort((a, b) => b.score - a.score);
-    scores.splice(10);
-    localStorage.setItem(LB_KEY, JSON.stringify(scores));
-  }
-  function renderLeaderboard() {
-    const scores = loadScores().slice(0, 5);
-    lbRowsEl.innerHTML = scores.length === 0
-      ? '<div class="bi-lb-row" style="color:#333;justify-content:center;font-size:10px;">No scores yet</div>'
-      : scores.map((s, i) => `<div class="bi-lb-row"><span>#${i+1} · ${s.name}</span><span>${s.score}</span></div>`).join('');
+
+  async function saveAndRefresh(rawName, sc) {
+    if (!db) return;
+    const name = rawName.trim().replace(/[^A-Z0-9 _\-]/gi, '').slice(0, 8).toUpperCase() || 'ANON';
+    try {
+      await db.collection(INVADERS_COL).add({
+        name, score: sc,
+        ts: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await renderLeaderboard(name);
+    } catch { await renderLeaderboard(); }
   }
 
   /* ── Word pool from loaded shows ── */
@@ -1472,15 +1508,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function newGame() {
-    score = 0; lives = 3; wave = 1;
+    score = 0; lives = 4; wave = 1;
     gameOver = false; gameOverShown = false; shotCd = 0;
     scoreEl.textContent = '0';
-    livesEl.textContent = '♥♥♥';
+    livesEl.textContent = '♥♥♥♥';
     gameOverEl.classList.remove('active');
     bullets = []; eBullets = [];
     initWave();
     player = { x: W / 2 };
-    renderLeaderboard();
   }
 
   /* ── Update ── */
@@ -1605,7 +1640,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     draw();
     if (gameOver && !gameOverShown) {
       gameOverShown = true;
-      goScoreEl.textContent = 'Score: ' + score;
+      const secretLine = score > 4444
+        ? `<span style="font-size:9px;letter-spacing:2px;color:rgba(212,255,26,0.55);display:block;margin-bottom:4px;">108% complete — are you actually for real happy now?</span>`
+        : '';
+      goScoreEl.innerHTML = secretLine + 'Score: ' + score;
       goInputRow.style.display = '';
       submitBtn.disabled = false;
       nameInput.value = '';
@@ -1619,7 +1657,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     const isMobile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
-    mobEl.style.display = isMobile ? 'flex' : 'none';
+    mobEl.style.display  = isMobile ? 'flex' : 'none';
+    hintEl.style.display = isMobile ? 'none' : '';
     cancelAnimationFrame(rafId);
     renderLeaderboard();
     requestAnimationFrame(() => { newGame(); loop(); });
@@ -1644,12 +1683,13 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   document.getElementById('bi-close').addEventListener('click', closeGame);
 
   /* ── Score submission ── */
-  submitBtn.addEventListener('click', () => {
+  submitBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim() || 'ANON';
-    saveScore(name, score);
-    renderLeaderboard();
-    goInputRow.style.display = 'none';
     submitBtn.disabled = true;
+    submitBtn.textContent = '...';
+    goInputRow.style.display = 'none';
+    await saveAndRefresh(name, score);
+    submitBtn.textContent = 'Submit';
   });
   nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
 
