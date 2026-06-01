@@ -1333,6 +1333,12 @@ function formatReply(text) {
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
     // **bold**
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Bare https?:// URLs not already inside an href attribute
+    .replace(/(?<![="'])(https?:\/\/[^\s<>")\]]+)/g, (_, url) => {
+      const clean = url.replace(/[.,!?:;)]+$/, '');
+      const tail  = url.slice(clean.length);
+      return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${tail}`;
+    })
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g,   '<br>');
 }
