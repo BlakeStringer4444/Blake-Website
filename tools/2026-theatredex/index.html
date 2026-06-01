@@ -216,6 +216,8 @@ body {
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .td-upcoming-toggle.active { background: var(--purple); border-color: var(--purple); color: #fff; }
 .td-upcoming-toggle:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
@@ -1419,11 +1421,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   function openGame() {
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    newGame();
-    cancelAnimationFrame(rafId);
-    loop();
-    const isMobile = window.innerWidth < 600 || 'ontouchstart' in window;
+    const isMobile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
     mobEl.style.display = isMobile ? 'flex' : 'none';
+    cancelAnimationFrame(rafId);
+    // Defer one frame so the overlay is fully laid out before resize() reads dimensions
+    requestAnimationFrame(() => { newGame(); loop(); });
   }
   function closeGame() {
     cancelAnimationFrame(rafId); rafId = null;
@@ -1432,7 +1434,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     keys = {};
   }
 
-  /* ── Input ── */
+  /* ── Keyboard input ── */
   window.addEventListener('keydown', e => {
     if (overlay.style.display === 'none') return;
     keys[e.key] = true;
@@ -1443,15 +1445,38 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   window.addEventListener('keyup', e => { if (e.key) keys[e.key] = false; });
 
   document.getElementById('bi-close').addEventListener('click', closeGame);
-  canvas.addEventListener('click', () => { if (gameOver) { gameOver = false; newGame(); } });
 
-  // Mobile hold buttons
-  [['bi-ml','ml'],['bi-mr','mr'],['bi-mf','mf']].forEach(([id, key]) => {
+  /* ── Mobile button input (touchstart/end — reliable on iOS) ── */
+  [['bi-ml','ml'], ['bi-mr','mr'], ['bi-mf','mf']].forEach(([id, key]) => {
     const el = document.getElementById(id);
-    el.addEventListener('pointerdown', e => { e.preventDefault(); keys[key] = true; });
-    el.addEventListener('pointerup',   () => { keys[key] = false; });
-    el.addEventListener('pointerleave',() => { keys[key] = false; });
+    el.addEventListener('touchstart',  e => { e.preventDefault(); keys[key] = true;  }, { passive: false });
+    el.addEventListener('touchend',    e => { e.preventDefault(); keys[key] = false; }, { passive: false });
+    el.addEventListener('touchcancel', ()  => { keys[key] = false; });
   });
+
+  /* ── Canvas touch: drag = move, tap = fire / restart ── */
+  let tcStartX = 0, tcStartT = 0;
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    tcStartX = e.touches[0].clientX;
+    tcStartT = Date.now();
+    keys['ml'] = false; keys['mr'] = false;
+  }, { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - tcStartX;
+    keys['ml'] = dx < -18;
+    keys['mr'] = dx >  18;
+  }, { passive: false });
+  canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    keys['ml'] = false; keys['mr'] = false;
+    const movedFar = Math.abs((e.changedTouches[0]?.clientX ?? tcStartX) - tcStartX) > 18;
+    if (!movedFar && Date.now() - tcStartT < 280) {
+      if (gameOver) { gameOver = false; newGame(); }
+      else { keys['mf'] = true; setTimeout(() => { keys['mf'] = false; }, 60); }
+    }
+  }, { passive: false });
 
 })();
 
