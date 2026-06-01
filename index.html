@@ -311,7 +311,14 @@ body[data-theme="terminal"] a.tool-card:hover .tool-name,
 body[data-theme="terminal"] a.tool-card:hover .tool-desc { color: var(--black); }
 body[data-theme="terminal"] .tool-name { color: #fff; }
 body[data-theme="terminal"] .tool-desc { color: rgba(255,255,255,0.4); }
-body[data-theme="dark"] #panel-tools > p { color: rgba(240,240,235,0.45); }
+.tools-desc {
+  font-size: 14px; line-height: 1.9;
+  color: rgba(0,0,0,0.75);
+  font-family: 'Inter', sans-serif; font-weight: 300;
+  margin-bottom: 12px;
+}
+body[data-theme="dark"]     .tools-desc { color: rgba(240,240,235,0.75); }
+body[data-theme="terminal"] .tools-desc { color: rgba(255,255,255,0.55); font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.8; }
 
 /* ── SECTION LABEL ── */
 .section-label {
@@ -3308,7 +3315,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
     <!-- TOOLS -->
     <div class="panel" id="panel-tools">
       <div class="section-label">Tools</div>
-      <p style="font-size:13px;color:rgba(0,0,0,0.5);letter-spacing:0.5px;">A growing collection of projects I've been working on.</p>
+      <p class="tools-desc">A growing collection of projects I've been working on.</p>
       <div class="tools-grid">
 
         <a class="tool-card" href="/tools/2026-theatredex">
