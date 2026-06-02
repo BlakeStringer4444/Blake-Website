@@ -298,20 +298,18 @@ body {
   font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
   padding: 3px 7px; border-radius: 2px; flex-shrink: 0;
 }
-.td-badge-play     { background: rgba(153,51,255,0.1);  color: var(--purple); }
-.td-badge-musical  { background: rgba(212,255,26,0.18); color: #5c7a00; }
-.td-badge-pantomime{ background: rgba(255,140,0,0.13);  color: #b86000; }
-.td-badge-vdl       { background: rgba(160,160,160,0.13); color: #777; }
+.td-badge-play,
+.td-badge-musical,
+.td-badge-pantomime { background: rgba(153,51,255,0.1); color: var(--purple); }
+.td-badge-vdl       { background: rgba(212,255,26,0.18); color: #5c7a00; }
 .td-badge-lyrebird  { background: rgba(160,160,160,0.13); color: #777; }
-[data-theme="dark"] .td-badge-musical   { color: #c4ef00; background: rgba(212,255,26,0.12); }
-[data-theme="dark"] .td-badge-pantomime { color: #ffaa44; background: rgba(255,170,68,0.12); }
-[data-theme="dark"] .td-badge-vdl,
+[data-theme="dark"] .td-badge-vdl       { color: #c4ef00; background: rgba(212,255,26,0.12); }
 [data-theme="dark"] .td-badge-lyrebird  { color: #aaa; background: rgba(200,200,200,0.1); }
-[data-theme="terminal"] .td-badge-play     { color: #fff; background: rgba(255,255,255,0.08); }
-[data-theme="terminal"] .td-badge-musical  { color: var(--lime); background: rgba(212,255,26,0.08); }
-[data-theme="terminal"] .td-badge-pantomime{ color: #ffaa44; background: rgba(255,170,68,0.08); }
-[data-theme="terminal"] .td-badge-vdl,
-[data-theme="terminal"] .td-badge-lyrebird { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
+[data-theme="terminal"] .td-badge-play,
+[data-theme="terminal"] .td-badge-musical,
+[data-theme="terminal"] .td-badge-pantomime { color: #fff; background: rgba(255,255,255,0.08); }
+[data-theme="terminal"] .td-badge-vdl       { color: var(--lime); background: rgba(212,255,26,0.08); }
+[data-theme="terminal"] .td-badge-lyrebird  { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
 
 .td-card-row1-right {
   display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;
@@ -1137,9 +1135,9 @@ function card(show) {
     <div class="td-card-row1">
       <span class="td-badges">
         <span class="${badgeCls}">${type}</span>
-        ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
-        ${show.VDL === '1'      ? '<span class="td-badge td-badge-vdl">VDL Entrant</span>'      : ''}
+        ${show.VDL === '1'      ? '<span class="td-badge td-badge-vdl">VDL Entrant</span>'   : ''}
         ${show.Lyrebird === '1' ? '<span class="td-badge td-badge-lyrebird">Lyrebird</span>' : ''}
+        ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
       </span>
       <span class="td-card-row1-right">
         <span class="td-company">${show.company}</span>
