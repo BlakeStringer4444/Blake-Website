@@ -1140,14 +1140,13 @@ function card(show) {
         ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
       </span>
       <span class="td-card-row1-right">
-        <span class="td-company">${show.company}</span>
         <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">${iconStar}</button>
       </span>
     </div>
     <div class="td-title-text">${show.title}</div>
     <div class="td-dates">${fmtRange(show)}</div>
     ${progressBar}
-    <div class="td-location">📍 ${show.suburb || ''}</div>
+    <div class="td-company">${show.company}</div>
     ${people ? `<div class="td-people">${people}</div>` : ''}
     ${links.length ? `<div class="td-links">${links.join('')}</div>` : ''}
     <button class="td-blakeai"
