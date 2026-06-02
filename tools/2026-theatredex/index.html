@@ -301,11 +301,17 @@ body {
 .td-badge-play     { background: rgba(153,51,255,0.1);  color: var(--purple); }
 .td-badge-musical  { background: rgba(212,255,26,0.18); color: #5c7a00; }
 .td-badge-pantomime{ background: rgba(255,140,0,0.13);  color: #b86000; }
+.td-badge-vdl       { background: rgba(160,160,160,0.13); color: #777; }
+.td-badge-lyrebird  { background: rgba(160,160,160,0.13); color: #777; }
 [data-theme="dark"] .td-badge-musical   { color: #c4ef00; background: rgba(212,255,26,0.12); }
 [data-theme="dark"] .td-badge-pantomime { color: #ffaa44; background: rgba(255,170,68,0.12); }
+[data-theme="dark"] .td-badge-vdl,
+[data-theme="dark"] .td-badge-lyrebird  { color: #aaa; background: rgba(200,200,200,0.1); }
 [data-theme="terminal"] .td-badge-play     { color: #fff; background: rgba(255,255,255,0.08); }
 [data-theme="terminal"] .td-badge-musical  { color: var(--lime); background: rgba(212,255,26,0.08); }
 [data-theme="terminal"] .td-badge-pantomime{ color: #ffaa44; background: rgba(255,170,68,0.08); }
+[data-theme="terminal"] .td-badge-vdl,
+[data-theme="terminal"] .td-badge-lyrebird { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
 
 .td-card-row1-right {
   display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;
@@ -871,6 +877,8 @@ button.td-link { background: none; cursor: pointer; }
     </select>
     <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
     <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
+    <button class="td-upcoming-toggle" id="td-vdl"      aria-pressed="false" title="Show VDL Entrants only">VDL Entrant</button>
+    <button class="td-upcoming-toggle" id="td-lyrebird" aria-pressed="false" title="Show Lyrebird Eligible shows only">Lyrebird Eligible</button>
     <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
   </div>
   <div class="td-controls-bottom">
@@ -1080,7 +1088,7 @@ function pushUrlState() {
 }
 
 function setFilterButtons(active) {
-  ['upcoming', 'nowshowing', 'watchlist'].forEach(id => {
+  ['upcoming', 'nowshowing', 'watchlist', 'vdl', 'lyrebird'].forEach(id => {
     const btn = document.getElementById('td-' + id);
     btn.classList.toggle('active', active === id);
     btn.setAttribute('aria-pressed', String(active === id));
@@ -1130,6 +1138,8 @@ function card(show) {
       <span class="td-badges">
         <span class="${badgeCls}">${type}</span>
         ${nowShowing ? '<span class="td-badge td-badge-nowshowing" aria-label="Now Showing"><span aria-hidden="true">● </span>Now Showing</span>' : ''}
+        ${show.VDL === '1'      ? '<span class="td-badge td-badge-vdl">VDL Entrant</span>'      : ''}
+        ${show.Lyrebird === '1' ? '<span class="td-badge td-badge-lyrebird">Lyrebird</span>' : ''}
       </span>
       <span class="td-card-row1-right">
         <span class="td-company">${show.company}</span>
@@ -1167,6 +1177,8 @@ function render() {
     if (activeFilter === 'watchlist'  && !watchlist.has(showKey(s))) return false;
     if (activeFilter === 'nowshowing' && !isNowShowing(s))           return false;
     if (activeFilter === 'upcoming'   && !isUpcoming(s))             return false;
+    if (activeFilter === 'vdl'        && s.VDL !== '1')              return false;
+    if (activeFilter === 'lyrebird'   && s.Lyrebird !== '1')         return false;
     if (activeCompany   && s.company !== activeCompany) return false;
     if (month !== null  && !monthsOf(s).includes(month)) return false;
     return true;
@@ -1250,6 +1262,8 @@ function setActiveFilter(name) {
 document.getElementById('td-upcoming').addEventListener('click',   () => setActiveFilter('upcoming'));
 document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
+document.getElementById('td-vdl').addEventListener('click',       () => setActiveFilter('vdl'));
+document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
 
 /* ── BLAKEAI ── */
 const CHIPS = [
