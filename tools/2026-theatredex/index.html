@@ -2271,6 +2271,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           <div class="fr-go-title">GAME OVER</div>
           <div class="fr-go-score">SCORE: <span id="fr-go-score">0</span></div>
           <button class="fr-go-btn" id="fr-play-again">PLAY AGAIN</button>
+          <button class="fr-go-btn" id="fr-go-close">CLOSE</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -2290,6 +2291,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       document.getElementById('fr-gameover').style.display = 'none';
       newGame();
     });
+    document.getElementById('fr-go-close').addEventListener('click', closeFrogger);
 
     newGame();
   }
@@ -2782,6 +2784,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           <div class="tw-go-title">GAME OVER</div>
           <div class="tw-go-score">SCORE: <span id="tw-go-score">0</span></div>
           <button class="tw-go-btn" id="tw-play-again">PLAY AGAIN</button>
+          <button class="tw-go-btn" id="tw-go-close">CLOSE</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -2803,6 +2806,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       document.getElementById('tw-gameover').style.display = 'none';
       newGame();
     });
+    document.getElementById('tw-go-close').addEventListener('click', closeTetris);
 
     newGame();
   }

@@ -1721,7 +1721,7 @@ body[data-theme="terminal"] .whack-mole--hit { color: #FFFFFF; background: #0000
 .ee-table-wrap { overflow-x:auto;overflow-y:auto;padding:12px 16px 20px;flex:1; }
 .ee-table { width:100%;min-width:520px;border-collapse:collapse;font-family:'DM Mono',monospace; }
 .ee-table th { font-size:9px;letter-spacing:3px;color:rgba(212,255,26,0.4);text-align:left;padding:10px 12px;border-bottom:1px solid rgba(212,255,26,0.12);font-weight:normal;white-space:nowrap; }
-.ee-table td { font-size:12px;color:rgba(255,255,255,0.55);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;line-height:1.5; }
+.ee-table td { font-size:12px;color:rgba(255,255,255,0.55);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;line-height:1.5;position:relative; }
 .ee-table tr:last-child td { border-bottom:none; }
 .ee-table tbody tr:hover td { background:rgba(212,255,26,0.03); }
 .ee-table td:first-child { color:rgba(255,255,255,0.2);font-size:11px; }
@@ -1731,10 +1731,10 @@ body[data-theme="terminal"] .whack-mole--hit { color: #FFFFFF; background: #0000
 .ee-chk-td { width:28px;text-align:center;padding-top:13px !important; }
 .ee-chk { width:15px;height:15px;cursor:pointer;accent-color:#d4ff1a;vertical-align:middle; }
 /* Cover/reveal cells */
-.ee-cell-wrap { position:relative;display:block; }
+.ee-cell-wrap { display:block; }
 .ee-cell-text { display:block; }
 .ee-cell-cover {
-  position:absolute;inset:-5px -8px;
+  position:absolute;inset:0;
   background:rgba(30,30,30,0.97);border:1px solid rgba(212,255,26,0.18);border-radius:2px;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   font-size:8px;letter-spacing:2px;color:rgba(212,255,26,0.45);
@@ -3612,7 +3612,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
       </div>
       <div id="ee-complete" style="display:none">
         <div class="ee-complete-bar">
-          <div class="ee-complete-label">— 111% COMPLETE —</div>
+          <div class="ee-complete-label">111% complete?</div>
           <div class="ee-complete-hint">Eating the green parts of a __________ is elite behaviour</div>
           <div class="ee-complete-input-row">
             <input id="ee-complete-input" class="ee-complete-input" type="text" maxlength="30" placeholder="TYPE YOUR ANSWER" autocomplete="off" spellcheck="false">
@@ -6369,6 +6369,7 @@ if (siteName) {
           <div class="pi-go-title">GAME OVER</div>
           <div class="pi-go-score">SCORE: <span id="pi-go-score">0</span></div>
           <button class="pi-go-btn" id="pi-play-again">PLAY AGAIN</button>
+          <button class="pi-go-btn" id="pi-go-close">CLOSE</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -6390,6 +6391,7 @@ if (siteName) {
       document.getElementById('pi-gameover').style.display = 'none';
       newGame();
     });
+    document.getElementById('pi-go-close').addEventListener('click', closePiano);
 
     newGame();
   }
