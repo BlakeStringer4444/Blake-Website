@@ -1053,6 +1053,7 @@ button.td-link { background: none; cursor: pointer; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -1145,6 +1146,7 @@ let db = null;
     };
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
+    firebase.auth().signInAnonymously().catch(() => {});
   } catch (e) { /* leaderboard unavailable offline */ }
 })();
 
@@ -2564,12 +2566,22 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         submitted = true;
         if (subBtn) subBtn.disabled = true;
         try {
-          await db.collection('frogger_scores').add({ name, score: finalScore, ts: Date.now() });
+          await db.collection('frogger_scores').add({ name, score: finalScore, ts: firebase.firestore.FieldValue.serverTimestamp() });
           const entry = document.getElementById('fr-lbm-entry');
           if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
         } catch (e) {
+          console.error('Frogger score submit failed:', e.code, e.message);
           submitted = false;
-          if (subBtn) subBtn.disabled = false;
+          if (subBtn) { subBtn.disabled = false; subBtn.textContent = 'SUBMIT →'; }
+          const entry = document.getElementById('fr-lbm-entry');
+          const errEl = entry?.querySelector('.bi-lbm-submit-err');
+          if (entry && !errEl) {
+            const err = document.createElement('div');
+            err.className = 'bi-lbm-submit-err';
+            err.style.cssText = 'font-size:10px;color:#ff5555;letter-spacing:1px;margin-top:6px;font-family:"DM Mono",monospace;';
+            err.textContent = e.code === 'permission-denied' ? 'SAVE FAILED: check Firebase rules' : 'SAVE FAILED — try again';
+            entry.appendChild(err);
+          }
         }
       };
       if (subBtn) subBtn.addEventListener('click', doSubmit);
@@ -3051,12 +3063,22 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         submitted = true;
         if (subBtn) subBtn.disabled = true;
         try {
-          await db.collection('tetris_scores').add({ name, score: finalScore, ts: Date.now() });
+          await db.collection('tetris_scores').add({ name, score: finalScore, ts: firebase.firestore.FieldValue.serverTimestamp() });
           const entry = document.getElementById('tw-lbm-entry');
           if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
         } catch (e) {
+          console.error('Tetris score submit failed:', e.code, e.message);
           submitted = false;
-          if (subBtn) subBtn.disabled = false;
+          if (subBtn) { subBtn.disabled = false; subBtn.textContent = 'SUBMIT →'; }
+          const entry = document.getElementById('tw-lbm-entry');
+          const errEl = entry?.querySelector('.bi-lbm-submit-err');
+          if (entry && !errEl) {
+            const err = document.createElement('div');
+            err.className = 'bi-lbm-submit-err';
+            err.style.cssText = 'font-size:10px;color:#ff5555;letter-spacing:1px;margin-top:6px;font-family:"DM Mono",monospace;';
+            err.textContent = e.code === 'permission-denied' ? 'SAVE FAILED: check Firebase rules' : 'SAVE FAILED — try again';
+            entry.appendChild(err);
+          }
         }
       };
       if (subBtn) subBtn.addEventListener('click', doSubmit);
