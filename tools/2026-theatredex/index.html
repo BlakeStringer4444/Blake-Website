@@ -1490,8 +1490,32 @@ function setActiveFilter(name) {
 document.getElementById('td-upcoming').addEventListener('click',   () => setActiveFilter('upcoming'));
 document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
-document.getElementById('td-vdl').addEventListener('click',       () => setActiveFilter('vdl'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
+
+/* ── VDL secret refresh: 10 clicks force-reloads data ── */
+(function () {
+  let vdlClicks = 0, vdlTimer = null;
+  const vdlBtn = document.getElementById('td-vdl');
+  vdlBtn.addEventListener('click', () => {
+    setActiveFilter('vdl');
+    vdlClicks++;
+    clearTimeout(vdlTimer);
+    vdlTimer = setTimeout(() => { vdlClicks = 0; }, 4000);
+    if (vdlClicks >= 10) {
+      vdlClicks = 0;
+      clearTimeout(vdlTimer);
+      vdlBtn.textContent = 'Refreshing…';
+      vdlBtn.disabled = true;
+      init().then(() => {
+        vdlBtn.textContent = 'VDL Entrant';
+        vdlBtn.disabled = false;
+      }).catch(() => {
+        vdlBtn.textContent = 'VDL Entrant';
+        vdlBtn.disabled = false;
+      });
+    }
+  });
+})();
 
 /* ── BLAKEAI ── */
 const CHIPS = [
