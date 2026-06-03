@@ -818,7 +818,8 @@ button.td-link { background: none; cursor: pointer; }
   .bi-lbm-scroll { padding: 0 16px 24px; }
 }
 .bi-lbm-super { font-size: 9px; letter-spacing: 3px; color: #555; margin-bottom: 4px; }
-.bi-lbm-title { font-size: 14px; letter-spacing: 2px; color: #D4FF1A; margin-bottom: 12px; }
+.bi-lbm-title { font-size: 14px; letter-spacing: 2px; color: #D4FF1A; margin-bottom: 4px; }
+.bi-lbm-sub { font-size: 9px; letter-spacing: 2px; color: #444; margin-bottom: 14px; font-family: 'DM Mono', monospace; }
 .bi-lbm-your { font-size: 11px; color: #888; margin-bottom: 18px; letter-spacing: 1px; }
 .bi-lbm-your strong { color: #fff; }
 .bi-lbm-qualify-label { font-size: 10px; letter-spacing: 1.5px; color: #D4FF1A; margin-bottom: 8px; line-height: 1.5; }
@@ -2416,7 +2417,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         goDiv.style.display = 'flex';
         goDiv.addEventListener('click', e => { if (e.target === goDiv) closeFrogger(); });
       }
-      setTimeout(openLeaderboard, 1200);
+      setTimeout(openLeaderboard, 1200, score);
     } else {
       player.x = W / 2 - FR_SIZE / 2;
       player.y = startTop() + Math.max(0, (startH - FR_SIZE) / 2);
@@ -2518,7 +2519,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   /* ── Leaderboard (reuses bi-lbm* CSS) ── */
-  async function openLeaderboard() {
+  async function openLeaderboard(finalScore) {
     const modal = document.createElement('div');
     modal.className = 'bi-lbm';
     modal.id        = 'fr-lbm';
@@ -2528,6 +2529,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         <div class="bi-lbm-scroll">
           <div class="bi-lbm-title">FROGGER MISSES BLAKE</div>
           <div class="bi-lbm-sub">TOP SCORES</div>
+          ${finalScore > 0 ? `
+          <div id="fr-lbm-entry" style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e1e1e">
+            <div class="bi-lbm-qualify-label">YOUR SCORE: ${finalScore} — ENTER YOUR NAME</div>
+            <div class="bi-lbm-input-row">
+              <input class="bi-lbm-name-input" id="fr-lbm-name" maxlength="20" placeholder="YOUR NAME" autocomplete="off">
+              <button class="bi-lbm-submit-btn" id="fr-lbm-submit">SUBMIT →</button>
+            </div>
+          </div>` : ''}
           <ul id="fr-lbm-list" style="list-style:none;padding:0;margin:0">
             <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>
           </ul>
@@ -2539,6 +2548,30 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     document.getElementById('fr-lbm-close').addEventListener('click', closeFrLb);
     modal.addEventListener('click', e => { if (e.target === modal) closeFrLb(); });
     document.addEventListener('keydown', frLbEsc);
+
+    if (finalScore > 0 && db) {
+      const nameEl = document.getElementById('fr-lbm-name');
+      const subBtn = document.getElementById('fr-lbm-submit');
+      if (nameEl) nameEl.focus();
+      let submitted = false;
+      const doSubmit = async () => {
+        if (submitted) return;
+        const name = (nameEl?.value || '').trim().toUpperCase().slice(0, 20);
+        if (!name) return;
+        submitted = true;
+        if (subBtn) subBtn.disabled = true;
+        try {
+          await db.collection('frogger_scores').add({ name, score: finalScore, ts: Date.now() });
+          const entry = document.getElementById('fr-lbm-entry');
+          if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
+        } catch (e) {
+          submitted = false;
+          if (subBtn) subBtn.disabled = false;
+        }
+      };
+      if (subBtn) subBtn.addEventListener('click', doSubmit);
+      if (nameEl) nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+    }
 
     if (!db) {
       document.getElementById('fr-lbm-list').innerHTML =
@@ -2554,7 +2587,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
       const hdr = document.createElement('li');
       hdr.className = 'bi-lbm-cols';
-      hdr.innerHTML = '<span>#</span><span>NAME</span><span>SCORE</span>';
+      hdr.innerHTML = '<span>#&nbsp;&nbsp;NAME</span><span>SCORE</span>';
       listEl.appendChild(hdr);
 
       const rows = snap.docs.map(d => d.data());
@@ -2570,26 +2603,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         li.innerHTML = `<span>${idx + 1}</span><span class="bi-lbm-row-name">${row.name || '?'}</span><span>${row.score || 0}</span>`;
         listEl.appendChild(li);
       });
-
-      const lowest = rows.length >= 10 ? (rows[rows.length - 1]?.score ?? 0) : -1;
-      if (score > 0 && (rows.length < 10 || score > lowest)) {
-        const scroll = modal.querySelector('.bi-lbm-scroll');
-        const sub = document.createElement('div');
-        sub.className = 'bi-lbm-qualify';
-        sub.innerHTML = `
-          <p class="bi-lbm-qualify-text">You qualify! Enter your name:</p>
-          <div class="bi-lbm-submit-row">
-            <input class="bi-lbm-input" id="fr-lbm-name" maxlength="20" placeholder="YOUR NAME">
-            <button class="bi-lbm-submit" id="fr-lbm-submit">SUBMIT</button>
-          </div>`;
-        scroll.appendChild(sub);
-        document.getElementById('fr-lbm-submit').addEventListener('click', async () => {
-          const name = (document.getElementById('fr-lbm-name')?.value || '').trim().toUpperCase().slice(0, 20);
-          if (!name) return;
-          await db.collection('frogger_scores').add({ name, score, ts: Date.now() });
-          sub.innerHTML = '<p class="bi-lbm-qualify-text" style="color:#d4ff1a">Score submitted! ✓</p>';
-        });
-      }
     } catch (err) {
       console.warn('Frogger leaderboard error:', err);
       const listEl = document.getElementById('fr-lbm-list');
@@ -2801,7 +2814,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         goDiv.style.display = 'flex';
         goDiv.addEventListener('click', e => { if (e.target === goDiv) closeTetris(); });
       }
-      setTimeout(openLeaderboard, 1200);
+      setTimeout(openLeaderboard, 1200, score);
     }
   }
 
@@ -2993,7 +3006,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   /* ── Leaderboard (reuses bi-lbm* CSS) ── */
-  async function openLeaderboard() {
+  async function openLeaderboard(finalScore) {
     const modal = document.createElement('div');
     modal.className = 'bi-lbm';
     modal.id        = 'tw-lbm';
@@ -3003,6 +3016,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         <div class="bi-lbm-scroll">
           <div class="bi-lbm-title">BLAKE-TRIS</div>
           <div class="bi-lbm-sub">TOP SCORES</div>
+          ${finalScore > 0 ? `
+          <div id="tw-lbm-entry" style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e1e1e">
+            <div class="bi-lbm-qualify-label">YOUR SCORE: ${finalScore} — ENTER YOUR NAME</div>
+            <div class="bi-lbm-input-row">
+              <input class="bi-lbm-name-input" id="tw-lbm-name" maxlength="20" placeholder="YOUR NAME" autocomplete="off">
+              <button class="bi-lbm-submit-btn" id="tw-lbm-submit">SUBMIT →</button>
+            </div>
+          </div>` : ''}
           <ul id="tw-lbm-list" style="list-style:none;padding:0;margin:0">
             <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>
           </ul>
@@ -3014,6 +3035,30 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     document.getElementById('tw-lbm-close').addEventListener('click', closeTwLb);
     modal.addEventListener('click', e => { if (e.target === modal) closeTwLb(); });
     document.addEventListener('keydown', twLbEsc);
+
+    if (finalScore > 0 && db) {
+      const nameEl = document.getElementById('tw-lbm-name');
+      const subBtn = document.getElementById('tw-lbm-submit');
+      if (nameEl) nameEl.focus();
+      let submitted = false;
+      const doSubmit = async () => {
+        if (submitted) return;
+        const name = (nameEl?.value || '').trim().toUpperCase().slice(0, 20);
+        if (!name) return;
+        submitted = true;
+        if (subBtn) subBtn.disabled = true;
+        try {
+          await db.collection('tetris_scores').add({ name, score: finalScore, ts: Date.now() });
+          const entry = document.getElementById('tw-lbm-entry');
+          if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
+        } catch (e) {
+          submitted = false;
+          if (subBtn) subBtn.disabled = false;
+        }
+      };
+      if (subBtn) subBtn.addEventListener('click', doSubmit);
+      if (nameEl) nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+    }
 
     if (!db) {
       document.getElementById('tw-lbm-list').innerHTML =
@@ -3029,7 +3074,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
       const hdr = document.createElement('li');
       hdr.className = 'bi-lbm-cols';
-      hdr.innerHTML = '<span>#</span><span>NAME</span><span>SCORE</span>';
+      hdr.innerHTML = '<span>#&nbsp;&nbsp;NAME</span><span>SCORE</span>';
       listEl.appendChild(hdr);
 
       const rows = snap.docs.map(d => d.data());
@@ -3045,26 +3090,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         li.innerHTML = `<span>${idx + 1}</span><span class="bi-lbm-row-name">${row.name || '?'}</span><span>${row.score || 0}</span>`;
         listEl.appendChild(li);
       });
-
-      const lowest = rows.length >= 10 ? (rows[rows.length - 1]?.score ?? 0) : -1;
-      if (score > 0 && (rows.length < 10 || score > lowest)) {
-        const scroll = modal.querySelector('.bi-lbm-scroll');
-        const sub = document.createElement('div');
-        sub.className = 'bi-lbm-qualify';
-        sub.innerHTML = `
-          <p class="bi-lbm-qualify-text">You qualify! Enter your name:</p>
-          <div class="bi-lbm-submit-row">
-            <input class="bi-lbm-input" id="tw-lbm-name" maxlength="20" placeholder="YOUR NAME">
-            <button class="bi-lbm-submit" id="tw-lbm-submit">SUBMIT</button>
-          </div>`;
-        scroll.appendChild(sub);
-        document.getElementById('tw-lbm-submit').addEventListener('click', async () => {
-          const name = (document.getElementById('tw-lbm-name')?.value || '').trim().toUpperCase().slice(0, 20);
-          if (!name) return;
-          await db.collection('tetris_scores').add({ name, score, ts: Date.now() });
-          sub.innerHTML = '<p class="bi-lbm-qualify-text" style="color:#d4ff1a">Score submitted! ✓</p>';
-        });
-      }
     } catch (err) {
       console.warn('Tetris leaderboard error:', err);
       const listEl = document.getElementById('tw-lbm-list');
