@@ -2382,8 +2382,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     }
 
     if (!itemObj.got) {
-      if (px1 < itemObj.x + 10 && px2 > itemObj.x - 10 && py1 < itemObj.y + 10 && py2 > itemObj.y - 10)
+      if (px1 < itemObj.x + 10 && px2 > itemObj.x - 10 && py1 < itemObj.y + 10 && py2 > itemObj.y - 10) {
         itemObj.got = true;
+        score += 100;
+        updateHUD();
+      }
     }
 
     if (invincible <= 0) {
