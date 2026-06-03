@@ -2180,15 +2180,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const FR_SPEED  = 190; // player px/s
   const FR_SIZE   = 20;  // player tile size (px)
 
-  const LANE_CFGS = [
-    { speedFrac: 0.08, dir:  1 },
-    { speedFrac: 0.06, dir: -1 },
-    { speedFrac: 0.07, dir:  1 },
-    { speedFrac: 0.065, dir: -1 },
-    { speedFrac: 0.075, dir:  1 },
-    { speedFrac: 0.055, dir: -1 },
-  ];
-
   let overlay, canvas, ctx;
   let W = 0, H = 0, dpr = 1;
   let goalH = 0, laneH = 0, safeH = 0, startH = 0;
@@ -2358,32 +2349,34 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     ctx.font = 'bold 12px "DM Mono",monospace';
     const pool = buildWordPool();
     let wi = 0;
-    const GAP   = 100; // min gap between car edges (player must pass through)
-    const PAD_X = 8;  // text padding inside car
+    const PAD_X = 8;
 
-    lanes = LANE_CFGS.map((cfg, i) => {
-      // Speed ramps up with each crossing
-      const speed  = cfg.speedFrac * W * (1 + crossing * 0.06);
-      const y      = laneTop(i);
-      const midY   = y + laneH / 2;
-      const carH   = Math.round(laneH * 0.68);
-      const cars   = [];
+    // Shuffle 3 right + 3 left so direction layout varies each game
+    const dirs = [1,1,1,-1,-1,-1].sort(() => Math.random() - 0.5);
 
-      // Place cars sequentially so edges never overlap
-      let edge = cfg.dir > 0 ? -180 : W + 180;
-      for (let j = 0; j < 7; j++) {
+    lanes = Array.from({ length: 6 }, (_, i) => {
+      const dir       = dirs[i];
+      const speedFrac = 0.04 + Math.random() * 0.07;   // 0.04–0.11, wide spread
+      const speed     = speedFrac * W * (1 + crossing * 0.09);
+      const carCount  = 5 + Math.floor(Math.random() * 4); // 5–8 per lane
+      const gap       = 90 + Math.floor(Math.random() * 50); // 90–140px gap
+
+      const y    = laneTop(i);
+      const midY = y + laneH / 2;
+      const carH = Math.round(laneH * 0.68);
+      const cars = [];
+
+      let edge = dir > 0 ? -180 : W + 180;
+      for (let j = 0; j < carCount; j++) {
         const raw  = pool[(wi++) % pool.length] || 'GO';
         const text = raw.length > 7 ? raw.slice(0, 7) : raw;
         const tw   = ctx.measureText(text).width;
         const carW = tw + PAD_X * 2;
-        let cx;
-        if (cfg.dir > 0) { cx = edge + carW / 2; edge += carW + GAP; }
-        else              { cx = edge - carW / 2; edge -= carW + GAP; }
-        cars.push({ text, tw, carW, carH, x: cx, y: midY });
+        if (dir > 0) { cars.push({ text, tw, carW, carH, x: edge + carW / 2, y: midY }); edge += carW + gap; }
+        else          { cars.push({ text, tw, carW, carH, x: edge - carW / 2, y: midY }); edge -= carW + gap; }
       }
-      // Total span used for seamless wrapping
-      const totalSpan = cars.reduce((s, c) => s + c.carW, 0) + GAP * cars.length;
-      return { speed, dir: cfg.dir, y, carH, cars, totalSpan };
+      const totalSpan = cars.reduce((s, c) => s + c.carW, 0) + gap * cars.length;
+      return { speed, dir, y, carH, cars, totalSpan };
     });
   }
 
