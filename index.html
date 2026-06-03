@@ -1720,16 +1720,29 @@ body[data-theme="terminal"] .whack-mole--hit { color: #FFFFFF; background: #0000
 .ee-topbar-sub { font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.2); }
 .ee-topbar-close { background:none;border:1px solid rgba(212,255,26,0.3);color:rgba(212,255,26,0.5);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:6px 12px;cursor:pointer;border-radius:2px;transition:border-color 0.15s,color 0.15s; }
 .ee-topbar-close:hover { border-color:#d4ff1a;color:#d4ff1a; }
-.ee-table-wrap { overflow-y:auto;padding:12px 16px 20px;flex:1; }
-.ee-table { width:100%;border-collapse:collapse;font-family:'DM Mono',monospace; }
-.ee-table th { font-size:7px;letter-spacing:3px;color:rgba(212,255,26,0.4);text-align:left;padding:8px 10px;border-bottom:1px solid rgba(212,255,26,0.12);font-weight:normal;white-space:nowrap; }
-.ee-table td { font-size:10px;color:rgba(255,255,255,0.55);padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;line-height:1.5; }
+.ee-table-wrap { overflow-x:auto;overflow-y:auto;padding:12px 16px 20px;flex:1; }
+.ee-table { width:100%;min-width:520px;border-collapse:collapse;font-family:'DM Mono',monospace; }
+.ee-table th { font-size:9px;letter-spacing:3px;color:rgba(212,255,26,0.4);text-align:left;padding:10px 12px;border-bottom:1px solid rgba(212,255,26,0.12);font-weight:normal;white-space:nowrap; }
+.ee-table td { font-size:12px;color:rgba(255,255,255,0.55);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;line-height:1.5; }
 .ee-table tr:last-child td { border-bottom:none; }
 .ee-table tbody tr:hover td { background:rgba(212,255,26,0.03); }
-.ee-table td:first-child { color:rgba(255,255,255,0.2);font-size:9px; }
-.ee-table td:nth-child(2) { color:#fff;font-weight:bold;font-size:11px;letter-spacing:1px;white-space:nowrap; }
-.ee-table td:nth-child(3) { color:rgba(153,51,255,0.8);white-space:nowrap; }
-@media (max-width:500px) { .ee-table th:nth-child(3),.ee-table td:nth-child(3) { display:none; } }
+.ee-table td:first-child { color:rgba(255,255,255,0.2);font-size:11px; }
+.ee-table td:nth-child(2) { color:#fff;font-weight:bold;font-size:13px;letter-spacing:1px;white-space:nowrap; }
+.ee-table td:nth-child(3) { color:rgba(153,51,255,0.8); }
+/* Checkbox column */
+.ee-chk-td { width:28px;text-align:center;padding-top:13px !important; }
+.ee-chk { width:15px;height:15px;cursor:pointer;accent-color:#d4ff1a;vertical-align:middle; }
+/* Cover/reveal cells */
+.ee-cell-wrap { position:relative;display:block; }
+.ee-cell-text { display:block; }
+.ee-cell-cover {
+  position:absolute;inset:-5px -8px;
+  background:rgba(30,30,30,0.97);border:1px solid rgba(212,255,26,0.18);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:8px;letter-spacing:2px;color:rgba(212,255,26,0.45);
+  transition:background 0.15s,border-color 0.15s;user-select:none;
+}
+.ee-cell-cover:hover { background:rgba(40,40,40,0.97);border-color:rgba(212,255,26,0.4);color:rgba(212,255,26,0.7); }
 
 /* ── BLAKE BREAKER PASSCODE INPUT ── */
 .bb-digit {
@@ -2775,7 +2788,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   border: 2px solid rgba(153,51,255,0.75);
   box-shadow: 0 0 32px rgba(153,51,255,0.28), 0 10px 50px rgba(0,0,0,0.7);
   border-radius: 5px;
-  width: 380px; max-width: calc(100vw - 20px);
+  width: 460px; max-width: calc(100vw - 20px);
   display: flex; flex-direction: column; align-items: stretch; position: relative;
 }
 .pi-topbar {
@@ -3449,7 +3462,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
         <button id="ee-spoilers-btn" class="tool-card">
           <span class="tool-icon">🕹️</span>
           <span class="tool-name">Easter Egg Spoilers</span>
-          <span class="tool-desc">All 11 secret games, revealed</span>
+          <span class="tool-desc">All 11 secret games on my website revealed.</span>
         </button>
 
         <div id="lost-moretome" class="tool-card placeholder">
@@ -3518,20 +3531,75 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
       <div class="ee-table-wrap">
         <table class="ee-table">
           <thead>
-            <tr><th>#</th><th>GAME</th><th>WHERE</th><th>HOW TO UNLOCK</th></tr>
+            <tr><th></th><th>#</th><th>GAME</th><th>WHERE</th><th>HOW TO UNLOCK</th></tr>
           </thead>
           <tbody>
-            <tr><td>01</td><td>BLAKE SNAKE</td><td>About tab</td><td>Click the "Contact" section label 5× within 2 seconds</td></tr>
-            <tr><td>02</td><td>THE BLAKE GAMBIT</td><td>About tab</td><td>Click the headshot photo 100× within 60 seconds</td></tr>
-            <tr><td>03</td><td>YOU VS. BLAKE AT PONG</td><td>About tab</td><td>Click the "Eyes: Blue" attribute tag 5×</td></tr>
-            <tr><td>04</td><td>FLAPPY BLAKE</td><td>Sound Design tab</td><td>Click the "Sound Design CV" section label 5×</td></tr>
-            <tr><td>05</td><td>2048: THE END OF BLAKE</td><td>Music tab</td><td>Click the "Future Garage" genre tag 5×</td></tr>
-            <tr><td>06</td><td>WHACK-A-BLAKE</td><td>Music tab</td><td>Click the "Final Cut Pro X" software tag 5×</td></tr>
-            <tr><td>07</td><td>BLAKE BREAKER</td><td>Anywhere</td><td>Switch to Terminal theme (click the ☾ header button until the screen turns green), then click the "Blake Stringer" site name 44×</td></tr>
-            <tr><td>08</td><td>BLAKE HERO 3</td><td>Music tab</td><td>Click the "Proteas" track name 5× within 3 seconds</td></tr>
-            <tr><td>09</td><td>BLAKE INVADERS</td><td>Theatredex</td><td>Click "Now Showing" filter 5× within 5 seconds</td></tr>
-            <tr><td>10</td><td>FROGGER MISSES BLAKE</td><td>Theatredex</td><td>Click "Watchlist" filter 5× within 5 seconds</td></tr>
-            <tr><td>11</td><td>BLAKE-TRIS</td><td>Theatredex</td><td>Type "Timothy Warner" in the search box</td></tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee01"></td>
+              <td>01</td><td>BLAKE SNAKE</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">About tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Contact" section label 5× within 2 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee02"></td>
+              <td>02</td><td>YOU VS. BLAKE AT PONG</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">About tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Eyes: Blue" attribute tag 5×</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee03"></td>
+              <td>03</td><td>FLAPPY BLAKE</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Sound Design tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Sound Design CV" section label 5×</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee04"></td>
+              <td>04</td><td>2048: THE END OF BLAKE</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Music tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Future Garage" genre tag 5×</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee05"></td>
+              <td>05</td><td>WHACK-A-BLAKE</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Music tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Final Cut Pro X" software tag 5×</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee06"></td>
+              <td>06</td><td>THE BLAKE GAMBIT</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">About tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Dark Mode" button 20 times to unlock Monochrome Mode. Then click the Blake Stringer header typewriter symbol 44 times</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee07"></td>
+              <td>07</td><td>BLAKE BREAKER</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Anywhere</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Switch to Terminal theme (click the ☾ header button until the screen turns green), then click the "Blake Stringer" site name 44×</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee08"></td>
+              <td>08</td><td>BLAKE INVADERS</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Theatredex</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click "Now Showing" filter 5× within 5 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee09"></td>
+              <td>09</td><td>FROGGER MISSES BLAKE</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Theatredex</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click "Watchlist" filter 5× within 5 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee10"></td>
+              <td>10</td><td>BLAKE-TRIS</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Theatredex</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Type "Timothy Warner" in the search box</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
+            <tr>
+              <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee11"></td>
+              <td>11</td><td>BLAKE HERO 3</td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Music tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Proteas" track name 5× within 3 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -6226,7 +6294,7 @@ if (siteName) {
   const HIT_ZONE_H  = 0.18; // fraction of board height = hit zone
   const TILE_H_FRAC = 0.11; // tile height as fraction of board height
   const MAX_LIVES   = 5;
-  const COMBO_THRESHOLDS = [8, 16, 24]; // hits to reach ×2, ×4, ×8
+  const COMBO_THRESHOLDS = [8, 16, 24, 32, 48]; // hits to reach ×2, ×4, ×8, ×16, ×32
 
   /* ── State ── */
   let overlay, canvas, ctx;
@@ -6292,6 +6360,7 @@ if (siteName) {
     canvas.addEventListener('mousedown',  onMouse);
 
     document.getElementById('pi-close').addEventListener('click', closePiano);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closePiano(); });
     document.getElementById('pi-play-again').addEventListener('click', () => {
       document.getElementById('pi-gameover').style.display = 'none';
       newGame();
@@ -6357,6 +6426,8 @@ if (siteName) {
   }
 
   function comboMult() {
+    if (totalHits >= COMBO_THRESHOLDS[4]) return 32;
+    if (totalHits >= COMBO_THRESHOLDS[3]) return 16;
     if (totalHits >= COMBO_THRESHOLDS[2]) return 8;
     if (totalHits >= COMBO_THRESHOLDS[1]) return 4;
     if (totalHits >= COMBO_THRESHOLDS[0]) return 2;
@@ -6365,7 +6436,7 @@ if (siteName) {
 
   function speed() {
     const m = comboMult();
-    const mult = m >= 8 ? 1.3 : m >= 4 ? 1.2 : m >= 2 ? 1.1 : 1.0;
+    const mult = m >= 32 ? 2.0 : m >= 16 ? 1.7 : m >= 8 ? 1.4 : m >= 4 ? 1.2 : m >= 2 ? 1.1 : 1.0;
     return BASE_SPEED * mult + Math.floor(totalHits / 12) * 15;
   }
 
@@ -6465,6 +6536,7 @@ if (siteName) {
     if (goDiv) {
       document.getElementById('pi-go-score').textContent = score;
       goDiv.style.display = 'flex';
+      goDiv.addEventListener('click', e => { if (e.target === goDiv) closePiano(); });
     }
     setTimeout(openLeaderboard, 1200);
   }
@@ -6577,6 +6649,7 @@ if (siteName) {
 
   function onKeyDown(e) {
     if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'Escape') { closePiano(); return; }
     const col = KEY_MAP[e.key.toLowerCase()];
     if (col === undefined) return;
     e.preventDefault();
@@ -6690,6 +6763,34 @@ if (siteName) {
   const btn = document.getElementById('ee-spoilers-btn');
   const ov  = document.getElementById('ee-ov');
   if (!btn || !ov) return;
+
+  /* ── Cover/reveal mechanic ── */
+  ov.querySelectorAll('.ee-cell-cover').forEach(cover => {
+    cover.addEventListener('click', e => {
+      e.stopPropagation();
+      cover.style.display = 'none';
+    });
+  });
+
+  /* ── Checkbox persistence ── */
+  const LS_KEY = 'ee_found';
+  function loadChks() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (_) {}
+    ov.querySelectorAll('.ee-chk').forEach(chk => {
+      if (saved[chk.dataset.id]) chk.checked = true;
+    });
+  }
+  function saveChk(id, val) {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (_) {}
+    saved[id] = val;
+    localStorage.setItem(LS_KEY, JSON.stringify(saved));
+  }
+  ov.querySelectorAll('.ee-chk').forEach(chk => {
+    chk.addEventListener('change', () => saveChk(chk.dataset.id, chk.checked));
+  });
+  loadChks();
 
   btn.addEventListener('click', () => {
     document.getElementById('ee-warn').style.display = '';
