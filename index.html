@@ -2709,6 +2709,63 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   animation: broken-blink 2.16s infinite;
   margin-top: 6px;
 }
+
+/* ── PIANO TILES EASTER EGG ─────────────────────── */
+.pi-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+}
+.pi-box {
+  background: #080808; border: 1px solid #1e1e1e; border-radius: 3px;
+  width: 380px; max-width: calc(100vw - 20px);
+  display: flex; flex-direction: column; align-items: stretch; position: relative;
+}
+.pi-topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 8px 2px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+}
+.pi-topbar-title {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
+  color: rgba(255,255,255,0.28); text-transform: uppercase;
+}
+.pi-close-top {
+  background: none; border: none; color: rgba(255,255,255,0.2);
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  cursor: pointer; padding: 8px 6px;
+}
+.pi-close-top:hover { color: rgba(255,255,255,0.6); }
+.pi-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 14px; font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 1.5px; color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+.pi-hud-combo { color: #d4ff1a; }
+.pi-hud-lives { letter-spacing: 3px; }
+.pi-canvas { display: block; background: #060606; }
+.pi-gameover {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
+  background: rgba(0,0,0,0.92); display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; padding: 24px;
+}
+.pi-go-title {
+  font-family: 'DM Mono', monospace; font-size: 22px;
+  letter-spacing: 5px; color: #d4ff1a; margin-bottom: 4px;
+}
+.pi-go-score {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px;
+}
+.pi-go-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6); font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; padding: 9px 0;
+  cursor: pointer; border-radius: 2px; width: 170px; text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.pi-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
+.music-track-name { cursor: pointer; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -6100,6 +6157,462 @@ if (siteName) {
     clearTimeout(resetTimer);
     resetTimer = setTimeout(() => { resetCount = 0; }, 2 * 60 * 1000);
   });
+
+})();
+
+/* ── PIANO TILES EASTER EGG ── */
+(function () {
+
+  /* ── Config ── */
+  const COLS        = 8;
+  const KEY_NOTES   = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+  const KEY_SHORTS  = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'];
+  const TILE_COLORS = ['#ff4444','#ff8c00','#ffd600','#d4ff1a','#00e676','#00e5ff','#aa00ff','#ff4081'];
+  const BASE_SPEED  = 220;   // px/s
+  const SPAWN_INTERVAL = 650; // ms between tile spawns (average)
+  const HIT_ZONE_H  = 0.18; // fraction of board height = hit zone
+  const TILE_H_FRAC = 0.11; // tile height as fraction of board height
+  const MAX_LIVES   = 3;
+  const COMBO_THRESHOLDS = [8, 16, 24]; // hits to reach ×2, ×4, ×8
+
+  /* ── State ── */
+  let overlay, canvas, ctx;
+  let W = 0, boardH = 0, keysH = 0, totalH = 0, dpr = 1;
+  let colW = 0, tileH = 0, hitLineY = 0;
+  let tiles = [], flashes = [];
+  let score = 0, combo = 0, lives = MAX_LIVES, totalHits = 0;
+  let spawnTimer = 0, gameActive = false;
+  let raf = null, lastTs = 0;
+  let keyPressed = {}; // col index → bool
+
+  /* ── Trigger: 5 clicks on track name within 3 s ── */
+  {
+    const trackName = document.querySelector('.music-track-name');
+    let piTimes = [];
+    if (trackName) {
+      trackName.addEventListener('click', () => {
+        const now = Date.now();
+        piTimes.push(now);
+        piTimes = piTimes.filter(t => now - t < 3000);
+        if (piTimes.length >= 5) {
+          piTimes = [];
+          if (!document.getElementById('pi-overlay')) launchPiano();
+        }
+      });
+    }
+  }
+
+  /* ── Launch ── */
+  function launchPiano() {
+    overlay = document.createElement('div');
+    overlay.className = 'pi-overlay';
+    overlay.id        = 'pi-overlay';
+    overlay.innerHTML = `
+      <div class="pi-box" id="pi-box">
+        <div class="pi-topbar">
+          <span class="pi-topbar-title">Proteas Piano</span>
+          <button class="pi-close-top" id="pi-close">[ CLOSE ]</button>
+        </div>
+        <div class="pi-hud">
+          <span>SCORE <span id="pi-score">0</span></span>
+          <span class="pi-hud-combo" id="pi-combo">COMBO ×1</span>
+          <span class="pi-hud-lives" id="pi-lives">♥♥♥</span>
+        </div>
+        <canvas class="pi-canvas" id="pi-canvas"></canvas>
+        <div class="pi-gameover" id="pi-gameover">
+          <div class="pi-go-title">GAME OVER</div>
+          <div class="pi-go-score">SCORE: <span id="pi-go-score">0</span></div>
+          <button class="pi-go-btn" id="pi-play-again">PLAY AGAIN</button>
+          <button class="pi-go-btn" id="pi-show-lb">LEADERBOARD</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    canvas = document.getElementById('pi-canvas');
+    ctx    = canvas.getContext('2d');
+
+    sizeCanvas();
+    startSong();
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup',   onKeyUp);
+    canvas.addEventListener('touchstart', onTouch, { passive: false });
+    canvas.addEventListener('mousedown',  onMouse);
+
+    document.getElementById('pi-close').addEventListener('click', closePiano);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closePiano(); });
+    document.getElementById('pi-play-again').addEventListener('click', () => {
+      document.getElementById('pi-gameover').style.display = 'none';
+      newGame();
+    });
+    document.getElementById('pi-show-lb').addEventListener('click', openLeaderboard);
+
+    newGame();
+  }
+
+  function closePiano() {
+    gameActive = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup',   onKeyUp);
+    pauseSong();
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    overlay = null;
+  }
+
+  /* ── Song ── */
+  function startSong() {
+    const audio = document.getElementById('music-audio');
+    if (!audio) return;
+    if (!audio.src || !audio.src.includes('Proteas')) {
+      audio.src = '/Audio/Proteas - Blake Stringer.mp3';
+    }
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
+  function pauseSong() {
+    const audio = document.getElementById('music-audio');
+    if (audio && !audio.paused) audio.pause();
+  }
+
+  /* ── Canvas sizing ── */
+  function sizeCanvas() {
+    dpr    = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    W      = Math.round(rect.width) || 356;
+    boardH = window.innerHeight < 600 ? 240 : window.innerWidth < 640 ? 340 : 400;
+    keysH  = window.innerWidth < 640 ? 64 : 76;
+    totalH = boardH + keysH;
+
+    canvas.style.height = totalH + 'px';
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(totalH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    colW     = W / COLS;
+    tileH    = Math.round(boardH * TILE_H_FRAC);
+    hitLineY = boardH - Math.round(boardH * HIT_ZONE_H);
+  }
+
+  /* ── Game logic ── */
+  function newGame() {
+    tiles = []; flashes = [];
+    score = 0; combo = 0; lives = MAX_LIVES; totalHits = 0;
+    spawnTimer = 0; gameActive = true; lastTs = 0;
+    updateHUD();
+    startSong();
+
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  }
+
+  function comboMult() {
+    if (totalHits >= COMBO_THRESHOLDS[2]) return 8;
+    if (totalHits >= COMBO_THRESHOLDS[1]) return 4;
+    if (totalHits >= COMBO_THRESHOLDS[0]) return 2;
+    return 1;
+  }
+
+  function speed() { return BASE_SPEED + Math.floor(totalHits / 12) * 15; }
+
+  function spawnTile(col) {
+    tiles.push({ col, y: -tileH, hit: false, missed: false });
+  }
+
+  function spawnRandom() {
+    // Pick 1 column (80%) or 2 columns (20%) for a chord
+    const cols = new Set();
+    cols.add(Math.floor(Math.random() * COLS));
+    if (Math.random() < 0.20) {
+      let c2;
+      do { c2 = Math.floor(Math.random() * COLS); } while (cols.has(c2));
+      cols.add(c2);
+    }
+    cols.forEach(c => spawnTile(c));
+  }
+
+  function loop(ts) {
+    if (!gameActive) return;
+    const dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 0;
+    lastTs = ts;
+
+    // Spawn
+    spawnTimer += dt * 1000;
+    const interval = SPAWN_INTERVAL - Math.floor(totalHits / 20) * 30;
+    if (spawnTimer >= Math.max(300, interval)) {
+      spawnTimer = 0;
+      spawnRandom();
+    }
+
+    // Move tiles
+    const spd = speed();
+    for (const t of tiles) {
+      if (!t.hit) t.y += spd * dt;
+    }
+
+    // Check misses
+    for (const t of tiles) {
+      if (!t.hit && !t.missed && t.y > hitLineY + tileH) {
+        t.missed = true;
+        combo = 0;
+        lives--;
+        flashes.push({ col: t.col, type: 'miss', alpha: 1 });
+        updateHUD();
+        if (lives <= 0) { endGame(); return; }
+      }
+    }
+
+    // Remove old tiles
+    tiles = tiles.filter(t => t.y < totalH + tileH * 2);
+    // Remove old flashes
+    flashes = flashes.filter(f => f.alpha > 0);
+    flashes.forEach(f => { f.alpha -= dt * 3; });
+
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function hitColumn(col) {
+    if (!gameActive) return;
+    // Find the bottommost unhit tile in this column that's hittable
+    let best = null;
+    for (const t of tiles) {
+      if (t.hit || t.missed || t.col !== col) continue;
+      const center = t.y + tileH / 2;
+      // Hittable: tile's bottom is past hitLineY - tileH and center hasn't passed hitLineY + tileH
+      if (t.y + tileH >= hitLineY - tileH && center <= hitLineY + tileH) {
+        if (!best || t.y > best.y) best = t;
+      }
+    }
+    if (!best) return;
+
+    best.hit = true;
+    combo++;
+    totalHits++;
+    const center = best.y + tileH / 2;
+    const dist   = Math.abs(center - hitLineY);
+    const isPerfect = dist < tileH * 0.4;
+    const pts = (isPerfect ? 10 : 5) * comboMult();
+    score += pts;
+    flashes.push({ col, type: isPerfect ? 'perfect' : 'good', alpha: 1 });
+    updateHUD();
+  }
+
+  function endGame() {
+    gameActive = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    draw();
+    const goDiv = document.getElementById('pi-gameover');
+    if (goDiv) {
+      document.getElementById('pi-go-score').textContent = score;
+      goDiv.style.display = 'flex';
+    }
+  }
+
+  function updateHUD() {
+    const s = document.getElementById('pi-score');
+    const c = document.getElementById('pi-combo');
+    const l = document.getElementById('pi-lives');
+    if (s) s.textContent = score;
+    if (c) { c.textContent = `COMBO ×${comboMult()}`; c.style.color = combo > 0 ? '#d4ff1a' : 'rgba(255,255,255,0.3)'; }
+    if (l) l.textContent = '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, MAX_LIVES - lives));
+  }
+
+  /* ── Drawing ── */
+  function draw() {
+    ctx.clearRect(0, 0, W, totalH);
+
+    // Board background
+    ctx.fillStyle = '#060606';
+    ctx.fillRect(0, 0, W, boardH);
+
+    // Column separators
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let c = 1; c < COLS; c++) {
+      ctx.beginPath(); ctx.moveTo(c * colW, 0); ctx.lineTo(c * colW, boardH); ctx.stroke();
+    }
+
+    // Hit zone shading
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    ctx.fillRect(0, hitLineY, W, boardH - hitLineY);
+
+    // Hit line
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, hitLineY); ctx.lineTo(W, hitLineY); ctx.stroke();
+
+    // Tiles
+    for (const t of tiles) {
+      if (t.hit) continue;
+      const x = t.col * colW + 2;
+      const y = t.y;
+      const w = colW - 4;
+      const color = TILE_COLORS[t.col];
+
+      if (t.missed) {
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, w, tileH);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, w, tileH);
+        // Shine
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(x, y, w, 3);
+      }
+    }
+
+    // Flash effects (hit feedback)
+    for (const f of flashes) {
+      const x = f.col * colW;
+      const color = f.type === 'miss'    ? `rgba(255,80,80,${f.alpha * 0.45})`
+                  : f.type === 'perfect' ? `rgba(255,255,255,${f.alpha * 0.35})`
+                  :                        `rgba(212,255,26,${f.alpha * 0.25})`;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, 0, colW, boardH);
+    }
+
+    // Piano keys
+    drawKeys();
+  }
+
+  function drawKeys() {
+    const ky = boardH;
+    for (let c = 0; c < COLS; c++) {
+      const x   = c * colW;
+      const col = TILE_COLORS[c];
+      const isPressed = keyPressed[c];
+
+      // Key background
+      ctx.fillStyle = isPressed ? col : '#0e0e0e';
+      ctx.fillRect(x, ky, colW, keysH);
+
+      // Key border
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, ky + 0.5, colW - 1, keysH - 1);
+
+      // Colored accent bar at top of key
+      ctx.fillStyle = col;
+      ctx.fillRect(x + 2, ky + 2, colW - 4, 3);
+
+      // Note label
+      ctx.fillStyle = isPressed ? '#000' : 'rgba(255,255,255,0.55)';
+      ctx.font = `bold ${Math.round(colW * 0.32)}px "DM Mono",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(KEY_NOTES[c], x + colW / 2, ky + keysH * 0.42);
+
+      // Keyboard shortcut
+      ctx.fillStyle = isPressed ? '#000' : 'rgba(255,255,255,0.22)';
+      ctx.font = `${Math.round(colW * 0.24)}px "DM Mono",monospace`;
+      ctx.fillText(KEY_SHORTS[c], x + colW / 2, ky + keysH * 0.72);
+    }
+  }
+
+  /* ── Input ── */
+  const KEY_MAP = { a:0, s:1, d:2, f:3, g:4, h:5, j:6, k:7 };
+
+  function onKeyDown(e) {
+    const col = KEY_MAP[e.key.toLowerCase()];
+    if (col === undefined) return;
+    e.preventDefault();
+    keyPressed[col] = true;
+    hitColumn(col);
+  }
+  function onKeyUp(e) {
+    const col = KEY_MAP[e.key.toLowerCase()];
+    if (col !== undefined) keyPressed[col] = false;
+  }
+
+  function colFromX(x) { return Math.max(0, Math.min(COLS - 1, Math.floor(x / colW))); }
+
+  function onTouch(e) {
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(t => {
+      const rect = canvas.getBoundingClientRect();
+      hitColumn(colFromX(t.clientX - rect.left));
+    });
+  }
+  function onMouse(e) {
+    const rect = canvas.getBoundingClientRect();
+    hitColumn(colFromX(e.clientX - rect.left));
+  }
+
+  /* ── Leaderboard (reuses bi-lbm* CSS from Theatredex — not available here,
+        so we build a lightweight equivalent inline) ── */
+  async function openLeaderboard() {
+    const modal = document.createElement('div');
+    modal.id = 'pi-lbm';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:#0f0f0f;border:1px solid #2a2a2a;width:340px;max-width:calc(100vw - 24px);max-height:85vh;overflow:hidden;display:flex;flex-direction:column;border-radius:3px">
+        <button id="pi-lbm-close" style="align-self:flex-end;background:none;border:none;color:#555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;padding:12px 14px">[ CLOSE ]</button>
+        <div style="overflow-y:auto;flex:1;padding:0 20px 20px">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;color:#d4ff1a;margin-bottom:4px">PIANO TILES</div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;margin-bottom:16px">TOP SCORES</div>
+          <div id="pi-lbm-rows" style="font-family:'DM Mono',monospace;font-size:11px;color:#555">LOADING…</div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    document.getElementById('pi-lbm-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    const rowsEl = document.getElementById('pi-lbm-rows');
+    const piDb   = window._piDb || null;
+
+    if (!piDb) {
+      rowsEl.textContent = 'Leaderboard unavailable.'; return;
+    }
+
+    try {
+      const snap = await piDb.collection('piano_scores').orderBy('score', 'desc').limit(10).get();
+      if (!document.getElementById('pi-lbm')) return;
+      const rows = snap.docs.map(d => d.data());
+
+      if (!rows.length) { rowsEl.innerHTML = '<span style="color:#333">No scores yet — be first!</span>'; }
+      else {
+        rowsEl.innerHTML = rows.map((r, i) =>
+          `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #141414">
+            <span style="color:#333">${i+1}</span>
+            <span style="flex:1;padding-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name||'?'}</span>
+            <span>${r.score||0}</span>
+          </div>`
+        ).join('');
+      }
+
+      // Submit if qualifies
+      const lowest = rows.length >= 10 ? (rows[rows.length-1]?.score ?? 0) : -1;
+      if (score > 0 && (rows.length < 10 || score > lowest)) {
+        const scroll = modal.querySelector('div[style*="overflow-y"]');
+        const sub = document.createElement('div');
+        sub.style.marginTop = '16px';
+        sub.innerHTML = `
+          <div style="font-size:10px;letter-spacing:1.5px;color:#555;margin-bottom:8px">YOU QUALIFY! ENTER YOUR NAME:</div>
+          <div style="display:flex;gap:6px">
+            <input id="pi-lbm-name" maxlength="20" placeholder="YOUR NAME"
+              style="flex:1;background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;border-radius:2px;outline:none">
+            <button id="pi-lbm-submit"
+              style="background:#d4ff1a;color:#000;border:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:2px">SUBMIT</button>
+          </div>`;
+        scroll.appendChild(sub);
+        document.getElementById('pi-lbm-submit').addEventListener('click', async () => {
+          const name = (document.getElementById('pi-lbm-name')?.value || '').trim().toUpperCase().slice(0,20);
+          if (!name) return;
+          await piDb.collection('piano_scores').add({ name, score, ts: Date.now() });
+          sub.innerHTML = '<div style="color:#d4ff1a;font-size:11px;margin-top:12px">Score submitted! ✓</div>';
+        });
+      }
+    } catch (err) {
+      rowsEl.textContent = 'Could not load scores.';
+    }
+  }
+
+  /* ── Wire up Firebase (reuse global db from existing init) ── */
+  // db is declared in the main script; expose it to piano IIFE via window
+  window.addEventListener('load', () => { window._piDb = typeof db !== 'undefined' ? db : null; });
 
 })();
 
