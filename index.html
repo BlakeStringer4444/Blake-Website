@@ -6341,6 +6341,10 @@ if (siteName) {
         </div>
         <div class="pi-hint">Desktop: A · S · D · F &nbsp;|&nbsp; Mobile: tap</div>
         <canvas class="pi-canvas" id="pi-canvas"></canvas>
+        <div class="game-lb-section">
+          <div class="game-lb-title">GLOBAL LEADERBOARD</div>
+          <div id="pi-ilb"></div>
+        </div>
         <div class="pi-gameover" id="pi-gameover">
           <div class="pi-go-title">GAME OVER</div>
           <div class="pi-go-score">SCORE: <span id="pi-go-score">0</span></div>
@@ -6348,6 +6352,7 @@ if (siteName) {
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    window.loadInlineLB('piano_scores', 'pi-ilb', {});
 
     canvas = document.getElementById('pi-canvas');
     ctx    = canvas.getContext('2d');
@@ -6730,6 +6735,7 @@ if (siteName) {
         const entry = document.getElementById('pi-lbm-entry');
         if (entry) entry.innerHTML = `<div style="font-family:'DM Mono',monospace;color:#d4ff1a;font-size:11px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid #1a1a1a">Score submitted! ✓</div>`;
         loadScores();
+        window.loadInlineLB('piano_scores', 'pi-ilb', {});
       };
       if (subBtn) subBtn.addEventListener('click', doSubmit);
       if (nameEl) nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });

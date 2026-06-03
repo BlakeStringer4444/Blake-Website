@@ -974,7 +974,7 @@ button.td-link { background: none; cursor: pointer; }
   border-radius: 5px;
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
   display: flex; flex-direction: column; align-items: stretch;
-  position: relative; overflow: hidden;
+  position: relative; overflow-y: auto;
 }
 .tw-topbar {
   position: relative; display: flex; justify-content: center; align-items: center;
@@ -1050,6 +1050,10 @@ button.td-link { background: none; cursor: pointer; }
   transition: border-color 0.15s, color 0.15s;
 }
 .tw-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
+.td-ilb-section { margin: 12px 12px 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+.td-ilb-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; color: #333; text-align: center; margin-bottom: 8px; }
+.td-ilb-cols { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 2px; color: #2a2a2a; padding-bottom: 5px; border-bottom: 1px solid #181818; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+.td-ilb-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #111; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1150,6 +1154,29 @@ let authReady = Promise.resolve();
     authReady = firebase.auth().signInAnonymously().catch(() => {});
   } catch (e) { /* leaderboard unavailable offline */ }
 })();
+
+async function loadTdInlineLB(col, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el || !db) return;
+  el.innerHTML = '<div style="color:#2a2a2a;font-size:10px;padding:8px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">LOADING...</div>';
+  try {
+    await authReady;
+    const snap = await db.collection(col).orderBy('score', 'desc').limit(10).get();
+    if (!document.getElementById(containerId)) return;
+    const rows = snap.docs.map(d => d.data());
+    if (!rows.length) {
+      el.innerHTML = '<div style="color:#2a2a2a;font-size:10px;padding:8px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">NO SCORES YET — BE FIRST</div>';
+      return;
+    }
+    el.innerHTML = `<div class="td-ilb-cols"><span>#&nbsp;&nbsp;NAME</span><span>SCORE</span></div>${rows.slice(0, 10).map((s, i) => {
+      const rc = i === 0 ? '#D4FF1A' : i < 3 ? '#FFFFFF' : '#444444';
+      return `<div class="td-ilb-row"><span style="color:${rc};min-width:16px;">${i + 1}</span><span style="flex:1;padding-left:8px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name || '???'}</span><span style="color:${i < 3 ? '#777' : '#444'}">${s.score}</span></div>`;
+    }).join('')}`;
+  } catch (_) {
+    const el2 = document.getElementById(containerId);
+    if (el2) el2.innerHTML = '<div style="color:#2a2a2a;font-size:10px;padding:8px 0;text-align:center;letter-spacing:1px;font-family:\'DM Mono\',monospace;">NO SCORES YET</div>';
+  }
+}
 
 /* ── THEME ── */
 const themeBtn = document.getElementById('td-theme-btn');
@@ -2236,6 +2263,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
             <button class="fr-dpad-btn" data-dir="right">→</button>
           </div>
         </div>
+        <div class="td-ilb-section">
+          <div class="td-ilb-title">GLOBAL LEADERBOARD</div>
+          <div id="fr-ilb"></div>
+        </div>
         <div class="fr-gameover" id="fr-gameover">
           <div class="fr-go-title">GAME OVER</div>
           <div class="fr-go-score">SCORE: <span id="fr-go-score">0</span></div>
@@ -2243,6 +2274,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    loadTdInlineLB('frogger_scores', 'fr-ilb');
 
     canvas = document.getElementById('fr-canvas');
     ctx    = canvas.getContext('2d');
@@ -2596,6 +2628,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           await db.collection('frogger_scores').add({ name, score: finalScore, ts: firebase.firestore.FieldValue.serverTimestamp() });
           const entry = document.getElementById('fr-lbm-entry');
           if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
+          loadTdInlineLB('frogger_scores', 'fr-ilb');
         } catch (e) {
           console.error('Frogger score submit failed:', e.code, e.message);
           submitted = false;
@@ -2741,6 +2774,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
             <button class="tw-dpad-btn tw-dpad-wide" data-dir="drop">▼▼ HARD DROP</button>
           </div>
         </div>
+        <div class="td-ilb-section">
+          <div class="td-ilb-title">GLOBAL LEADERBOARD</div>
+          <div id="tw-ilb"></div>
+        </div>
         <div class="tw-gameover" id="tw-gameover">
           <div class="tw-go-title">GAME OVER</div>
           <div class="tw-go-score">SCORE: <span id="tw-go-score">0</span></div>
@@ -2748,6 +2785,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    loadTdInlineLB('tetris_scores', 'tw-ilb');
 
     boardCanvas = document.getElementById('tw-board');
     bCtx        = boardCanvas.getContext('2d');
@@ -3094,6 +3132,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           await db.collection('tetris_scores').add({ name, score: finalScore, ts: firebase.firestore.FieldValue.serverTimestamp() });
           const entry = document.getElementById('tw-lbm-entry');
           if (entry) entry.innerHTML = '<div class="bi-lbm-qualify-label" style="color:#d4ff1a">Score submitted! ✓</div>';
+          loadTdInlineLB('tetris_scores', 'tw-ilb');
         } catch (e) {
           console.error('Tetris score submit failed:', e.code, e.message);
           submitted = false;
