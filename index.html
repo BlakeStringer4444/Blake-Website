@@ -2717,24 +2717,30 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   display: flex; align-items: center; justify-content: center;
 }
 .pi-box {
-  background: #080808; border: 1px solid #1e1e1e; border-radius: 3px;
+  background: #080808;
+  border: 2px solid rgba(153,51,255,0.75);
+  box-shadow: 0 0 32px rgba(153,51,255,0.28), 0 10px 50px rgba(0,0,0,0.7);
+  border-radius: 5px;
   width: 380px; max-width: calc(100vw - 20px);
   display: flex; flex-direction: column; align-items: stretch; position: relative;
 }
 .pi-topbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 2px 8px 2px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+  padding: 10px 12px 10px 18px;
+  border-bottom: 1px solid rgba(153,51,255,0.22);
+  background: rgba(153,51,255,0.07); flex-shrink: 0;
 }
 .pi-topbar-title {
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
-  color: rgba(255,255,255,0.28); text-transform: uppercase;
+  font-family: 'DM Mono', monospace; font-size: 18px; font-weight: bold;
+  letter-spacing: 4px; color: rgba(153,51,255,0.9); text-transform: uppercase;
 }
 .pi-close-top {
-  background: none; border: none; color: rgba(255,255,255,0.2);
+  background: none; border: 1px solid rgba(153,51,255,0.3);
+  border-radius: 3px; color: rgba(153,51,255,0.6);
   font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
-  cursor: pointer; padding: 8px 6px;
+  cursor: pointer; padding: 5px 10px;
 }
-.pi-close-top:hover { color: rgba(255,255,255,0.6); }
+.pi-close-top:hover { border-color: rgba(153,51,255,0.8); color: rgba(153,51,255,1); }
 .pi-hud {
   display: flex; justify-content: space-between; align-items: center;
   padding: 7px 14px; font-family: 'DM Mono', monospace;
@@ -2743,6 +2749,11 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 }
 .pi-hud-combo { color: #d4ff1a; }
 .pi-hud-lives { letter-spacing: 3px; }
+.pi-hint {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.18); text-align: center;
+  padding: 4px 14px 2px; text-transform: uppercase;
+}
 .pi-canvas { display: block; background: #060606; }
 .pi-gameover {
   position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
@@ -6164,10 +6175,9 @@ if (siteName) {
 (function () {
 
   /* ── Config ── */
-  const COLS        = 8;
-  const KEY_NOTES   = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
-  const KEY_SHORTS  = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'];
-  const TILE_COLORS = ['#ff4444','#ff8c00','#ffd600','#d4ff1a','#00e676','#00e5ff','#aa00ff','#ff4081'];
+  const COLS        = 4;
+  const KEY_SHORTS  = ['A', 'S', 'D', 'F'];
+  const TILE_COLORS = ['#ff4444', '#d4ff1a', '#aa00ff', '#00e5ff'];
   const BASE_SPEED  = 220;   // px/s
   const SPAWN_INTERVAL = 650; // ms between tile spawns (average)
   const HIT_ZONE_H  = 0.18; // fraction of board height = hit zone
@@ -6218,6 +6228,7 @@ if (siteName) {
           <span class="pi-hud-combo" id="pi-combo">COMBO ×1</span>
           <span class="pi-hud-lives" id="pi-lives">♥♥♥</span>
         </div>
+        <div class="pi-hint">Desktop: A · S · D · F &nbsp;|&nbsp; Mobile: tap</div>
         <canvas class="pi-canvas" id="pi-canvas"></canvas>
         <div class="pi-gameover" id="pi-gameover">
           <div class="pi-go-title">GAME OVER</div>
@@ -6238,7 +6249,6 @@ if (siteName) {
     canvas.addEventListener('mousedown',  onMouse);
 
     document.getElementById('pi-close').addEventListener('click', closePiano);
-    overlay.addEventListener('click', e => { if (e.target === overlay) closePiano(); });
     document.getElementById('pi-play-again').addEventListener('click', () => {
       document.getElementById('pi-gameover').style.display = 'none';
       newGame();
@@ -6496,22 +6506,17 @@ if (siteName) {
       ctx.fillStyle = col;
       ctx.fillRect(x + 2, ky + 2, colW - 4, 3);
 
-      // Note label
-      ctx.fillStyle = isPressed ? '#000' : 'rgba(255,255,255,0.55)';
-      ctx.font = `bold ${Math.round(colW * 0.32)}px "DM Mono",monospace`;
+      // Key letter (centered)
+      ctx.fillStyle = isPressed ? '#000' : 'rgba(255,255,255,0.45)';
+      ctx.font = `bold ${Math.round(colW * 0.3)}px "DM Mono",monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(KEY_NOTES[c], x + colW / 2, ky + keysH * 0.42);
-
-      // Keyboard shortcut
-      ctx.fillStyle = isPressed ? '#000' : 'rgba(255,255,255,0.22)';
-      ctx.font = `${Math.round(colW * 0.24)}px "DM Mono",monospace`;
-      ctx.fillText(KEY_SHORTS[c], x + colW / 2, ky + keysH * 0.72);
+      ctx.fillText(KEY_SHORTS[c], x + colW / 2, ky + keysH * 0.55);
     }
   }
 
   /* ── Input ── */
-  const KEY_MAP = { a:0, s:1, d:2, f:3, g:4, h:5, j:6, k:7 };
+  const KEY_MAP = { a:0, s:1, d:2, f:3 };
 
   function onKeyDown(e) {
     const col = KEY_MAP[e.key.toLowerCase()];
