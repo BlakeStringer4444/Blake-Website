@@ -921,6 +921,114 @@ button.td-link { background: none; cursor: pointer; }
   transition: border-color 0.15s, color 0.15s;
 }
 .fr-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
+
+/* ── TETRIS EASTER EGG ──────────────────────────── */
+.tw-secret-card {
+  border: 1px solid var(--purple); border-radius: 4px;
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;
+  background: rgba(153,51,255,0.05); cursor: default;
+  animation: td-fade-in 0.25s ease;
+}
+.tw-secret-label {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--purple); opacity: 0.7;
+}
+.tw-secret-title {
+  font-family: 'DM Mono', monospace; font-size: 15px; letter-spacing: 1px;
+  color: var(--fg);
+}
+.tw-secret-desc {
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+}
+.tw-secret-btn {
+  align-self: flex-start; background: var(--purple); color: #fff;
+  border: none; border-radius: 3px; padding: 8px 18px;
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.tw-secret-btn:hover { opacity: 0.85; }
+.tw-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+}
+.tw-box {
+  background: #0a0a0a; border: 1px solid #222; border-radius: 3px;
+  max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
+  display: flex; flex-direction: column; align-items: stretch;
+  position: relative; overflow: hidden;
+}
+.tw-topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 8px 2px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+}
+.tw-topbar-title {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
+  color: rgba(255,255,255,0.3); text-transform: uppercase;
+}
+.tw-close-top {
+  background: none; border: none; color: rgba(255,255,255,0.2);
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  cursor: pointer; padding: 8px 6px;
+}
+.tw-close-top:hover { color: rgba(255,255,255,0.6); }
+.tw-game-area {
+  display: flex; gap: 0; flex: 1; overflow: hidden;
+}
+.tw-canvas { display: block; background: #0a0a0a; flex-shrink: 0; }
+.tw-sidebar {
+  width: 96px; flex-shrink: 0; display: flex; flex-direction: column;
+  gap: 14px; padding: 12px 10px; border-left: 1px solid #1a1a1a;
+  background: #0a0a0a;
+}
+.tw-side-label {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 4px;
+}
+.tw-side-value {
+  font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 1px;
+  color: rgba(255,255,255,0.7);
+}
+.tw-next-canvas { display: block; }
+.tw-dpad {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 8px 0; flex-shrink: 0;
+  border-top: 1px solid #1a1a1a; background: #0a0a0a;
+}
+.tw-dpad-row { display: flex; gap: 2px; }
+.tw-dpad-btn {
+  background: none; border: 1px solid rgba(153,51,255,0.35); border-radius: 4px;
+  color: rgba(153,51,255,0.75); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+}
+.tw-dpad-btn:active { background: rgba(153,51,255,0.18); }
+.tw-dpad-wide { width: 160px; height: 44px; font-size: 13px; letter-spacing: 1.5px; }
+.tw-dpad-sq   { width: 52px;  height: 44px; }
+.tw-gameover {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
+  background: rgba(0,0,0,0.92);
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; gap: 10px; padding: 24px;
+}
+.tw-go-title {
+  font-family: 'DM Mono', monospace; font-size: 22px;
+  letter-spacing: 5px; color: #d4ff1a; margin-bottom: 4px;
+}
+.tw-go-score {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 8px;
+}
+.tw-go-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6); font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; padding: 9px 0;
+  cursor: pointer; border-radius: 2px; width: 170px; text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.tw-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1265,8 +1373,19 @@ function render() {
 
   const grid  = document.getElementById('td-grid');
   const count = document.getElementById('td-count');
-  grid.innerHTML    = results.length ? results.map(card).join('') : '<div class="td-empty">No shows match — try adjusting your filters</div>';
+  const twCard = q.trim() === 'timothy warner'
+    ? `<div class="tw-secret-card">
+        <span class="tw-secret-label">✦ Secret Show</span>
+        <span class="tw-secret-title">Timothy Warner</span>
+        <span class="tw-secret-desc">No performance dates available. This one exists in a different dimension entirely.</span>
+        <button class="tw-secret-btn" id="tw-launch-btn">▶ Play Tetris</button>
+      </div>` : '';
+  grid.innerHTML    = twCard + (results.length ? results.map(card).join('') : '<div class="td-empty">No shows match — try adjusting your filters</div>');
   count.textContent = `Showing ${results.length} of ${allShows.length} productions`;
+  if (twCard) {
+    const launchBtn = document.getElementById('tw-launch-btn');
+    if (launchBtn) launchBtn.addEventListener('click', () => { if (!document.getElementById('tw-overlay') && window.launchTetris) window.launchTetris(); });
+  }
   pushUrlState();
 
   grid.querySelectorAll('.td-star-btn').forEach(btn => {
@@ -2421,6 +2540,482 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     } catch (err) {
       console.warn('Frogger leaderboard error:', err);
       const listEl = document.getElementById('fr-lbm-list');
+      if (listEl) listEl.innerHTML = '<li class="bi-lbm-row"><span style="color:#555">Could not load scores</span></li>';
+    }
+  }
+
+})();
+
+/* ── TETRIS EASTER EGG ── */
+(function () {
+
+  /* ── Piece definitions ── */
+  const PIECE_DEFS = [
+    { color: '#00e5ff', spawn: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] }, // I
+    { color: '#ffd600', spawn: [[1,1],[1,1]] },                               // O
+    { color: '#aa00ff', spawn: [[0,1,0],[1,1,1],[0,0,0]] },                   // T
+    { color: '#00e676', spawn: [[0,1,1],[1,1,0],[0,0,0]] },                   // S
+    { color: '#ff1744', spawn: [[1,1,0],[0,1,1],[0,0,0]] },                   // Z
+    { color: '#ff6d00', spawn: [[0,0,1],[1,1,1],[0,0,0]] },                   // L
+    { color: '#2979ff', spawn: [[1,0,0],[1,1,1],[0,0,0]] },                   // J
+  ];
+
+  function rotateMatrix(m) {
+    const N = m.length;
+    return Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, c) => m[N - 1 - c][r]));
+  }
+
+  const PIECES = PIECE_DEFS.map(def => {
+    const rots = [def.spawn];
+    for (let i = 0; i < 3; i++) rots.push(rotateMatrix(rots[rots.length - 1]));
+    return { color: def.color, rots };
+  });
+
+  /* ── Constants ── */
+  const COLS = 10, ROWS = 20;
+  const LINE_PTS = [0, 100, 300, 500, 800];
+
+  /* ── State ── */
+  let overlay, boardCanvas, bCtx, nextCanvas, nCtx;
+  let CS = 22; // cell size px
+  let board, cur, nextPiece;
+  let score, level, lines;
+  let dropTimer, dropDelay;
+  let softDropping = false;
+  let gameActive = false, isPaused = false;
+  let raf = null;
+  let keys = {};
+  let dasTimer = 0, dasDir = 0, dasRepeat = 0; // delayed auto-shift
+
+  /* ── Trigger via render() injection (see render()) ── */
+  function launchTetris() {
+    overlay = document.createElement('div');
+    overlay.className = 'tw-overlay';
+    overlay.id        = 'tw-overlay';
+    overlay.innerHTML = `
+      <div class="tw-box" id="tw-box">
+        <div class="tw-topbar">
+          <span class="tw-topbar-title">Theatredex Tetris</span>
+          <button class="tw-close-top" id="tw-close">[ CLOSE ]</button>
+        </div>
+        <div class="tw-game-area">
+          <canvas class="tw-canvas" id="tw-board"></canvas>
+          <div class="tw-sidebar">
+            <div>
+              <div class="tw-side-label">Next</div>
+              <canvas class="tw-next-canvas" id="tw-next"></canvas>
+            </div>
+            <div>
+              <div class="tw-side-label">Score</div>
+              <div class="tw-side-value" id="tw-score">0</div>
+            </div>
+            <div>
+              <div class="tw-side-label">Level</div>
+              <div class="tw-side-value" id="tw-level">1</div>
+            </div>
+            <div>
+              <div class="tw-side-label">Lines</div>
+              <div class="tw-side-value" id="tw-lines">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="tw-dpad" id="tw-dpad">
+          <div class="tw-dpad-row">
+            <button class="tw-dpad-btn tw-dpad-wide" data-dir="rotate">↺ ROTATE</button>
+          </div>
+          <div class="tw-dpad-row">
+            <button class="tw-dpad-btn tw-dpad-sq" data-dir="left">←</button>
+            <button class="tw-dpad-btn tw-dpad-sq" data-dir="down">↓</button>
+            <button class="tw-dpad-btn tw-dpad-sq" data-dir="right">→</button>
+          </div>
+          <div class="tw-dpad-row">
+            <button class="tw-dpad-btn tw-dpad-wide" data-dir="drop">▼▼ HARD DROP</button>
+          </div>
+        </div>
+        <div class="tw-gameover" id="tw-gameover">
+          <div class="tw-go-title">GAME OVER</div>
+          <div class="tw-go-score">SCORE: <span id="tw-go-score">0</span></div>
+          <button class="tw-go-btn" id="tw-play-again">PLAY AGAIN</button>
+          <button class="tw-go-btn" id="tw-show-lb">LEADERBOARD</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    boardCanvas = document.getElementById('tw-board');
+    bCtx        = boardCanvas.getContext('2d');
+    nextCanvas  = document.getElementById('tw-next');
+    nCtx        = nextCanvas.getContext('2d');
+
+    sizeCanvases();
+    bindDpad();
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup',   onKeyUp);
+
+    document.getElementById('tw-close').addEventListener('click', closeTetris);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeTetris(); });
+    document.getElementById('tw-play-again').addEventListener('click', () => {
+      document.getElementById('tw-gameover').style.display = 'none';
+      newGame();
+    });
+    document.getElementById('tw-show-lb').addEventListener('click', openLeaderboard);
+
+    newGame();
+  }
+
+  /* ── expose globally so render() can call it ── */
+  window.launchTetris = launchTetris;
+
+  function closeTetris() {
+    gameActive = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup',   onKeyUp);
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    overlay = null; keys = {};
+  }
+
+  /* ── Canvas sizing ── */
+  function sizeCanvases() {
+    const dpr = window.devicePixelRatio || 1;
+    CS = window.innerHeight < 600 ? 16 : window.innerWidth < 640 ? 18 : 22;
+
+    const bW = CS * COLS, bH = CS * ROWS;
+    boardCanvas.style.width  = bW + 'px';
+    boardCanvas.style.height = bH + 'px';
+    boardCanvas.width  = Math.round(bW * dpr);
+    boardCanvas.height = Math.round(bH * dpr);
+    bCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const nSize = CS * 4;
+    nextCanvas.style.width  = nSize + 'px';
+    nextCanvas.style.height = nSize + 'px';
+    nextCanvas.width  = Math.round(nSize * dpr);
+    nextCanvas.height = Math.round(nSize * dpr);
+    nCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ── Game ── */
+  function newGame() {
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    score = 0; level = 1; lines = 0;
+    dropTimer = 0; dropDelay = calcDelay(1);
+    softDropping = false; dasTimer = 0; dasDir = 0; dasRepeat = 0;
+    gameActive = true; isPaused = false;
+    nextPiece  = randomPiece();
+    spawnPiece();
+    updateHUD();
+
+    let last = 0;
+    function loop(ts) {
+      if (!gameActive) return;
+      const dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+      last = ts;
+      handleDAS(dt);
+      if (!isPaused) {
+        const eff = softDropping ? Math.min(dropDelay, 50) : dropDelay;
+        dropTimer += dt * 1000;
+        if (dropTimer >= eff) { dropTimer = 0; stepDown(); }
+      }
+      drawBoard();
+      drawNext();
+      raf = requestAnimationFrame(loop);
+    }
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  }
+
+  function calcDelay(lv) { return Math.max(50, 850 - (lv - 1) * 75); }
+
+  function randomPiece() {
+    const def = PIECES[Math.floor(Math.random() * PIECES.length)];
+    return { def, rot: 0 };
+  }
+
+  function spawnPiece() {
+    cur = {
+      def:  nextPiece.def,
+      rot:  nextPiece.rot,
+      col:  Math.floor((COLS - nextPiece.def.rots[0].length) / 2),
+      row:  0,
+    };
+    nextPiece = randomPiece();
+    if (!valid(cur.def.rots[cur.rot], cur.col, cur.row)) {
+      // Top out
+      gameActive = false;
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      drawBoard();
+      const goDiv = document.getElementById('tw-gameover');
+      if (goDiv) {
+        document.getElementById('tw-go-score').textContent = score;
+        goDiv.style.display = 'flex';
+      }
+    }
+  }
+
+  function cells(mat, col, row) {
+    const result = [];
+    mat.forEach((r, ri) => r.forEach((v, ci) => { if (v) result.push([col + ci, row + ri]); }));
+    return result;
+  }
+
+  function valid(mat, col, row) {
+    return cells(mat, col, row).every(([c, r]) => c >= 0 && c < COLS && r < ROWS && (r < 0 || !board[r][c]));
+  }
+
+  function stepDown() {
+    if (valid(cur.def.rots[cur.rot], cur.col, cur.row + 1)) {
+      cur.row++;
+    } else {
+      lockPiece();
+    }
+  }
+
+  function lockPiece() {
+    cells(cur.def.rots[cur.rot], cur.col, cur.row).forEach(([c, r]) => {
+      if (r >= 0 && r < ROWS) board[r][c] = cur.def.color;
+    });
+    clearLines();
+    spawnPiece();
+  }
+
+  function clearLines() {
+    const full = [];
+    for (let r = 0; r < ROWS; r++) {
+      if (board[r].every(c => c !== null)) full.push(r);
+    }
+    if (!full.length) return;
+    full.forEach(r => { board.splice(r, 1); board.unshift(Array(COLS).fill(null)); });
+    lines  += full.length;
+    score  += LINE_PTS[Math.min(full.length, 4)] * level;
+    level   = Math.floor(lines / 10) + 1;
+    dropDelay = calcDelay(level);
+    updateHUD();
+  }
+
+  /* ── Ghost piece ── */
+  function ghostRow() {
+    let r = cur.row;
+    while (valid(cur.def.rots[cur.rot], cur.col, r + 1)) r++;
+    return r;
+  }
+
+  /* ── Input ── */
+  function tryMove(dc) {
+    if (valid(cur.def.rots[cur.rot], cur.col + dc, cur.row)) { cur.col += dc; return true; }
+    return false;
+  }
+
+  function tryRotate(dir) {
+    const numRots = cur.def.rots.length;
+    const next    = ((cur.rot + dir) % numRots + numRots) % numRots;
+    const mat     = cur.def.rots[next];
+    // Try basic then wall-kick offsets
+    for (const [dc, dr] of [[0,0],[1,0],[-1,0],[2,0],[-2,0],[0,-1]]) {
+      if (valid(mat, cur.col + dc, cur.row + dr)) {
+        cur.rot = next; cur.col += dc; cur.row += dr; return;
+      }
+    }
+  }
+
+  function hardDrop() {
+    cur.row = ghostRow();
+    lockPiece();
+  }
+
+  function handleDAS(dt) {
+    if (dasDir === 0) return;
+    dasTimer  += dt * 1000;
+    dasRepeat += dt * 1000;
+    if (dasTimer > 170 && dasRepeat > 50) { tryMove(dasDir); dasRepeat = 0; }
+  }
+
+  function onKeyDown(e) {
+    if (!gameActive || isPaused) return;
+    switch (e.key) {
+      case 'ArrowLeft':  e.preventDefault(); tryMove(-1); dasDir = -1; dasTimer = 0; break;
+      case 'ArrowRight': e.preventDefault(); tryMove(1);  dasDir =  1; dasTimer = 0; break;
+      case 'ArrowDown':  e.preventDefault(); softDropping = true; break;
+      case 'ArrowUp':    e.preventDefault(); tryRotate(1);  break;
+      case ' ':          e.preventDefault(); hardDrop(); break;
+      case 'z': case 'Z': tryRotate(-1); break;
+      case 'x': case 'X': tryRotate(1);  break;
+      case 'Escape': closeTetris(); break;
+    }
+  }
+
+  function onKeyUp(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { dasDir = 0; dasTimer = 0; dasRepeat = 0; }
+    if (e.key === 'ArrowDown') softDropping = false;
+  }
+
+  function bindDpad() {
+    const dpad = document.getElementById('tw-dpad');
+    if (!dpad) return;
+    dpad.querySelectorAll('.tw-dpad-btn').forEach(btn => {
+      const dir = btn.dataset.dir;
+      const onStart = e => {
+        e.preventDefault();
+        if (!gameActive) return;
+        if      (dir === 'left')   { tryMove(-1); dasDir = -1; dasTimer = 0; }
+        else if (dir === 'right')  { tryMove(1);  dasDir =  1; dasTimer = 0; }
+        else if (dir === 'down')   softDropping = true;
+        else if (dir === 'rotate') tryRotate(1);
+        else if (dir === 'drop')   hardDrop();
+      };
+      const onEnd = e => {
+        e.preventDefault();
+        if (dir === 'left' || dir === 'right') { dasDir = 0; dasTimer = 0; dasRepeat = 0; }
+        if (dir === 'down') softDropping = false;
+      };
+      btn.addEventListener('touchstart', onStart, { passive: false });
+      btn.addEventListener('touchend',   onEnd,   { passive: false });
+      btn.addEventListener('mousedown',  onStart);
+      btn.addEventListener('mouseup',    onEnd);
+      btn.addEventListener('mouseleave', onEnd);
+    });
+  }
+
+  /* ── Drawing ── */
+  function drawCell(ctx, c, r, color, alpha) {
+    const x = c * CS, y = r * CS;
+    ctx.globalAlpha = alpha ?? 1;
+    ctx.fillStyle   = color;
+    ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+    // Highlight top-left edge
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(x + 1, y + 1, CS - 2, 2);
+    ctx.fillRect(x + 1, y + 1, 2, CS - 2);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawBoard() {
+    const bW = CS * COLS, bH = CS * ROWS;
+    bCtx.clearRect(0, 0, bW, bH);
+
+    // Grid lines
+    bCtx.strokeStyle = 'rgba(255,255,255,0.03)';
+    bCtx.lineWidth   = 1;
+    for (let c = 0; c <= COLS; c++) { bCtx.beginPath(); bCtx.moveTo(c * CS, 0); bCtx.lineTo(c * CS, bH); bCtx.stroke(); }
+    for (let r = 0; r <= ROWS; r++) { bCtx.beginPath(); bCtx.moveTo(0, r * CS); bCtx.lineTo(bW, r * CS); bCtx.stroke(); }
+
+    // Locked cells
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        if (board[r][c]) drawCell(bCtx, c, r, board[r][c]);
+
+    if (!cur) return;
+
+    // Ghost
+    const gr = ghostRow();
+    if (gr !== cur.row) {
+      cells(cur.def.rots[cur.rot], cur.col, gr).forEach(([c, r]) => {
+        if (r >= 0) drawCell(bCtx, c, r, cur.def.color, 0.18);
+      });
+    }
+
+    // Active piece
+    cells(cur.def.rots[cur.rot], cur.col, cur.row).forEach(([c, r]) => {
+      if (r >= 0) drawCell(bCtx, c, r, cur.def.color);
+    });
+  }
+
+  function drawNext() {
+    const nSize = CS * 4;
+    nCtx.clearRect(0, 0, nSize, nSize);
+    if (!nextPiece) return;
+    const mat = nextPiece.def.rots[0];
+    const off = Math.floor((4 - mat.length) / 2);
+    mat.forEach((row, ri) =>
+      row.forEach((v, ci) => { if (v) drawCell(nCtx, off + ci, off + ri, nextPiece.def.color); })
+    );
+  }
+
+  function updateHUD() {
+    const s = document.getElementById('tw-score');
+    const l = document.getElementById('tw-level');
+    const n = document.getElementById('tw-lines');
+    if (s) s.textContent = score;
+    if (l) l.textContent = level;
+    if (n) n.textContent = lines;
+  }
+
+  /* ── Leaderboard (reuses bi-lbm* CSS) ── */
+  async function openLeaderboard() {
+    const modal = document.createElement('div');
+    modal.className = 'bi-lbm-overlay';
+    modal.id        = 'tw-lbm';
+    modal.innerHTML = `
+      <div class="bi-lbm-card">
+        <button class="bi-lbm-close" id="tw-lbm-close">[ CLOSE ]</button>
+        <div class="bi-lbm-scroll">
+          <div class="bi-lbm-title">TETRIS</div>
+          <div class="bi-lbm-sub">TOP SCORES</div>
+          <ul id="tw-lbm-list" style="list-style:none;padding:0;margin:0">
+            <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>
+          </ul>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('tw-lbm-close').addEventListener('click', () => {
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+    });
+    modal.addEventListener('click', e => {
+      if (e.target === modal && modal.parentNode) modal.parentNode.removeChild(modal);
+    });
+
+    if (!db) {
+      document.getElementById('tw-lbm-list').innerHTML =
+        '<li class="bi-lbm-row"><span style="color:#555">Leaderboard unavailable</span></li>';
+      return;
+    }
+
+    try {
+      const snap = await db.collection('tetris_scores').orderBy('score', 'desc').limit(10).get();
+      if (!document.getElementById('tw-lbm')) return;
+      const listEl = document.getElementById('tw-lbm-list');
+      listEl.innerHTML = '';
+
+      const hdr = document.createElement('li');
+      hdr.className = 'bi-lbm-cols';
+      hdr.innerHTML = '<span>#</span><span>NAME</span><span>SCORE</span>';
+      listEl.appendChild(hdr);
+
+      const rows = snap.docs.map(d => d.data());
+      if (!rows.length) {
+        const li = document.createElement('li');
+        li.className = 'bi-lbm-row';
+        li.innerHTML = '<span style="color:#333;font-size:10px">No scores yet — be first!</span>';
+        listEl.appendChild(li);
+      }
+      rows.forEach((row, idx) => {
+        const li = document.createElement('li');
+        li.className = 'bi-lbm-row';
+        li.innerHTML = `<span>${idx + 1}</span><span class="bi-lbm-row-name">${row.name || '?'}</span><span>${row.score || 0}</span>`;
+        listEl.appendChild(li);
+      });
+
+      const lowest = rows.length >= 10 ? (rows[rows.length - 1]?.score ?? 0) : -1;
+      if (score > 0 && (rows.length < 10 || score > lowest)) {
+        const scroll = modal.querySelector('.bi-lbm-scroll');
+        const sub = document.createElement('div');
+        sub.className = 'bi-lbm-qualify';
+        sub.innerHTML = `
+          <p class="bi-lbm-qualify-text">You qualify! Enter your name:</p>
+          <div class="bi-lbm-submit-row">
+            <input class="bi-lbm-input" id="tw-lbm-name" maxlength="20" placeholder="YOUR NAME">
+            <button class="bi-lbm-submit" id="tw-lbm-submit">SUBMIT</button>
+          </div>`;
+        scroll.appendChild(sub);
+        document.getElementById('tw-lbm-submit').addEventListener('click', async () => {
+          const name = (document.getElementById('tw-lbm-name')?.value || '').trim().toUpperCase().slice(0, 20);
+          if (!name) return;
+          await db.collection('tetris_scores').add({ name, score, ts: Date.now() });
+          sub.innerHTML = '<p class="bi-lbm-qualify-text" style="color:#d4ff1a">Score submitted! ✓</p>';
+        });
+      }
+    } catch (err) {
+      console.warn('Tetris leaderboard error:', err);
+      const listEl = document.getElementById('tw-lbm-list');
       if (listEl) listEl.innerHTML = '<li class="bi-lbm-row"><span style="color:#555">Could not load scores</span></li>';
     }
   }
