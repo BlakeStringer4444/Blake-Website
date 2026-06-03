@@ -2181,12 +2181,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const FR_SIZE   = 20;  // player tile size (px)
 
   const LANE_CFGS = [
-    { speedFrac: 0.12, dir:  1 },
-    { speedFrac: 0.08, dir: -1 },
-    { speedFrac: 0.10, dir:  1 },
-    { speedFrac: 0.09, dir: -1 },
-    { speedFrac: 0.11, dir:  1 },
-    { speedFrac: 0.07, dir: -1 },
+    { speedFrac: 0.08, dir:  1 },
+    { speedFrac: 0.06, dir: -1 },
+    { speedFrac: 0.07, dir:  1 },
+    { speedFrac: 0.065, dir: -1 },
+    { speedFrac: 0.075, dir:  1 },
+    { speedFrac: 0.055, dir: -1 },
   ];
 
   let overlay, canvas, ctx;
@@ -2358,12 +2358,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     ctx.font = 'bold 12px "DM Mono",monospace';
     const pool = buildWordPool();
     let wi = 0;
-    const GAP   = 50; // min gap between car edges (player must pass through)
+    const GAP   = 100; // min gap between car edges (player must pass through)
     const PAD_X = 8;  // text padding inside car
 
     lanes = LANE_CFGS.map((cfg, i) => {
       // Speed ramps up with each crossing
-      const speed  = cfg.speedFrac * W * (1 + crossing * 0.09);
+      const speed  = cfg.speedFrac * W * (1 + crossing * 0.06);
       const y      = laneTop(i);
       const midY   = y + laneH / 2;
       const carH   = Math.round(laneH * 0.68);
@@ -2371,7 +2371,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
       // Place cars sequentially so edges never overlap
       let edge = cfg.dir > 0 ? -180 : W + 180;
-      for (let j = 0; j < 10; j++) {
+      for (let j = 0; j < 7; j++) {
         const raw  = pool[(wi++) % pool.length] || 'GO';
         const text = raw.length > 7 ? raw.slice(0, 7) : raw;
         const tw   = ctx.measureText(text).width;
