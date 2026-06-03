@@ -2779,16 +2779,17 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   display: flex; flex-direction: column; align-items: stretch; position: relative;
 }
 .pi-topbar {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 12px 10px 18px;
+  position: relative; display: flex; justify-content: center; align-items: center;
+  padding: 14px 60px;
   border-bottom: 1px solid rgba(153,51,255,0.22);
   background: rgba(153,51,255,0.07); flex-shrink: 0;
 }
 .pi-topbar-title {
-  font-family: 'DM Mono', monospace; font-size: 18px; font-weight: bold;
-  letter-spacing: 4px; color: rgba(153,51,255,0.9); text-transform: uppercase;
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(22px, 5vw, 34px);
+  letter-spacing: 6px; color: #d4ff1a; text-transform: uppercase; text-align: center;
 }
 .pi-close-top {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   background: none; border: 1px solid rgba(153,51,255,0.3);
   border-radius: 3px; color: rgba(153,51,255,0.6);
   font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
@@ -3487,6 +3488,54 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
     <div class="broken-sub">We're all going to die.</div>
     <div class="broken-sub">Please do not attempt to leave the island.</div>
     <div class="broken-dhsymbol">☯</div>
+  </div>
+</div>
+
+<!-- EASTER EGG SPOILERS OVERLAY -->
+<div id="ee-ov" class="ee-ov" style="display:none">
+  <div id="ee-warn" class="ee-screen">
+    <div class="ee-cover">
+      <div class="ee-stamp">⚠ TOP SECRET ⚠</div>
+      <div class="ee-cover-title">EASTER EGG<br>SPOILERS</div>
+      <div class="ee-cover-edition">BLAKE STRINGER PORTFOLIO · CLASSIFIED EDITION · DO NOT DISTRIBUTE</div>
+      <div class="ee-cover-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="ee-cover-warning">The following document reveals all 11 secret games hidden<br>throughout this website and the Theatredex.<br>Proceed only if you want the fun to be spoiled.</div>
+      <div class="ee-cover-btns">
+        <button id="ee-reveal" class="ee-btn-primary">▶ REVEAL SECRETS</button>
+        <button id="ee-cancel" class="ee-btn-secondary">✕ NEVER MIND</button>
+      </div>
+    </div>
+  </div>
+  <div id="ee-tbl" class="ee-screen" style="display:none">
+    <div class="ee-inner">
+      <div class="ee-topbar">
+        <div class="ee-topbar-left">
+          <span class="ee-topbar-label">▓ CLASSIFIED INTEL ▓</span>
+          <span class="ee-topbar-sub">SECRET GAMES DATABASE · V11.0 · ALL REGIONS</span>
+        </div>
+        <button id="ee-close" class="ee-topbar-close">[ CLOSE ]</button>
+      </div>
+      <div class="ee-table-wrap">
+        <table class="ee-table">
+          <thead>
+            <tr><th>#</th><th>GAME</th><th>WHERE</th><th>HOW TO UNLOCK</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>01</td><td>BLAKE SNAKE</td><td>About tab</td><td>Click the "Contact" section label 5× within 2 seconds</td></tr>
+            <tr><td>02</td><td>THE BLAKE GAMBIT</td><td>About tab</td><td>Click the headshot photo 100× within 60 seconds</td></tr>
+            <tr><td>03</td><td>YOU VS. BLAKE AT PONG</td><td>About tab</td><td>Click the "Eyes: Blue" attribute tag 5×</td></tr>
+            <tr><td>04</td><td>FLAPPY BLAKE</td><td>Sound Design tab</td><td>Click the "Sound Design CV" section label 5×</td></tr>
+            <tr><td>05</td><td>2048: THE END OF BLAKE</td><td>Music tab</td><td>Click the "Future Garage" genre tag 5×</td></tr>
+            <tr><td>06</td><td>WHACK-A-BLAKE</td><td>Music tab</td><td>Click the "Final Cut Pro X" software tag 5×</td></tr>
+            <tr><td>07</td><td>BLAKE BREAKER</td><td>Anywhere</td><td>Switch to Terminal theme (click the ☾ header button until the screen turns green), then click the "Blake Stringer" site name 44×</td></tr>
+            <tr><td>08</td><td>BLAKE HERO 3</td><td>Music tab</td><td>Click the "Proteas" track name 5× within 3 seconds</td></tr>
+            <tr><td>09</td><td>BLAKE INVADERS</td><td>Theatredex</td><td>Click "Now Showing" filter 5× within 5 seconds</td></tr>
+            <tr><td>10</td><td>FROGGER MISSES BLAKE</td><td>Theatredex</td><td>Click "Watchlist" filter 5× within 5 seconds</td></tr>
+            <tr><td>11</td><td>BLAKE-TRIS</td><td>Theatredex</td><td>Type "Timothy Warner" in the search box</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -6527,6 +6576,7 @@ if (siteName) {
   const KEY_MAP = { a:0, s:1, d:2, f:3 };
 
   function onKeyDown(e) {
+    if (e.target.tagName === 'INPUT') return;
     const col = KEY_MAP[e.key.toLowerCase()];
     if (col === undefined) return;
     e.preventDefault();
@@ -6534,6 +6584,7 @@ if (siteName) {
     hitColumn(col);
   }
   function onKeyUp(e) {
+    if (e.target.tagName === 'INPUT') return;
     const col = KEY_MAP[e.key.toLowerCase()];
     if (col !== undefined) keyPressed[col] = false;
   }
@@ -6660,54 +6711,6 @@ if (siteName) {
 })();
 
 </script>
-
-<!-- EASTER EGG SPOILERS OVERLAY -->
-<div id="ee-ov" class="ee-ov" style="display:none">
-  <div id="ee-warn" class="ee-screen">
-    <div class="ee-cover">
-      <div class="ee-stamp">⚠ TOP SECRET ⚠</div>
-      <div class="ee-cover-title">EASTER EGG<br>SPOILERS</div>
-      <div class="ee-cover-edition">BLAKE STRINGER PORTFOLIO · CLASSIFIED EDITION · DO NOT DISTRIBUTE</div>
-      <div class="ee-cover-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-      <div class="ee-cover-warning">The following document reveals all 11 secret games hidden<br>throughout this website and the Theatredex.<br>Proceed only if you want the fun to be spoiled.</div>
-      <div class="ee-cover-btns">
-        <button id="ee-reveal" class="ee-btn-primary">▶ REVEAL SECRETS</button>
-        <button id="ee-cancel" class="ee-btn-secondary">✕ NEVER MIND</button>
-      </div>
-    </div>
-  </div>
-  <div id="ee-tbl" class="ee-screen" style="display:none">
-    <div class="ee-inner">
-      <div class="ee-topbar">
-        <div class="ee-topbar-left">
-          <span class="ee-topbar-label">▓ CLASSIFIED INTEL ▓</span>
-          <span class="ee-topbar-sub">SECRET GAMES DATABASE · V11.0 · ALL REGIONS</span>
-        </div>
-        <button id="ee-close" class="ee-topbar-close">[ CLOSE ]</button>
-      </div>
-      <div class="ee-table-wrap">
-        <table class="ee-table">
-          <thead>
-            <tr><th>#</th><th>GAME</th><th>WHERE</th><th>HOW TO UNLOCK</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>01</td><td>BLAKE SNAKE</td><td>About tab</td><td>Click the "Contact" section label 5× within 2 seconds</td></tr>
-            <tr><td>02</td><td>THE BLAKE GAMBIT</td><td>About tab</td><td>Click the headshot photo 100× within 60 seconds</td></tr>
-            <tr><td>03</td><td>YOU VS. BLAKE AT PONG</td><td>About tab</td><td>Click the "Eyes: Blue" attribute tag 5×</td></tr>
-            <tr><td>04</td><td>FLAPPY BLAKE</td><td>Sound Design tab</td><td>Click the "Sound Design CV" section label 5×</td></tr>
-            <tr><td>05</td><td>2048: THE END OF BLAKE</td><td>Music tab</td><td>Click the "Future Garage" genre tag 5×</td></tr>
-            <tr><td>06</td><td>WHACK-A-BLAKE</td><td>Music tab</td><td>Click the "Final Cut Pro X" software tag 5×</td></tr>
-            <tr><td>07</td><td>BLAKE BREAKER</td><td>Anywhere</td><td>Switch to Terminal theme (click the ☾ header button until the screen turns green), then click the "Blake Stringer" site name 44×</td></tr>
-            <tr><td>08</td><td>BLAKE HERO 3</td><td>Music tab</td><td>Click the "Proteas" track name 5× within 3 seconds</td></tr>
-            <tr><td>09</td><td>BLAKE INVADERS</td><td>Theatredex</td><td>Click "Now Showing" filter 5× within 5 seconds</td></tr>
-            <tr><td>10</td><td>FROGGER MISSES BLAKE</td><td>Theatredex</td><td>Click "Watchlist" filter 5× within 5 seconds</td></tr>
-            <tr><td>11</td><td>BLAKE-TRIS</td><td>Theatredex</td><td>Type "Timothy Warner" in the search box</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
