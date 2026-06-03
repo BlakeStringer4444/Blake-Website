@@ -1134,6 +1134,7 @@ button.td-link { background: none; cursor: pointer; }
 <script>
 /* ── FIREBASE ── */
 let db = null;
+let authReady = Promise.resolve();
 (function () {
   try {
     const cfg = {
@@ -1146,7 +1147,7 @@ let db = null;
     };
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
-    firebase.auth().signInAnonymously().catch(() => {});
+    authReady = firebase.auth().signInAnonymously().catch(() => {});
   } catch (e) { /* leaderboard unavailable offline */ }
 })();
 
@@ -1746,6 +1747,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (!db) { lbRowsEl.innerHTML = ''; return; }
     lbRowsEl.innerHTML = '<div class="bi-lb-row" style="color:#333;justify-content:center;font-size:10px;">Loading...</div>';
     try {
+      await authReady;
       const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(5).get();
       const rows = snap.docs.map(d => d.data());
       lbRowsEl.innerHTML = rows.length === 0
@@ -1795,6 +1797,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     let allRows = [];
     if (db) {
       try {
+        await authReady;
         const snap = await db.collection(INVADERS_COL).orderBy('score', 'desc').limit(50).get();
         allRows = snap.docs.map(d => d.data());
       } catch {}
@@ -2595,6 +2598,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     }
 
     try {
+      await authReady;
       const snap = await db.collection('frogger_scores').orderBy('score', 'desc').limit(10).get();
       if (!document.getElementById('fr-lbm')) return;
       const listEl = document.getElementById('fr-lbm-list');
@@ -3092,6 +3096,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     }
 
     try {
+      await authReady;
       const snap = await db.collection('tetris_scores').orderBy('score', 'desc').limit(10).get();
       if (!document.getElementById('tw-lbm')) return;
       const listEl = document.getElementById('tw-lbm-list');
