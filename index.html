@@ -6367,6 +6367,7 @@ if (siteName) {
           <div class="pi-go-title">GAME OVER</div>
           <div class="pi-go-score">SCORE: <span id="pi-go-score">0</span></div>
           <button class="pi-go-btn" id="pi-play-again">PLAY AGAIN</button>
+          <button class="pi-go-btn" id="pi-go-close">CLOSE</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -6388,6 +6389,7 @@ if (siteName) {
       document.getElementById('pi-gameover').style.display = 'none';
       newGame();
     });
+    document.getElementById('pi-go-close').addEventListener('click', closePiano);
 
     newGame();
   }
