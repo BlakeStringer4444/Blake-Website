@@ -1005,10 +1005,10 @@ button.td-link { background: none; cursor: pointer; }
 .tw-next-canvas { display: block; }
 .tw-dpad {
   display: flex; flex-direction: column; align-items: center;
-  gap: 2px; padding: 8px 0; flex-shrink: 0;
+  gap: 4px; padding: 10px 0; flex-shrink: 0;
   border-top: 1px solid #1a1a1a; background: #0a0a0a;
 }
-.tw-dpad-row { display: flex; gap: 2px; }
+.tw-dpad-row { display: flex; gap: 4px; }
 .tw-dpad-btn {
   background: none; border: 1px solid rgba(153,51,255,0.35); border-radius: 4px;
   color: rgba(153,51,255,0.75); font-size: 16px; cursor: pointer;
@@ -1017,8 +1017,8 @@ button.td-link { background: none; cursor: pointer; }
   user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
 }
 .tw-dpad-btn:active { background: rgba(153,51,255,0.18); }
-.tw-dpad-wide { width: 160px; height: 44px; font-size: 13px; letter-spacing: 1.5px; }
-.tw-dpad-sq   { width: 52px;  height: 44px; }
+.tw-dpad-wide { width: 180px; height: 64px; font-size: 14px; letter-spacing: 1.5px; }
+.tw-dpad-sq   { width: 64px;  height: 64px; font-size: 22px; }
 .tw-gameover {
   position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
   background: rgba(0,0,0,0.92);
@@ -2525,12 +2525,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>
       </div>`;
     document.body.appendChild(modal);
-    document.getElementById('fr-lbm-close').addEventListener('click', () => {
-      if (modal.parentNode) modal.parentNode.removeChild(modal);
-    });
-    modal.addEventListener('click', e => {
-      if (e.target === modal && modal.parentNode) modal.parentNode.removeChild(modal);
-    });
+    const closeFrLb = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); document.removeEventListener('keydown', frLbEsc); };
+    const frLbEsc = e => { if (e.key === 'Escape') closeFrLb(); };
+    document.getElementById('fr-lbm-close').addEventListener('click', closeFrLb);
+    modal.addEventListener('click', e => { if (e.target === modal) closeFrLb(); });
+    document.addEventListener('keydown', frLbEsc);
 
     if (!db) {
       document.getElementById('fr-lbm-list').innerHTML =
@@ -2999,12 +2998,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>
       </div>`;
     document.body.appendChild(modal);
-    document.getElementById('tw-lbm-close').addEventListener('click', () => {
-      if (modal.parentNode) modal.parentNode.removeChild(modal);
-    });
-    modal.addEventListener('click', e => {
-      if (e.target === modal && modal.parentNode) modal.parentNode.removeChild(modal);
-    });
+    const closeTwLb = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); document.removeEventListener('keydown', twLbEsc); };
+    const twLbEsc = e => { if (e.key === 'Escape') closeTwLb(); };
+    document.getElementById('tw-lbm-close').addEventListener('click', closeTwLb);
+    modal.addEventListener('click', e => { if (e.target === modal) closeTwLb(); });
+    document.addEventListener('keydown', twLbEsc);
 
     if (!db) {
       document.getElementById('tw-lbm-list').innerHTML =

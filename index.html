@@ -308,6 +308,14 @@ body[data-theme="terminal"] .tool-card { border-color: rgba(255,255,255,0.15); }
 body[data-theme="terminal"] a.tool-card:hover { background: var(--lime); border-color: var(--lime); }
 body[data-theme="terminal"] a.tool-card:hover .tool-name,
 body[data-theme="terminal"] a.tool-card:hover .tool-desc { color: var(--black); }
+button.tool-card { cursor: pointer; }
+button.tool-card:hover { background: var(--purple); border-color: var(--purple); }
+button.tool-card:hover .tool-name,
+button.tool-card:hover .tool-desc { color: var(--lime); }
+body[data-theme="dark"] button.tool-card:hover { background: var(--purple); border-color: var(--purple); }
+body[data-theme="terminal"] button.tool-card:hover { background: var(--lime); border-color: var(--lime); }
+body[data-theme="terminal"] button.tool-card:hover .tool-name,
+body[data-theme="terminal"] button.tool-card:hover .tool-desc { color: var(--black); }
 body[data-theme="terminal"] .tool-name { color: #fff; }
 body[data-theme="terminal"] .tool-desc { color: rgba(255,255,255,0.4); }
 .tools-desc {
@@ -1673,6 +1681,54 @@ body[data-theme="terminal"] .back-to-top { background: #FFFFFF; color: #000000; 
 body[data-theme="terminal"] .whack-mole { color: #000000; }
 body[data-theme="terminal"] .whack-mole--hit { color: #FFFFFF; background: #000000; }
 
+/* ── EASTER EGG SPOILERS OVERLAY ── */
+.ee-ov { position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box; }
+.ee-screen { width:100%;max-width:700px; }
+.ee-cover {
+  background:#0a0a0a;border:2px solid rgba(212,255,26,0.45);
+  box-shadow:0 0 40px rgba(212,255,26,0.1),0 8px 40px rgba(0,0,0,0.85);
+  border-radius:4px;padding:36px 24px;text-align:center;position:relative;overflow:hidden;
+}
+.ee-cover::before {
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(212,255,26,0.018) 29px);
+  pointer-events:none;
+}
+.ee-stamp {
+  display:inline-block;border:3px solid rgba(220,50,50,0.6);color:rgba(220,50,50,0.65);
+  font-family:'DM Mono',monospace;font-size:13px;font-weight:bold;letter-spacing:6px;
+  padding:6px 18px;text-transform:uppercase;transform:rotate(-4deg);margin-bottom:16px;
+}
+.ee-cover-title {
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,9vw,58px);
+  letter-spacing:8px;color:#d4ff1a;line-height:1.05;margin:10px 0 8px;
+}
+.ee-cover-edition { font-family:'DM Mono',monospace;font-size:8px;letter-spacing:4px;color:rgba(255,255,255,0.2);margin-bottom:20px;text-transform:uppercase; }
+.ee-cover-line { color:rgba(212,255,26,0.15);font-size:11px;margin:14px 0;letter-spacing:2px; }
+.ee-cover-warning { font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;color:rgba(255,255,255,0.35);line-height:1.9;margin-bottom:28px; }
+.ee-cover-btns { display:flex;gap:12px;justify-content:center;flex-wrap:wrap; }
+.ee-btn-primary { background:#d4ff1a;border:none;color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:bold;letter-spacing:2px;padding:12px 24px;cursor:pointer;transition:transform 0.1s,opacity 0.1s; }
+.ee-btn-primary:hover { transform:scale(1.03); }
+.ee-btn-secondary { background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.3);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;padding:12px 24px;cursor:pointer;transition:border-color 0.15s,color 0.15s; }
+.ee-btn-secondary:hover { border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.6); }
+.ee-inner { background:#0a0a0a;border:2px solid rgba(212,255,26,0.45);box-shadow:0 0 40px rgba(212,255,26,0.1),0 8px 40px rgba(0,0,0,0.85);border-radius:4px;overflow:hidden;max-height:90vh;display:flex;flex-direction:column; }
+.ee-topbar { display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:rgba(212,255,26,0.05);border-bottom:1px solid rgba(212,255,26,0.12);flex-shrink:0; }
+.ee-topbar-left { display:flex;flex-direction:column;gap:2px; }
+.ee-topbar-label { font-family:'DM Mono',monospace;font-size:11px;font-weight:bold;letter-spacing:3px;color:#d4ff1a; }
+.ee-topbar-sub { font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.2); }
+.ee-topbar-close { background:none;border:1px solid rgba(212,255,26,0.3);color:rgba(212,255,26,0.5);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:6px 12px;cursor:pointer;border-radius:2px;transition:border-color 0.15s,color 0.15s; }
+.ee-topbar-close:hover { border-color:#d4ff1a;color:#d4ff1a; }
+.ee-table-wrap { overflow-y:auto;padding:12px 16px 20px;flex:1; }
+.ee-table { width:100%;border-collapse:collapse;font-family:'DM Mono',monospace; }
+.ee-table th { font-size:7px;letter-spacing:3px;color:rgba(212,255,26,0.4);text-align:left;padding:8px 10px;border-bottom:1px solid rgba(212,255,26,0.12);font-weight:normal;white-space:nowrap; }
+.ee-table td { font-size:10px;color:rgba(255,255,255,0.55);padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;line-height:1.5; }
+.ee-table tr:last-child td { border-bottom:none; }
+.ee-table tbody tr:hover td { background:rgba(212,255,26,0.03); }
+.ee-table td:first-child { color:rgba(255,255,255,0.2);font-size:9px; }
+.ee-table td:nth-child(2) { color:#fff;font-weight:bold;font-size:11px;letter-spacing:1px;white-space:nowrap; }
+.ee-table td:nth-child(3) { color:rgba(153,51,255,0.8);white-space:nowrap; }
+@media (max-width:500px) { .ee-table th:nth-child(3),.ee-table td:nth-child(3) { display:none; } }
+
 /* ── BLAKE BREAKER PASSCODE INPUT ── */
 .bb-digit {
   width: 44px; height: 56px;
@@ -2208,10 +2264,6 @@ body[data-theme="terminal"] .scroll-progress { background: #FFFFFF; }
     align-items: flex-start;
     justify-content: flex-start;
     padding: 16px 12px 24px;
-  }
-  #bb-code-overlay {
-    align-items: center;
-    justify-content: center;
   }
 }
 .easter-box {
@@ -3391,6 +3443,12 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
           <span class="tool-tag">Live</span>
         </a>
 
+        <button id="ee-spoilers-btn" class="tool-card">
+          <span class="tool-icon">🕹️</span>
+          <span class="tool-name">Easter Egg Spoilers</span>
+          <span class="tool-desc">All 11 secret games, revealed</span>
+        </button>
+
         <div id="lost-moretome" class="tool-card placeholder">
           <span class="tool-icon">✦</span>
           <span class="tool-name">More to Come</span>
@@ -3445,6 +3503,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   try {
     if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
     db = firebase.firestore();
+    window._piDb = db;
   } catch (e) {
     window.showLeaderboard = function () {};
     window.loadInlineLB  = function () {};
@@ -5604,74 +5663,11 @@ if (siteName) {
       if (tapCount >= 44) {
         tapCount = 0;
         clearTimeout(tapTimer);
-        showPasscode();
+        if (!document.getElementById('bb-overlay')) launchBB();
       }
     }
     siteNameEl.addEventListener('click', handleBBTap);
     siteNameEl.addEventListener('touchend', handleBBTap, { passive: false });
-  }
-
-  function showPasscode() {
-    if (document.getElementById('bb-code-overlay') || document.getElementById('bb-overlay')) return;
-    const overlay = document.createElement('div');
-    overlay.id = 'bb-code-overlay';
-    overlay.className = 'easter-overlay';
-    overlay.innerHTML = `
-      <div class="easter-box" style="max-width:300px;text-align:center;">
-        <button class="easter-close" id="bb-code-close">ESC<br>CLOSE</button>
-        <div class="easter-title" style="font-size:clamp(16px,4vw,22px);margin-bottom:6px;">ENTER CODE</div>
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:22px;">ACCESS RESTRICTED</div>
-        <div style="display:flex;gap:12px;justify-content:center;margin-bottom:18px;">
-          <input class="bb-digit" id="bb-d1" maxlength="1" inputmode="numeric">
-          <input class="bb-digit" id="bb-d2" maxlength="1" inputmode="numeric">
-          <input class="bb-digit" id="bb-d3" maxlength="1" inputmode="numeric">
-          <input class="bb-digit" id="bb-d4" maxlength="1" inputmode="numeric">
-        </div>
-        <div id="bb-code-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,80,80,0.85);letter-spacing:2px;min-height:16px;"></div>
-      </div>`;
-    document.body.appendChild(overlay);
-
-    const digits  = ['bb-d1','bb-d2','bb-d3','bb-d4'].map(id => document.getElementById(id));
-    const codeMsg = document.getElementById('bb-code-msg');
-
-    digits[0].focus();
-
-    digits.forEach((inp, i) => {
-      inp.addEventListener('keydown', e => {
-        if (e.key === 'Backspace' && !inp.value && i > 0) {
-          digits[i-1].value = '';
-          digits[i-1].focus();
-        }
-      });
-      inp.addEventListener('input', () => {
-        inp.value = inp.value.replace(/\D/g, '').slice(-1);
-        if (inp.value && i < 3) digits[i+1].focus();
-        const code = digits.map(d => d.value).join('');
-        if (code.length === 4) {
-          if (code === '4444') {
-            overlay.remove();
-            document.removeEventListener('keydown', escClose);
-            launchBB();
-          } else {
-            codeMsg.textContent = 'ACCESS DENIED';
-            setTimeout(() => {
-              digits.forEach(d => d.value = '');
-              codeMsg.textContent = '';
-              digits[0].focus();
-            }, 900);
-          }
-        }
-      });
-    });
-
-    function escClose(e) {
-      if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escClose); }
-    }
-    document.getElementById('bb-code-close').addEventListener('click', () => {
-      overlay.remove();
-      document.removeEventListener('keydown', escClose);
-    });
-    document.addEventListener('keydown', escClose);
   }
 
   function launchBB() {
@@ -6182,7 +6178,7 @@ if (siteName) {
   const SPAWN_INTERVAL = 650; // ms between tile spawns (average)
   const HIT_ZONE_H  = 0.18; // fraction of board height = hit zone
   const TILE_H_FRAC = 0.11; // tile height as fraction of board height
-  const MAX_LIVES   = 3;
+  const MAX_LIVES   = 5;
   const COMBO_THRESHOLDS = [8, 16, 24]; // hits to reach ×2, ×4, ×8
 
   /* ── State ── */
@@ -6226,7 +6222,7 @@ if (siteName) {
         <div class="pi-hud">
           <span>SCORE <span id="pi-score">0</span></span>
           <span class="pi-hud-combo" id="pi-combo">COMBO ×1</span>
-          <span class="pi-hud-lives" id="pi-lives">♥♥♥</span>
+          <span class="pi-hud-lives" id="pi-lives">♥♥♥♥♥</span>
         </div>
         <div class="pi-hint">Desktop: A · S · D · F &nbsp;|&nbsp; Mobile: tap</div>
         <canvas class="pi-canvas" id="pi-canvas"></canvas>
@@ -6320,7 +6316,11 @@ if (siteName) {
     return 1;
   }
 
-  function speed() { return BASE_SPEED + Math.floor(totalHits / 12) * 15; }
+  function speed() {
+    const m = comboMult();
+    const mult = m >= 8 ? 1.3 : m >= 4 ? 1.2 : m >= 2 ? 1.1 : 1.0;
+    return BASE_SPEED * mult + Math.floor(totalHits / 12) * 15;
+  }
 
   function spawnTile(col) {
     tiles.push({ col, y: -tileH, hit: false, missed: false });
@@ -6400,7 +6400,12 @@ if (siteName) {
     const dist   = Math.abs(center - hitLineY);
     const isPerfect = dist < tileH * 0.4;
     const pts = (isPerfect ? 10 : 5) * comboMult();
+    const prevScore = score;
     score += pts;
+    if (Math.floor(score / 1000) > Math.floor(prevScore / 1000) && lives < MAX_LIVES) {
+      lives++;
+      flashes.push({ col: Math.floor(COLS / 2), type: 'life', alpha: 1.5 });
+    }
     flashes.push({ col, type: isPerfect ? 'perfect' : 'good', alpha: 1 });
     updateHUD();
   }
@@ -6474,12 +6479,17 @@ if (siteName) {
 
     // Flash effects (hit feedback)
     for (const f of flashes) {
-      const x = f.col * colW;
-      const color = f.type === 'miss'    ? `rgba(255,80,80,${f.alpha * 0.45})`
-                  : f.type === 'perfect' ? `rgba(255,255,255,${f.alpha * 0.35})`
-                  :                        `rgba(212,255,26,${f.alpha * 0.25})`;
-      ctx.fillStyle = color;
-      ctx.fillRect(x, 0, colW, boardH);
+      if (f.type === 'life') {
+        ctx.fillStyle = `rgba(0,255,100,${Math.min(1, f.alpha) * 0.18})`;
+        ctx.fillRect(0, 0, W, boardH);
+      } else {
+        const x = f.col * colW;
+        const color = f.type === 'miss'    ? `rgba(255,80,80,${f.alpha * 0.45})`
+                    : f.type === 'perfect' ? `rgba(255,255,255,${f.alpha * 0.35})`
+                    :                        `rgba(212,255,26,${f.alpha * 0.25})`;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, 0, colW, boardH);
+      }
     }
 
     // Piano keys
@@ -6544,9 +6554,10 @@ if (siteName) {
     hitColumn(colFromX(e.clientX - rect.left));
   }
 
-  /* ── Leaderboard (reuses bi-lbm* CSS from Theatredex — not available here,
-        so we build a lightweight equivalent inline) ── */
   async function openLeaderboard() {
+    if (document.getElementById('pi-lbm')) return;
+    const finalScore = score;
+    const piDb = window._piDb || null;
     const modal = document.createElement('div');
     modal.id = 'pi-lbm';
     modal.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center';
@@ -6556,71 +6567,149 @@ if (siteName) {
         <div style="overflow-y:auto;flex:1;padding:0 20px 20px">
           <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;color:#d4ff1a;margin-bottom:4px">BLAKE HERO 3</div>
           <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;margin-bottom:16px">TOP SCORES</div>
+          ${finalScore > 0 ? `
+          <div id="pi-lbm-entry" style="margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #1a1a1a">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#888;margin-bottom:8px">YOUR SCORE: ${finalScore} — ENTER YOUR NAME:</div>
+            <div style="display:flex;gap:6px">
+              <input id="pi-lbm-name" maxlength="20" placeholder="YOUR NAME" autocomplete="off"
+                style="flex:1;background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;border-radius:2px;outline:none">
+              <button id="pi-lbm-submit"
+                style="background:#d4ff1a;color:#000;border:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:2px">SUBMIT</button>
+            </div>
+          </div>` : ''}
           <div id="pi-lbm-rows" style="font-family:'DM Mono',monospace;font-size:11px;color:#555">LOADING…</div>
         </div>
       </div>`;
     document.body.appendChild(modal);
 
-    document.getElementById('pi-lbm-close').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    const closeLb = () => { modal.remove(); document.removeEventListener('keydown', lbEsc); };
+    const lbEsc = e => { if (e.key === 'Escape') closeLb(); };
+    document.getElementById('pi-lbm-close').addEventListener('click', closeLb);
+    modal.addEventListener('click', e => { if (e.target === modal) closeLb(); });
+    document.addEventListener('keydown', lbEsc);
 
     const rowsEl = document.getElementById('pi-lbm-rows');
-    const piDb   = window._piDb || null;
 
-    if (!piDb) {
-      rowsEl.textContent = 'Leaderboard unavailable.'; return;
+    // Name submission
+    if (finalScore > 0) {
+      const nameEl = document.getElementById('pi-lbm-name');
+      const subBtn = document.getElementById('pi-lbm-submit');
+      if (nameEl) nameEl.focus();
+      let submitted = false;
+      const doSubmit = async () => {
+        if (submitted) return;
+        const name = (nameEl?.value || '').trim().toUpperCase().slice(0, 20);
+        if (!name) { if (nameEl) nameEl.focus(); return; }
+        submitted = true;
+        if (subBtn) { subBtn.disabled = true; subBtn.textContent = '…'; }
+        if (piDb) {
+          try { await piDb.collection('piano_scores').add({ name, score: finalScore, ts: Date.now() }); } catch (_) {}
+        }
+        const entry = document.getElementById('pi-lbm-entry');
+        if (entry) entry.innerHTML = `<div style="font-family:'DM Mono',monospace;color:#d4ff1a;font-size:11px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid #1a1a1a">Score submitted! ✓</div>`;
+        loadScores();
+      };
+      if (subBtn) subBtn.addEventListener('click', doSubmit);
+      if (nameEl) nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
     }
 
-    try {
-      const snap = await piDb.collection('piano_scores').orderBy('score', 'desc').limit(10).get();
-      if (!document.getElementById('pi-lbm')) return;
-      const rows = snap.docs.map(d => d.data());
-
-      if (!rows.length) { rowsEl.innerHTML = '<span style="color:#333">No scores yet — be first!</span>'; }
-      else {
-        rowsEl.innerHTML = rows.map((r, i) =>
-          `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #141414">
-            <span style="color:#333">${i+1}</span>
-            <span style="flex:1;padding-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name||'?'}</span>
-            <span>${r.score||0}</span>
-          </div>`
-        ).join('');
-      }
-
-      // Submit if qualifies
-      const lowest = rows.length >= 10 ? (rows[rows.length-1]?.score ?? 0) : -1;
-      if (score > 0 && (rows.length < 10 || score > lowest)) {
-        const scroll = modal.querySelector('div[style*="overflow-y"]');
-        const sub = document.createElement('div');
-        sub.style.marginTop = '16px';
-        sub.innerHTML = `
-          <div style="font-size:10px;letter-spacing:1.5px;color:#555;margin-bottom:8px">YOU QUALIFY! ENTER YOUR NAME:</div>
-          <div style="display:flex;gap:6px">
-            <input id="pi-lbm-name" maxlength="20" placeholder="YOUR NAME"
-              style="flex:1;background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;border-radius:2px;outline:none">
-            <button id="pi-lbm-submit"
-              style="background:#d4ff1a;color:#000;border:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:2px">SUBMIT</button>
-          </div>`;
-        scroll.appendChild(sub);
-        document.getElementById('pi-lbm-submit').addEventListener('click', async () => {
-          const name = (document.getElementById('pi-lbm-name')?.value || '').trim().toUpperCase().slice(0,20);
-          if (!name) return;
-          await piDb.collection('piano_scores').add({ name, score, ts: Date.now() });
-          sub.innerHTML = '<div style="color:#d4ff1a;font-size:11px;margin-top:12px">Score submitted! ✓</div>';
-        });
-      }
-    } catch (err) {
-      rowsEl.textContent = 'Could not load scores.';
+    async function loadScores() {
+      if (!piDb) { rowsEl.textContent = 'Leaderboard unavailable.'; return; }
+      try {
+        const snap = await piDb.collection('piano_scores').orderBy('score', 'desc').limit(10).get();
+        if (!document.getElementById('pi-lbm')) return;
+        const rows = snap.docs.map(d => d.data());
+        if (!rows.length) { rowsEl.innerHTML = '<span style="color:#333">No scores yet — be first!</span>'; }
+        else {
+          rowsEl.innerHTML = rows.map((r, i) =>
+            `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #141414">
+              <span style="color:#333">${i+1}</span>
+              <span style="flex:1;padding-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name||'?'}</span>
+              <span>${r.score||0}</span>
+            </div>`
+          ).join('');
+        }
+      } catch (_) { rowsEl.textContent = 'Could not load scores.'; }
     }
+    loadScores();
   }
-
-  /* ── Wire up Firebase (reuse global db from existing init) ── */
-  // db is declared in the main script; expose it to piano IIFE via window
-  window.addEventListener('load', () => { window._piDb = typeof db !== 'undefined' ? db : null; });
 
 })();
 
+/* ── EASTER EGG SPOILERS ── */
+(function () {
+  const btn = document.getElementById('ee-spoilers-btn');
+  const ov  = document.getElementById('ee-ov');
+  if (!btn || !ov) return;
+
+  btn.addEventListener('click', () => {
+    document.getElementById('ee-warn').style.display = '';
+    document.getElementById('ee-tbl').style.display  = 'none';
+    ov.style.display = 'flex';
+  });
+
+  document.getElementById('ee-reveal').addEventListener('click', () => {
+    document.getElementById('ee-warn').style.display = 'none';
+    document.getElementById('ee-tbl').style.display  = '';
+  });
+
+  const closeEE = () => { ov.style.display = 'none'; };
+  document.getElementById('ee-cancel').addEventListener('click', closeEE);
+  document.getElementById('ee-close').addEventListener('click', closeEE);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ov.style.display !== 'none') closeEE();
+  });
+})();
+
 </script>
+
+<!-- EASTER EGG SPOILERS OVERLAY -->
+<div id="ee-ov" class="ee-ov" style="display:none">
+  <div id="ee-warn" class="ee-screen">
+    <div class="ee-cover">
+      <div class="ee-stamp">⚠ TOP SECRET ⚠</div>
+      <div class="ee-cover-title">EASTER EGG<br>SPOILERS</div>
+      <div class="ee-cover-edition">BLAKE STRINGER PORTFOLIO · CLASSIFIED EDITION · DO NOT DISTRIBUTE</div>
+      <div class="ee-cover-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="ee-cover-warning">The following document reveals all 11 secret games hidden<br>throughout this website and the Theatredex.<br>Proceed only if you want the fun to be spoiled.</div>
+      <div class="ee-cover-btns">
+        <button id="ee-reveal" class="ee-btn-primary">▶ REVEAL SECRETS</button>
+        <button id="ee-cancel" class="ee-btn-secondary">✕ NEVER MIND</button>
+      </div>
+    </div>
+  </div>
+  <div id="ee-tbl" class="ee-screen" style="display:none">
+    <div class="ee-inner">
+      <div class="ee-topbar">
+        <div class="ee-topbar-left">
+          <span class="ee-topbar-label">▓ CLASSIFIED INTEL ▓</span>
+          <span class="ee-topbar-sub">SECRET GAMES DATABASE · V11.0 · ALL REGIONS</span>
+        </div>
+        <button id="ee-close" class="ee-topbar-close">[ CLOSE ]</button>
+      </div>
+      <div class="ee-table-wrap">
+        <table class="ee-table">
+          <thead>
+            <tr><th>#</th><th>GAME</th><th>WHERE</th><th>HOW TO UNLOCK</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>01</td><td>BLAKE SNAKE</td><td>About tab</td><td>Click the "Contact" section label 5× within 2 seconds</td></tr>
+            <tr><td>02</td><td>THE BLAKE GAMBIT</td><td>About tab</td><td>Click the headshot photo 100× within 60 seconds</td></tr>
+            <tr><td>03</td><td>YOU VS. BLAKE AT PONG</td><td>About tab</td><td>Click the "Eyes: Blue" attribute tag 5×</td></tr>
+            <tr><td>04</td><td>FLAPPY BLAKE</td><td>Sound Design tab</td><td>Click the "Sound Design CV" section label 5×</td></tr>
+            <tr><td>05</td><td>2048: THE END OF BLAKE</td><td>Music tab</td><td>Click the "Future Garage" genre tag 5×</td></tr>
+            <tr><td>06</td><td>WHACK-A-BLAKE</td><td>Music tab</td><td>Click the "Final Cut Pro X" software tag 5×</td></tr>
+            <tr><td>07</td><td>BLAKE BREAKER</td><td>Anywhere</td><td>Switch to Terminal theme (click the ☾ header button until the screen turns green), then click the "Blake Stringer" site name 44×</td></tr>
+            <tr><td>08</td><td>BLAKE HERO 3</td><td>Music tab</td><td>Click the "Proteas" track name 5× within 3 seconds</td></tr>
+            <tr><td>09</td><td>BLAKE INVADERS</td><td>Theatredex</td><td>Click "Now Showing" filter 5× within 5 seconds</td></tr>
+            <tr><td>10</td><td>FROGGER MISSES BLAKE</td><td>Theatredex</td><td>Click "Watchlist" filter 5× within 5 seconds</td></tr>
+            <tr><td>11</td><td>BLAKE-TRIS</td><td>Theatredex</td><td>Type "Timothy Warner" in the search box</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
