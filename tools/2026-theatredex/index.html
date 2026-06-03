@@ -238,6 +238,16 @@ body {
   transition: border-color 0.2s;
 }
 .td-select:focus { border-color: var(--purple); }
+.td-select--active {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 1px var(--purple);
+  color: var(--purple);
+}
+[data-theme="terminal"] .td-select--active {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 1px var(--lime);
+  color: var(--lime);
+}
 
 .td-controls-bottom {
   display: flex;
@@ -1239,6 +1249,7 @@ async function init() {
     allShows = parseCSV(text).sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
     buildFilters(allShows);
     readUrlState();
+    syncSelectActive();
     render();
   } catch (e) {
     document.getElementById('td-grid').innerHTML =
@@ -1249,8 +1260,13 @@ async function init() {
 
 /* ── EVENTS ── */
 document.getElementById('td-search').addEventListener('input',   e  => { searchQ = e.target.value; render(); });
-document.getElementById('td-company').addEventListener('change',  e  => { activeCompany = e.target.value; render(); });
-document.getElementById('td-month').addEventListener('change',    e  => { activeMonth = e.target.value; render(); });
+function syncSelectActive() {
+  document.getElementById('td-company').classList.toggle('td-select--active', activeCompany !== '');
+  document.getElementById('td-month').classList.toggle('td-select--active',   activeMonth   !== '');
+}
+
+document.getElementById('td-company').addEventListener('change', e => { activeCompany = e.target.value; syncSelectActive(); render(); });
+document.getElementById('td-month').addEventListener('change',   e => { activeMonth   = e.target.value; syncSelectActive(); render(); });
 function setActiveFilter(name) {
   activeFilter = (activeFilter === name) ? null : name;
   setFilterButtons(activeFilter);
