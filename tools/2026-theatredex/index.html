@@ -954,33 +954,39 @@ button.td-link { background: none; cursor: pointer; }
   display: flex; align-items: center; justify-content: center;
 }
 .tw-box {
-  background: #0a0a0a; border: 1px solid #222; border-radius: 3px;
+  background: #080808;
+  border: 2px solid rgba(153,51,255,0.75);
+  box-shadow: 0 0 32px rgba(153,51,255,0.28), 0 10px 50px rgba(0,0,0,0.7);
+  border-radius: 5px;
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
   display: flex; flex-direction: column; align-items: stretch;
   position: relative; overflow: hidden;
 }
 .tw-topbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 2px 8px 2px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+  padding: 10px 12px 10px 18px;
+  border-bottom: 1px solid rgba(153,51,255,0.22);
+  background: rgba(153,51,255,0.07); flex-shrink: 0;
 }
 .tw-topbar-title {
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
-  color: rgba(255,255,255,0.3); text-transform: uppercase;
+  font-family: 'DM Mono', monospace; font-size: 18px; font-weight: bold;
+  letter-spacing: 4px; color: rgba(153,51,255,0.9); text-transform: uppercase;
 }
 .tw-close-top {
-  background: none; border: none; color: rgba(255,255,255,0.2);
+  background: none; border: 1px solid rgba(153,51,255,0.3);
+  border-radius: 3px; color: rgba(153,51,255,0.6);
   font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
-  cursor: pointer; padding: 8px 6px;
+  cursor: pointer; padding: 5px 10px;
 }
-.tw-close-top:hover { color: rgba(255,255,255,0.6); }
+.tw-close-top:hover { border-color: rgba(153,51,255,0.8); color: rgba(153,51,255,1); }
 .tw-game-area {
   display: flex; gap: 0; flex: 1; overflow: hidden;
 }
 .tw-canvas { display: block; background: #0a0a0a; flex-shrink: 0; }
 .tw-sidebar {
   width: 96px; flex-shrink: 0; display: flex; flex-direction: column;
-  gap: 14px; padding: 12px 10px; border-left: 1px solid #1a1a1a;
-  background: #0a0a0a;
+  gap: 14px; padding: 12px 10px; border-left: 1px solid rgba(153,51,255,0.15);
+  background: #080808;
 }
 .tw-side-label {
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
@@ -1375,10 +1381,10 @@ function render() {
   const count = document.getElementById('td-count');
   const twCard = q.trim() === 'timothy warner'
     ? `<div class="tw-secret-card">
-        <span class="tw-secret-label">✦ Secret Show</span>
+        <span class="tw-secret-label">✦ Secret Game</span>
         <span class="tw-secret-title">Timothy Warner</span>
-        <span class="tw-secret-desc">No performance dates available. This one exists in a different dimension entirely.</span>
-        <button class="tw-secret-btn" id="tw-launch-btn">▶ Play Tetris</button>
+        <span class="tw-secret-desc">You can visit his website at <a href="https://timothyrobotics.com/" target="_blank" rel="noopener noreferrer" style="color:var(--purple)">timothyrobotics.com</a></span>
+        <button class="tw-secret-btn" id="tw-launch-btn">▶ Play Blake-Tris</button>
       </div>` : '';
   grid.innerHTML    = twCard + (results.length ? results.map(card).join('') : '<div class="td-empty">No shows match — try adjusting your filters</div>');
   count.textContent = `Showing ${results.length} of ${allShows.length} productions`;
@@ -2271,34 +2277,56 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function buildLanes() {
-    ctx.font = 'bold 13px "DM Mono",monospace';
+    ctx.font = 'bold 12px "DM Mono",monospace';
     const pool = buildWordPool();
     let wi = 0;
+    const GAP   = 50; // min gap between car edges (player must pass through)
+    const PAD_X = 8;  // text padding inside car
+
     lanes = LANE_CFGS.map((cfg, i) => {
-      const speed  = cfg.speedFrac * W;
+      // Speed ramps up with each crossing
+      const speed  = cfg.speedFrac * W * (1 + crossing * 0.09);
       const y      = laneTop(i);
       const midY   = y + laneH / 2;
-      const spacing = 110;
-      const count  = Math.ceil((W + 300) / spacing);
-      const words  = [];
-      for (let j = 0; j < count; j++) {
-        const text = pool[(wi++) % pool.length] || 'STAGE';
+      const carH   = Math.round(laneH * 0.68);
+      const cars   = [];
+
+      // Place cars sequentially so edges never overlap
+      let edge = cfg.dir > 0 ? -180 : W + 180;
+      for (let j = 0; j < 10; j++) {
+        const raw  = pool[(wi++) % pool.length] || 'GO';
+        const text = raw.length > 7 ? raw.slice(0, 7) : raw;
         const tw   = ctx.measureText(text).width;
-        const startX = cfg.dir > 0 ? j * spacing - 150 : W + 150 - j * spacing;
-        words.push({ text, tw, x: startX, y: midY });
+        const carW = tw + PAD_X * 2;
+        let cx;
+        if (cfg.dir > 0) { cx = edge + carW / 2; edge += carW + GAP; }
+        else              { cx = edge - carW / 2; edge -= carW + GAP; }
+        cars.push({ text, tw, carW, carH, x: cx, y: midY });
       }
-      return { speed, dir: cfg.dir, y, words };
+      // Total span used for seamless wrapping
+      const totalSpan = cars.reduce((s, c) => s + c.carW, 0) + GAP * cars.length;
+      return { speed, dir: cfg.dir, y, carH, cars, totalSpan };
     });
   }
 
   function spawnItem() {
-    const li   = Math.floor(Math.random() * 6);
-    const lane = lanes[li];
-    itemObj = {
-      x: W * 0.2 + Math.random() * W * 0.6,
-      y: lane.y + laneH / 2,
-      speed: lane.speed, dir: lane.dir, got: false,
-    };
+    // Try each lane (shuffled) for a visible on-screen gap
+    const order = [0,1,2,3,4,5].sort(() => Math.random() - 0.5);
+    for (const li of order) {
+      const lane = lanes[li];
+      const available = [];
+      for (let x = FR_SIZE * 2; x < W - FR_SIZE * 2; x += 8) {
+        const blocked = lane.cars.some(c => x > c.x - c.carW / 2 - FR_SIZE && x < c.x + c.carW / 2 + FR_SIZE);
+        if (!blocked) available.push(x);
+      }
+      if (available.length > 0) {
+        const x = available[Math.floor(Math.random() * available.length)];
+        itemObj = { x, y: lane.y + laneH / 2, speed: lane.speed, dir: lane.dir, got: false };
+        return;
+      }
+    }
+    // Fallback: park star in the safe zone
+    itemObj = { x: W / 2, y: safeTop() + safeH / 2, speed: 0, dir: 0, got: false };
   }
 
   function update(dt) {
@@ -2313,10 +2341,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     player.y = Math.max(0, Math.min(H - FR_SIZE, player.y));
 
     for (const lane of lanes) {
-      for (const w of lane.words) {
-        w.x += lane.speed * lane.dir * dt;
-        if (lane.dir > 0 && w.x >  W + 150) w.x -= W + 300;
-        if (lane.dir < 0 && w.x < -150)     w.x += W + 300;
+      for (const c of lane.cars) {
+        c.x += lane.speed * lane.dir * dt;
+        if (lane.dir > 0 && c.x - c.carW / 2 >  W + 150) c.x -= lane.totalSpan;
+        if (lane.dir < 0 && c.x + c.carW / 2 < -150)     c.x += lane.totalSpan;
       }
     }
     if (!itemObj.got) {
@@ -2346,8 +2374,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (invincible <= 0) {
       for (const lane of lanes) {
         if (pCy < lane.y || pCy > lane.y + laneH) continue;
-        for (const w of lane.words) {
-          if (px1 < w.x + w.tw / 2 + 2 && px2 > w.x - w.tw / 2 - 2 && py1 < w.y + 8 && py2 > w.y - 8) {
+        const hH = lane.carH / 2;
+        for (const c of lane.cars) {
+          if (px1 < c.x + c.carW / 2 && px2 > c.x - c.carW / 2 &&
+              py1 < c.y + hH && py2 > c.y - hH) {
             hitPlayer(); return;
           }
         }
@@ -2418,11 +2448,21 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     ctx.fillStyle = 'rgba(40,40,40,0.5)';
     ctx.fillRect(0, startTop(), W, startH);
 
-    ctx.font = 'bold 13px "DM Mono",monospace';
+    ctx.font = 'bold 12px "DM Mono",monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const lane of lanes) {
-      ctx.fillStyle = lane.dir > 0 ? FR_PURPLE : FR_LIME;
-      for (const w of lane.words) ctx.fillText(w.text, w.x, w.y);
+      const carColor = lane.dir > 0 ? FR_PURPLE : 'rgba(100,200,50,0.85)';
+      const txtColor = lane.dir > 0 ? '#fff' : '#0a0a0a';
+      for (const c of lane.cars) {
+        const x = c.x - c.carW / 2, y = c.y - lane.carH / 2;
+        ctx.fillStyle = carColor;
+        ctx.fillRect(x, y, c.carW, lane.carH);
+        // Subtle highlight edge
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(x, y, c.carW, 2);
+        ctx.fillStyle = txtColor;
+        ctx.fillText(c.text, c.x, c.y);
+      }
     }
 
     if (!itemObj.got) {
@@ -2650,7 +2690,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     document.addEventListener('keyup',   onKeyUp);
 
     document.getElementById('tw-close').addEventListener('click', closeTetris);
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeTetris(); });
     document.getElementById('tw-play-again').addEventListener('click', () => {
       document.getElementById('tw-gameover').style.display = 'none';
       newGame();
