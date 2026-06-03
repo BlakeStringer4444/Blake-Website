@@ -1741,6 +1741,15 @@ body[data-theme="terminal"] .whack-mole--hit { color: #FFFFFF; background: #0000
   transition:background 0.15s,border-color 0.15s;user-select:none;
 }
 .ee-cell-cover:hover { background:rgba(40,40,40,0.97);border-color:rgba(212,255,26,0.4);color:rgba(212,255,26,0.7); }
+.ee-complete-bar { border-top:1px solid rgba(212,255,26,0.25);padding:18px 20px 22px;background:rgba(212,255,26,0.02);text-align:center; }
+.ee-complete-label { font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:#d4ff1a;margin-bottom:12px; }
+.ee-complete-hint { font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,0.55);line-height:1.8;margin-bottom:14px; }
+.ee-complete-input-row { display:flex;justify-content:center; }
+.ee-complete-input { background:#000;border:1px solid rgba(212,255,26,0.3);color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:8px 14px;letter-spacing:2px;text-transform:uppercase;outline:none;width:240px;box-sizing:border-box;text-align:center;transition:border-color 0.2s,color 0.2s; }
+.ee-complete-input:focus { border-color:rgba(212,255,26,0.6); }
+@keyframes ee-rain-fall { 0% { transform:translateY(-80px);opacity:1; } 85% { opacity:0.9; } 100% { transform:translateY(110vh);opacity:0; } }
+.ee-rain-ov { position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden; }
+.ee-rain-piece { position:absolute;top:0;font-family:'Bebas Neue',sans-serif;color:#d4ff1a;animation:ee-rain-fall linear forwards;white-space:nowrap;text-shadow:0 0 10px rgba(212,255,26,0.45); }
 
 /* ── BLAKE BREAKER PASSCODE INPUT ── */
 .bb-digit {
@@ -3600,6 +3609,15 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
             </tr>
           </tbody>
         </table>
+      </div>
+      <div id="ee-complete" style="display:none">
+        <div class="ee-complete-bar">
+          <div class="ee-complete-label">— 111% COMPLETE —</div>
+          <div class="ee-complete-hint">Eating the green parts of a __________ is elite behaviour</div>
+          <div class="ee-complete-input-row">
+            <input id="ee-complete-input" class="ee-complete-input" type="text" maxlength="30" placeholder="TYPE YOUR ANSWER" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -6795,10 +6813,42 @@ if (siteName) {
     saved[id] = val;
     localStorage.setItem(LS_KEY, JSON.stringify(saved));
   }
+  function checkAllFound() {
+    const allChecked = [...ov.querySelectorAll('.ee-chk')].every(c => c.checked);
+    document.getElementById('ee-complete').style.display = allChecked ? '' : 'none';
+  }
+
+  function doEERain() {
+    const rainOv = document.createElement('div');
+    rainOv.className = 'ee-rain-ov';
+    document.body.appendChild(rainOv);
+    for (let i = 0; i < 80; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'ee-rain-piece';
+        el.textContent = '111%';
+        el.style.cssText = `left:${Math.random()*92}%;animation-duration:${1.8+Math.random()*2.2}s;font-size:${18+Math.floor(Math.random()*42)}px;opacity:${0.5+Math.random()*0.5}`;
+        rainOv.appendChild(el);
+      }, Math.random() * 3500);
+    }
+    setTimeout(() => rainOv.remove(), 9000);
+  }
+
   ov.querySelectorAll('.ee-chk').forEach(chk => {
-    chk.addEventListener('change', () => saveChk(chk.dataset.id, chk.checked));
+    chk.addEventListener('change', () => { saveChk(chk.dataset.id, chk.checked); checkAllFound(); });
   });
   loadChks();
+  checkAllFound();
+
+  document.getElementById('ee-complete-input').addEventListener('input', function () {
+    if (this.value.trim().toLowerCase() === 'strawberry') {
+      this.value = 'STRAWBERRY ✓';
+      this.disabled = true;
+      this.style.borderColor = '#d4ff1a';
+      this.style.color = '#d4ff1a';
+      doEERain();
+    }
+  });
 
   btn.addEventListener('click', () => {
     document.getElementById('ee-warn').style.display = '';
