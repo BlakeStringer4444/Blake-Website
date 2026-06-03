@@ -1028,6 +1028,10 @@ button.td-link { background: none; cursor: pointer; }
 .tw-dpad-btn:active { background: rgba(153,51,255,0.18); }
 .tw-dpad-wide { width: 180px; height: 64px; font-size: 14px; letter-spacing: 1.5px; }
 .tw-dpad-sq   { width: 64px;  height: 64px; font-size: 22px; }
+@media (max-width: 639px) {
+  .tw-dpad-wide { height: 50px; }
+  .tw-dpad-sq   { width: 56px; height: 50px; font-size: 20px; }
+}
 .tw-gameover {
   position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
   background: rgba(0,0,0,0.92);
@@ -2709,7 +2713,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   });
 
   /* ── Constants ── */
-  const COLS = 10, ROWS = 20;
+  let COLS = 10, ROWS = 20;  /* ROWS reduced to 15 on mobile by sizeCanvases */
   const LINE_PTS = [0, 100, 300, 500, 800];
 
   /* ── State ── */
@@ -2819,7 +2823,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   /* ── Canvas sizing ── */
   function sizeCanvases() {
     const dpr = window.devicePixelRatio || 1;
-    CS = window.innerHeight < 600 ? 16 : window.innerWidth < 640 ? 18 : 22;
+    const mobile = window.innerWidth < 640;
+    ROWS = mobile ? 15 : 20;
+    CS = window.innerHeight < 600 ? 16 : mobile ? 20 : 22;
 
     const bW = CS * COLS, bH = CS * ROWS;
     boardCanvas.style.width  = bW + 'px';
