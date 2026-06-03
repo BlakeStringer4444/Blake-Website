@@ -2167,7 +2167,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     overlay.innerHTML = `
       <div class="fr-box" id="fr-box">
         <div class="fr-topbar">
-          <span class="fr-topbar-title">Theatredex Frogger</span>
+          <span class="fr-topbar-title">Frogger Misses Blake</span>
           <button class="fr-close-top" id="fr-close">[ CLOSE ]</button>
         </div>
         <div class="fr-hud">
@@ -2190,7 +2190,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           <div class="fr-go-title">GAME OVER</div>
           <div class="fr-go-score">SCORE: <span id="fr-go-score">0</span></div>
           <button class="fr-go-btn" id="fr-play-again">PLAY AGAIN</button>
-          <button class="fr-go-btn" id="fr-show-lb">LEADERBOARD</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -2209,7 +2208,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       document.getElementById('fr-gameover').style.display = 'none';
       newGame();
     });
-    document.getElementById('fr-show-lb').addEventListener('click', openLeaderboard);
 
     newGame();
   }
@@ -2373,6 +2371,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         document.getElementById('fr-go-score').textContent = score;
         goDiv.style.display = 'flex';
       }
+      setTimeout(openLeaderboard, 1200);
     } else {
       player.x = W / 2 - FR_SIZE / 2;
       player.y = startTop() + Math.max(0, (startH - FR_SIZE) / 2);
@@ -2472,7 +2471,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       <div class="bi-lbm-card">
         <button class="bi-lbm-close" id="fr-lbm-close">[ CLOSE ]</button>
         <div class="bi-lbm-scroll">
-          <div class="bi-lbm-title">FROGGER</div>
+          <div class="bi-lbm-title">FROGGER MISSES BLAKE</div>
           <div class="bi-lbm-sub">TOP SCORES</div>
           <ul id="fr-lbm-list" style="list-style:none;padding:0;margin:0">
             <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>
@@ -2595,7 +2594,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     overlay.innerHTML = `
       <div class="tw-box" id="tw-box">
         <div class="tw-topbar">
-          <span class="tw-topbar-title">Theatredex Tetris</span>
+          <span class="tw-topbar-title">Blake-Tris</span>
           <button class="tw-close-top" id="tw-close">[ CLOSE ]</button>
         </div>
         <div class="tw-game-area">
@@ -2636,7 +2635,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           <div class="tw-go-title">GAME OVER</div>
           <div class="tw-go-score">SCORE: <span id="tw-go-score">0</span></div>
           <button class="tw-go-btn" id="tw-play-again">PLAY AGAIN</button>
-          <button class="tw-go-btn" id="tw-show-lb">LEADERBOARD</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -2657,7 +2655,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       document.getElementById('tw-gameover').style.display = 'none';
       newGame();
     });
-    document.getElementById('tw-show-lb').addEventListener('click', openLeaderboard);
 
     newGame();
   }
@@ -2749,6 +2746,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         document.getElementById('tw-go-score').textContent = score;
         goDiv.style.display = 'flex';
       }
+      setTimeout(openLeaderboard, 1200);
     }
   }
 
@@ -2948,7 +2946,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       <div class="bi-lbm-card">
         <button class="bi-lbm-close" id="tw-lbm-close">[ CLOSE ]</button>
         <div class="bi-lbm-scroll">
-          <div class="bi-lbm-title">TETRIS</div>
+          <div class="bi-lbm-title">BLAKE-TRIS</div>
           <div class="bi-lbm-sub">TOP SCORES</div>
           <ul id="tw-lbm-list" style="list-style:none;padding:0;margin:0">
             <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>

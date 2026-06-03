@@ -6210,7 +6210,7 @@ if (siteName) {
     overlay.innerHTML = `
       <div class="pi-box" id="pi-box">
         <div class="pi-topbar">
-          <span class="pi-topbar-title">Proteas Piano</span>
+          <span class="pi-topbar-title">Blake Hero 3</span>
           <button class="pi-close-top" id="pi-close">[ CLOSE ]</button>
         </div>
         <div class="pi-hud">
@@ -6223,7 +6223,6 @@ if (siteName) {
           <div class="pi-go-title">GAME OVER</div>
           <div class="pi-go-score">SCORE: <span id="pi-go-score">0</span></div>
           <button class="pi-go-btn" id="pi-play-again">PLAY AGAIN</button>
-          <button class="pi-go-btn" id="pi-show-lb">LEADERBOARD</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -6244,7 +6243,6 @@ if (siteName) {
       document.getElementById('pi-gameover').style.display = 'none';
       newGame();
     });
-    document.getElementById('pi-show-lb').addEventListener('click', openLeaderboard);
 
     newGame();
   }
@@ -6406,6 +6404,7 @@ if (siteName) {
       document.getElementById('pi-go-score').textContent = score;
       goDiv.style.display = 'flex';
     }
+    setTimeout(openLeaderboard, 1200);
   }
 
   function updateHUD() {
@@ -6550,7 +6549,7 @@ if (siteName) {
       <div style="background:#0f0f0f;border:1px solid #2a2a2a;width:340px;max-width:calc(100vw - 24px);max-height:85vh;overflow:hidden;display:flex;flex-direction:column;border-radius:3px">
         <button id="pi-lbm-close" style="align-self:flex-end;background:none;border:none;color:#555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;padding:12px 14px">[ CLOSE ]</button>
         <div style="overflow-y:auto;flex:1;padding:0 20px 20px">
-          <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;color:#d4ff1a;margin-bottom:4px">PIANO TILES</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;color:#d4ff1a;margin-bottom:4px">BLAKE HERO 3</div>
           <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;margin-bottom:16px">TOP SCORES</div>
           <div id="pi-lbm-rows" style="font-family:'DM Mono',monospace;font-size:11px;color:#555">LOADING…</div>
         </div>
