@@ -849,6 +849,78 @@ button.td-link { background: none; cursor: pointer; }
 }
 .bi-lbm-row--hl { background: rgba(212,255,26,0.07); margin: 0 -8px; padding: 7px 8px; }
 .bi-lbm-row-name { flex: 1; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── FROGGER EASTER EGG ─────────────────────────── */
+.fr-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+}
+.fr-box {
+  background: #0a0a0a; border: 1px solid #222;
+  width: 380px; max-width: calc(100vw - 24px);
+  display: flex; flex-direction: column; align-items: stretch;
+  position: relative; border-radius: 3px;
+}
+.fr-topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 8px 2px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+}
+.fr-topbar-title {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
+  color: rgba(255,255,255,0.3); text-transform: uppercase;
+}
+.fr-close-top {
+  background: none; border: none; color: rgba(255,255,255,0.2);
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  cursor: pointer; padding: 8px 6px;
+}
+.fr-close-top:hover { color: rgba(255,255,255,0.6); }
+.fr-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 14px; font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 1.5px; color: rgba(255,255,255,0.45);
+  flex-shrink: 0;
+}
+.fr-hud-lives { color: #d4ff1a; letter-spacing: 3px; }
+.fr-canvas { display: block; background: #0f0f0f; width: 100%; }
+.fr-dpad {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 10px 0; flex-shrink: 0;
+  border-top: 1px solid #1a1a1a;
+}
+.fr-dpad-row { display: flex; gap: 2px; }
+.fr-dpad-btn {
+  width: 52px; height: 52px; background: none;
+  border: 1px solid rgba(153,51,255,0.35); border-radius: 4px;
+  color: rgba(153,51,255,0.75); font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+}
+.fr-dpad-btn:active { background: rgba(153,51,255,0.18); }
+.fr-gameover {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5;
+  background: rgba(0,0,0,0.92);
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; gap: 10px; padding: 24px;
+}
+.fr-go-title {
+  font-family: 'DM Mono', monospace; font-size: 22px;
+  letter-spacing: 5px; color: #d4ff1a; margin-bottom: 4px;
+}
+.fr-go-score {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 8px;
+}
+.fr-go-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6); font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; padding: 9px 0;
+  cursor: pointer; border-radius: 2px; width: 170px; text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.fr-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1901,6 +1973,457 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       if (gameOver) { gameOver = false; newGame(); }
     }
   }, { passive: false });
+
+})();
+
+/* ── FROGGER EASTER EGG ── */
+(function () {
+
+  const FR_LIME   = '#d4ff1a';
+  const FR_PURPLE = 'rgba(153,51,255,0.85)';
+  const FR_SPEED  = 190; // player px/s
+  const FR_SIZE   = 20;  // player tile size (px)
+
+  const LANE_CFGS = [
+    { speedFrac: 0.12, dir:  1 },
+    { speedFrac: 0.08, dir: -1 },
+    { speedFrac: 0.10, dir:  1 },
+    { speedFrac: 0.09, dir: -1 },
+    { speedFrac: 0.11, dir:  1 },
+    { speedFrac: 0.07, dir: -1 },
+  ];
+
+  let overlay, canvas, ctx;
+  let W = 0, H = 0, dpr = 1;
+  let goalH = 0, laneH = 0, safeH = 0, startH = 0;
+  let player, lanes, itemObj;
+  let lives = 3, score = 0, crossing = 0;
+  let crossingStart = 0, invincible = 0;
+  let keys = {};
+  let raf = null, gameActive = false;
+
+  /* ── Trigger: 5 clicks on Watchlist within 5 s ── */
+  {
+    let frTimes = [];
+    const wlBtn = document.getElementById('td-watchlist');
+    if (wlBtn) {
+      wlBtn.addEventListener('click', () => {
+        const now = Date.now();
+        frTimes.push(now);
+        frTimes = frTimes.filter(t => now - t < 5000);
+        if (frTimes.length >= 5) {
+          frTimes = [];
+          if (!document.getElementById('fr-overlay')) launchFrogger();
+        }
+      });
+    }
+  }
+
+  /* ── Word pool from show titles ── */
+  function buildWordPool() {
+    const stop = new Set(['the','and','of','a','an','in','on','at','to','for','with','from','is','it','as','or','by','be','are','was','were','not','that','this','but']);
+    const seen = new Set();
+    const words = [];
+    for (const show of allShows) {
+      for (const w of (show.title || '').split(/\s+/)) {
+        const clean = w.replace(/[^a-zA-Z]/g, '').toUpperCase();
+        if (clean.length >= 3 && !stop.has(clean.toLowerCase()) && !seen.has(clean)) {
+          seen.add(clean); words.push(clean);
+        }
+      }
+    }
+    if (!words.length) words.push('FROGGER','THEATRE','BLAKE','STAGE','CURTAIN','DRAMA','LIGHTS','SCENE','MUSIC');
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+    return words;
+  }
+
+  /* ── Launch overlay ── */
+  function launchFrogger() {
+    overlay = document.createElement('div');
+    overlay.className = 'fr-overlay';
+    overlay.id        = 'fr-overlay';
+    overlay.innerHTML = `
+      <div class="fr-box" id="fr-box">
+        <div class="fr-topbar">
+          <span class="fr-topbar-title">Theatredex Frogger</span>
+          <button class="fr-close-top" id="fr-close">[ CLOSE ]</button>
+        </div>
+        <div class="fr-hud">
+          <span>SCORE <span id="fr-score">0</span></span>
+          <span class="fr-hud-lives" id="fr-lives">♥♥♥</span>
+          <span>TIME <span id="fr-timer">0</span>s</span>
+        </div>
+        <canvas class="fr-canvas" id="fr-canvas"></canvas>
+        <div class="fr-dpad" id="fr-dpad">
+          <div class="fr-dpad-row">
+            <button class="fr-dpad-btn" data-dir="up">↑</button>
+          </div>
+          <div class="fr-dpad-row">
+            <button class="fr-dpad-btn" data-dir="left">←</button>
+            <button class="fr-dpad-btn" data-dir="down">↓</button>
+            <button class="fr-dpad-btn" data-dir="right">→</button>
+          </div>
+        </div>
+        <div class="fr-gameover" id="fr-gameover">
+          <div class="fr-go-title">GAME OVER</div>
+          <div class="fr-go-score">SCORE: <span id="fr-go-score">0</span></div>
+          <button class="fr-go-btn" id="fr-play-again">PLAY AGAIN</button>
+          <button class="fr-go-btn" id="fr-show-lb">LEADERBOARD</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    canvas = document.getElementById('fr-canvas');
+    ctx    = canvas.getContext('2d');
+
+    sizeCanvas();
+    bindDpad();
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup',   onKeyUp);
+
+    document.getElementById('fr-close').addEventListener('click', closeFrogger);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeFrogger(); });
+    document.getElementById('fr-play-again').addEventListener('click', () => {
+      document.getElementById('fr-gameover').style.display = 'none';
+      newGame();
+    });
+    document.getElementById('fr-show-lb').addEventListener('click', openLeaderboard);
+
+    newGame();
+  }
+
+  function closeFrogger() {
+    gameActive = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup',   onKeyUp);
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    overlay = null; keys = {};
+  }
+
+  /* ── Canvas sizing ── */
+  function sizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    W = Math.round(rect.width) || 356;
+    H = window.innerHeight < 600 ? 220 : window.innerWidth < 640 ? 340 : 380;
+    canvas.style.height = H + 'px';
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    goalH  = Math.round(H * 0.09);
+    laneH  = Math.round(H * 0.12);
+    safeH  = Math.round(H * 0.09);
+    startH = H - goalH - 6 * laneH - safeH;
+  }
+
+  function laneTop(i)  { return goalH + i * laneH; }
+  function safeTop()   { return goalH + 6 * laneH; }
+  function startTop()  { return safeTop() + safeH; }
+
+  /* ── Game ── */
+  function newGame() {
+    score = 0; lives = 3; crossing = 0;
+    gameActive = true; invincible = 0;
+    initCrossing();
+    updateHUD();
+    let last = 0;
+    function loop(ts) {
+      if (!gameActive) return;
+      const dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+      last = ts;
+      update(dt);
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  }
+
+  function initCrossing() {
+    player = {
+      x: W / 2 - FR_SIZE / 2,
+      y: startTop() + Math.max(0, (startH - FR_SIZE) / 2),
+    };
+    crossingStart = Date.now();
+    buildLanes();
+    spawnItem();
+  }
+
+  function buildLanes() {
+    ctx.font = 'bold 13px "DM Mono",monospace';
+    const pool = buildWordPool();
+    let wi = 0;
+    lanes = LANE_CFGS.map((cfg, i) => {
+      const speed  = cfg.speedFrac * W;
+      const y      = laneTop(i);
+      const midY   = y + laneH / 2;
+      const spacing = 110;
+      const count  = Math.ceil((W + 300) / spacing);
+      const words  = [];
+      for (let j = 0; j < count; j++) {
+        const text = pool[(wi++) % pool.length] || 'STAGE';
+        const tw   = ctx.measureText(text).width;
+        const startX = cfg.dir > 0 ? j * spacing - 150 : W + 150 - j * spacing;
+        words.push({ text, tw, x: startX, y: midY });
+      }
+      return { speed, dir: cfg.dir, y, words };
+    });
+  }
+
+  function spawnItem() {
+    const li   = Math.floor(Math.random() * 6);
+    const lane = lanes[li];
+    itemObj = {
+      x: W * 0.2 + Math.random() * W * 0.6,
+      y: lane.y + laneH / 2,
+      speed: lane.speed, dir: lane.dir, got: false,
+    };
+  }
+
+  function update(dt) {
+    if (invincible > 0) invincible -= dt * 1000;
+
+    const spd = FR_SPEED * dt;
+    if (keys.ArrowLeft  || keys.left)  player.x -= spd;
+    if (keys.ArrowRight || keys.right) player.x += spd;
+    if (keys.ArrowUp    || keys.up)    player.y -= spd;
+    if (keys.ArrowDown  || keys.down)  player.y += spd;
+    player.x = Math.max(0, Math.min(W - FR_SIZE, player.x));
+    player.y = Math.max(0, Math.min(H - FR_SIZE, player.y));
+
+    for (const lane of lanes) {
+      for (const w of lane.words) {
+        w.x += lane.speed * lane.dir * dt;
+        if (lane.dir > 0 && w.x >  W + 150) w.x -= W + 300;
+        if (lane.dir < 0 && w.x < -150)     w.x += W + 300;
+      }
+    }
+    if (!itemObj.got) {
+      itemObj.x += itemObj.speed * itemObj.dir * dt;
+      if (itemObj.dir > 0 && itemObj.x >  W + 60) itemObj.x -= W + 120;
+      if (itemObj.dir < 0 && itemObj.x < -60)     itemObj.x += W + 120;
+    }
+
+    const px1 = player.x + 3, py1 = player.y + 3;
+    const px2 = player.x + FR_SIZE - 3, py2 = player.y + FR_SIZE - 3;
+    const pCy = (py1 + py2) / 2;
+
+    if (pCy < goalH) {
+      const elapsed = (Date.now() - crossingStart) / 1000;
+      crossing++;
+      score += (100 + (crossing - 1) * 10) + (itemObj.got ? 50 : 0) + Math.max(0, Math.floor(50 - elapsed * 2));
+      updateHUD();
+      initCrossing();
+      return;
+    }
+
+    if (!itemObj.got) {
+      if (px1 < itemObj.x + 10 && px2 > itemObj.x - 10 && py1 < itemObj.y + 10 && py2 > itemObj.y - 10)
+        itemObj.got = true;
+    }
+
+    if (invincible <= 0) {
+      for (const lane of lanes) {
+        if (pCy < lane.y || pCy > lane.y + laneH) continue;
+        for (const w of lane.words) {
+          if (px1 < w.x + w.tw / 2 + 2 && px2 > w.x - w.tw / 2 - 2 && py1 < w.y + 8 && py2 > w.y - 8) {
+            hitPlayer(); return;
+          }
+        }
+        break;
+      }
+    }
+
+    const timerEl = document.getElementById('fr-timer');
+    if (timerEl) timerEl.textContent = Math.floor((Date.now() - crossingStart) / 1000);
+  }
+
+  function hitPlayer() {
+    lives--;
+    updateHUD();
+    if (lives <= 0) {
+      gameActive = false;
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      draw();
+      const goDiv = document.getElementById('fr-gameover');
+      if (goDiv) {
+        document.getElementById('fr-go-score').textContent = score;
+        goDiv.style.display = 'flex';
+      }
+    } else {
+      player.x = W / 2 - FR_SIZE / 2;
+      player.y = startTop() + Math.max(0, (startH - FR_SIZE) / 2);
+      crossingStart = Date.now();
+      invincible = 1500;
+    }
+  }
+
+  function updateHUD() {
+    const scoreEl = document.getElementById('fr-score');
+    const livesEl = document.getElementById('fr-lives');
+    if (scoreEl) scoreEl.textContent = score;
+    if (livesEl) livesEl.textContent = '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, 3 - lives));
+  }
+
+  /* ── Drawing ── */
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.fillStyle = 'rgba(212,255,26,0.08)';
+    ctx.fillRect(0, 0, W, goalH);
+    ctx.fillStyle = FR_LIME;
+    ctx.font = 'bold 10px "DM Mono",monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('GOAL', W / 2, goalH / 2);
+
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#121212' : '#181818';
+      ctx.fillRect(0, laneTop(i), W, laneH);
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 9]);
+    for (let i = 1; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, laneTop(i)); ctx.lineTo(W, laneTop(i));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(60,120,60,0.12)';
+    ctx.fillRect(0, safeTop(), W, safeH);
+    ctx.fillStyle = 'rgba(40,40,40,0.5)';
+    ctx.fillRect(0, startTop(), W, startH);
+
+    ctx.font = 'bold 13px "DM Mono",monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const lane of lanes) {
+      ctx.fillStyle = lane.dir > 0 ? FR_PURPLE : FR_LIME;
+      for (const w of lane.words) ctx.fillText(w.text, w.x, w.y);
+    }
+
+    if (!itemObj.got) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '14px Arial,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('★', itemObj.x, itemObj.y);
+    }
+
+    if (invincible <= 0 || Math.floor(invincible / 120) % 2 === 0) {
+      ctx.fillStyle = FR_LIME;
+      ctx.fillRect(player.x, player.y, FR_SIZE, FR_SIZE);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(player.x + 4, player.y + 5, 4, 4);
+      ctx.fillRect(player.x + 12, player.y + 5, 4, 4);
+    }
+  }
+
+  /* ── Controls ── */
+  function onKeyDown(e) {
+    keys[e.key] = true;
+    if (e.key === 'Escape') { closeFrogger(); return; }
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+  }
+  function onKeyUp(e) { keys[e.key] = false; }
+
+  function bindDpad() {
+    const dpad = document.getElementById('fr-dpad');
+    if (!dpad) return;
+    dpad.querySelectorAll('.fr-dpad-btn').forEach(btn => {
+      const dir = btn.dataset.dir;
+      btn.addEventListener('touchstart', e => { e.preventDefault(); keys[dir] = true;  }, { passive: false });
+      btn.addEventListener('touchend',   e => { e.preventDefault(); keys[dir] = false; }, { passive: false });
+      btn.addEventListener('mousedown',  () => { keys[dir] = true;  });
+      btn.addEventListener('mouseup',    () => { keys[dir] = false; });
+      btn.addEventListener('mouseleave', () => { keys[dir] = false; });
+    });
+  }
+
+  /* ── Leaderboard (reuses bi-lbm* CSS) ── */
+  async function openLeaderboard() {
+    const modal = document.createElement('div');
+    modal.className = 'bi-lbm-overlay';
+    modal.id        = 'fr-lbm';
+    modal.innerHTML = `
+      <div class="bi-lbm-card">
+        <button class="bi-lbm-close" id="fr-lbm-close">[ CLOSE ]</button>
+        <div class="bi-lbm-scroll">
+          <div class="bi-lbm-title">FROGGER</div>
+          <div class="bi-lbm-sub">TOP SCORES</div>
+          <ul id="fr-lbm-list" style="list-style:none;padding:0;margin:0">
+            <li class="bi-lbm-row"><span style="color:#333">LOADING…</span></li>
+          </ul>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('fr-lbm-close').addEventListener('click', () => {
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+    });
+    modal.addEventListener('click', e => {
+      if (e.target === modal && modal.parentNode) modal.parentNode.removeChild(modal);
+    });
+
+    if (!db) {
+      document.getElementById('fr-lbm-list').innerHTML =
+        '<li class="bi-lbm-row"><span style="color:#555">Leaderboard unavailable</span></li>';
+      return;
+    }
+
+    try {
+      const snap = await db.collection('frogger_scores').orderBy('score', 'desc').limit(10).get();
+      if (!document.getElementById('fr-lbm')) return;
+      const listEl = document.getElementById('fr-lbm-list');
+      listEl.innerHTML = '';
+
+      const hdr = document.createElement('li');
+      hdr.className = 'bi-lbm-cols';
+      hdr.innerHTML = '<span>#</span><span>NAME</span><span>SCORE</span>';
+      listEl.appendChild(hdr);
+
+      const rows = snap.docs.map(d => d.data());
+      if (!rows.length) {
+        const li = document.createElement('li');
+        li.className = 'bi-lbm-row';
+        li.innerHTML = '<span style="color:#333;font-size:10px">No scores yet — be first!</span>';
+        listEl.appendChild(li);
+      }
+      rows.forEach((row, idx) => {
+        const li = document.createElement('li');
+        li.className = 'bi-lbm-row';
+        li.innerHTML = `<span>${idx + 1}</span><span class="bi-lbm-row-name">${row.name || '?'}</span><span>${row.score || 0}</span>`;
+        listEl.appendChild(li);
+      });
+
+      const lowest = rows.length >= 10 ? (rows[rows.length - 1]?.score ?? 0) : -1;
+      if (score > 0 && (rows.length < 10 || score > lowest)) {
+        const scroll = modal.querySelector('.bi-lbm-scroll');
+        const sub = document.createElement('div');
+        sub.className = 'bi-lbm-qualify';
+        sub.innerHTML = `
+          <p class="bi-lbm-qualify-text">You qualify! Enter your name:</p>
+          <div class="bi-lbm-submit-row">
+            <input class="bi-lbm-input" id="fr-lbm-name" maxlength="20" placeholder="YOUR NAME">
+            <button class="bi-lbm-submit" id="fr-lbm-submit">SUBMIT</button>
+          </div>`;
+        scroll.appendChild(sub);
+        document.getElementById('fr-lbm-submit').addEventListener('click', async () => {
+          const name = (document.getElementById('fr-lbm-name')?.value || '').trim().toUpperCase().slice(0, 20);
+          if (!name) return;
+          await db.collection('frogger_scores').add({ name, score, ts: Date.now() });
+          sub.innerHTML = '<p class="bi-lbm-qualify-text" style="color:#d4ff1a">Score submitted! ✓</p>';
+        });
+      }
+    } catch (err) {
+      console.warn('Frogger leaderboard error:', err);
+      const listEl = document.getElementById('fr-lbm-list');
+      if (listEl) listEl.innerHTML = '<li class="bi-lbm-row"><span style="color:#555">Could not load scores</span></li>';
+    }
+  }
 
 })();
 
