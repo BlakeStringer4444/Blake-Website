@@ -285,6 +285,16 @@ a.tool-card:hover { background: var(--purple); border-color: var(--purple); }
 a.tool-card:hover .tool-name,
 a.tool-card:hover .tool-desc { color: var(--lime); }
 .tool-card.placeholder { opacity: 0.35; cursor: default; }
+a.tool-card.locked { opacity: 0.42; cursor: pointer; }
+a.tool-card.locked:hover { background: none; border-color: rgba(0,0,0,0.15); }
+a.tool-card.locked .tool-name { color: inherit; }
+a.tool-card.locked .tool-desc { color: rgba(0,0,0,0.5); }
+body[data-theme="dark"] a.tool-card.locked:hover { background: none; border-color: rgba(255,255,255,0.12); }
+body[data-theme="dark"] a.tool-card.locked .tool-name { color: #f0f0eb; }
+body[data-theme="dark"] a.tool-card.locked .tool-desc { color: rgba(240,240,235,0.45); }
+body[data-theme="terminal"] a.tool-card.locked:hover { background: none; border-color: rgba(255,255,255,0.15); }
+body[data-theme="terminal"] a.tool-card.locked .tool-name { color: #fff; }
+body[data-theme="terminal"] a.tool-card.locked .tool-desc { color: rgba(255,255,255,0.4); }
 .tool-icon { font-size: 30px; line-height: 1; }
 .tool-name {
   font-family: 'DM Mono', monospace;
@@ -3469,6 +3479,12 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
           <span class="tool-name">2026 Theatredex</span>
           <span class="tool-desc">Browse & filter Victorian community theatre productions</span>
           <span class="tool-tag">Live</span>
+        </a>
+
+        <a id="vdldex-card" class="tool-card locked" href="/tools/vdldex" onclick="return vdldexClick(event)">
+          <span class="tool-icon">🗂️</span>
+          <span class="tool-name">VDLdex</span>
+          <span class="tool-desc" id="vdldex-desc">🔒 Coming Soon</span>
         </a>
 
         <button id="ee-spoilers-btn" class="tool-card">
@@ -6910,6 +6926,35 @@ if (siteName) {
   }
   setupSort('act-result-th', 'act-acc-table');
   setupSort('snd-result-th', 'snd-acc-table');
+})();
+
+/* ── VDLdex 50-click unlock ── */
+(function () {
+  const UNLOCK_KEY = 'vdldex_unlocked';
+  const NEEDED = 50;
+  let clicks = 0;
+  const card = document.getElementById('vdldex-card');
+  const desc = document.getElementById('vdldex-desc');
+  if (!card) return;
+
+  function unlock() {
+    card.classList.remove('locked');
+    desc.textContent = 'Search & filter VDL entries 1997–2026';
+    localStorage.setItem(UNLOCK_KEY, '1');
+  }
+
+  if (localStorage.getItem(UNLOCK_KEY)) unlock();
+
+  window.vdldexClick = function (e) {
+    if (!card.classList.contains('locked')) return true;
+    e.preventDefault();
+    clicks++;
+    const rem = NEEDED - clicks;
+    if (rem <= 0) {
+      unlock();
+    }
+    return false;
+  };
 })();
 
 </script>
