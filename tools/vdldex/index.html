@@ -14,7 +14,8 @@
     :root {
       --lime:   #D4FF1A;
       --purple: #9933FF;
-      --bg:     #f8f8f5;
+      --black:  #0a0a0a;
+      --bg:     #f5f5f0;
       --bg2:    #ffffff;
       --text:   #111111;
       --dim:    rgba(0,0,0,0.42);
@@ -45,7 +46,7 @@
       --th-txt: #D4FF1A;
     }
 
-    html { font-size: 14px; }
+    html { font-size: 15px; }
     body {
       font-family: 'DM Mono', monospace;
       background: var(--bg);
@@ -54,78 +55,124 @@
       transition: background 0.2s, color 0.2s;
     }
 
-    /* ── TOPBAR ── */
-    .vd-topbar {
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 0 20px; height: 54px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
+    /* ── HEADER (Theatredex style) ── */
+    .vd-header {
+      background: var(--black);
+      padding: 24px 48px 28px;
     }
-    .vd-logo {
-      display: flex; flex-direction: column; gap: 1px;
+    .vd-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
-    .vd-logo-title {
+    .vd-back {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(212,255,26,0.5);
+      text-decoration: none;
+      transition: color 0.2s;
+      padding-top: 4px;
+    }
+    .vd-back:hover { color: var(--lime); }
+    .vd-header-btns {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .vd-header-btn {
+      background: none;
+      border: 1px solid rgba(212,255,26,0.25);
+      color: rgba(212,255,26,0.7);
+      width: 44px; height: 44px;
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      line-height: 1;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .vd-header-btn:hover { border-color: var(--lime); color: var(--lime); }
+    #vd-font-btn { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+    #vd-font-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
+    #vd-theme-btn { font-size: 16px; }
+    .vd-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 26px; letter-spacing: 5px;
-      color: var(--lime); line-height: 1;
+      font-size: clamp(52px, 9vw, 104px);
+      letter-spacing: 6px;
+      line-height: 1;
+      color: var(--lime);
     }
-    .vd-logo-sub {
-      font-size: 8px; letter-spacing: 3px; color: var(--dim);
-      text-transform: uppercase;
+    .vd-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(212,255,26,0.5);
+      margin-top: 6px;
     }
-    .vd-topbar-right { display: flex; align-items: center; gap: 8px; }
-    .vd-btn {
-      background: none; border: 1px solid var(--border); color: var(--dim);
-      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
-      padding: 5px 10px; cursor: pointer; border-radius: 2px;
-      transition: border-color 0.15s, color 0.15s;
-      white-space: nowrap; text-decoration: none; display: inline-block;
-    }
-    .vd-btn:hover { border-color: var(--purple); color: var(--purple); }
-    [data-theme="terminal"] .vd-btn { border-color: rgba(212,255,26,0.22); color: rgba(212,255,26,0.45); }
-    [data-theme="terminal"] .vd-btn:hover { border-color: var(--lime); color: var(--lime); }
-    .vd-btn.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
-    [data-theme="terminal"] .vd-btn.active { background: var(--lime); border-color: var(--lime); color: #000; }
 
     /* ── STATS ── */
     .vd-stats {
-      display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
-      padding: 10px 20px;
+      display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+      padding: 14px 48px;
       background: var(--bg2); border-bottom: 1px solid var(--border);
     }
     .vd-stat {
-      font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
     }
     .vd-stat strong { color: var(--text); font-weight: 500; }
 
     /* ── CONTROLS ── */
     .vd-controls {
-      padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;
+      padding: 18px 48px; display: flex; flex-direction: column; gap: 14px;
+      background: var(--bg2);
       border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
     }
     .vd-search-wrap { position: relative; }
     .vd-search {
-      width: 100%; background: var(--bg2);
+      width: 100%; background: var(--bg);
       border: 1px solid var(--border); border-radius: 2px;
       color: var(--text); font-family: 'DM Mono', monospace;
-      font-size: 12px; padding: 10px 36px 10px 12px;
+      font-size: 13px; padding: 11px 38px 11px 14px;
       outline: none; transition: border-color 0.15s;
     }
     .vd-search::placeholder { color: var(--dim); }
     .vd-search:focus { border-color: var(--purple); }
     [data-theme="terminal"] .vd-search:focus { border-color: var(--lime); }
     .vd-search-clear {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
       background: none; border: none; color: var(--dim); font-size: 14px;
       cursor: pointer; display: none; padding: 0; line-height: 1;
     }
+
+    /* Company dropdown */
+    .vd-select-wrap { display: flex; align-items: center; gap: 10px; }
+    .vd-filter-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); flex-shrink: 0; text-transform: uppercase; }
+    .vd-select {
+      flex: 1; max-width: 320px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 2px;
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px;
+      padding: 8px 12px; outline: none; cursor: pointer;
+      transition: border-color 0.15s; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(0,0,0,0.3)'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      padding-right: 30px;
+    }
+    [data-theme="dark"] .vd-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");
+    }
+    [data-theme="terminal"] .vd-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(212,255,26,0.4)'/%3E%3C/svg%3E");
+    }
+    .vd-select:focus { border-color: var(--purple); }
+    [data-theme="terminal"] .vd-select:focus { border-color: var(--lime); }
+    .vd-select option { background: var(--bg2); color: var(--text); }
+
     .vd-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-    .vd-filter-label { font-size: 9px; letter-spacing: 2px; color: var(--dim); flex-shrink: 0; margin-right: 2px; }
     .vd-chip {
       background: none; border: 1px solid var(--border); color: var(--dim);
-      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
-      text-transform: uppercase; padding: 4px 10px; cursor: pointer; border-radius: 2px;
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 5px 12px; cursor: pointer; border-radius: 2px;
       transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap;
     }
     .vd-chip:hover { border-color: var(--purple); color: var(--purple); }
@@ -137,27 +184,78 @@
     /* ── RESULTS BAR ── */
     .vd-results-bar {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 8px 20px; border-bottom: 1px solid var(--border);
+      padding: 10px 48px; border-bottom: 1px solid var(--border);
     }
-    .vd-count { font-size: 9px; letter-spacing: 2px; color: var(--dim); }
+    .vd-count { font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+    .vd-bar-right { display: flex; align-items: center; gap: 12px; }
     .vd-clear-all {
       background: none; border: none; color: var(--dim);
-      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
       cursor: pointer; text-decoration: underline; display: none; padding: 0;
     }
     .vd-clear-all:hover { color: var(--purple); }
     [data-theme="terminal"] .vd-clear-all:hover { color: var(--lime); }
+    .vd-insights-toggle {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; padding: 5px 12px; cursor: pointer; border-radius: 2px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .vd-insights-toggle:hover { border-color: var(--purple); color: var(--purple); }
+    .vd-insights-toggle.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+    [data-theme="terminal"] .vd-insights-toggle:hover { border-color: var(--lime); color: var(--lime); }
+    [data-theme="terminal"] .vd-insights-toggle.active { background: var(--lime); border-color: var(--lime); color: #000; }
+
+    /* ── INSIGHTS PANEL ── */
+    .vd-insights {
+      display: none;
+      padding: 24px 48px 28px;
+      background: var(--bg2);
+      border-bottom: 2px solid var(--border);
+    }
+    .vd-insights.open { display: block; }
+    .vd-insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .vd-ins-card {
+      border: 1px solid var(--border); border-radius: 2px; padding: 18px 20px;
+    }
+    .vd-ins-title {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--purple); margin-bottom: 14px; font-weight: 500;
+    }
+    [data-theme="terminal"] .vd-ins-title { color: var(--lime); }
+    .vd-ins-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .vd-ins-row:last-child { border-bottom: none; }
+    .vd-ins-name { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vd-ins-count {
+      font-size: 11px; letter-spacing: 1px; color: var(--purple); flex-shrink: 0; font-weight: 500;
+    }
+    [data-theme="terminal"] .vd-ins-count { color: var(--lime); }
+    .vd-ins-bar-track {
+      height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px;
+    }
+    .vd-ins-bar-fill {
+      height: 3px; background: var(--purple); border-radius: 2px;
+    }
+    [data-theme="terminal"] .vd-ins-bar-fill { background: var(--lime); }
 
     /* ── TABLE ── */
     .vd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .vd-table {
       width: 100%; border-collapse: collapse;
-      font-family: 'DM Mono', monospace; font-size: 12px; min-width: 720px;
+      font-family: 'DM Mono', monospace; font-size: 13px; min-width: 720px;
     }
     .vd-table thead th {
       background: var(--th-bg); color: var(--th-txt);
-      font-size: 9px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500;
-      padding: 10px 12px; text-align: left; white-space: nowrap;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500;
+      padding: 12px 14px; text-align: left; white-space: nowrap;
       cursor: pointer; user-select: none; transition: opacity 0.15s;
     }
     .vd-table thead th:hover { opacity: 0.82; }
@@ -168,12 +266,12 @@
     .vd-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
     .vd-table tbody tr:nth-child(even) { background: var(--row-alt); }
     .vd-table tbody tr:hover { background: var(--row-hover); }
-    .vd-table tbody td { padding: 10px 12px; vertical-align: top; line-height: 1.45; color: var(--text); }
-    .vd-table tbody td.vd-year { color: var(--dim); font-size: 11px; white-space: nowrap; width: 58px; }
+    .vd-table tbody td { padding: 12px 14px; vertical-align: top; line-height: 1.5; color: var(--text); }
+    .vd-table tbody td.vd-year { color: var(--dim); font-size: 12px; white-space: nowrap; width: 64px; }
     .vd-table tbody td.vd-production { font-weight: 500; }
     .vd-genre-badge {
-      display: inline-block; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 2px 6px; border-radius: 2px;
+      display: inline-block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
       background: rgba(153,51,255,0.1); color: var(--purple); white-space: nowrap;
     }
     [data-theme="dark"] .vd-genre-badge { background: rgba(153,51,255,0.15); }
@@ -183,23 +281,25 @@
     /* ── STATES ── */
     .vd-message {
       padding: 60px 20px; text-align: center;
-      font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim);
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim);
     }
     .vd-message.loading { animation: vd-pulse 1.5s ease-in-out infinite; }
     @keyframes vd-pulse { 0%,100%{opacity:0.35} 50%{opacity:1} }
 
-    /* ── MOBILE CARDS ── */
+    /* ── MOBILE ── */
     @media (max-width: 639px) {
-      .vd-topbar { padding: 0 14px; }
-      .vd-logo-sub { display: none; }
-      .vd-stats { padding: 10px 14px; gap: 14px; }
-      .vd-controls { padding: 12px 14px; }
-      .vd-results-bar { padding: 8px 14px; }
+      .vd-header { padding: 18px 16px 22px; }
+      .vd-stats { padding: 12px 16px; gap: 16px; }
+      .vd-controls { padding: 14px 16px; position: static; }
+      .vd-results-bar { padding: 10px 16px; }
+      .vd-insights { padding: 16px 16px 20px; }
+      .vd-select-wrap { flex-wrap: wrap; }
+      .vd-select { max-width: 100%; }
       .vd-table-wrap { overflow-x: unset; }
       .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; }
       .vd-table thead { display: none; }
       .vd-table tbody tr {
-        padding: 14px 14px; border-bottom: 1px solid var(--border);
+        padding: 14px 16px; border-bottom: 1px solid var(--border);
         display: flex; flex-direction: column; gap: 4px;
       }
       .vd-table tbody td { padding: 0; border: none; }
@@ -207,36 +307,53 @@
         font-size: 9px; letter-spacing: 2px; color: var(--dim);
         display: inline; margin-right: 8px;
       }
-      .vd-table tbody td.vd-production { font-size: 13px; margin-bottom: 2px; }
-      .vd-table tbody td.vd-company { font-size: 11px; color: var(--dim); }
+      .vd-table tbody td.vd-production { font-size: 14px; margin-bottom: 2px; }
+      .vd-table tbody td.vd-company { font-size: 12px; color: var(--dim); }
       .vd-table tbody td.vd-genre { margin-top: 2px; }
       .vd-table tbody td.vd-director::before { content: 'Dir · '; color: var(--dim); }
       .vd-table tbody td.vd-playwright::before { content: 'By · '; color: var(--dim); }
+      .vd-insights-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .vd-header { padding: 22px 28px 26px; }
+      .vd-stats { padding: 12px 28px; }
+      .vd-controls { padding: 16px 28px; }
+      .vd-results-bar { padding: 10px 28px; }
+      .vd-insights { padding: 20px 28px 24px; }
     }
   </style>
 </head>
 <body>
 
-<div class="vd-topbar">
-  <div class="vd-logo">
-    <span class="vd-logo-title">VDLdex</span>
-    <span class="vd-logo-sub">VDL Entrants Archive</span>
+<!-- HEADER -->
+<header class="vd-header">
+  <div class="vd-header-top">
+    <a class="vd-back" href="/">← blakestringer.com</a>
+    <div class="vd-header-btns">
+      <button class="vd-header-btn" id="vd-font-btn">Aa</button>
+      <button class="vd-header-btn" id="vd-theme-btn">☾</button>
+    </div>
   </div>
-  <div class="vd-topbar-right">
-    <button class="vd-btn" id="vd-font-btn">Aa</button>
-    <button class="vd-btn" id="vd-theme-btn">☾</button>
-    <a class="vd-btn" href="/">← Blake Stringer</a>
-  </div>
-</div>
+  <div class="vd-title">VDLdex</div>
+  <div class="vd-subtitle">VDL Entrants Archive · 1997–2026</div>
+</header>
 
+<!-- STATS -->
 <div class="vd-stats" id="vd-stats">
-  <span class="vd-stat vd-message loading">Loading…</span>
+  <span class="vd-stat vd-message loading" style="padding:0;letter-spacing:2px">Loading…</span>
 </div>
 
+<!-- CONTROLS -->
 <div class="vd-controls">
   <div class="vd-search-wrap">
     <input id="vd-search" class="vd-search" type="search" placeholder="Search production, company, director, playwright…" autocomplete="off" spellcheck="false">
     <button id="vd-search-clear" class="vd-search-clear" aria-label="Clear">✕</button>
+  </div>
+  <div class="vd-select-wrap">
+    <span class="vd-filter-label">Company</span>
+    <select id="vd-company-select" class="vd-select">
+      <option value="all">All Companies</option>
+    </select>
   </div>
   <div class="vd-filter-row" id="vd-genre-row">
     <span class="vd-filter-label">Genre</span>
@@ -251,11 +368,23 @@
   </div>
 </div>
 
+<!-- RESULTS BAR -->
 <div class="vd-results-bar">
   <span class="vd-count" id="vd-count">—</span>
-  <button class="vd-clear-all" id="vd-clear-all">Clear all filters</button>
+  <div class="vd-bar-right">
+    <button class="vd-clear-all" id="vd-clear-all">Clear all filters</button>
+    <button class="vd-insights-toggle" id="vd-insights-toggle">Insights ▾</button>
+  </div>
 </div>
 
+<!-- INSIGHTS PANEL -->
+<div class="vd-insights" id="vd-insights">
+  <div class="vd-insights-grid" id="vd-insights-grid">
+    <div class="vd-ins-card"><div class="vd-ins-title">Loading…</div></div>
+  </div>
+</div>
+
+<!-- TABLE -->
 <div class="vd-table-wrap">
   <table class="vd-table">
     <thead>
@@ -312,9 +441,9 @@
 
   let allRows = [];
   let sortCol = 'YEAR', sortAsc = false;
-  let activeGenre = 'all', activeDecade = 'all', query = '';
+  let activeGenre = 'all', activeDecade = 'all', activeCompany = 'all', query = '';
 
-  /* CSV parser — handles quoted fields with commas */
+  /* CSV parser */
   function parseCSV(text) {
     const lines = text.trim().split(/\r?\n/);
     const headers = splitLine(lines[0]);
@@ -345,6 +474,8 @@
       allRows = parseCSV(await res.text());
       buildStats();
       buildGenreChips();
+      buildCompanyDropdown();
+      buildInsights();
       render();
     } catch (e) {
       document.getElementById('vd-stats').innerHTML = '<span class="vd-stat" style="color:#ff5555;letter-spacing:1px">Failed to load — check connection and try refreshing</span>';
@@ -352,19 +483,33 @@
     }
   }
 
-  /* Stats */
+  /* Stats — no genres count */
   function buildStats() {
     const years = allRows.map(r => parseInt(r.YEAR)).filter(Boolean);
     const cos   = new Set(allRows.map(r => r.COMPANY).filter(Boolean));
-    const genres = new Set(allRows.map(r => r.GENRE).filter(Boolean));
     const minY = Math.min(...years), maxY = Math.max(...years);
     document.getElementById('vd-stats').innerHTML = `
       <span class="vd-stat"><strong>${allRows.length}</strong> productions</span>
       <span class="vd-stat"><strong>${minY}–${maxY}</strong></span>
       <span class="vd-stat"><strong>${cos.size}</strong> companies</span>
-      <span class="vd-stat"><strong>${genres.size}</strong> genres</span>
     `;
   }
+
+  /* Company dropdown */
+  function buildCompanyDropdown() {
+    const companies = [...new Set(allRows.map(r => r.COMPANY).filter(Boolean))].sort();
+    const sel = document.getElementById('vd-company-select');
+    companies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('vd-company-select').addEventListener('change', function () {
+    activeCompany = this.value;
+    render();
+  });
 
   /* Genre chips */
   function buildGenreChips() {
@@ -404,6 +549,58 @@
     return '';
   }
 
+  /* ── Insights ── */
+  function freq(rows, key) {
+    const map = {};
+    rows.forEach(r => {
+      const val = (r[key] || '').trim();
+      if (val) map[val] = (map[val] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
+
+  function buildInsights() {
+    const genreList = freq(allRows, 'GENRE');
+    const dirList   = freq(allRows, 'DIRECTOR').slice(0, 10);
+    const pwList    = freq(allRows, 'PLAYWRIGHT').slice(0, 10);
+    const prodList  = freq(allRows, 'PRODUCTION').filter(([,n]) => n > 1).slice(0, 10);
+
+    const maxGenre = genreList[0]?.[1] || 1;
+    const maxDir   = dirList[0]?.[1] || 1;
+    const maxPw    = pwList[0]?.[1] || 1;
+    const maxProd  = prodList[0]?.[1] || 1;
+
+    function card(title, entries, max) {
+      if (!entries.length) return `<div class="vd-ins-card"><div class="vd-ins-title">${title}</div><div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">No data</span></div></div>`;
+      return `<div class="vd-ins-card">
+        <div class="vd-ins-title">${title}</div>
+        ${entries.map(([name, n]) => `
+          <div class="vd-ins-row">
+            <span class="vd-ins-name" title="${name}">${name}</span>
+            <span class="vd-ins-count">${n}×</span>
+          </div>
+          <div class="vd-ins-bar-track"><div class="vd-ins-bar-fill" style="width:${Math.round(n/max*100)}%"></div></div>
+        `).join('')}
+      </div>`;
+    }
+
+    document.getElementById('vd-insights-grid').innerHTML =
+      card('Genre Breakdown', genreList, maxGenre) +
+      card('Top Directors', dirList, maxDir) +
+      card('Top Playwrights', pwList, maxPw) +
+      (prodList.length
+        ? card('Productions Entered Multiple Times', prodList, maxProd)
+        : `<div class="vd-ins-card"><div class="vd-ins-title">Productions Entered Multiple Times</div><div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">None found</span></div></div>`);
+  }
+
+  /* Insights toggle */
+  document.getElementById('vd-insights-toggle').addEventListener('click', function () {
+    const panel = document.getElementById('vd-insights');
+    const open = panel.classList.toggle('open');
+    this.classList.toggle('active', open);
+    this.textContent = open ? 'Insights ▴' : 'Insights ▾';
+  });
+
   /* Sort */
   document.querySelectorAll('.vd-table thead th').forEach(th => {
     th.addEventListener('click', () => {
@@ -442,13 +639,14 @@
   document.getElementById('vd-clear-all').addEventListener('click', () => {
     searchEl.value = ''; query = '';
     clearBtn.style.display = 'none';
-    activeGenre = 'all'; activeDecade = 'all';
+    activeGenre = 'all'; activeDecade = 'all'; activeCompany = 'all';
+    document.getElementById('vd-company-select').value = 'all';
     document.querySelectorAll('#vd-genre-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.genre === 'all'));
     document.querySelectorAll('#vd-decade-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.decade === 'all'));
     render();
   });
 
-  /* Highlight search term */
+  /* Highlight */
   function hl(text) {
     if (!query || !text) return text || '';
     const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -458,8 +656,9 @@
   /* Render */
   function render() {
     const rows = allRows.filter(r => {
-      if (activeGenre  !== 'all' && r.GENRE !== activeGenre) return false;
-      if (activeDecade !== 'all' && decadeOf(r.YEAR) !== activeDecade) return false;
+      if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)   return false;
+      if (activeDecade  !== 'all' && decadeOf(r.YEAR) !== activeDecade) return false;
+      if (activeCompany !== 'all' && r.COMPANY !== activeCompany) return false;
       if (query) {
         const hay = [r.PRODUCTION, r.COMPANY, r.DIRECTOR, r.PLAYWRIGHT].join(' ').toLowerCase();
         if (!hay.includes(query)) return false;
@@ -474,7 +673,7 @@
       return sortAsc ? cmp : -cmp;
     });
 
-    const filtersActive = query || activeGenre !== 'all' || activeDecade !== 'all';
+    const filtersActive = query || activeGenre !== 'all' || activeDecade !== 'all' || activeCompany !== 'all';
     document.getElementById('vd-clear-all').style.display = filtersActive ? 'inline' : 'none';
     document.getElementById('vd-count').textContent = `${rows.length} result${rows.length !== 1 ? 's' : ''}`;
 
