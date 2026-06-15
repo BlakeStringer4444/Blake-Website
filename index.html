@@ -6950,8 +6950,6 @@ if (siteName) {
     const rem = NEEDED - clicks;
     if (rem <= 0) {
       unlock();
-    } else {
-      desc.textContent = '🔒 ' + rem + ' more click' + (rem === 1 ? '' : 's') + '…';
     }
     return false;
   };
