@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VDLdex — Blake Stringer</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --lime:   #D4FF1A;
+      --purple: #9933FF;
+      --bg:     #f8f8f5;
+      --bg2:    #ffffff;
+      --text:   #111111;
+      --dim:    rgba(0,0,0,0.42);
+      --border: rgba(0,0,0,0.1);
+      --row-alt:   rgba(0,0,0,0.025);
+      --row-hover: rgba(153,51,255,0.04);
+      --th-bg:  var(--purple);
+      --th-txt: var(--lime);
+    }
+    [data-theme="dark"] {
+      --bg:     #0e0e0e;
+      --bg2:    #141414;
+      --text:   rgba(255,255,255,0.85);
+      --dim:    rgba(255,255,255,0.35);
+      --border: rgba(255,255,255,0.08);
+      --row-alt:   rgba(255,255,255,0.025);
+      --row-hover: rgba(153,51,255,0.07);
+    }
+    [data-theme="terminal"] {
+      --bg:     #000000;
+      --bg2:    #050505;
+      --text:   #D4FF1A;
+      --dim:    rgba(212,255,26,0.4);
+      --border: rgba(212,255,26,0.14);
+      --row-alt:   rgba(212,255,26,0.022);
+      --row-hover: rgba(212,255,26,0.05);
+      --th-bg:  #000;
+      --th-txt: #D4FF1A;
+    }
+
+    html { font-size: 14px; }
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* ── TOPBAR ── */
+    .vd-topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 0 20px; height: 54px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    .vd-logo {
+      display: flex; flex-direction: column; gap: 1px;
+    }
+    .vd-logo-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px; letter-spacing: 5px;
+      color: var(--lime); line-height: 1;
+    }
+    .vd-logo-sub {
+      font-size: 8px; letter-spacing: 3px; color: var(--dim);
+      text-transform: uppercase;
+    }
+    .vd-topbar-right { display: flex; align-items: center; gap: 8px; }
+    .vd-btn {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      padding: 5px 10px; cursor: pointer; border-radius: 2px;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap; text-decoration: none; display: inline-block;
+    }
+    .vd-btn:hover { border-color: var(--purple); color: var(--purple); }
+    [data-theme="terminal"] .vd-btn { border-color: rgba(212,255,26,0.22); color: rgba(212,255,26,0.45); }
+    [data-theme="terminal"] .vd-btn:hover { border-color: var(--lime); color: var(--lime); }
+    .vd-btn.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+    [data-theme="terminal"] .vd-btn.active { background: var(--lime); border-color: var(--lime); color: #000; }
+
+    /* ── STATS ── */
+    .vd-stats {
+      display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+      padding: 10px 20px;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+    }
+    .vd-stat {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
+    }
+    .vd-stat strong { color: var(--text); font-weight: 500; }
+
+    /* ── CONTROLS ── */
+    .vd-controls {
+      padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .vd-search-wrap { position: relative; }
+    .vd-search {
+      width: 100%; background: var(--bg2);
+      border: 1px solid var(--border); border-radius: 2px;
+      color: var(--text); font-family: 'DM Mono', monospace;
+      font-size: 12px; padding: 10px 36px 10px 12px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .vd-search::placeholder { color: var(--dim); }
+    .vd-search:focus { border-color: var(--purple); }
+    [data-theme="terminal"] .vd-search:focus { border-color: var(--lime); }
+    .vd-search-clear {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--dim); font-size: 14px;
+      cursor: pointer; display: none; padding: 0; line-height: 1;
+    }
+    .vd-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .vd-filter-label { font-size: 9px; letter-spacing: 2px; color: var(--dim); flex-shrink: 0; margin-right: 2px; }
+    .vd-chip {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 4px 10px; cursor: pointer; border-radius: 2px;
+      transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap;
+    }
+    .vd-chip:hover { border-color: var(--purple); color: var(--purple); }
+    .vd-chip.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+    [data-theme="terminal"] .vd-chip { border-color: rgba(212,255,26,0.18); color: rgba(212,255,26,0.42); }
+    [data-theme="terminal"] .vd-chip:hover { border-color: var(--lime); color: var(--lime); }
+    [data-theme="terminal"] .vd-chip.active { background: var(--lime); border-color: var(--lime); color: #000; }
+
+    /* ── RESULTS BAR ── */
+    .vd-results-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 8px 20px; border-bottom: 1px solid var(--border);
+    }
+    .vd-count { font-size: 9px; letter-spacing: 2px; color: var(--dim); }
+    .vd-clear-all {
+      background: none; border: none; color: var(--dim);
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+      cursor: pointer; text-decoration: underline; display: none; padding: 0;
+    }
+    .vd-clear-all:hover { color: var(--purple); }
+    [data-theme="terminal"] .vd-clear-all:hover { color: var(--lime); }
+
+    /* ── TABLE ── */
+    .vd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .vd-table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'DM Mono', monospace; font-size: 12px; min-width: 720px;
+    }
+    .vd-table thead th {
+      background: var(--th-bg); color: var(--th-txt);
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500;
+      padding: 10px 12px; text-align: left; white-space: nowrap;
+      cursor: pointer; user-select: none; transition: opacity 0.15s;
+    }
+    .vd-table thead th:hover { opacity: 0.82; }
+    .vd-table thead th.vd-sorted { color: #fff; }
+    [data-theme="terminal"] .vd-table thead th.vd-sorted { color: #000; }
+    .vd-sort-arrow { margin-left: 4px; font-size: 8px; opacity: 0.45; }
+    .vd-table thead th.vd-sorted .vd-sort-arrow { opacity: 1; }
+    .vd-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
+    .vd-table tbody tr:nth-child(even) { background: var(--row-alt); }
+    .vd-table tbody tr:hover { background: var(--row-hover); }
+    .vd-table tbody td { padding: 10px 12px; vertical-align: top; line-height: 1.45; color: var(--text); }
+    .vd-table tbody td.vd-year { color: var(--dim); font-size: 11px; white-space: nowrap; width: 58px; }
+    .vd-table tbody td.vd-production { font-weight: 500; }
+    .vd-genre-badge {
+      display: inline-block; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 2px;
+      background: rgba(153,51,255,0.1); color: var(--purple); white-space: nowrap;
+    }
+    [data-theme="dark"] .vd-genre-badge { background: rgba(153,51,255,0.15); }
+    [data-theme="terminal"] .vd-genre-badge { background: rgba(212,255,26,0.1); color: var(--lime); }
+    mark { background: rgba(212,255,26,0.3); color: inherit; border-radius: 1px; }
+
+    /* ── STATES ── */
+    .vd-message {
+      padding: 60px 20px; text-align: center;
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim);
+    }
+    .vd-message.loading { animation: vd-pulse 1.5s ease-in-out infinite; }
+    @keyframes vd-pulse { 0%,100%{opacity:0.35} 50%{opacity:1} }
+
+    /* ── MOBILE CARDS ── */
+    @media (max-width: 639px) {
+      .vd-topbar { padding: 0 14px; }
+      .vd-logo-sub { display: none; }
+      .vd-stats { padding: 10px 14px; gap: 14px; }
+      .vd-controls { padding: 12px 14px; }
+      .vd-results-bar { padding: 8px 14px; }
+      .vd-table-wrap { overflow-x: unset; }
+      .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; }
+      .vd-table thead { display: none; }
+      .vd-table tbody tr {
+        padding: 14px 14px; border-bottom: 1px solid var(--border);
+        display: flex; flex-direction: column; gap: 4px;
+      }
+      .vd-table tbody td { padding: 0; border: none; }
+      .vd-table tbody td.vd-year {
+        font-size: 9px; letter-spacing: 2px; color: var(--dim);
+        display: inline; margin-right: 8px;
+      }
+      .vd-table tbody td.vd-production { font-size: 13px; margin-bottom: 2px; }
+      .vd-table tbody td.vd-company { font-size: 11px; color: var(--dim); }
+      .vd-table tbody td.vd-genre { margin-top: 2px; }
+      .vd-table tbody td.vd-director::before { content: 'Dir · '; color: var(--dim); }
+      .vd-table tbody td.vd-playwright::before { content: 'By · '; color: var(--dim); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="vd-topbar">
+  <div class="vd-logo">
+    <span class="vd-logo-title">VDLdex</span>
+    <span class="vd-logo-sub">VDL Entrants Archive</span>
+  </div>
+  <div class="vd-topbar-right">
+    <button class="vd-btn" id="vd-font-btn">Aa</button>
+    <button class="vd-btn" id="vd-theme-btn">☾</button>
+    <a class="vd-btn" href="/">← Blake Stringer</a>
+  </div>
+</div>
+
+<div class="vd-stats" id="vd-stats">
+  <span class="vd-stat vd-message loading">Loading…</span>
+</div>
+
+<div class="vd-controls">
+  <div class="vd-search-wrap">
+    <input id="vd-search" class="vd-search" type="search" placeholder="Search production, company, director, playwright…" autocomplete="off" spellcheck="false">
+    <button id="vd-search-clear" class="vd-search-clear" aria-label="Clear">✕</button>
+  </div>
+  <div class="vd-filter-row" id="vd-genre-row">
+    <span class="vd-filter-label">Genre</span>
+  </div>
+  <div class="vd-filter-row" id="vd-decade-row">
+    <span class="vd-filter-label">Decade</span>
+    <button class="vd-chip active" data-decade="all">All</button>
+    <button class="vd-chip" data-decade="1990s">1990s</button>
+    <button class="vd-chip" data-decade="2000s">2000s</button>
+    <button class="vd-chip" data-decade="2010s">2010s</button>
+    <button class="vd-chip" data-decade="2020s">2020s</button>
+  </div>
+</div>
+
+<div class="vd-results-bar">
+  <span class="vd-count" id="vd-count">—</span>
+  <button class="vd-clear-all" id="vd-clear-all">Clear all filters</button>
+</div>
+
+<div class="vd-table-wrap">
+  <table class="vd-table">
+    <thead>
+      <tr>
+        <th data-col="YEAR" class="vd-sorted">Year <span class="vd-sort-arrow">↓</span></th>
+        <th data-col="PRODUCTION">Production <span class="vd-sort-arrow">↕</span></th>
+        <th data-col="COMPANY">Company <span class="vd-sort-arrow">↕</span></th>
+        <th data-col="GENRE">Genre <span class="vd-sort-arrow">↕</span></th>
+        <th data-col="DIRECTOR">Director <span class="vd-sort-arrow">↕</span></th>
+        <th data-col="PLAYWRIGHT">Playwright <span class="vd-sort-arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="vd-tbody">
+      <tr><td colspan="6" class="vd-message loading">Loading data…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+/* ── Theme ── */
+(function () {
+  const CYCLE = ['light','dark','terminal'];
+  const ICONS = { light:'☾', dark:'○', terminal:'⚙' };
+  let t = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'dark';
+  function apply(v) {
+    t = v;
+    if (v === 'light') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', v);
+    document.getElementById('vd-theme-btn').textContent = ICONS[v] || '☾';
+    if (v === 'terminal') { sessionStorage.setItem('theme', v); }
+    else { localStorage.setItem('theme', v); sessionStorage.removeItem('theme'); }
+  }
+  apply(t);
+  document.getElementById('vd-theme-btn').addEventListener('click', () => {
+    apply(CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]);
+  });
+})();
+
+/* ── Font zoom ── */
+(function () {
+  let z = localStorage.getItem('font-zoom') === '1';
+  const btn = document.getElementById('vd-font-btn');
+  function apply() {
+    document.documentElement.style.zoom = z ? '1.25' : '';
+    btn.classList.toggle('active', z);
+  }
+  apply();
+  btn.addEventListener('click', () => { z = !z; localStorage.setItem('font-zoom', z ? '1' : '0'); apply(); });
+})();
+
+/* ── Core ── */
+(function () {
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQhjOV8zhbwgLAtaeJyXc_MfI7cQ0DAkIwwSQgvstW2XKF6LuizptizLPrs9GPWP4BEn32RXv5k7yy/pub?gid=61495691&single=true&output=csv';
+
+  let allRows = [];
+  let sortCol = 'YEAR', sortAsc = false;
+  let activeGenre = 'all', activeDecade = 'all', query = '';
+
+  /* CSV parser — handles quoted fields with commas */
+  function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    const headers = splitLine(lines[0]);
+    return lines.slice(1).map(line => {
+      const vals = splitLine(line);
+      const row = {};
+      headers.forEach((h, i) => { row[h.trim()] = (vals[i] || '').trim(); });
+      return row;
+    }).filter(r => r.YEAR || r.PRODUCTION);
+  }
+
+  function splitLine(line) {
+    const out = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { out.push(cur); cur = ''; }
+      else cur += line[i];
+    }
+    out.push(cur);
+    return out;
+  }
+
+  /* Fetch */
+  async function load() {
+    try {
+      const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      allRows = parseCSV(await res.text());
+      buildStats();
+      buildGenreChips();
+      render();
+    } catch (e) {
+      document.getElementById('vd-stats').innerHTML = '<span class="vd-stat" style="color:#ff5555;letter-spacing:1px">Failed to load — check connection and try refreshing</span>';
+      document.getElementById('vd-tbody').innerHTML = '<tr><td colspan="6" class="vd-message">Could not load data</td></tr>';
+    }
+  }
+
+  /* Stats */
+  function buildStats() {
+    const years = allRows.map(r => parseInt(r.YEAR)).filter(Boolean);
+    const cos   = new Set(allRows.map(r => r.COMPANY).filter(Boolean));
+    const genres = new Set(allRows.map(r => r.GENRE).filter(Boolean));
+    const minY = Math.min(...years), maxY = Math.max(...years);
+    document.getElementById('vd-stats').innerHTML = `
+      <span class="vd-stat"><strong>${allRows.length}</strong> productions</span>
+      <span class="vd-stat"><strong>${minY}–${maxY}</strong></span>
+      <span class="vd-stat"><strong>${cos.size}</strong> companies</span>
+      <span class="vd-stat"><strong>${genres.size}</strong> genres</span>
+    `;
+  }
+
+  /* Genre chips */
+  function buildGenreChips() {
+    const genres = [...new Set(allRows.map(r => r.GENRE).filter(Boolean))].sort();
+    const row = document.getElementById('vd-genre-row');
+    const label = row.querySelector('.vd-filter-label');
+    row.innerHTML = ''; row.appendChild(label);
+    ['all', ...genres].forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'vd-chip' + (g === 'all' ? ' active' : '');
+      btn.textContent = g === 'all' ? 'All' : g;
+      btn.dataset.genre = g;
+      btn.addEventListener('click', () => {
+        activeGenre = g;
+        row.querySelectorAll('.vd-chip').forEach(c => c.classList.toggle('active', c.dataset.genre === g));
+        render();
+      });
+      row.appendChild(btn);
+    });
+  }
+
+  /* Decade chips */
+  document.querySelectorAll('#vd-decade-row .vd-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeDecade = btn.dataset.decade;
+      document.querySelectorAll('#vd-decade-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.decade === activeDecade));
+      render();
+    });
+  });
+
+  function decadeOf(year) {
+    const y = parseInt(year);
+    if (y >= 1990 && y < 2000) return '1990s';
+    if (y >= 2000 && y < 2010) return '2000s';
+    if (y >= 2010 && y < 2020) return '2010s';
+    if (y >= 2020) return '2020s';
+    return '';
+  }
+
+  /* Sort */
+  document.querySelectorAll('.vd-table thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      sortAsc = sortCol === col ? !sortAsc : (col !== 'YEAR');
+      sortCol = col;
+      document.querySelectorAll('.vd-table thead th').forEach(h => {
+        const isSorted = h.dataset.col === sortCol;
+        h.classList.toggle('vd-sorted', isSorted);
+        const arr = h.querySelector('.vd-sort-arrow');
+        if (arr) arr.textContent = isSorted ? (sortAsc ? '↑' : '↓') : '↕';
+      });
+      render();
+    });
+  });
+
+  /* Search */
+  const searchEl = document.getElementById('vd-search');
+  const clearBtn = document.getElementById('vd-search-clear');
+  let debounceTimer;
+  searchEl.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      query = searchEl.value.trim().toLowerCase();
+      clearBtn.style.display = query ? 'block' : 'none';
+      render();
+    }, 180);
+  });
+  clearBtn.addEventListener('click', () => {
+    searchEl.value = ''; query = '';
+    clearBtn.style.display = 'none';
+    render();
+  });
+
+  /* Clear all */
+  document.getElementById('vd-clear-all').addEventListener('click', () => {
+    searchEl.value = ''; query = '';
+    clearBtn.style.display = 'none';
+    activeGenre = 'all'; activeDecade = 'all';
+    document.querySelectorAll('#vd-genre-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.genre === 'all'));
+    document.querySelectorAll('#vd-decade-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.decade === 'all'));
+    render();
+  });
+
+  /* Highlight search term */
+  function hl(text) {
+    if (!query || !text) return text || '';
+    const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(`(${esc})`, 'gi'), '<mark>$1</mark>');
+  }
+
+  /* Render */
+  function render() {
+    const rows = allRows.filter(r => {
+      if (activeGenre  !== 'all' && r.GENRE !== activeGenre) return false;
+      if (activeDecade !== 'all' && decadeOf(r.YEAR) !== activeDecade) return false;
+      if (query) {
+        const hay = [r.PRODUCTION, r.COMPANY, r.DIRECTOR, r.PLAYWRIGHT].join(' ').toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+
+    rows.sort((a, b) => {
+      let va = a[sortCol] || '', vb = b[sortCol] || '';
+      if (sortCol === 'YEAR') { va = parseInt(va) || 0; vb = parseInt(vb) || 0; }
+      const cmp = typeof va === 'number' ? va - vb : va.localeCompare(vb, undefined, { sensitivity: 'base' });
+      return sortAsc ? cmp : -cmp;
+    });
+
+    const filtersActive = query || activeGenre !== 'all' || activeDecade !== 'all';
+    document.getElementById('vd-clear-all').style.display = filtersActive ? 'inline' : 'none';
+    document.getElementById('vd-count').textContent = `${rows.length} result${rows.length !== 1 ? 's' : ''}`;
+
+    const tbody = document.getElementById('vd-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="vd-message">No productions match your search</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="vd-year">${r.YEAR}</td>
+        <td class="vd-production">${hl(r.PRODUCTION)}</td>
+        <td class="vd-company">${hl(r.COMPANY)}</td>
+        <td class="vd-genre"><span class="vd-genre-badge">${r.GENRE || '—'}</span></td>
+        <td class="vd-director">${hl(r.DIRECTOR)}</td>
+        <td class="vd-playwright">${hl(r.PLAYWRIGHT)}</td>
+      </tr>`).join('');
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
