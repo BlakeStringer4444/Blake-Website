@@ -5699,8 +5699,9 @@ if (siteName) {
   const particles = [];
   const colours = ['#D4FF1A', '#9933FF', '#D4FF1A', '#ffffff'];
   document.addEventListener('mousemove', e => {
+    const zoom = parseFloat(document.documentElement.style.zoom) || 1;
     const p = document.createElement('div');
-    p.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
+    p.style.cssText = `position:fixed;left:${e.clientX / zoom}px;top:${e.clientY / zoom}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
     document.body.appendChild(p);
     particles.push(p);
     requestAnimationFrame(() => { p.style.opacity = '0'; p.style.transform = 'translate(-50%,-50%) scale(0.2)'; });
