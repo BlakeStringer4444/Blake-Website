@@ -703,6 +703,10 @@ body[data-theme="terminal"] .tools-desc { color: rgba(255,255,255,0.55); font-fa
   padding: 2px 7px;
   white-space: nowrap;
 }
+.result-sort-th { cursor: pointer; user-select: none; transition: color 0.15s; }
+.result-sort-th:hover { color: #fff; }
+.sort-ind { margin-left: 5px; font-size: 8px; opacity: 0.45; }
+.result-sort-th.sort-active .sort-ind { opacity: 1; }
 
 /* ── MUSIC FOLLOW LINK ── */
 .music-follow {
@@ -3021,27 +3025,27 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
             <div class="section-sublabel" id="act-accolades">Accolades</div>
       <div class="cv-table-wrap">
-        <table class="cv-table">
+        <table class="cv-table" id="act-acc-table">
           <thead>
             <tr>
               <th>Year</th>
               <th>Award</th>
-              <th>Result</th>
+              <th class="result-sort-th" id="act-result-th">Result <span class="sort-ind">↕</span></th>
               <th>Category</th>
               <th>Production</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>2024</td><td>VDL Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Photograph 51</td></tr>
-            <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>The Normal Heart</td></tr>
-            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
-            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Highly Commended Performance in a One Act Play</td><td>Schmattes</td></tr>
-            <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Lead Actor in a Drama</td><td>Torch Song</td></tr>
-            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Comedy</td><td>Dracula – The Bloody Truth</td></tr>
-            <tr><td>2019</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>Ghosts</td></tr>
-            <tr><td>2018</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>The Elephant Man</td></tr>
-            <tr><td>2017</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Never The Sinner</td></tr>
-            <tr><td>2015</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>Romeo &amp; Juliet</td></tr>
+            <tr data-year="2024"><td>2024</td><td>VDL Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Photograph 51</td></tr>
+            <tr data-year="2023"><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>The Normal Heart</td></tr>
+            <tr data-year="2023"><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr data-year="2023"><td>2023</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Highly Commended Performance in a One Act Play</td><td>Schmattes</td></tr>
+            <tr data-year="2022"><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Lead Actor in a Drama</td><td>Torch Song</td></tr>
+            <tr data-year="2022"><td>2022</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Comedy</td><td>Dracula – The Bloody Truth</td></tr>
+            <tr data-year="2019"><td>2019</td><td>Lyrebird Awards</td><td><span class="award-win">Winner</span></td><td>Best Supporting Actor in a Drama</td><td>Ghosts</td></tr>
+            <tr data-year="2018"><td>2018</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>The Elephant Man</td></tr>
+            <tr data-year="2017"><td>2017</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Lead Actor in a Drama</td><td>Never The Sinner</td></tr>
+            <tr data-year="2015"><td>2015</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Supporting Actor in a Drama</td><td>Romeo &amp; Juliet</td></tr>
           </tbody>
         </table>
       </div>
@@ -3271,21 +3275,21 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
       <div class="section-sublabel" id="snd-accolades">Accolades</div>
       <div class="cv-table-wrap">
-        <table class="cv-table">
+        <table class="cv-table" id="snd-acc-table">
           <thead>
             <tr>
               <th>Year</th>
               <th>Award</th>
-              <th>Result</th>
+              <th class="result-sort-th" id="snd-result-th">Result <span class="sort-ind">↕</span></th>
               <th>Category</th>
               <th>Production</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>2024</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>Frankenstein</td></tr>
-            <tr><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>Lovesong</td></tr>
-            <tr><td></td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
-            <tr><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>The Revlon Girl</td></tr>
+            <tr data-year="2024"><td>2024</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>Frankenstein</td></tr>
+            <tr data-year="2023"><td>2023</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>Lovesong</td></tr>
+            <tr data-year="2023"><td>2023</td><td>Lyrebird Awards</td><td><span class="award-nom">Nomination</span></td><td>Best Sound Design in a Drama</td><td>The Shoe-Horn Sonata</td></tr>
+            <tr data-year="2022"><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>The Revlon Girl</td></tr>
           </tbody>
         </table>
       </div>
@@ -5697,8 +5701,9 @@ if (siteName) {
   const particles = [];
   const colours = ['#D4FF1A', '#9933FF', '#D4FF1A', '#ffffff'];
   document.addEventListener('mousemove', e => {
+    const zoom = parseFloat(document.documentElement.style.zoom) || 1;
     const p = document.createElement('div');
-    p.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
+    p.style.cssText = `position:fixed;left:${e.clientX / zoom}px;top:${e.clientY / zoom}px;width:5px;height:5px;border-radius:50%;background:${colours[Math.floor(Math.random()*colours.length)]};pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:0.8;transition:opacity 0.5s,transform 0.5s;`;
     document.body.appendChild(p);
     particles.push(p);
     requestAnimationFrame(() => { p.style.opacity = '0'; p.style.transform = 'translate(-50%,-50%) scale(0.2)'; });
@@ -6870,6 +6875,41 @@ if (siteName) {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && ov.style.display !== 'none') closeEE();
   });
+})();
+
+/* ── Accolades Result sort ── */
+(function () {
+  function setupSort(thId, tableId) {
+    const th = document.getElementById(thId);
+    const table = document.getElementById(tableId);
+    if (!th || !table) return;
+    const tbody = table.querySelector('tbody');
+    const ind = th.querySelector('.sort-ind');
+    let sorted = false;
+    Array.from(tbody.querySelectorAll('tr')).forEach((r, i) => { r.dataset.origIdx = i; });
+    th.addEventListener('click', () => {
+      sorted = !sorted;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      if (sorted) {
+        rows.sort((a, b) => {
+          const ra = a.querySelector('span')?.textContent.trim() || '';
+          const rb = b.querySelector('span')?.textContent.trim() || '';
+          const cmp = rb.localeCompare(ra); // Z-A: Winner before Nomination
+          if (cmp !== 0) return cmp;
+          return (parseInt(b.dataset.year) || 0) - (parseInt(a.dataset.year) || 0);
+        });
+        th.classList.add('sort-active');
+        ind.textContent = '↑';
+      } else {
+        rows.sort((a, b) => a.dataset.origIdx - b.dataset.origIdx);
+        th.classList.remove('sort-active');
+        ind.textContent = '↕';
+      }
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+  setupSort('act-result-th', 'act-acc-table');
+  setupSort('snd-result-th', 'snd-acc-table');
 })();
 
 </script>
