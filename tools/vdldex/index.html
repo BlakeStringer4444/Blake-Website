@@ -55,30 +55,29 @@
       transition: background 0.2s, color 0.2s;
     }
 
-    /* ── HEADER (Theatredex style) ── */
+    /* ── HEADER — matches Theatredex exactly ── */
     .vd-header {
       background: var(--black);
-      padding: 24px 48px 28px;
+      padding: 28px 48px 24px;
     }
     .vd-header-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .vd-back {
       font-family: 'DM Mono', monospace;
       font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-      color: rgba(212,255,26,0.5);
+      color: rgba(212,255,26,0.55);
       text-decoration: none;
       transition: color 0.2s;
-      padding-top: 4px;
+      padding-top: 6px;
     }
     .vd-back:hover { color: var(--lime); }
-    .vd-header-btns {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .vd-header-btn {
+    .vd-header-actions { display: flex; align-items: center; gap: 10px; }
+    .vd-font-btn,
+    .vd-theme-btn {
       background: none;
       border: 1px solid rgba(212,255,26,0.25);
       color: rgba(212,255,26,0.7);
@@ -92,10 +91,11 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    .vd-header-btn:hover { border-color: var(--lime); color: var(--lime); }
-    #vd-font-btn { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
-    #vd-font-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
-    #vd-theme-btn { font-size: 16px; }
+    .vd-theme-btn { font-size: 16px; }
+    .vd-font-btn  { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+    .vd-theme-btn:hover,
+    .vd-font-btn:hover  { border-color: var(--lime); color: var(--lime); }
+    .vd-font-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
     .vd-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: clamp(52px, 9vw, 104px);
@@ -109,17 +109,6 @@
       color: rgba(212,255,26,0.5);
       margin-top: 6px;
     }
-
-    /* ── STATS ── */
-    .vd-stats {
-      display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
-      padding: 14px 48px;
-      background: var(--bg2); border-bottom: 1px solid var(--border);
-    }
-    .vd-stat {
-      font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
-    }
-    .vd-stat strong { color: var(--text); font-weight: 500; }
 
     /* ── CONTROLS ── */
     .vd-controls {
@@ -146,17 +135,20 @@
     }
 
     /* Company dropdown */
-    .vd-select-wrap { display: flex; align-items: center; gap: 10px; }
-    .vd-filter-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); flex-shrink: 0; text-transform: uppercase; }
+    .vd-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .vd-filter-label {
+      font-size: 10px; letter-spacing: 2px; color: var(--dim);
+      flex-shrink: 0; text-transform: uppercase;
+      width: 62px; /* fixed width so Genre and Decade labels align chips */
+    }
     .vd-select {
       flex: 1; max-width: 320px;
       background: var(--bg); border: 1px solid var(--border); border-radius: 2px;
       color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px;
-      padding: 8px 12px; outline: none; cursor: pointer;
+      padding: 8px 30px 8px 12px; outline: none; cursor: pointer;
       transition: border-color 0.15s; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(0,0,0,0.3)'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 12px center;
-      padding-right: 30px;
     }
     [data-theme="dark"] .vd-select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");
@@ -168,7 +160,6 @@
     [data-theme="terminal"] .vd-select:focus { border-color: var(--lime); }
     .vd-select option { background: var(--bg2); color: var(--text); }
 
-    .vd-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .vd-chip {
       background: none; border: 1px solid var(--border); color: var(--dim);
       font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
@@ -181,13 +172,25 @@
     [data-theme="terminal"] .vd-chip:hover { border-color: var(--lime); color: var(--lime); }
     [data-theme="terminal"] .vd-chip.active { background: var(--lime); border-color: var(--lime); color: #000; }
 
+    /* Tools row (Insights toggle lives here) */
+    .vd-tools-chip {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 5px 12px; cursor: pointer; border-radius: 2px;
+      transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap;
+    }
+    .vd-tools-chip:hover { border-color: var(--purple); color: var(--purple); }
+    .vd-tools-chip.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+    [data-theme="terminal"] .vd-tools-chip { border-color: rgba(212,255,26,0.18); color: rgba(212,255,26,0.42); }
+    [data-theme="terminal"] .vd-tools-chip:hover { border-color: var(--lime); color: var(--lime); }
+    [data-theme="terminal"] .vd-tools-chip.active { background: var(--lime); border-color: var(--lime); color: #000; }
+
     /* ── RESULTS BAR ── */
     .vd-results-bar {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 10px 48px; border-bottom: 1px solid var(--border);
     }
     .vd-count { font-size: 10px; letter-spacing: 2px; color: var(--dim); }
-    .vd-bar-right { display: flex; align-items: center; gap: 12px; }
     .vd-clear-all {
       background: none; border: none; color: var(--dim);
       font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
@@ -195,16 +198,6 @@
     }
     .vd-clear-all:hover { color: var(--purple); }
     [data-theme="terminal"] .vd-clear-all:hover { color: var(--lime); }
-    .vd-insights-toggle {
-      background: none; border: 1px solid var(--border); color: var(--dim);
-      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
-      text-transform: uppercase; padding: 5px 12px; cursor: pointer; border-radius: 2px;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .vd-insights-toggle:hover { border-color: var(--purple); color: var(--purple); }
-    .vd-insights-toggle.active { background: var(--purple); border-color: var(--purple); color: var(--lime); }
-    [data-theme="terminal"] .vd-insights-toggle:hover { border-color: var(--lime); color: var(--lime); }
-    [data-theme="terminal"] .vd-insights-toggle.active { background: var(--lime); border-color: var(--lime); color: #000; }
 
     /* ── INSIGHTS PANEL ── */
     .vd-insights {
@@ -216,30 +209,38 @@
     .vd-insights.open { display: block; }
     .vd-insights-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
     }
     .vd-ins-card {
       border: 1px solid var(--border); border-radius: 2px; padding: 18px 20px;
+      display: flex; flex-direction: column;
     }
     .vd-ins-title {
       font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--purple); margin-bottom: 14px; font-weight: 500;
+      color: var(--purple); margin-bottom: 14px; font-weight: 500; flex-shrink: 0;
     }
     [data-theme="terminal"] .vd-ins-title { color: var(--lime); }
+    .vd-ins-list {
+      overflow-y: auto; max-height: 280px;
+      /* hide scrollbar visually but keep functional */
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .vd-ins-list::-webkit-scrollbar { width: 3px; }
+    .vd-ins-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     .vd-ins-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border);
+      padding: 6px 0; border-bottom: 1px solid var(--border);
       font-size: 12px;
     }
     .vd-ins-row:last-child { border-bottom: none; }
+    .vd-ins-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
     .vd-ins-name { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .vd-ins-count {
       font-size: 11px; letter-spacing: 1px; color: var(--purple); flex-shrink: 0; font-weight: 500;
     }
     [data-theme="terminal"] .vd-ins-count { color: var(--lime); }
     .vd-ins-bar-track {
-      height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px;
+      height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px;
     }
     .vd-ins-bar-fill {
       height: 3px; background: var(--purple); border-radius: 2px;
@@ -269,13 +270,28 @@
     .vd-table tbody td { padding: 12px 14px; vertical-align: top; line-height: 1.5; color: var(--text); }
     .vd-table tbody td.vd-year { color: var(--dim); font-size: 12px; white-space: nowrap; width: 64px; }
     .vd-table tbody td.vd-production { font-weight: 500; }
+
+    /* Genre badges — Comedy = Lyrebird silver, Drama = VDL yellow, others = purple */
     .vd-genre-badge {
       display: inline-block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 3px 8px; border-radius: 2px;
-      background: rgba(153,51,255,0.1); color: var(--purple); white-space: nowrap;
+      padding: 3px 8px; border-radius: 2px; white-space: nowrap;
+      background: rgba(153,51,255,0.1); color: var(--purple);
     }
-    [data-theme="dark"] .vd-genre-badge { background: rgba(153,51,255,0.15); }
+    [data-theme="dark"]     .vd-genre-badge { background: rgba(153,51,255,0.15); }
     [data-theme="terminal"] .vd-genre-badge { background: rgba(212,255,26,0.1); color: var(--lime); }
+
+    .vd-genre-badge.vd-genre-comedy {
+      background: rgba(160,160,160,0.13); color: #777;
+    }
+    [data-theme="dark"]     .vd-genre-badge.vd-genre-comedy { color: #aaa; background: rgba(200,200,200,0.1); }
+    [data-theme="terminal"] .vd-genre-badge.vd-genre-comedy { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
+
+    .vd-genre-badge.vd-genre-drama {
+      background: rgba(212,255,26,0.18); color: #5c7a00;
+    }
+    [data-theme="dark"]     .vd-genre-badge.vd-genre-drama { color: #c4ef00; background: rgba(212,255,26,0.12); }
+    [data-theme="terminal"] .vd-genre-badge.vd-genre-drama { color: var(--lime); background: rgba(212,255,26,0.08); }
+
     mark { background: rgba(212,255,26,0.3); color: inherit; border-radius: 1px; }
 
     /* ── STATES ── */
@@ -289,11 +305,10 @@
     /* ── MOBILE ── */
     @media (max-width: 639px) {
       .vd-header { padding: 18px 16px 22px; }
-      .vd-stats { padding: 12px 16px; gap: 16px; }
       .vd-controls { padding: 14px 16px; position: static; }
       .vd-results-bar { padding: 10px 16px; }
       .vd-insights { padding: 16px 16px 20px; }
-      .vd-select-wrap { flex-wrap: wrap; }
+      .vd-filter-label { width: 56px; }
       .vd-select { max-width: 100%; }
       .vd-table-wrap { overflow-x: unset; }
       .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; }
@@ -316,7 +331,6 @@
     }
     @media (min-width: 640px) and (max-width: 1023px) {
       .vd-header { padding: 22px 28px 26px; }
-      .vd-stats { padding: 12px 28px; }
       .vd-controls { padding: 16px 28px; }
       .vd-results-bar { padding: 10px 28px; }
       .vd-insights { padding: 20px 28px 24px; }
@@ -329,19 +343,14 @@
 <header class="vd-header">
   <div class="vd-header-top">
     <a class="vd-back" href="/">← blakestringer.com</a>
-    <div class="vd-header-btns">
-      <button class="vd-header-btn" id="vd-font-btn">Aa</button>
-      <button class="vd-header-btn" id="vd-theme-btn">☾</button>
+    <div class="vd-header-actions">
+      <button class="vd-font-btn" id="vd-font-btn" title="Adjust text size">Aa</button>
+      <button class="vd-theme-btn" id="vd-theme-btn" title="Toggle theme"></button>
     </div>
   </div>
-  <div class="vd-title">VDLdex</div>
-  <div class="vd-subtitle">VDL Entrants Archive · 1997–2026</div>
+  <h1 class="vd-title">VDLdex</h1>
+  <p class="vd-subtitle">The Victorian Drama League Entrants Archive · 1997–2026</p>
 </header>
-
-<!-- STATS -->
-<div class="vd-stats" id="vd-stats">
-  <span class="vd-stat vd-message loading" style="padding:0;letter-spacing:2px">Loading…</span>
-</div>
 
 <!-- CONTROLS -->
 <div class="vd-controls">
@@ -349,7 +358,7 @@
     <input id="vd-search" class="vd-search" type="search" placeholder="Search production, company, director, playwright…" autocomplete="off" spellcheck="false">
     <button id="vd-search-clear" class="vd-search-clear" aria-label="Clear">✕</button>
   </div>
-  <div class="vd-select-wrap">
+  <div class="vd-filter-row">
     <span class="vd-filter-label">Company</span>
     <select id="vd-company-select" class="vd-select">
       <option value="all">All Companies</option>
@@ -366,15 +375,16 @@
     <button class="vd-chip" data-decade="2010s">2010s</button>
     <button class="vd-chip" data-decade="2020s">2020s</button>
   </div>
+  <div class="vd-filter-row">
+    <span class="vd-filter-label">Tools</span>
+    <button class="vd-tools-chip" id="vd-insights-toggle">Insights</button>
+  </div>
 </div>
 
 <!-- RESULTS BAR -->
 <div class="vd-results-bar">
   <span class="vd-count" id="vd-count">—</span>
-  <div class="vd-bar-right">
-    <button class="vd-clear-all" id="vd-clear-all">Clear all filters</button>
-    <button class="vd-insights-toggle" id="vd-insights-toggle">Insights ▾</button>
-  </div>
+  <button class="vd-clear-all" id="vd-clear-all">Clear all filters</button>
 </div>
 
 <!-- INSIGHTS PANEL -->
@@ -404,23 +414,31 @@
 </div>
 
 <script>
+/* ── SVG icons matching Theatredex ── */
+const sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
+
 /* ── Theme ── */
 (function () {
-  const CYCLE = ['light','dark','terminal'];
-  const ICONS = { light:'☾', dark:'○', terminal:'⚙' };
+  const CYCLE = ['light', 'dark', 'terminal'];
+  const themeBtn = document.getElementById('vd-theme-btn');
+
+  function iconFor(t) {
+    return t === 'terminal' ? lockSVG : t === 'dark' ? sunSVG : '☾';
+  }
+
   let t = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'dark';
+
   function apply(v) {
     t = v;
     if (v === 'light') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', v);
-    document.getElementById('vd-theme-btn').textContent = ICONS[v] || '☾';
+    themeBtn.innerHTML = iconFor(v);
     if (v === 'terminal') { sessionStorage.setItem('theme', v); }
     else { localStorage.setItem('theme', v); sessionStorage.removeItem('theme'); }
   }
   apply(t);
-  document.getElementById('vd-theme-btn').addEventListener('click', () => {
-    apply(CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]);
-  });
+  themeBtn.addEventListener('click', () => apply(CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]));
 })();
 
 /* ── Font zoom ── */
@@ -472,27 +490,13 @@
       const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
       allRows = parseCSV(await res.text());
-      buildStats();
       buildGenreChips();
       buildCompanyDropdown();
       buildInsights();
       render();
     } catch (e) {
-      document.getElementById('vd-stats').innerHTML = '<span class="vd-stat" style="color:#ff5555;letter-spacing:1px">Failed to load — check connection and try refreshing</span>';
-      document.getElementById('vd-tbody').innerHTML = '<tr><td colspan="6" class="vd-message">Could not load data</td></tr>';
+      document.getElementById('vd-tbody').innerHTML = '<tr><td colspan="6" class="vd-message">Could not load data — check connection and try refreshing</td></tr>';
     }
-  }
-
-  /* Stats — no genres count */
-  function buildStats() {
-    const years = allRows.map(r => parseInt(r.YEAR)).filter(Boolean);
-    const cos   = new Set(allRows.map(r => r.COMPANY).filter(Boolean));
-    const minY = Math.min(...years), maxY = Math.max(...years);
-    document.getElementById('vd-stats').innerHTML = `
-      <span class="vd-stat"><strong>${allRows.length}</strong> productions</span>
-      <span class="vd-stat"><strong>${minY}–${maxY}</strong></span>
-      <span class="vd-stat"><strong>${cos.size}</strong> companies</span>
-    `;
   }
 
   /* Company dropdown */
@@ -507,8 +511,7 @@
   }
 
   document.getElementById('vd-company-select').addEventListener('change', function () {
-    activeCompany = this.value;
-    render();
+    activeCompany = this.value; render();
   });
 
   /* Genre chips */
@@ -561,36 +564,44 @@
 
   function buildInsights() {
     const genreList = freq(allRows, 'GENRE');
-    const dirList   = freq(allRows, 'DIRECTOR').slice(0, 10);
-    const pwList    = freq(allRows, 'PLAYWRIGHT').slice(0, 10);
-    const prodList  = freq(allRows, 'PRODUCTION').filter(([,n]) => n > 1).slice(0, 10);
+    const dirList   = freq(allRows, 'DIRECTOR');
+    const pwList    = freq(allRows, 'PLAYWRIGHT');
+    const prodList  = freq(allRows, 'PRODUCTION').filter(([, n]) => n > 1);
 
     const maxGenre = genreList[0]?.[1] || 1;
     const maxDir   = dirList[0]?.[1] || 1;
     const maxPw    = pwList[0]?.[1] || 1;
     const maxProd  = prodList[0]?.[1] || 1;
 
-    function card(title, entries, max) {
-      if (!entries.length) return `<div class="vd-ins-card"><div class="vd-ins-title">${title}</div><div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">No data</span></div></div>`;
-      return `<div class="vd-ins-card">
-        <div class="vd-ins-title">${title}</div>
-        ${entries.map(([name, n]) => `
-          <div class="vd-ins-row">
+    function rows(entries, max) {
+      if (!entries.length) return '<div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">No data</span></div>';
+      return entries.map(([name, n]) => `
+        <div class="vd-ins-row">
+          <div class="vd-ins-row-top">
             <span class="vd-ins-name" title="${name}">${name}</span>
             <span class="vd-ins-count">${n}×</span>
           </div>
-          <div class="vd-ins-bar-track"><div class="vd-ins-bar-fill" style="width:${Math.round(n/max*100)}%"></div></div>
-        `).join('')}
+          <div class="vd-ins-bar-track"><div class="vd-ins-bar-fill" style="width:${Math.round(n / max * 100)}%"></div></div>
+        </div>`).join('');
+    }
+
+    function card(title, entries, max) {
+      return `<div class="vd-ins-card">
+        <div class="vd-ins-title">${title}</div>
+        <div class="vd-ins-list">${rows(entries, max)}</div>
       </div>`;
     }
 
+    const noMulti = `<div class="vd-ins-card">
+      <div class="vd-ins-title">Productions Entered Multiple Times</div>
+      <div class="vd-ins-list"><div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">None found</span></div></div>
+    </div>`;
+
     document.getElementById('vd-insights-grid').innerHTML =
       card('Genre Breakdown', genreList, maxGenre) +
-      card('Top Directors', dirList, maxDir) +
-      card('Top Playwrights', pwList, maxPw) +
-      (prodList.length
-        ? card('Productions Entered Multiple Times', prodList, maxProd)
-        : `<div class="vd-ins-card"><div class="vd-ins-title">Productions Entered Multiple Times</div><div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">None found</span></div></div>`);
+      card('Director with the Most Submissions', dirList, maxDir) +
+      card('Playwright with the Most Submissions', pwList, maxPw) +
+      (prodList.length ? card('Productions Entered Multiple Times', prodList, maxProd) : noMulti);
   }
 
   /* Insights toggle */
@@ -598,7 +609,6 @@
     const panel = document.getElementById('vd-insights');
     const open = panel.classList.toggle('open');
     this.classList.toggle('active', open);
-    this.textContent = open ? 'Insights ▴' : 'Insights ▾';
   });
 
   /* Sort */
@@ -631,8 +641,7 @@
   });
   clearBtn.addEventListener('click', () => {
     searchEl.value = ''; query = '';
-    clearBtn.style.display = 'none';
-    render();
+    clearBtn.style.display = 'none'; render();
   });
 
   /* Clear all */
@@ -653,12 +662,21 @@
     return text.replace(new RegExp(`(${esc})`, 'gi'), '<mark>$1</mark>');
   }
 
+  /* Genre badge class */
+  function genreCls(g) {
+    if (!g) return 'vd-genre-badge';
+    const norm = g.trim().toLowerCase();
+    if (norm === 'comedy') return 'vd-genre-badge vd-genre-comedy';
+    if (norm === 'drama')  return 'vd-genre-badge vd-genre-drama';
+    return 'vd-genre-badge';
+  }
+
   /* Render */
   function render() {
     const rows = allRows.filter(r => {
-      if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)   return false;
+      if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)         return false;
       if (activeDecade  !== 'all' && decadeOf(r.YEAR) !== activeDecade) return false;
-      if (activeCompany !== 'all' && r.COMPANY !== activeCompany) return false;
+      if (activeCompany !== 'all' && r.COMPANY !== activeCompany)       return false;
       if (query) {
         const hay = [r.PRODUCTION, r.COMPANY, r.DIRECTOR, r.PLAYWRIGHT].join(' ').toLowerCase();
         if (!hay.includes(query)) return false;
@@ -688,7 +706,7 @@
         <td class="vd-year">${r.YEAR}</td>
         <td class="vd-production">${hl(r.PRODUCTION)}</td>
         <td class="vd-company">${hl(r.COMPANY)}</td>
-        <td class="vd-genre"><span class="vd-genre-badge">${r.GENRE || '—'}</span></td>
+        <td class="vd-genre"><span class="${genreCls(r.GENRE)}">${r.GENRE || '—'}</span></td>
         <td class="vd-director">${hl(r.DIRECTOR)}</td>
         <td class="vd-playwright">${hl(r.PLAYWRIGHT)}</td>
       </tr>`).join('');
