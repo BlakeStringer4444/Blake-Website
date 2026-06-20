@@ -53,6 +53,7 @@
       color: var(--text);
       min-height: 100vh;
       transition: background 0.2s, color 0.2s;
+      overflow-x: hidden;
     }
 
     /* ── HEADER — matches Theatredex exactly ── */
@@ -215,6 +216,7 @@
     .vd-ins-card {
       border: 1px solid var(--border); border-radius: 2px; padding: 18px 20px;
       display: flex; flex-direction: column;
+      min-width: 0; overflow: hidden;
     }
     .vd-ins-title {
       font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
@@ -352,32 +354,65 @@
       .vd-select { width: 100%; max-width: none; flex: 1; min-width: 0; }
 
       .vd-results-bar { padding: 8px 16px; }
-      .vd-insights { padding: 14px 16px 18px; }
-      .vd-insights-grid { grid-template-columns: 1fr; }
+
+      /* Insights: contain width, single column */
+      .vd-insights { padding: 14px 0 18px; overflow: hidden; }
+      .vd-insights-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 0 16px;
+        overflow: hidden;
+      }
+      .vd-ins-bar-track { overflow: hidden; }
 
       /* Jump button closer to edge on small screens */
       .vd-jump-top { bottom: 16px; right: 16px; }
 
-      /* Table → stacked card layout */
+      /* ── Table → Theatredex-style cards ── */
       .vd-table-wrap { overflow-x: unset; }
       .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; }
       .vd-table thead { display: none; }
+
+      /* Each row becomes a card */
       .vd-table tbody tr {
+        background: var(--bg2);
+        margin: 0 12px 8px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
         padding: 14px 16px;
-        border-bottom: 1px solid var(--border);
-        display: flex; flex-direction: column; gap: 3px;
+        display: flex; flex-direction: column; gap: 4px;
+        width: auto;
       }
-      .vd-table tbody td { padding: 0; border: none; }
+      .vd-table tbody td { padding: 0; border: none; width: 100%; }
+
+      /* Year — small dim label above title */
       .vd-table tbody td.vd-year {
-        font-size: 9px; letter-spacing: 2px; color: var(--dim); margin-bottom: 1px;
+        font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
       }
-      .vd-table tbody td.vd-production { font-size: 15px; line-height: 1.3; }
-      .vd-table tbody td.vd-company { font-size: 12px; color: var(--dim); }
-      .vd-table tbody td.vd-genre { margin-top: 3px; }
-      .vd-table tbody td.vd-director { font-size: 12px; }
-      .vd-table tbody td.vd-director::before { content: 'Dir · '; color: var(--dim); }
-      .vd-table tbody td.vd-playwright { font-size: 12px; }
-      .vd-table tbody td.vd-playwright::before { content: 'By · '; color: var(--dim); }
+
+      /* Production title — Bebas Neue, purple, like Theatredex */
+      .vd-table tbody td.vd-production {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 22px; letter-spacing: 2px; line-height: 1.1;
+        color: var(--purple); font-weight: normal;
+      }
+      [data-theme="dark"]     .vd-table tbody td.vd-production { color: var(--lime); }
+      [data-theme="terminal"] .vd-table tbody td.vd-production { color: #ffffff; }
+
+      /* Company — small uppercase */
+      .vd-table tbody td.vd-company {
+        font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim);
+        margin-bottom: 2px;
+      }
+
+      /* Genre badge */
+      .vd-table tbody td.vd-genre { margin-top: 2px; }
+
+      /* Director / Playwright — labelled rows */
+      .vd-table tbody td.vd-director,
+      .vd-table tbody td.vd-playwright { font-size: 11px; color: var(--text); }
+      .vd-table tbody td.vd-director::before   { content: 'Director · ';   color: var(--dim); }
+      .vd-table tbody td.vd-playwright::before { content: 'Playwright · '; color: var(--dim); }
     }
     @media (min-width: 640px) and (max-width: 1023px) {
       .vd-header { padding: 22px 28px 26px; }
@@ -462,6 +497,8 @@
     </tbody>
   </table>
 </div>
+
+<button class="vd-jump-top" id="vd-jump-top" aria-label="Back to top">↑ Top</button>
 
 <script>
 /* ── SVG icons matching Theatredex ── */
@@ -777,7 +814,5 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
   btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 })();
 </script>
-
-<button class="vd-jump-top" id="vd-jump-top" aria-label="Back to top">↑ Top</button>
 </body>
 </html>
