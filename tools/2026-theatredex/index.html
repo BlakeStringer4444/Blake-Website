@@ -311,15 +311,15 @@ body {
 .td-badge-play,
 .td-badge-musical,
 .td-badge-pantomime { background: rgba(153,51,255,0.1); color: var(--purple); }
-.td-badge-vdl       { background: rgba(212,255,26,0.18); color: #5c7a00; }
-.td-badge-lyrebird  { background: rgba(160,160,160,0.13); color: #777; }
-[data-theme="dark"] .td-badge-vdl       { color: #c4ef00; background: rgba(212,255,26,0.12); }
-[data-theme="dark"] .td-badge-lyrebird  { color: #aaa; background: rgba(200,200,200,0.1); }
+.td-badge-vdl       { background: rgba(255,102,0,0.12);  color: #cc4400; }
+.td-badge-lyrebird  { background: rgba(212,175,55,0.15); color: #7a6200; }
+[data-theme="dark"] .td-badge-vdl       { color: #ff6a00; background: rgba(255,102,0,0.18); }
+[data-theme="dark"] .td-badge-lyrebird  { color: #e8a800; background: rgba(212,175,55,0.18); }
 [data-theme="terminal"] .td-badge-play,
 [data-theme="terminal"] .td-badge-musical,
 [data-theme="terminal"] .td-badge-pantomime { color: #fff; background: rgba(255,255,255,0.08); }
-[data-theme="terminal"] .td-badge-vdl       { color: var(--lime); background: rgba(212,255,26,0.08); }
-[data-theme="terminal"] .td-badge-lyrebird  { color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
+[data-theme="terminal"] .td-badge-vdl       { color: #ff6a00; background: rgba(255,102,0,0.12); }
+[data-theme="terminal"] .td-badge-lyrebird  { color: #e8a800; background: rgba(212,175,55,0.1); }
 
 .td-card-row1-right {
   display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;
@@ -374,8 +374,10 @@ body {
   font-size: 12px; color: var(--muted);
 }
 .td-people {
-  font-size: 11px; color: var(--muted);
-  line-height: 1.6;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.8;
   border-top: 1px solid var(--card-border);
   padding-top: 7px; margin-top: 2px;
 }
