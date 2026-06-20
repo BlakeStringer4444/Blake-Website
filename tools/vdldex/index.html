@@ -369,8 +369,8 @@
       .vd-jump-top { bottom: 16px; right: 16px; }
 
       /* ── Table → Theatredex-style cards ── */
-      .vd-table-wrap { overflow-x: unset; }
-      .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; }
+      .vd-table-wrap { overflow-x: unset; overflow: hidden; }
+      .vd-table, .vd-table tbody, .vd-table tr, .vd-table td { display: block; width: 100%; min-width: 0; }
       .vd-table thead { display: none; }
 
       /* Each row becomes a card */
@@ -408,11 +408,11 @@
       /* Genre badge */
       .vd-table tbody td.vd-genre { margin-top: 2px; }
 
-      /* Director / Playwright — labelled rows */
+      /* Director / Playwright — labelled rows, same size as label */
       .vd-table tbody td.vd-director,
-      .vd-table tbody td.vd-playwright { font-size: 11px; color: var(--text); }
-      .vd-table tbody td.vd-director::before   { content: 'Director · ';   color: var(--dim); }
-      .vd-table tbody td.vd-playwright::before { content: 'Playwright · '; color: var(--dim); }
+      .vd-table tbody td.vd-playwright { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text); }
+      .vd-table tbody td.vd-director::before   { content: 'DIRECTOR · ';   color: var(--dim); }
+      .vd-table tbody td.vd-playwright::before { content: 'PLAYWRIGHT · '; color: var(--dim); }
     }
     @media (min-width: 640px) and (max-width: 1023px) {
       .vd-header { padding: 22px 28px 26px; }

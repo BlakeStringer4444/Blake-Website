@@ -1365,8 +1365,8 @@ function card(show) {
   if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer" aria-label="Website (opens in new tab)">${iconWeb} Web</a>`);
 
   const people = [
-    show.director   ? 'Director: '   + show.director   : '',
-    show.playwright ? 'Playwright: ' + show.playwright  : '',
+    show.director   ? 'DIRECTOR · '   + show.director   : '',
+    show.playwright ? 'PLAYWRIGHT · ' + show.playwright  : '',
   ].filter(Boolean).join('<br>');
 
   let progressBar = '';
