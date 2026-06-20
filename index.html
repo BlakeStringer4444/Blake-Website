@@ -6915,7 +6915,7 @@ if (siteName) {
           return (parseInt(b.dataset.year) || 0) - (parseInt(a.dataset.year) || 0);
         });
         th.classList.add('sort-active');
-        ind.textContent = '↑';
+        ind.textContent = '↓';
       } else {
         rows.sort((a, b) => a.dataset.origIdx - b.dataset.origIdx);
         th.classList.remove('sort-active');
