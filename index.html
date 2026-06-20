@@ -3895,7 +3895,11 @@ document.addEventListener('keydown', e => {
 buildTabs();
 /* ── AUTO-LABEL TABLE CELLS ── */
 document.querySelectorAll('.cv-table').forEach(table => {
-  const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+  const headers = [...table.querySelectorAll('thead th')].map(th => {
+    const clone = th.cloneNode(true);
+    clone.querySelectorAll('.sort-ind').forEach(s => s.remove());
+    return clone.textContent.trim();
+  });
   table.querySelectorAll('tbody tr').forEach(row => {
     [...row.querySelectorAll('td')].forEach((td, i) => {
       if (i > 0 && headers[i]) td.dataset.label = headers[i];
