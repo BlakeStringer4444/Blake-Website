@@ -3039,7 +3039,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
           <thead>
             <tr>
               <th>Year</th>
-              <th>Award</th>
+              <th class="result-sort-th" id="act-award-th">Award <span class="sort-ind">↕</span></th>
               <th class="result-sort-th" id="act-result-th">Result <span class="sort-ind">↕</span></th>
               <th>Category</th>
               <th>Production</th>
@@ -6924,8 +6924,36 @@ if (siteName) {
       rows.forEach(r => tbody.appendChild(r));
     });
   }
+  function setupAwardSort(thId, tableId) {
+    const th = document.getElementById(thId);
+    const table = document.getElementById(tableId);
+    if (!th || !table) return;
+    const tbody = table.querySelector('tbody');
+    const ind = th.querySelector('.sort-ind');
+    let sorted = false;
+    Array.from(tbody.querySelectorAll('tr')).forEach((r, i) => { r.dataset.awardIdx = i; });
+    th.addEventListener('click', () => {
+      sorted = !sorted;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      if (sorted) {
+        rows.sort((a, b) => {
+          const ra = a.querySelectorAll('td')[1]?.textContent.trim() || '';
+          const rb = b.querySelectorAll('td')[1]?.textContent.trim() || '';
+          return rb.localeCompare(ra); // Z-A
+        });
+        th.classList.add('sort-active');
+        ind.textContent = '↓';
+      } else {
+        rows.sort((a, b) => a.dataset.awardIdx - b.dataset.awardIdx);
+        th.classList.remove('sort-active');
+        ind.textContent = '↕';
+      }
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
   setupSort('act-result-th', 'act-acc-table');
   setupSort('snd-result-th', 'snd-acc-table');
+  setupAwardSort('act-award-th', 'act-acc-table');
 })();
 
 /* ── VDLdex 50-click unlock ── */
