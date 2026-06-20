@@ -282,10 +282,10 @@
     [data-theme="terminal"] .vd-genre-badge { background: rgba(212,255,26,0.1); color: var(--lime); }
 
     .vd-genre-badge.vd-genre-comedy {
-      background: rgba(212,175,55,0.15); color: #7a6200;
+      background: rgba(0,0,0,0.07); color: #3a3a3a;
     }
-    [data-theme="dark"]     .vd-genre-badge.vd-genre-comedy { color: #e8a800; background: rgba(212,175,55,0.18); }
-    [data-theme="terminal"] .vd-genre-badge.vd-genre-comedy { color: #e8a800; background: rgba(212,175,55,0.1); }
+    [data-theme="dark"]     .vd-genre-badge.vd-genre-comedy { color: #e8e8e8; background: rgba(255,255,255,0.12); }
+    [data-theme="terminal"] .vd-genre-badge.vd-genre-comedy { color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.09); }
 
     .vd-genre-badge.vd-genre-drama {
       background: rgba(255,102,0,0.12); color: #cc4400;
@@ -448,16 +448,14 @@
       <option value="all">All Companies</option>
     </select>
   </div>
+  <div class="vd-filter-row">
+    <span class="vd-filter-label">Year</span>
+    <select id="vd-year-select" class="vd-select">
+      <option value="all">All Years</option>
+    </select>
+  </div>
   <div class="vd-filter-row" id="vd-genre-row">
     <span class="vd-filter-label">Genre</span>
-  </div>
-  <div class="vd-filter-row" id="vd-decade-row">
-    <span class="vd-filter-label">Decade</span>
-    <button class="vd-chip active" data-decade="all">All</button>
-    <button class="vd-chip" data-decade="1990s">1990s</button>
-    <button class="vd-chip" data-decade="2000s">2000s</button>
-    <button class="vd-chip" data-decade="2010s">2010s</button>
-    <button class="vd-chip" data-decade="2020s">2020s</button>
   </div>
   <div class="vd-filter-row">
     <span class="vd-filter-label">Tools</span>
@@ -545,7 +543,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
 
   let allRows = [];
   let sortCol = 'YEAR', sortAsc = false;
-  let activeGenre = 'all', activeDecade = 'all', activeCompany = 'all', query = '';
+  let activeGenre = 'all', activeYear = 'all', activeCompany = 'all', query = '';
 
   /* CSV parser */
   function parseCSV(text) {
@@ -578,6 +576,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       allRows = parseCSV(await res.text());
       buildGenreChips();
       buildCompanyDropdown();
+      buildYearDropdown();
       buildInsights();
       render();
     } catch (e) {
@@ -600,6 +599,22 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     activeCompany = this.value; render();
   });
 
+  /* Year dropdown */
+  function buildYearDropdown() {
+    const years = [...new Set(allRows.map(r => r.YEAR).filter(Boolean))]
+      .sort((a, b) => parseInt(b) - parseInt(a));
+    const sel = document.getElementById('vd-year-select');
+    years.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('vd-year-select').addEventListener('change', function () {
+    activeYear = this.value; render();
+  });
+
   /* Genre chips */
   function buildGenreChips() {
     const genres = [...new Set(allRows.map(r => r.GENRE).filter(Boolean))].sort();
@@ -618,24 +633,6 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       });
       row.appendChild(btn);
     });
-  }
-
-  /* Decade chips */
-  document.querySelectorAll('#vd-decade-row .vd-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeDecade = btn.dataset.decade;
-      document.querySelectorAll('#vd-decade-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.decade === activeDecade));
-      render();
-    });
-  });
-
-  function decadeOf(year) {
-    const y = parseInt(year);
-    if (y >= 1990 && y < 2000) return '1990s';
-    if (y >= 2000 && y < 2010) return '2000s';
-    if (y >= 2010 && y < 2020) return '2010s';
-    if (y >= 2020) return '2020s';
-    return '';
   }
 
   /* ── Insights ── */
@@ -737,10 +734,10 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
   document.getElementById('vd-clear-all').addEventListener('click', () => {
     searchEl.value = ''; query = '';
     clearBtn.style.display = 'none';
-    activeGenre = 'all'; activeDecade = 'all'; activeCompany = 'all';
+    activeGenre = 'all'; activeYear = 'all'; activeCompany = 'all';
     document.getElementById('vd-company-select').value = 'all';
+    document.getElementById('vd-year-select').value = 'all';
     document.querySelectorAll('#vd-genre-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.genre === 'all'));
-    document.querySelectorAll('#vd-decade-row .vd-chip').forEach(c => c.classList.toggle('active', c.dataset.decade === 'all'));
     render();
   });
 
@@ -763,9 +760,9 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
   /* Render */
   function render() {
     const rows = allRows.filter(r => {
-      if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)         return false;
-      if (activeDecade  !== 'all' && decadeOf(r.YEAR) !== activeDecade) return false;
-      if (activeCompany !== 'all' && r.COMPANY !== activeCompany)       return false;
+      if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)   return false;
+      if (activeYear    !== 'all' && r.YEAR    !== activeYear)    return false;
+      if (activeCompany !== 'all' && r.COMPANY !== activeCompany) return false;
       if (query) {
         const hay = [r.PRODUCTION, r.COMPANY, r.DIRECTOR, r.PLAYWRIGHT].join(' ').toLowerCase();
         if (!hay.includes(query)) return false;
@@ -780,7 +777,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       return sortAsc ? cmp : -cmp;
     });
 
-    const filtersActive = query || activeGenre !== 'all' || activeDecade !== 'all' || activeCompany !== 'all';
+    const filtersActive = query || activeGenre !== 'all' || activeYear !== 'all' || activeCompany !== 'all';
     document.getElementById('vd-clear-all').style.display = filtersActive ? 'inline' : 'none';
     document.getElementById('vd-count').textContent = `${rows.length} result${rows.length !== 1 ? 's' : ''}`;
 
