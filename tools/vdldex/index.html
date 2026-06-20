@@ -576,6 +576,14 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     return out;
   }
 
+  /* Split joint companies on ' & ', joint people on ',' */
+  function splitCompanies(str) {
+    return str ? str.split(' & ').map(s => s.trim()).filter(Boolean) : [];
+  }
+  function splitPeople(str) {
+    return str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
+
   /* Fetch */
   async function load() {
     try {
@@ -592,9 +600,11 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     }
   }
 
-  /* Company dropdown */
+  /* Company dropdown — splits joint entries so individuals appear */
   function buildCompanyDropdown() {
-    const companies = [...new Set(allRows.map(r => r.COMPANY).filter(Boolean))].sort();
+    const companies = [...new Set(
+      allRows.flatMap(r => splitCompanies(r.COMPANY))
+    )].sort();
     const sel = document.getElementById('vd-company-select');
     companies.forEach(c => {
       const opt = document.createElement('option');
@@ -653,11 +663,22 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     return Object.entries(map).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }
 
+  /* Like freq() but splits joint entries first */
+  function freqSplit(rows, key, splitFn) {
+    const map = {};
+    rows.forEach(r => {
+      splitFn(r[key] || '').forEach(val => {
+        if (val) map[val] = (map[val] || 0) + 1;
+      });
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
+
   function buildInsights() {
     const genreList   = freq(allRows, 'GENRE');
-    const dirList     = freq(allRows, 'DIRECTOR');
-    const pwList      = freq(allRows, 'PLAYWRIGHT');
-    const compList    = freq(allRows, 'COMPANY');
+    const dirList     = freqSplit(allRows, 'DIRECTOR',   splitPeople);
+    const pwList      = freqSplit(allRows, 'PLAYWRIGHT', splitPeople);
+    const compList    = freqSplit(allRows, 'COMPANY',    splitCompanies);
     const prodList    = freq(allRows, 'PRODUCTION').filter(([, n]) => n > 1);
 
     const maxGenre  = genreList[0]?.[1] || 1;
@@ -770,7 +791,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     const rows = allRows.filter(r => {
       if (activeGenre   !== 'all' && r.GENRE   !== activeGenre)   return false;
       if (activeYear    !== 'all' && r.YEAR    !== activeYear)    return false;
-      if (activeCompany !== 'all' && r.COMPANY !== activeCompany) return false;
+      if (activeCompany !== 'all' && !splitCompanies(r.COMPANY).includes(activeCompany)) return false;
       if (query) {
         const hay = [r.PRODUCTION, r.COMPANY, r.DIRECTOR, r.PLAYWRIGHT].join(' ').toLowerCase();
         if (!hay.includes(query)) return false;
