@@ -399,7 +399,7 @@
     </div>
   </div>
   <h1 class="vd-title">VDLdex</h1>
-  <p class="vd-subtitle">The Victorian Drama League Entrants Archive · 1997–2026</p>
+  <p class="vd-subtitle">The Victorian Drama League Entrants Archive ·<br>1997–2026</p>
 </header>
 
 <!-- CONTROLS -->
@@ -613,15 +613,17 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
   }
 
   function buildInsights() {
-    const genreList = freq(allRows, 'GENRE');
-    const dirList   = freq(allRows, 'DIRECTOR');
-    const pwList    = freq(allRows, 'PLAYWRIGHT');
-    const prodList  = freq(allRows, 'PRODUCTION').filter(([, n]) => n > 1);
+    const genreList   = freq(allRows, 'GENRE');
+    const dirList     = freq(allRows, 'DIRECTOR');
+    const pwList      = freq(allRows, 'PLAYWRIGHT');
+    const compList    = freq(allRows, 'COMPANY');
+    const prodList    = freq(allRows, 'PRODUCTION').filter(([, n]) => n > 1);
 
-    const maxGenre = genreList[0]?.[1] || 1;
-    const maxDir   = dirList[0]?.[1] || 1;
-    const maxPw    = pwList[0]?.[1] || 1;
-    const maxProd  = prodList[0]?.[1] || 1;
+    const maxGenre  = genreList[0]?.[1] || 1;
+    const maxDir    = dirList[0]?.[1] || 1;
+    const maxPw     = pwList[0]?.[1] || 1;
+    const maxComp   = compList[0]?.[1] || 1;
+    const maxProd   = prodList[0]?.[1] || 1;
 
     function rows(entries, max) {
       if (!entries.length) return '<div class="vd-ins-row"><span class="vd-ins-name" style="color:var(--dim)">No data</span></div>';
@@ -648,10 +650,11 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     </div>`;
 
     document.getElementById('vd-insights-grid').innerHTML =
-      card('Genre Breakdown', genreList, maxGenre) +
-      card('Director with the Most Submissions', dirList, maxDir) +
+      (prodList.length ? card('Productions Entered Multiple Times', prodList, maxProd) : noMulti) +
       card('Playwright with the Most Submissions', pwList, maxPw) +
-      (prodList.length ? card('Productions Entered Multiple Times', prodList, maxProd) : noMulti);
+      card('Companies with the Most Submissions', compList, maxComp) +
+      card('Director with the Most Submissions', dirList, maxDir) +
+      card('Genre Breakdown', genreList, maxGenre);
   }
 
   /* Insights toggle */
