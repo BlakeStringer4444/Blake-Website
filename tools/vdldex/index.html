@@ -576,9 +576,9 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     return out;
   }
 
-  /* Split joint entries — handle both ' & ' and ',' as separators */
+  /* Split joint entries — companies use ' & ', people use ',' or ' & ' */
   function splitCompanies(str) {
-    return str ? str.split(/ & |,/).map(s => s.trim()).filter(Boolean) : [];
+    return str ? str.split(' & ').map(s => s.trim()).filter(Boolean) : [];
   }
   function splitPeople(str) {
     return str ? str.split(/ & |,/).map(s => s.trim()).filter(Boolean) : [];
