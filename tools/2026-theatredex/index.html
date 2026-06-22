@@ -119,10 +119,10 @@ body {
 .td-header-btn {
   font-family: 'DM Mono', monospace;
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: rgba(212,255,26,0.55);
+  color: var(--lime);
   text-decoration: none;
   background: none;
-  border: 1px solid rgba(212,255,26,0.25);
+  border: 1px solid var(--lime);
   padding: 7px 14px;
   border-radius: 2px;
   transition: all 0.2s;
@@ -131,7 +131,7 @@ body {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 1;
 }
-.td-header-btn:hover { color: var(--lime); border-color: var(--lime); }
+.td-header-btn:hover { background: var(--lime); color: var(--black); border-color: var(--lime); }
 
 .td-theme-btn,
 .td-font-btn {
