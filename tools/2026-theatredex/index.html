@@ -1060,10 +1060,78 @@ button.td-link { background: none; cursor: pointer; }
 .td-ilb-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; color: #333; text-align: center; margin-bottom: 8px; }
 .td-ilb-cols { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 2px; color: #2a2a2a; padding-bottom: 5px; border-bottom: 1px solid #181818; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
 .td-ilb-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #111; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; }
+
+/* ── MAP VIEW ── */
+.td-header-btn--active { color: var(--lime) !important; border-color: var(--lime) !important; background: rgba(212,255,26,0.1); }
+#td-map-view { display: flex; flex-direction: column; }
+.td-map-addr-bar {
+  display: flex; gap: 8px; padding: 14px 24px;
+  background: var(--bg); border-bottom: 1px solid var(--card-border); align-items: center;
+}
+.td-map-addr-input {
+  flex: 1; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
+  border: 1px solid var(--input-border); border-radius: 3px;
+  background: var(--input-bg); color: var(--fg); outline: none; transition: border-color 0.2s;
+}
+.td-map-addr-input:focus { border-color: var(--purple); }
+[data-theme="terminal"] .td-map-addr-input:focus { border-color: var(--lime); }
+.td-map-addr-input::placeholder { color: var(--muted); }
+.td-map-addr-btn {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 10px 18px; background: var(--purple); color: #fff;
+  border: none; border-radius: 2px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.td-map-addr-btn:hover:not(:disabled) { opacity: 0.8; }
+.td-map-addr-btn:disabled { opacity: 0.5; cursor: default; }
+[data-theme="terminal"] .td-map-addr-btn { background: var(--lime); color: var(--black); }
+.td-map-addr-clear {
+  display: none; align-items: center; justify-content: center;
+  background: none; border: 1px solid var(--input-border); color: var(--muted);
+  width: 38px; height: 38px; border-radius: 2px; cursor: pointer; font-size: 14px;
+  flex-shrink: 0; transition: all 0.15s;
+}
+.td-map-addr-clear.visible { display: flex; }
+.td-map-addr-clear:hover { border-color: var(--fg); color: var(--fg); }
+.td-map-body { display: flex; height: calc(100vh - 240px); min-height: 420px; }
+#td-map-el { flex: 1; min-width: 0; z-index: 0; }
+.td-map-sidebar {
+  width: 290px; flex-shrink: 0;
+  border-left: 1px solid var(--card-border); overflow-y: auto; background: var(--bg);
+}
+.td-map-list-header {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); padding: 12px 16px 8px; border-bottom: 1px solid var(--card-border);
+  position: sticky; top: 0; background: var(--bg); z-index: 1;
+}
+.td-map-list-item { padding: 11px 16px; border-bottom: 1px solid var(--card-border); cursor: pointer; transition: background 0.12s; }
+.td-map-list-item:hover { background: var(--card-bg); }
+.td-map-list-name { font-size: 12px; font-weight: 500; line-height: 1.3; color: var(--fg); margin-bottom: 2px; }
+.td-map-list-dist { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--purple); }
+[data-theme="terminal"] .td-map-list-dist { color: var(--lime); }
+.td-map-pin-dot {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--purple); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+[data-theme="terminal"] .td-map-pin-dot { background: var(--lime); }
+.td-map-user-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #e03030; border: 2.5px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
+.td-map-popup { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.4; }
+/* Leaflet popup tweak */
+.leaflet-popup-content-wrapper { border-radius: 3px !important; }
+@media (max-width: 639px) {
+  .td-map-body { flex-direction: column; height: auto; }
+  #td-map-el { height: 56vmax; min-height: 280px; }
+  .td-map-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--card-border); height: 260px; }
+  .td-map-addr-bar { padding: 10px 16px; gap: 6px; }
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 
@@ -1080,6 +1148,7 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-header-btns">
     <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Current Auditions ↗</a>
+    <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
   </div>
 </header>
 
@@ -1109,6 +1178,21 @@ button.td-link { background: none; cursor: pointer; }
 <main class="td-main">
   <div class="td-grid" id="td-grid">
     <div class="td-loading">Loading shows…</div>
+  </div>
+  <div id="td-map-view" hidden>
+    <div class="td-map-addr-bar">
+      <input type="text" id="td-map-addr" class="td-map-addr-input"
+        placeholder="Enter your suburb or address to see distances…"
+        autocomplete="off" spellcheck="false">
+      <button id="td-map-addr-btn" class="td-map-addr-btn">GO</button>
+      <button id="td-map-addr-clear" class="td-map-addr-clear" aria-label="Clear address">✕</button>
+    </div>
+    <div class="td-map-body">
+      <div id="td-map-el"></div>
+      <div class="td-map-sidebar">
+        <div id="td-map-list"></div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -3195,6 +3279,172 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     }
   }
 
+})();
+
+/* ── MAP VIEW ── */
+(function () {
+  const mapBtn     = document.getElementById('td-map-btn');
+  const mapView    = document.getElementById('td-map-view');
+  const grid       = document.getElementById('td-grid');
+  const controls   = document.querySelector('.td-controls');
+  const addrInput  = document.getElementById('td-map-addr');
+  const addrBtn    = document.getElementById('td-map-addr-btn');
+  const addrClear  = document.getElementById('td-map-addr-clear');
+
+  let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false, mapActive = false;
+
+  function extractCoords(url) {
+    if (!url) return null;
+    let m = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+    if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+    m = url.match(/\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+    return null;
+  }
+
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371, toR = Math.PI / 180;
+    const dLat = (lat2 - lat1) * toR, dLng = (lng2 - lng1) * toR;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.asin(Math.sqrt(a));
+  }
+
+  function buildPins() {
+    const seen = new Map();
+    for (const show of allShows) {
+      if (!show.company || seen.has(show.company)) continue;
+      const c = extractCoords(show.url_map);
+      if (c) seen.set(show.company, { lat: c[0], lng: c[1] });
+    }
+    return Array.from(seen.entries()).map(([name, pos]) => ({ name, ...pos }));
+  }
+
+  function tileUrl() {
+    const t = document.documentElement.dataset.theme || '';
+    return (t === 'dark' || t === 'terminal')
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  }
+
+  function initLeaflet(pins) {
+    if (mapReady) return;
+    mapReady = true;
+    leafletMap = L.map('td-map-el').setView([-37.88, 145.05], 10);
+    L.tileLayer(tileUrl(), {
+      attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(leafletMap);
+
+    const pinIcon = L.divIcon({
+      className: '', html: '<div class="td-map-pin-dot"></div>',
+      iconSize: [13,13], iconAnchor: [6,6], popupAnchor: [0,-8]
+    });
+
+    mapPinsData = pins.map(p => {
+      const marker = L.marker([p.lat, p.lng], { icon: pinIcon }).addTo(leafletMap);
+      marker.bindPopup(`<div class="td-map-popup"><strong>${p.name}</strong></div>`);
+      return { ...p, marker };
+    });
+
+    if (mapPinsData.length) {
+      leafletMap.fitBounds(
+        L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1)
+      );
+    }
+    renderList(mapPinsData, false);
+  }
+
+  function fmtDist(km) {
+    return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
+  }
+
+  function renderList(pins, withDist) {
+    const el = document.getElementById('td-map-list');
+    el.innerHTML =
+      `<div class="td-map-list-header">${withDist ? 'Sorted by distance' : pins.length + ' companies mapped'}</div>` +
+      pins.map((p, i) =>
+        `<div class="td-map-list-item" data-idx="${i}">
+          <div class="td-map-list-name">${p.name}</div>
+          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)} away</div>` : ''}
+        </div>`
+      ).join('');
+    el.querySelectorAll('.td-map-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const p = pins[+item.dataset.idx];
+        leafletMap.setView([p.lat, p.lng], 14, { animate: true });
+        p.marker.openPopup();
+      });
+    });
+  }
+
+  async function geocode(addr) {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=au`,
+      { headers: { Accept: 'application/json' } }
+    );
+    const data = await res.json();
+    return data[0] ? { lat: +data[0].lat, lng: +data[0].lon } : null;
+  }
+
+  async function handleSearch() {
+    const addr = addrInput.value.trim();
+    if (!addr) return;
+    addrBtn.textContent = '…';
+    addrBtn.disabled = true;
+    try {
+      const pos = await geocode(addr);
+      if (!pos) {
+        addrBtn.textContent = 'Not found';
+        setTimeout(() => { addrBtn.textContent = 'GO'; addrBtn.disabled = false; }, 2000);
+        return;
+      }
+      if (userMarker) { userMarker.remove(); userMarker = null; }
+      userMarker = L.marker([pos.lat, pos.lng], {
+        icon: L.divIcon({ className: '', html: '<div class="td-map-user-dot"></div>', iconSize: [16,16], iconAnchor: [8,8] })
+      }).addTo(leafletMap);
+      userMarker.bindPopup('<div class="td-map-popup"><strong>📍 Your location</strong></div>').openPopup();
+      leafletMap.setView([pos.lat, pos.lng], 11, { animate: true });
+      addrClear.classList.add('visible');
+
+      const sorted = mapPinsData
+        .map(p => ({ ...p, dist: haversine(pos.lat, pos.lng, p.lat, p.lng) }))
+        .sort((a, b) => a.dist - b.dist);
+      renderList(sorted, true);
+    } catch (e) { console.error(e); }
+    addrBtn.textContent = 'GO';
+    addrBtn.disabled = false;
+  }
+
+  function clearAddr() {
+    addrInput.value = '';
+    addrClear.classList.remove('visible');
+    if (userMarker) { userMarker.remove(); userMarker = null; }
+    renderList(mapPinsData, false);
+    if (mapPinsData.length)
+      leafletMap.fitBounds(L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1));
+  }
+
+  mapBtn.addEventListener('click', () => {
+    mapActive = !mapActive;
+    if (mapActive) {
+      grid.hidden = true;
+      controls.hidden = true;
+      mapView.hidden = false;
+      mapBtn.classList.add('td-header-btn--active');
+      initLeaflet(buildPins());
+      setTimeout(() => leafletMap && leafletMap.invalidateSize(), 150);
+    } else {
+      grid.hidden = false;
+      controls.hidden = false;
+      mapView.hidden = true;
+      mapBtn.classList.remove('td-header-btn--active');
+    }
+  });
+
+  addrBtn.addEventListener('click', handleSearch);
+  addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+  addrInput.addEventListener('input', () => { if (!addrInput.value) addrClear.classList.remove('visible'); });
+  addrClear.addEventListener('click', clearAddr);
 })();
 
 init();
