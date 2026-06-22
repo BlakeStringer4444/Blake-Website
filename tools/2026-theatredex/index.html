@@ -3438,7 +3438,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         const people = [
           s.director   ? 'Dir · ' + s.director   : '',
           s.playwright ? 'By · '  + s.playwright  : '',
-        ].filter(Boolean).join(' · ');
+        ].filter(Boolean).join('<br>');
         return `<div class="td-map-detail-show">
           <div class="td-map-detail-show-title">${s.title}</div>
           <div class="td-map-detail-show-dates">${fmtRange(s)}</div>
