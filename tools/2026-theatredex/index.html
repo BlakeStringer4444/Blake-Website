@@ -1128,6 +1128,21 @@ button.td-link { background: none; cursor: pointer; }
 .td-map-list-name { font-size: 12px; font-weight: 500; line-height: 1.3; color: var(--fg); margin-bottom: 2px; }
 .td-map-list-dist { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--purple); }
 [data-theme="terminal"] .td-map-list-dist { color: var(--lime); }
+.td-map-detail-back {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(212,255,26,0.55); background: none; border: none; cursor: pointer;
+  padding: 12px 16px 6px; display: block; transition: color 0.15s; width: 100%; text-align: left;
+}
+.td-map-detail-back:hover { color: var(--lime); }
+.td-map-detail-co-name {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--lime); padding: 4px 16px 10px; border-bottom: 1px solid var(--card-border); line-height: 1.4;
+}
+.td-map-detail-show { padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
+.td-map-detail-show-title { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.3; margin-bottom: 3px; }
+.td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--purple); }
+[data-theme="terminal"] .td-map-detail-show-dates { color: var(--lime); }
+.td-map-detail-show-venue { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
 .td-map-pin-dot {
   width: 13px; height: 13px; border-radius: 50%;
   background: var(--purple); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
@@ -3318,6 +3333,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const addrClear = document.getElementById('td-map-addr-clear');
 
   let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
+  let _lastListPins = [], _lastListWithDist = false;
 
   function extractCoords(url) {
     if (!url) return null;
@@ -3368,7 +3384,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
     mapPinsData = pins.map(p => {
       const marker = L.marker([p.lat, p.lng], { icon: pinIcon }).addTo(leafletMap);
-      marker.bindPopup(`<div class="td-map-popup"><strong>${p.name}</strong></div>`);
+      marker.on('click', () => {
+        renderCompanyDetail(p.name);
+      });
       return { ...p, marker };
     });
 
@@ -3385,6 +3403,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function renderList(pins, withDist) {
+    _lastListPins = pins;
+    _lastListWithDist = withDist;
     const display = withDist ? pins : [...pins].sort((a, b) => a.name.localeCompare(b.name));
     const el = document.getElementById('td-map-list');
     el.innerHTML =
@@ -3399,9 +3419,30 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       item.addEventListener('click', () => {
         const p = display[+item.dataset.idx];
         leafletMap.setView([p.lat, p.lng], 14, { animate: true });
-        p.marker.openPopup();
+        renderCompanyDetail(p.name);
       });
     });
+  }
+
+  function renderCompanyDetail(name) {
+    const shows = allShows
+      .filter(s => s.company === name)
+      .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
+    const el = document.getElementById('td-map-list');
+    el.innerHTML =
+      `<button class="td-map-detail-back">← All companies</button>` +
+      `<div class="td-map-detail-co-name">${name}</div>` +
+      shows.map(s =>
+        `<div class="td-map-detail-show">
+          <div class="td-map-detail-show-title">${s.title}</div>
+          <div class="td-map-detail-show-dates">${fmtRange(s)}</div>
+          ${s.suburb ? `<div class="td-map-detail-show-venue">${s.suburb}</div>` : ''}
+        </div>`
+      ).join('');
+    el.querySelector('.td-map-detail-back').addEventListener('click', () => {
+      renderList(_lastListPins, _lastListWithDist);
+    });
+    el.scrollTop = 0;
   }
 
   async function geocode(addr) {
