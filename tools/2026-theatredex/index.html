@@ -121,11 +121,13 @@ body {
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
   color: rgba(212,255,26,0.55);
   text-decoration: none;
+  background: none;
   border: 1px solid rgba(212,255,26,0.25);
   padding: 7px 14px;
   border-radius: 2px;
   transition: all 0.2s;
   white-space: nowrap;
+  cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   flex: 1;
 }
@@ -1082,7 +1084,7 @@ button.td-link { background: none; cursor: pointer; }
   color: rgba(212,255,26,0.7); white-space: nowrap; flex-shrink: 0;
 }
 .td-map-addr-input {
-  flex: 1; padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 14px;
+  flex: 1; padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 16px;
   border: 1px solid rgba(212,255,26,0.25); background: rgba(255,255,255,0.05);
   color: #fff; outline: none; transition: border-color 0.2s; min-width: 0;
 }
@@ -1092,6 +1094,7 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
   padding: 8px 16px; background: var(--lime); color: var(--black);
   border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0;
+  align-self: stretch;
 }
 .td-map-addr-btn:hover:not(:disabled) { opacity: 0.8; }
 .td-map-addr-btn:disabled { opacity: 0.5; cursor: default; }
@@ -3382,10 +3385,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function renderList(pins, withDist) {
+    const display = withDist ? pins : [...pins].sort((a, b) => a.name.localeCompare(b.name));
     const el = document.getElementById('td-map-list');
     el.innerHTML =
-      `<div class="td-map-list-header">${withDist ? 'Sorted by distance' : pins.length + ' companies mapped'}</div>` +
-      pins.map((p, i) =>
+      `<div class="td-map-list-header">${withDist ? 'Sorted by distance' : display.length + ' companies mapped'}</div>` +
+      display.map((p, i) =>
         `<div class="td-map-list-item" data-idx="${i}">
           <div class="td-map-list-name">${p.name}</div>
           ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)} away</div>` : ''}
@@ -3393,7 +3397,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       ).join('');
     el.querySelectorAll('.td-map-list-item').forEach(item => {
       item.addEventListener('click', () => {
-        const p = pins[+item.dataset.idx];
+        const p = display[+item.dataset.idx];
         leafletMap.setView([p.lat, p.lng], 14, { animate: true });
         p.marker.openPopup();
       });
@@ -3446,7 +3450,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       leafletMap.fitBounds(L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1));
   }
 
+  let _savedZoom = '';
+
   function openMap() {
+    /* Strip any Aa-button zoom so the fixed modal always fits the screen */
+    _savedZoom = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
     overlay.classList.add('open');
     mapBtn.classList.add('td-header-btn--active');
     /* Defer init one frame so the modal has painted and the map element has real dimensions */
@@ -3461,6 +3470,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   function closeMap() {
     overlay.classList.remove('open');
     mapBtn.classList.remove('td-header-btn--active');
+    document.documentElement.style.zoom = _savedZoom;
   }
 
   mapBtn.addEventListener('click', openMap);
