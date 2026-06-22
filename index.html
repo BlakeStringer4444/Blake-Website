@@ -3481,10 +3481,11 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
           <span class="tool-tag">Live</span>
         </a>
 
-        <a id="vdldex-card" class="tool-card locked" href="/tools/vdldex" onclick="return vdldexClick(event)">
+        <a class="tool-card" href="/tools/vdldex">
           <span class="tool-icon">🗂️</span>
           <span class="tool-name">VDLdex</span>
-          <span class="tool-desc" id="vdldex-desc">🔒 Coming Soon</span>
+          <span class="tool-desc">Search & filter VDL entries 1997–2026</span>
+          <span class="tool-tag">Live</span>
         </a>
 
         <button id="ee-spoilers-btn" class="tool-card">
@@ -6960,34 +6961,6 @@ if (siteName) {
   setupAwardSort('act-award-th', 'act-acc-table');
 })();
 
-/* ── VDLdex 50-click unlock ── */
-(function () {
-  const UNLOCK_KEY = 'vdldex_unlocked';
-  const NEEDED = 50;
-  let clicks = 0;
-  const card = document.getElementById('vdldex-card');
-  const desc = document.getElementById('vdldex-desc');
-  if (!card) return;
-
-  function unlock() {
-    card.classList.remove('locked');
-    desc.textContent = 'Search & filter VDL entries 1997–2026';
-    localStorage.setItem(UNLOCK_KEY, '1');
-  }
-
-  if (localStorage.getItem(UNLOCK_KEY)) unlock();
-
-  window.vdldexClick = function (e) {
-    if (!card.classList.contains('locked')) return true;
-    e.preventDefault();
-    clicks++;
-    const rem = NEEDED - clicks;
-    if (rem <= 0) {
-      unlock();
-    }
-    return false;
-  };
-})();
 
 </script>
 
