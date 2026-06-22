@@ -1061,42 +1061,59 @@ button.td-link { background: none; cursor: pointer; }
 .td-ilb-cols { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 2px; color: #2a2a2a; padding-bottom: 5px; border-bottom: 1px solid #181818; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
 .td-ilb-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #111; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; }
 
-/* ── MAP VIEW ── */
+/* ── MAP VIEW MODAL ── */
 .td-header-btn--active { color: var(--lime) !important; border-color: var(--lime) !important; background: rgba(212,255,26,0.1); }
-#td-map-view { display: flex; flex-direction: column; }
-.td-map-addr-bar {
-  display: flex; gap: 8px; padding: 14px 24px;
-  background: var(--bg); border-bottom: 1px solid var(--card-border); align-items: center;
+.td-map-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 20px;
+}
+.td-map-overlay.open { display: flex; }
+.td-map-modal {
+  width: 100%; max-width: 1200px; height: calc(100vh - 40px);
+  background: var(--bg); border: 2px solid var(--lime);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.td-map-topbar {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--black); border-bottom: 1px solid rgba(212,255,26,0.2); flex-shrink: 0;
+}
+.td-map-modal-title {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(212,255,26,0.7); white-space: nowrap; flex-shrink: 0;
 }
 .td-map-addr-input {
-  flex: 1; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
-  border: 1px solid var(--input-border); border-radius: 3px;
-  background: var(--input-bg); color: var(--fg); outline: none; transition: border-color 0.2s;
+  flex: 1; padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 14px;
+  border: 1px solid rgba(212,255,26,0.25); background: rgba(255,255,255,0.05);
+  color: #fff; outline: none; transition: border-color 0.2s; min-width: 0;
 }
-.td-map-addr-input:focus { border-color: var(--purple); }
-[data-theme="terminal"] .td-map-addr-input:focus { border-color: var(--lime); }
-.td-map-addr-input::placeholder { color: var(--muted); }
+.td-map-addr-input:focus { border-color: var(--lime); }
+.td-map-addr-input::placeholder { color: rgba(255,255,255,0.3); }
 .td-map-addr-btn {
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-  padding: 10px 18px; background: var(--purple); color: #fff;
-  border: none; border-radius: 2px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0;
+  padding: 8px 16px; background: var(--lime); color: var(--black);
+  border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0;
 }
 .td-map-addr-btn:hover:not(:disabled) { opacity: 0.8; }
 .td-map-addr-btn:disabled { opacity: 0.5; cursor: default; }
-[data-theme="terminal"] .td-map-addr-btn { background: var(--lime); color: var(--black); }
 .td-map-addr-clear {
   display: none; align-items: center; justify-content: center;
-  background: none; border: 1px solid var(--input-border); color: var(--muted);
-  width: 38px; height: 38px; border-radius: 2px; cursor: pointer; font-size: 14px;
-  flex-shrink: 0; transition: all 0.15s;
+  background: none; border: 1px solid rgba(212,255,26,0.25); color: rgba(212,255,26,0.6);
+  width: 34px; height: 34px; cursor: pointer; font-size: 13px; flex-shrink: 0; transition: all 0.15s;
 }
 .td-map-addr-clear.visible { display: flex; }
-.td-map-addr-clear:hover { border-color: var(--fg); color: var(--fg); }
-.td-map-body { display: flex; height: calc(100vh - 240px); min-height: 420px; }
-#td-map-el { flex: 1; min-width: 0; z-index: 0; }
+.td-map-addr-clear:hover { border-color: var(--lime); color: var(--lime); }
+.td-map-close {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  background: none; border: 1px solid rgba(212,255,26,0.35); color: rgba(212,255,26,0.7);
+  padding: 5px 11px; text-align: center; line-height: 1.6; cursor: pointer; flex-shrink: 0;
+  transition: all 0.2s; touch-action: manipulation;
+}
+.td-map-close:hover { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+.td-map-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+#td-map-el { flex: 1; min-width: 0; min-height: 0; }
 .td-map-sidebar {
-  width: 290px; flex-shrink: 0;
-  border-left: 1px solid var(--card-border); overflow-y: auto; background: var(--bg);
+  width: 280px; flex-shrink: 0;
+  border-left: 1px solid rgba(212,255,26,0.15); overflow-y: auto; background: var(--bg);
 }
 .td-map-list-header {
   font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
@@ -1118,13 +1135,15 @@ button.td-link { background: none; cursor: pointer; }
   background: #e03030; border: 2.5px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.5);
 }
 .td-map-popup { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.4; }
-/* Leaflet popup tweak */
 .leaflet-popup-content-wrapper { border-radius: 3px !important; }
 @media (max-width: 639px) {
-  .td-map-body { flex-direction: column; height: auto; }
-  #td-map-el { height: 56vmax; min-height: 280px; }
-  .td-map-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--card-border); height: 260px; }
-  .td-map-addr-bar { padding: 10px 16px; gap: 6px; }
+  .td-map-overlay { padding: 0; }
+  .td-map-modal { height: 100%; max-height: none; border-width: 1px; border-left: none; border-right: none; }
+  .td-map-topbar { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .td-map-modal-title { display: none; }
+  .td-map-body { flex-direction: column; }
+  #td-map-el { flex: 1; min-height: 240px; }
+  .td-map-sidebar { width: 100%; border-left: none; border-top: 1px solid rgba(212,255,26,0.15); height: 180px; flex-shrink: 0; }
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1179,13 +1198,18 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-grid" id="td-grid">
     <div class="td-loading">Loading shows…</div>
   </div>
-  <div id="td-map-view" hidden>
-    <div class="td-map-addr-bar">
+</main>
+
+<div class="td-map-overlay" id="td-map-overlay">
+  <div class="td-map-modal">
+    <div class="td-map-topbar">
+      <span class="td-map-modal-title">Map View · 2026</span>
       <input type="text" id="td-map-addr" class="td-map-addr-input"
         placeholder="Enter your suburb or address to see distances…"
         autocomplete="off" spellcheck="false">
       <button id="td-map-addr-btn" class="td-map-addr-btn">GO</button>
-      <button id="td-map-addr-clear" class="td-map-addr-clear" aria-label="Clear address">✕</button>
+      <button id="td-map-addr-clear" class="td-map-addr-clear" aria-label="Clear">✕</button>
+      <button class="td-map-close" id="td-map-close">ESC<br>CLOSE</button>
     </div>
     <div class="td-map-body">
       <div id="td-map-el"></div>
@@ -1194,7 +1218,7 @@ button.td-link { background: none; cursor: pointer; }
       </div>
     </div>
   </div>
-</main>
+</div>
 
 <footer class="td-footer">
   <span>Blake Stringer // 2026</span>
@@ -3281,17 +3305,16 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
 })();
 
-/* ── MAP VIEW ── */
+/* ── MAP VIEW MODAL ── */
 (function () {
-  const mapBtn     = document.getElementById('td-map-btn');
-  const mapView    = document.getElementById('td-map-view');
-  const grid       = document.getElementById('td-grid');
-  const controls   = document.querySelector('.td-controls');
-  const addrInput  = document.getElementById('td-map-addr');
-  const addrBtn    = document.getElementById('td-map-addr-btn');
-  const addrClear  = document.getElementById('td-map-addr-clear');
+  const mapBtn    = document.getElementById('td-map-btn');
+  const overlay   = document.getElementById('td-map-overlay');
+  const closeBtn  = document.getElementById('td-map-close');
+  const addrInput = document.getElementById('td-map-addr');
+  const addrBtn   = document.getElementById('td-map-addr-btn');
+  const addrClear = document.getElementById('td-map-addr-clear');
 
-  let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false, mapActive = false;
+  let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
 
   function extractCoords(url) {
     if (!url) return null;
@@ -3405,7 +3428,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       userMarker.bindPopup('<div class="td-map-popup"><strong>📍 Your location</strong></div>').openPopup();
       leafletMap.setView([pos.lat, pos.lng], 11, { animate: true });
       addrClear.classList.add('visible');
-
       const sorted = mapPinsData
         .map(p => ({ ...p, dist: haversine(pos.lat, pos.lng, p.lat, p.lng) }))
         .sort((a, b) => a.dist - b.dist);
@@ -3424,22 +3446,27 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       leafletMap.fitBounds(L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1));
   }
 
-  mapBtn.addEventListener('click', () => {
-    mapActive = !mapActive;
-    if (mapActive) {
-      grid.hidden = true;
-      controls.hidden = true;
-      mapView.hidden = false;
-      mapBtn.classList.add('td-header-btn--active');
-      initLeaflet(buildPins());
-      setTimeout(() => leafletMap && leafletMap.invalidateSize(), 150);
-    } else {
-      grid.hidden = false;
-      controls.hidden = false;
-      mapView.hidden = true;
-      mapBtn.classList.remove('td-header-btn--active');
-    }
-  });
+  function openMap() {
+    overlay.classList.add('open');
+    mapBtn.classList.add('td-header-btn--active');
+    /* Defer init one frame so the modal has painted and the map element has real dimensions */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        initLeaflet(buildPins());
+        if (leafletMap) leafletMap.invalidateSize();
+      });
+    });
+  }
+
+  function closeMap() {
+    overlay.classList.remove('open');
+    mapBtn.classList.remove('td-header-btn--active');
+  }
+
+  mapBtn.addEventListener('click', openMap);
+  closeBtn.addEventListener('click', closeMap);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeMap(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeMap(); });
 
   addrBtn.addEventListener('click', handleSearch);
   addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
