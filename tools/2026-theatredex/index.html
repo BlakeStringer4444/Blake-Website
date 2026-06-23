@@ -1101,7 +1101,8 @@ button.td-link { background: none; cursor: pointer; }
 .td-map-addr-clear {
   display: none; align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.25); color: rgba(212,255,26,0.6);
-  width: 34px; height: 34px; cursor: pointer; font-size: 13px; flex-shrink: 0; transition: all 0.15s;
+  width: 34px; height: 34px; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+  font-family: 'DM Mono', monospace; font-size: 7px; letter-spacing: 0.5px; text-transform: uppercase;
 }
 .td-map-addr-clear.visible { display: flex; }
 .td-map-addr-clear:hover { border-color: var(--lime); color: var(--lime); }
@@ -1227,8 +1228,8 @@ button.td-link { background: none; cursor: pointer; }
       <input type="text" id="td-map-addr" class="td-map-addr-input"
         placeholder="Enter your suburb or address to see distances…"
         autocomplete="off" spellcheck="false">
+      <button id="td-map-addr-clear" class="td-map-addr-clear">Clear</button>
       <button id="td-map-addr-btn" class="td-map-addr-btn">GO</button>
-      <button id="td-map-addr-clear" class="td-map-addr-clear" aria-label="Clear">✕</button>
       <button class="td-map-close" id="td-map-close">ESC<br>CLOSE</button>
     </div>
     <div class="td-map-body">
