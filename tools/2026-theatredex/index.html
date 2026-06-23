@@ -328,7 +328,7 @@ body {
 }
 .td-company {
   font-family: 'DM Mono', monospace;
-  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;
   color: rgba(0,0,0,0.55);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -1142,10 +1142,9 @@ button.td-link { background: none; cursor: pointer; }
 [data-theme="terminal"] .td-map-detail-co-name { color: var(--lime); }
 .td-map-detail-show { padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
 .td-map-detail-show-title { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.3; margin-bottom: 3px; }
-.td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--purple); }
+.td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--purple); }
 [data-theme="terminal"] .td-map-detail-show-dates { color: var(--lime); }
-.td-map-detail-show-venue { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
-.td-map-detail-show-people { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
+.td-map-detail-show-people { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
 .td-map-pin-dot {
   width: 13px; height: 13px; border-radius: 50%;
   background: var(--purple); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
@@ -1184,7 +1183,7 @@ button.td-link { background: none; cursor: pointer; }
     </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
-  <p class="td-subtitle">Blake's nerdy attempt to summarise all things community theatre in Victoria lol</p>
+  <p class="td-subtitle">Blake's nerdy attempt to capture all <u>plays</u> in community theatre in Victoria lol</p>
   <div class="td-header-btns">
     <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
@@ -1522,7 +1521,7 @@ function card(show) {
     <div class="td-title-text">${show.title}</div>
     <div class="td-dates">${fmtRange(show)}</div>
     ${progressBar}
-    <div class="td-company">${show.company}</div>
+    <div class="td-company" title="${show.company}">${show.company}</div>
     ${people ? `<div class="td-people">${people}</div>` : ''}
     ${links.length ? `<div class="td-links">${links.join('')}</div>` : ''}
     <button class="td-blakeai"
@@ -3442,7 +3441,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         return `<div class="td-map-detail-show">
           <div class="td-map-detail-show-title">${s.title}</div>
           <div class="td-map-detail-show-dates">${fmtRange(s)}</div>
-          ${s.suburb ? `<div class="td-map-detail-show-venue">${s.suburb}</div>` : ''}
           ${people ? `<div class="td-map-detail-show-people">${people}</div>` : ''}
         </div>`;
       }).join('');
