@@ -1142,10 +1142,9 @@ button.td-link { background: none; cursor: pointer; }
 [data-theme="terminal"] .td-map-detail-co-name { color: var(--lime); }
 .td-map-detail-show { padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
 .td-map-detail-show-title { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.3; margin-bottom: 3px; }
-.td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--purple); }
+.td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--purple); }
 [data-theme="terminal"] .td-map-detail-show-dates { color: var(--lime); }
-.td-map-detail-show-venue { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
-.td-map-detail-show-people { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
+.td-map-detail-show-people { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--muted); margin-top: 2px; }
 .td-map-pin-dot {
   width: 13px; height: 13px; border-radius: 50%;
   background: var(--purple); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
@@ -3442,7 +3441,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         return `<div class="td-map-detail-show">
           <div class="td-map-detail-show-title">${s.title}</div>
           <div class="td-map-detail-show-dates">${fmtRange(s)}</div>
-          ${s.suburb ? `<div class="td-map-detail-show-venue">${s.suburb}</div>` : ''}
           ${people ? `<div class="td-map-detail-show-people">${people}</div>` : ''}
         </div>`;
       }).join('');
