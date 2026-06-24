@@ -1177,7 +1177,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-overlay.open { opacity: 1; pointer-events: auto; }
 .td-cal-modal {
   background: var(--bg); border: 1px solid var(--lime);
-  width: 100%; max-width: 960px; max-height: 85vh;
+  width: 100%; max-width: 1440px; max-height: 92vh;
   display: flex; flex-direction: column; overflow: hidden;
 }
 .td-cal-topbar {
@@ -1290,11 +1290,11 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-back:hover { background: rgba(212,255,26,0.1); }
 /* Yearly legend / info bar */
 .td-cal-info {
-  display: none; padding: 6px 16px; flex-shrink: 0;
+  display: none; padding: 8px 16px; flex-shrink: 0;
   border-bottom: 1px solid rgba(212,255,26,0.1);
-  font-family: 'DM Mono', monospace; font-size: 9px;
-  letter-spacing: 0.3px; line-height: 1.7;
-  flex-direction: column; gap: 2px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  letter-spacing: 0.3px; line-height: 1.8;
+  flex-direction: column; gap: 3px;
 }
 .td-cal-info.visible { display: flex; }
 /* Yearly month separator */
@@ -4022,8 +4022,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
     var overlapDays = totalOverlapDays();
     var dayWord     = overlapDays === 1 ? 'day' : 'days';
-    /* >30 days = major (red) · 1–30 days = minor (amber) · 0 = no clash (green) */
-    var clashLevel  = overlapDays === 0 ? 'none' : overlapDays > 30 ? 'major' : 'minor';
+    /* 21+ days = major (red) · 1–20 days = minor (amber) · 0 = no clash (green) */
+    var clashLevel  = overlapDays === 0 ? 'none' : overlapDays >= 21 ? 'major' : 'minor';
     var clashText   = clashLevel === 'major'
       ? '<span style="color:#ef4444">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
       : clashLevel === 'minor'
