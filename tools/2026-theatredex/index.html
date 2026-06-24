@@ -1361,7 +1361,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-clash-autocomplete { position: relative; }
 .td-clash-input {
   width: 100%; padding: 9px 12px; box-sizing: border-box;
-  background: var(--card); border: 1px solid rgba(128,128,128,0.25);
+  background: var(--card-bg); border: 1px solid rgba(128,128,128,0.25);
   color: var(--fg); font-family: 'DM Mono', monospace; font-size: 11px;
 }
 .td-clash-input:focus { outline: none; border-color: var(--purple); }
@@ -1403,6 +1403,8 @@ button.td-link { background: none; cursor: pointer; }
   .td-clash-overlay { padding: 0; }
   .td-clash-modal { max-height: 100dvh; border-left: none; border-right: none; }
   .td-clash-body { padding: 20px 16px; }
+  /* Prevent iOS Safari auto-zoom on focus (triggers when font-size < 16px) */
+  .td-clash-input { font-size: 16px; }
 }
 .td-cal-empty {
   padding: 48px 20px; text-align: center;
