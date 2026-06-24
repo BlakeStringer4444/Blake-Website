@@ -1311,7 +1311,8 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(128,128,128,0.08);
   line-height: 1.4;
 }
-.td-cal-month-col.has-clash { color: #f59e0b; background: rgba(245,158,11,0.07); }
+.td-cal-month-col.has-clash       { color: #f59e0b; background: rgba(245,158,11,0.07); }
+.td-cal-month-col.has-clash-major { color: #ef4444; background: rgba(239,68,68,0.08); }
 /* Taller bars in yearly rows */
 .td-cal-row-a .td-cal-bar, .td-cal-row-b .td-cal-bar { height: 22px; }
 .td-cal-row-a .td-cal-rehbar, .td-cal-row-b .td-cal-rehbar { height: 13px; }
@@ -3993,20 +3994,43 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return rs <= mE && e >= mS;
     }
 
+    /* Total overlapping days between the two commitment windows */
+    function totalOverlapDays() {
+      var sA = parseDate(showA.date_start), eA = parseDate(showA.date_end) || sA;
+      var sB = parseDate(showB.date_start), eB = parseDate(showB.date_end) || sB;
+      if (!sA || !sB) return 0;
+      var rsA = new Date(sA.getTime() - REHEARSAL_MS);
+      var rsB = new Date(sB.getTime() - REHEARSAL_MS);
+      var oS = new Date(Math.max(rsA.getTime(), rsB.getTime()));
+      var oE = new Date(Math.min(eA.getTime(), eB.getTime()));
+      if (oS > oE) return 0;
+      return Math.round((oE - oS) / 86400000) + 1;
+    }
+
+    var overlapDays = totalOverlapDays();
+    var clashLevel  = overlapDays === 0 ? '' : overlapDays >= 30 ? 'major' : 'minor';
+    var clashColour = clashLevel === 'major' ? '#ef4444' : '#f59e0b';
+    var clashText   = clashLevel === 'major'
+      ? '<span style="color:#ef4444">⚠ Major clash · ~' + overlapDays + ' days overlap</span>'
+      : clashLevel === 'minor'
+        ? '<span style="color:#f59e0b">⚠ Potential clash · ~' + overlapDays + ' days overlap</span>'
+        : '<span style="color:var(--muted)">No clash detected</span>';
+
     /* Compact single-line legend */
     calInfo.innerHTML =
       '<span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) +
       '&emsp;<span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) +
-      '&emsp;·&emsp;Solid = performance &nbsp; Dashed = rehearsal (est. 8 wk) &nbsp;' +
-      '<span style="color:#f59e0b">⚠ = clash</span>';
+      '&emsp;·&emsp;Solid = performance &nbsp; Dashed = rehearsal (est. 8 wk) &nbsp;·&emsp;' +
+      clashText;
     calInfo.classList.add('visible');
 
-    /* Month column headers — amber if both shows active in that month */
+    /* Month column headers — coloured by clash level where both shows are active */
     var monthHead = '';
     for (var mi = 0; mi < 12; mi++) {
-      var clash = activeInMonth(showA, mi) && activeInMonth(showB, mi);
-      monthHead += '<div class="td-cal-month-col' + (clash ? ' has-clash' : '') + '">' +
-        CAL_MONTHS_SHORT[mi] + (clash ? '<br>⚠' : '') + '</div>';
+      var active = activeInMonth(showA, mi) && activeInMonth(showB, mi);
+      var colCls = active ? (clashLevel === 'major' ? ' has-clash-major' : clashLevel === 'minor' ? ' has-clash' : '') : '';
+      monthHead += '<div class="td-cal-month-col' + colCls + '">' +
+        CAL_MONTHS_SHORT[mi] + (active && clashLevel ? '<br>⚠' : '') + '</div>';
     }
 
     /* Build a row for one show */
