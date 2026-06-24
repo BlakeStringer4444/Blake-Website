@@ -4002,27 +4002,33 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return rs <= mE && e >= mS;
     }
 
-    /* Total overlapping days between the two commitment windows */
+    /* Number of days ANYTHING overlaps between the two shows' full
+       commitment windows (rehearsal start → performance end). */
     function totalOverlapDays() {
-      var sA = parseDate(showA.date_start), eA = parseDate(showA.date_end) || sA;
-      var sB = parseDate(showB.date_start), eB = parseDate(showB.date_end) || sB;
+      var sA = parseDate(showA.date_start);
+      var sB = parseDate(showB.date_start);
       if (!sA || !sB) return 0;
-      var rsA = new Date(sA.getTime() - REHEARSAL_MS);
-      var rsB = new Date(sB.getTime() - REHEARSAL_MS);
-      var oS = new Date(Math.max(rsA.getTime(), rsB.getTime()));
-      var oE = new Date(Math.min(eA.getTime(), eB.getTime()));
-      if (oS > oE) return 0;
-      return Math.round((oE - oS) / 86400000) + 1;
+      var eA = parseDate(showA.date_end) || sA;
+      var eB = parseDate(showB.date_end) || sB;
+      if (eA < sA) eA = sA;               // guard against blank/reversed end dates
+      if (eB < sB) eB = sB;
+      var startA = sA.getTime() - REHEARSAL_MS;   // includes the 8-week rehearsal window
+      var startB = sB.getTime() - REHEARSAL_MS;
+      var oStart = Math.max(startA, startB);
+      var oEnd   = Math.min(eA.getTime(), eB.getTime());
+      if (oStart > oEnd) return 0;
+      return Math.floor((oEnd - oStart) / 86400000) + 1;  // inclusive day count
     }
 
     var overlapDays = totalOverlapDays();
-    var clashLevel  = overlapDays === 0 ? '' : overlapDays >= 30 ? 'major' : 'minor';
-    var clashColour = clashLevel === 'major' ? '#ef4444' : '#f59e0b';
+    var dayWord     = overlapDays === 1 ? 'day' : 'days';
+    /* >30 days = major (red) · 1–30 days = minor (amber) · 0 = no clash (green) */
+    var clashLevel  = overlapDays === 0 ? 'none' : overlapDays > 30 ? 'major' : 'minor';
     var clashText   = clashLevel === 'major'
-      ? '<span style="color:#ef4444">⚠ Major clash · ~' + overlapDays + ' days overlap</span>'
+      ? '<span style="color:#ef4444">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
       : clashLevel === 'minor'
-        ? '<span style="color:#f59e0b">⚠ Potential clash · ~' + overlapDays + ' days overlap</span>'
-        : '<span style="color:var(--muted)">No clash detected</span>';
+        ? '<span style="color:#f59e0b">⚠ Minor overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
+        : '<span style="color:#22c55e">✓ No clash detected</span>';
 
     /* Compact single-line legend */
     calInfo.innerHTML =
@@ -4038,7 +4044,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var active = activeInMonth(showA, mi) && activeInMonth(showB, mi);
       var colCls = active ? (clashLevel === 'major' ? ' has-clash-major' : clashLevel === 'minor' ? ' has-clash' : '') : '';
       monthHead += '<div class="td-cal-month-col' + colCls + '">' +
-        CAL_MONTHS_SHORT[mi] + (active && clashLevel ? '<br>⚠' : '') + '</div>';
+        CAL_MONTHS_SHORT[mi] + (active && clashLevel !== 'none' ? '<br>⚠' : '') + '</div>';
     }
 
     /* Build a row for one show */
