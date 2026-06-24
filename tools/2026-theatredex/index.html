@@ -1213,7 +1213,7 @@ button.td-link { background: none; cursor: pointer; }
   transition: background 0.15s;
 }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
-.td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; }
+.td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
 .td-cal-head {
   display: flex; position: sticky; top: 0; z-index: 2;
   background: var(--bg); border-bottom: 1px solid rgba(212,255,26,0.15);
@@ -1253,9 +1253,10 @@ button.td-link { background: none; cursor: pointer; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .td-cal-row-grid { flex: 1; display: grid; align-items: stretch; }
-.td-cal-today-stripe {
-  border-left: 2px solid #e53935;
-  background: none; pointer-events: none;
+.td-cal-today-line {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: #e53935; pointer-events: none; z-index: 5;
+  transform: translateX(-50%);
 }
 .td-cal-bar {
   height: 16px; align-self: center; background: var(--purple); border-radius: 2px;
@@ -3933,8 +3934,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     for (var d = 1; d <= numDays; d++) {
       dayHead += '<div class="td-cal-day-num' + (isNow && d === todayD ? ' td-cal-today-col' : '') + '">' + d + '</div>';
     }
-    var todayStripe = isNow ? barHTML('td-cal-today-stripe', todayD, todayD, '') : '';
-
     var rowsHTML = shows.length === 0
       ? '<div class="td-cal-empty">No shows this month</div>'
       : shows.map(function(s) {
@@ -3949,7 +3948,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
               '<div class="td-cal-row-company" title="' + esc(s.company) + '">' + esc(s.company) + '</div>' +
               '<div class="td-cal-row-show" title="' + esc(s.title) + '">' + esc(s.title) + '</div>' +
             '</div>' +
-            '<div class="td-cal-row-grid" style="grid-template-columns:' + gtc + '">' + todayStripe + perf + '</div>' +
+            '<div class="td-cal-row-grid" style="grid-template-columns:' + gtc + '">' + perf + '</div>' +
           '</div>';
         }).join('');
 
@@ -3959,6 +3958,20 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
       '</div>' +
       '<div class="td-cal-rows">' + rowsHTML + '</div>';
+
+    /* Single continuous today line — measured after DOM is ready */
+    if (isNow) {
+      var todayEl = calBody.querySelector('.td-cal-today-col');
+      if (todayEl) {
+        var bRect = calBody.getBoundingClientRect();
+        var cRect = todayEl.getBoundingClientRect();
+        var x = cRect.left + cRect.width / 2 - bRect.left;
+        var line = document.createElement('div');
+        line.className = 'td-cal-today-line';
+        line.style.left = Math.round(x) + 'px';
+        calBody.appendChild(line);
+      }
+    }
 
     calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
       row.addEventListener('click', function() {
