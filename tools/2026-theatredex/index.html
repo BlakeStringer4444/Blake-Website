@@ -1356,15 +1356,35 @@ button.td-link { background: none; cursor: pointer; }
 }
 .td-clash-label-a { color: var(--purple); }
 .td-clash-label-b { color: #22d3ee; }
-.td-clash-select {
-  width: 100%; padding: 9px 36px 9px 12px; box-sizing: border-box;
+.td-clash-autocomplete { position: relative; }
+.td-clash-input {
+  width: 100%; padding: 9px 12px; box-sizing: border-box;
   background: var(--card); border: 1px solid rgba(128,128,128,0.25);
   color: var(--fg); font-family: 'DM Mono', monospace; font-size: 11px;
-  cursor: pointer; appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 12px center;
 }
-.td-clash-select:focus { outline: none; border-color: var(--purple); }
+.td-clash-input:focus { outline: none; border-color: var(--purple); }
+.td-clash-input.chosen { border-color: var(--lime); color: var(--fg); }
+.td-clash-suggestions {
+  display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+  background: var(--card); border: 1px solid rgba(128,128,128,0.25); border-top: none;
+  max-height: 200px; overflow-y: auto;
+}
+.td-clash-suggestions.open { display: block; }
+.td-clash-suggestion {
+  padding: 8px 12px; cursor: pointer;
+  border-bottom: 1px solid rgba(128,128,128,0.08);
+}
+.td-clash-suggestion:hover, .td-clash-suggestion.hi { background: rgba(100,74,228,0.12); }
+.td-clash-suggestion-title {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--fg);
+}
+.td-clash-suggestion-company {
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
+  margin-top: 1px;
+}
+.td-clash-no-results {
+  padding: 10px 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
+}
 .td-clash-compare {
   align-self: center; padding: 10px 32px;
   background: var(--lime); color: #000; border: none;
@@ -1500,12 +1520,18 @@ button.td-link { background: none; cursor: pointer; }
     <div class="td-clash-body">
       <p class="td-clash-desc">Select two shows to compare their rehearsal and performance schedules side by side across the full year.</p>
       <div class="td-clash-field">
-        <label class="td-clash-label td-clash-label-a" for="td-clash-a">■ Show A</label>
-        <select class="td-clash-select" id="td-clash-a"><option value="">— Select a show —</option></select>
+        <label class="td-clash-label td-clash-label-a" for="td-clash-a-input">■ Show A</label>
+        <div class="td-clash-autocomplete">
+          <input class="td-clash-input" id="td-clash-a-input" type="text" placeholder="Type a show title…" autocomplete="off" spellcheck="false">
+          <div class="td-clash-suggestions" id="td-clash-a-sugg"></div>
+        </div>
       </div>
       <div class="td-clash-field">
-        <label class="td-clash-label td-clash-label-b" for="td-clash-b">■ Show B</label>
-        <select class="td-clash-select" id="td-clash-b"><option value="">— Select a show —</option></select>
+        <label class="td-clash-label td-clash-label-b" for="td-clash-b-input">■ Show B</label>
+        <div class="td-clash-autocomplete">
+          <input class="td-clash-input" id="td-clash-b-input" type="text" placeholder="Type a show title…" autocomplete="off" spellcheck="false">
+          <div class="td-clash-suggestions" id="td-clash-b-sugg"></div>
+        </div>
       </div>
       <button class="td-clash-compare" id="td-clash-compare" disabled>Compare ◈</button>
       <p class="td-clash-note">Rehearsal windows are estimated at 8 weeks before opening night.</p>
@@ -3823,12 +3849,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   var calNav        = document.getElementById('td-cal-nav');
   var calModalTitle = document.getElementById('td-cal-modal-title');
   var calInfo       = document.getElementById('td-cal-info');
-  var clashBtn      = document.getElementById('td-clash-btn');
-  var clashOverlay  = document.getElementById('td-clash-overlay');
-  var clashClose    = document.getElementById('td-clash-close');
-  var clashSelectA  = document.getElementById('td-clash-a');
-  var clashSelectB  = document.getElementById('td-clash-b');
-  var clashCompare  = document.getElementById('td-clash-compare');
+  var clashBtn     = document.getElementById('td-clash-btn');
+  var clashOverlay = document.getElementById('td-clash-overlay');
+  var clashClose   = document.getElementById('td-clash-close');
+  var clashInputA  = document.getElementById('td-clash-a-input');
+  var clashSuggA   = document.getElementById('td-clash-a-sugg');
+  var clashInputB  = document.getElementById('td-clash-b-input');
+  var clashSuggB   = document.getElementById('td-clash-b-sugg');
+  var clashCompare = document.getElementById('td-clash-compare');
+  var _selectedA = null, _selectedB = null;
 
   var calYear = 0, calMonth = 0;
   var _calSavedZoom = '';
@@ -4050,36 +4079,99 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (_yearlyMode) setMonthlyMode();
   }
 
-  /* ── PICKER ── */
+  /* ── PICKER AUTOCOMPLETE ── */
+  function makeAutocomplete(input, sugg, onSelect) {
+    function search(q) {
+      if (!q) { sugg.classList.remove('open'); return; }
+      var ql = q.toLowerCase();
+      var hits = allShows.filter(function(s) {
+        return s.date_start &&
+          ((s.title || '').toLowerCase().includes(ql) || (s.company || '').toLowerCase().includes(ql));
+      }).sort(function(a, b) {
+        var at = (a.title || '').toLowerCase().startsWith(ql);
+        var bt = (b.title || '').toLowerCase().startsWith(ql);
+        return (at === bt) ? (a.title||'').localeCompare(b.title||'') : (at ? -1 : 1);
+      }).slice(0, 15);
+
+      sugg.innerHTML = hits.length
+        ? hits.map(function(s) {
+            return '<div class="td-clash-suggestion" data-key="' + esc(s.title + '|||' + s.company) + '">' +
+              '<div class="td-clash-suggestion-title">' + esc(s.title) + '</div>' +
+              '<div class="td-clash-suggestion-company">' + esc(s.company) + '</div>' +
+            '</div>';
+          }).join('')
+        : '<div class="td-clash-no-results">No shows found</div>';
+      sugg.classList.add('open');
+
+      sugg.querySelectorAll('.td-clash-suggestion').forEach(function(el) {
+        el.addEventListener('mousedown', function(ev) {
+          ev.preventDefault();
+          var parts = el.dataset.key.split('|||');
+          var show = allShows.find(function(s) { return s.title === parts[0] && s.company === parts[1]; });
+          if (!show) return;
+          input.value = show.title;
+          input.classList.add('chosen');
+          sugg.classList.remove('open');
+          onSelect(show);
+        });
+      });
+    }
+
+    input.addEventListener('input', function() {
+      input.classList.remove('chosen');
+      onSelect(null);
+      search(input.value.trim());
+    });
+    input.addEventListener('focus', function() {
+      if (input.value.trim() && !input.classList.contains('chosen')) search(input.value.trim());
+    });
+    input.addEventListener('blur', function() {
+      setTimeout(function() { sugg.classList.remove('open'); }, 160);
+    });
+    input.addEventListener('keydown', function(e) {
+      var items = sugg.querySelectorAll('.td-clash-suggestion');
+      var cur   = sugg.querySelector('.td-clash-suggestion.hi');
+      var idx   = -1; items.forEach(function(el, i) { if (el === cur) idx = i; });
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (cur) cur.classList.remove('hi');
+        (items[idx + 1] || items[0]).classList.add('hi');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (cur) cur.classList.remove('hi');
+        (items[idx - 1] || items[items.length - 1]).classList.add('hi');
+      } else if (e.key === 'Enter') {
+        var hi = sugg.querySelector('.td-clash-suggestion.hi');
+        if (hi) { e.preventDefault(); hi.dispatchEvent(new MouseEvent('mousedown')); }
+      } else if (e.key === 'Escape') {
+        sugg.classList.remove('open');
+      }
+    });
+  }
+
+  function validatePicker() {
+    clashCompare.disabled = !_selectedA || !_selectedB ||
+      (_selectedA.title === _selectedB.title && _selectedA.company === _selectedB.company);
+  }
+
+  makeAutocomplete(clashInputA, clashSuggA, function(s) { _selectedA = s; validatePicker(); });
+  makeAutocomplete(clashInputB, clashSuggB, function(s) { _selectedB = s; validatePicker(); });
+
   function openPicker() {
-    /* Populate dropdowns from allShows */
-    var opts = allShows
-      .filter(function(s) { return s.date_start; })
-      .sort(function(a, b) { return (a.company||'').localeCompare(b.company||'') || (a.title||'').localeCompare(b.title||''); })
-      .map(function(s) {
-        var k = esc(s.title + '|||' + s.company);
-        return '<option value="' + k + '">' + esc(s.company + ' · ' + s.title) + '</option>';
-      }).join('');
-    var blank = '<option value="">— Select a show —</option>';
-    clashSelectA.innerHTML = blank + opts;
-    clashSelectB.innerHTML = blank + opts;
+    _selectedA = null; _selectedB = null;
+    clashInputA.value = ''; clashInputA.classList.remove('chosen');
+    clashInputB.value = ''; clashInputB.classList.remove('chosen');
+    clashSuggA.classList.remove('open'); clashSuggA.innerHTML = '';
+    clashSuggB.classList.remove('open'); clashSuggB.innerHTML = '';
     clashCompare.disabled = true;
     clashOverlay.classList.add('open');
     clashBtn.classList.add('td-header-btn--active');
+    setTimeout(function() { clashInputA.focus(); }, 50);
   }
 
   function closePicker() {
     clashOverlay.classList.remove('open');
     clashBtn.classList.remove('td-header-btn--active');
-  }
-
-  function findShow(key) {
-    var parts = key.split('|||');
-    return allShows.find(function(s) { return s.title === parts[0] && s.company === parts[1]; }) || null;
-  }
-
-  function validatePicker() {
-    clashCompare.disabled = !clashSelectA.value || !clashSelectB.value || clashSelectA.value === clashSelectB.value;
   }
 
   /* ── EVENT LISTENERS ── */
@@ -4093,13 +4185,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   clashBtn.addEventListener('click', openPicker);
   clashClose.addEventListener('click', closePicker);
   clashOverlay.addEventListener('click', function(e) { if (e.target === clashOverlay) closePicker(); });
-  clashSelectA.addEventListener('change', validatePicker);
-  clashSelectB.addEventListener('change', validatePicker);
   clashCompare.addEventListener('click', function() {
-    var showA = findShow(clashSelectA.value), showB = findShow(clashSelectB.value);
-    if (!showA || !showB) return;
+    if (!_selectedA || !_selectedB) return;
     closePicker();
-    openCalendarYearly(showA, showB);
+    openCalendarYearly(_selectedA, _selectedB);
   });
 
   document.addEventListener('keydown', function(e) {
