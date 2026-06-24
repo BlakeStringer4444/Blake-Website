@@ -1215,7 +1215,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
 .td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
 .td-cal-head {
-  display: flex; position: sticky; top: 0; z-index: 2;
+  display: flex; position: sticky; top: 0; z-index: 10;
   background: var(--bg); border-bottom: 1px solid rgba(212,255,26,0.15);
 }
 .td-cal-head-label {
@@ -1223,6 +1223,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(212,255,26,0.1);
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
   text-transform: uppercase; color: var(--muted); white-space: nowrap;
+  position: sticky; left: 0; z-index: 11; background: var(--bg);
 }
 .td-cal-head-days { flex: 1; display: grid; }
 .td-cal-day-num {
@@ -1241,6 +1242,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(212,255,26,0.08);
   display: flex; flex-direction: column; justify-content: center; gap: 2px;
   overflow: hidden;
+  position: sticky; left: 0; z-index: 6; background: var(--bg);
 }
 .td-cal-row-company {
   font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.5px;
@@ -1423,8 +1425,8 @@ button.td-link { background: none; cursor: pointer; }
   .td-cal-modal-title { display: none; }
   .td-cal-month-label { font-size: 10px; min-width: 110px; letter-spacing: 1px; }
   .td-cal-nav-btn { font-size: 9px; padding: 5px 8px; }
-  .td-cal-head-label { width: 90px; font-size: 8px; }
-  .td-cal-row-label { width: 90px; }
+  .td-cal-head-label { width: 140px; font-size: 8px; }
+  .td-cal-row-label { width: 140px; }
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3921,7 +3923,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     var numDays = daysInMonth(y, m);
     var todayY  = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
     var isNow   = (y === todayY && m === todayM);
-    var labelW  = window.innerWidth < 640 ? 90 : 200;
+    var labelW  = window.innerWidth < 640 ? 140 : 200;
     var gtc     = 'repeat(' + numDays + ',minmax(18px,1fr))';
     var mStart  = new Date(y, m, 1), mEnd = new Date(y, m, numDays);
 
@@ -3970,7 +3972,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
     calBody.innerHTML =
       '<div class="td-cal-head">' +
-        '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Company · Show</div>' +
+        '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Show</div>' +
         '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
       '</div>' +
       '<div class="td-cal-rows">' + todayOverlay + rowsHTML + '</div>';
