@@ -1230,10 +1230,7 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
   border-right: 1px solid rgba(128,128,128,0.08);
 }
-.td-cal-day-num.td-cal-today-col {
-  color: var(--fg); background: rgba(212,255,26,0.1);
-  box-shadow: inset 0 -2px 0 var(--lime);
-}
+.td-cal-day-num.td-cal-today-col { color: #e53935; }
 .td-cal-rows { }
 .td-cal-row {
   display: flex; border-bottom: 1px solid rgba(128,128,128,0.08);
@@ -1257,10 +1254,8 @@ button.td-link { background: none; cursor: pointer; }
 }
 .td-cal-row-grid { flex: 1; display: grid; align-items: stretch; }
 .td-cal-today-stripe {
-  background: rgba(212,255,26,0.07);
-  border-left: 1px solid rgba(212,255,26,0.25);
-  border-right: 1px solid rgba(212,255,26,0.08);
-  pointer-events: none;
+  border-left: 2px solid #e53935;
+  background: none; pointer-events: none;
 }
 .td-cal-bar {
   height: 16px; align-self: center; background: var(--purple); border-radius: 2px;
@@ -1269,6 +1264,37 @@ button.td-link { background: none; cursor: pointer; }
 }
 .td-cal-row:hover .td-cal-bar { opacity: 1; }
 .td-cal-bar--approx { opacity: 0.4; }
+/* Rehearsal bar (clash mode) */
+.td-cal-rehbar {
+  height: 10px; align-self: center; border-radius: 2px;
+  border: 1px dashed rgba(100,74,228,0.45); background: rgba(100,74,228,0.1);
+  margin: 0 1px; pointer-events: none;
+}
+/* Clash mode button */
+.td-cal-clash-btn {
+  background: none; border: 1px solid rgba(212,255,26,0.35);
+  color: rgba(212,255,26,0.65); font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.td-cal-clash-btn:hover { background: rgba(212,255,26,0.08); color: var(--lime); }
+.td-cal-clash-btn.active { background: var(--lime); color: #000; border-color: var(--lime); }
+/* Clash mode info bar */
+.td-cal-info {
+  display: none; padding: 7px 16px; flex-shrink: 0;
+  background: rgba(212,255,26,0.04); border-bottom: 1px solid rgba(212,255,26,0.12);
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--lime);
+  letter-spacing: 0.3px; line-height: 1.6;
+}
+.td-cal-info.visible { display: block; }
+/* Clash mode row states */
+.td-cal-row--selected .td-cal-bar { background: var(--lime); opacity: 1; }
+.td-cal-row--selected .td-cal-row-show { color: var(--lime); }
+.td-cal-row--selected .td-cal-row-company { color: rgba(212,255,26,0.6); }
+.td-cal-row--clash .td-cal-bar { background: #f59e0b; opacity: 1; }
+.td-cal-row--clash .td-cal-rehbar { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.1); }
+.td-cal-row--clash .td-cal-row-show { color: #f59e0b; }
+.td-cal-row--safe { opacity: 0.25; }
 .td-cal-empty {
   padding: 48px 20px; text-align: center;
   font-family: 'DM Mono', monospace; font-size: 12px;
@@ -1369,8 +1395,10 @@ button.td-link { background: none; cursor: pointer; }
         <span class="td-cal-month-label" id="td-cal-month-label"></span>
         <button class="td-cal-nav-btn" id="td-cal-next">NEXT →</button>
       </div>
+      <button class="td-cal-clash-btn" id="td-cal-clash-btn" title="Show rehearsal windows and detect clashing shows">Will it Clash? ◈</button>
       <button class="td-cal-close" id="td-cal-close">ESC<br>CLOSE</button>
     </div>
+    <div class="td-cal-info" id="td-cal-info"></div>
     <div class="td-cal-body" id="td-cal-body"></div>
   </div>
 </div>
@@ -3667,19 +3695,24 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
 /* ── CALENDAR VIEW ── */
 (function () {
-  const CAL_MONTHS = ['January','February','March','April','May','June',
-                      'July','August','September','October','November','December'];
+  var CAL_MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+  var REHEARSAL_MS = 56 * 86400000; // 8 weeks in milliseconds
 
-  const calBtn     = document.getElementById('td-cal-btn');
-  const calOverlay = document.getElementById('td-cal-overlay');
-  const calClose   = document.getElementById('td-cal-close');
-  const calPrev    = document.getElementById('td-cal-prev');
-  const calNext    = document.getElementById('td-cal-next');
-  const calLabel   = document.getElementById('td-cal-month-label');
-  const calBody    = document.getElementById('td-cal-body');
+  var calBtn      = document.getElementById('td-cal-btn');
+  var calOverlay  = document.getElementById('td-cal-overlay');
+  var calClose    = document.getElementById('td-cal-close');
+  var calPrev     = document.getElementById('td-cal-prev');
+  var calNext     = document.getElementById('td-cal-next');
+  var calLabel    = document.getElementById('td-cal-month-label');
+  var calBody     = document.getElementById('td-cal-body');
+  var calClashBtn = document.getElementById('td-cal-clash-btn');
+  var calInfo     = document.getElementById('td-cal-info');
 
-  let calYear = 0, calMonth = 0;
-  let _calSavedZoom = '';
+  var calYear = 0, calMonth = 0;
+  var _calSavedZoom = '';
+  var clashMode = false;
+  var selectedShow = null;
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -3687,66 +3720,142 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 
+  function rehStart(show) {
+    var s = parseDate(show.date_start);
+    return s ? new Date(s.getTime() - REHEARSAL_MS) : null;
+  }
+
+  function windowsOverlap(a, b) {
+    var as = rehStart(a), ae = parseDate(a.date_end) || parseDate(a.date_start);
+    var bs = rehStart(b), be = parseDate(b.date_end) || parseDate(b.date_start);
+    if (!as || !ae || !bs || !be) return false;
+    return as <= be && bs <= ae;
+  }
+
+  /* Clamp a date to the calendar month. Returns 1..numDays or null if entirely outside. */
+  function clampS(date, y, m) {
+    if (!date) return null;
+    if (date.getFullYear() > y || (date.getFullYear() === y && date.getMonth() > m)) return null;
+    if (date.getFullYear() < y || (date.getFullYear() === y && date.getMonth() < m)) return 1;
+    return date.getDate();
+  }
+  function clampE(date, y, m, nd) {
+    if (!date) return null;
+    if (date.getFullYear() < y || (date.getFullYear() === y && date.getMonth() < m)) return null;
+    if (date.getFullYear() > y || (date.getFullYear() === y && date.getMonth() > m)) return nd;
+    return date.getDate();
+  }
+
+  function fmtShort(date) {
+    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  }
+
+  function updateInfoBar() {
+    if (!clashMode) { calInfo.classList.remove('visible'); return; }
+    if (!selectedShow) {
+      calInfo.innerHTML =
+        '◈ Will it Clash? — click any show to reveal clashes &nbsp;·&nbsp; ' +
+        'dashed bars = estimated 8-week rehearsal window &nbsp;·&nbsp; solid bars = performance run';
+      calInfo.classList.add('visible');
+      return;
+    }
+    var s = parseDate(selectedShow.date_start);
+    var rs = s ? new Date(s.getTime() - REHEARSAL_MS) : null;
+    calInfo.innerHTML =
+      '◎ <strong>' + esc(selectedShow.title) + '</strong> · ' + esc(selectedShow.company) +
+      (rs ? ' — commitment est. from ~' + fmtShort(rs) : '') +
+      ' &nbsp;·&nbsp; <span style="color:#f59e0b">■</span> amber = clashes &nbsp; faded = safe to double';
+    calInfo.classList.add('visible');
+  }
+
+  function applyClashClasses() {
+    calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
+      row.classList.remove('td-cal-row--selected', 'td-cal-row--clash', 'td-cal-row--safe');
+      if (!clashMode || !selectedShow) return;
+      var co = row.dataset.company, ti = row.dataset.title;
+      if (co === selectedShow.company && ti === selectedShow.title) {
+        row.classList.add('td-cal-row--selected');
+      } else {
+        var show = allShows.find(function(s) { return s.company === co && s.title === ti; });
+        row.classList.add(show && windowsOverlap(show, selectedShow) ? 'td-cal-row--clash' : 'td-cal-row--safe');
+      }
+    });
+    updateInfoBar();
+  }
+
   function renderCalendar() {
-    const y = calYear, m = calMonth;
-    const numDays = daysInMonth(y, m);
-    const todayY  = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
-    const isCurrentMonth = (y === todayY && m === todayM);
-    const labelW  = window.innerWidth < 640 ? 90 : 200;
-    const gtcDays = 'repeat(' + numDays + ',minmax(18px,1fr))';
+    var y = calYear, m = calMonth;
+    var numDays = daysInMonth(y, m);
+    var todayY = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
+    var isCurrentMonth = (y === todayY && m === todayM);
+    var labelW  = window.innerWidth < 640 ? 90 : 200;
+    var gtcDays = 'repeat(' + numDays + ',minmax(18px,1fr))';
+    var monthStart = new Date(y, m, 1);
+    var monthEnd   = new Date(y, m, numDays);
 
-    const monthStart = new Date(y, m, 1);
-    const monthEnd   = new Date(y, m, numDays);
-
-    const shows = allShows.filter(function(s) {
+    var shows = allShows.filter(function(s) {
       var start = parseDate(s.date_start);
       var end   = parseDate(s.date_end) || start;
       if (!start) return false;
+      if (clashMode) {
+        var rs = new Date(start.getTime() - REHEARSAL_MS);
+        return rs <= monthEnd && end >= monthStart;
+      }
       return start <= monthEnd && end >= monthStart;
     }).sort(function(a, b) {
-      return (a.date_start || '').localeCompare(b.date_start || '') ||
-             (a.company || '').localeCompare(b.company || '');
+      var as = clashMode ? rehStart(a) : parseDate(a.date_start);
+      var bs = clashMode ? rehStart(b) : parseDate(b.date_start);
+      return (as && bs) ? as - bs : (a.date_start || '').localeCompare(b.date_start || '');
     });
 
     calLabel.textContent = CAL_MONTHS[m] + ' ' + y;
 
-    /* Day number header */
     var dayHeadHTML = '';
     for (var d = 1; d <= numDays; d++) {
-      var isToday = isCurrentMonth && d === todayD;
-      dayHeadHTML += '<div class="td-cal-day-num' + (isToday ? ' td-cal-today-col' : '') + '">' + d + '</div>';
+      dayHeadHTML += '<div class="td-cal-day-num' + (isCurrentMonth && d === todayD ? ' td-cal-today-col' : '') + '">' + d + '</div>';
     }
 
-    /* Show rows */
+    var todayHTML = isCurrentMonth
+      ? '<div class="td-cal-today-stripe" style="grid-column:' + todayD + '/' + (todayD + 1) + '"></div>'
+      : '';
+
     var rowsHTML = '';
     if (shows.length === 0) {
-      rowsHTML = '<div class="td-cal-empty">No shows this month</div>';
+      rowsHTML = '<div class="td-cal-empty">No shows' + (clashMode ? ' or rehearsals' : '') + ' this month</div>';
     } else {
       shows.forEach(function(s) {
-        var start   = parseDate(s.date_start);
-        var end     = parseDate(s.date_end) || start;
+        var start    = parseDate(s.date_start);
+        var end      = parseDate(s.date_end) || start;
         var isApprox = s.date_approximate === '1' || s.date_approximate === 'true';
 
-        /* Clamp bar to this month */
-        var barS = 1, barE = numDays;
-        if (start.getFullYear() === y && start.getMonth() === m) barS = start.getDate();
-        if (end.getFullYear()   === y && end.getMonth()   === m) barE = end.getDate();
-
-        var todayStripe = isCurrentMonth
-          ? '<div class="td-cal-today-stripe" style="grid-column:' + todayD + '/' + (todayD + 1) + '"></div>'
+        /* Performance bar */
+        var perfS = clampS(start, y, m), perfE = clampE(end, y, m, numDays);
+        var perfHTML = (perfS && perfE && perfS <= perfE)
+          ? '<div class="td-cal-bar' + (isApprox ? ' td-cal-bar--approx' : '') + '" ' +
+              'style="grid-column:' + perfS + '/' + (perfE + 1) + '" ' +
+              'title="' + esc(s.title) + ' · ' + esc(fmtRange(s)) + '"></div>'
           : '';
 
+        /* Rehearsal bar — only in clash mode, spans from ~8wk before open to day before open */
+        var rehHTML = '';
+        if (clashMode) {
+          var rs = new Date(start.getTime() - REHEARSAL_MS);
+          var re = new Date(start.getTime() - 86400000);
+          var rsC = clampS(rs, y, m), reC = clampE(re, y, m, numDays);
+          if (rsC && reC && rsC <= reC) {
+            rehHTML = '<div class="td-cal-rehbar" style="grid-column:' + rsC + '/' + (reC + 1) + '" ' +
+              'title="Rehearsals est. from ' + fmtShort(rs) + '"></div>';
+          }
+        }
+
         rowsHTML +=
-          '<div class="td-cal-row" data-company="' + esc(s.company) + '">' +
+          '<div class="td-cal-row" data-company="' + esc(s.company) + '" data-title="' + esc(s.title) + '">' +
             '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">' +
               '<div class="td-cal-row-company" title="' + esc(s.company) + '">' + esc(s.company) + '</div>' +
               '<div class="td-cal-row-show" title="' + esc(s.title) + '">' + esc(s.title) + '</div>' +
             '</div>' +
             '<div class="td-cal-row-grid" style="grid-template-columns:' + gtcDays + '">' +
-              todayStripe +
-              '<div class="td-cal-bar' + (isApprox ? ' td-cal-bar--approx' : '') + '" ' +
-                'style="grid-column:' + barS + '/' + (barE + 1) + '" ' +
-                'title="' + esc(s.title) + ' · ' + esc(fmtRange(s)) + '"></div>' +
+              todayHTML + rehHTML + perfHTML +
             '</div>' +
           '</div>';
       });
@@ -3759,20 +3868,30 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       '</div>' +
       '<div class="td-cal-rows">' + rowsHTML + '</div>';
 
-    /* Click a row → filter main grid by company */
     calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
       row.addEventListener('click', function() {
-        var company = row.dataset.company;
-        closeCalendar();
-        activeCompany = company;
-        activeFilter  = null;
-        setFilterButtons(null);
-        document.getElementById('td-company').value = company;
-        syncSelectActive();
-        render();
-        document.getElementById('td-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (clashMode) {
+          var co = row.dataset.company, ti = row.dataset.title;
+          if (selectedShow && selectedShow.company === co && selectedShow.title === ti) {
+            selectedShow = null;
+          } else {
+            selectedShow = allShows.find(function(s) { return s.company === co && s.title === ti; }) || null;
+          }
+          applyClashClasses();
+        } else {
+          closeCalendar();
+          activeCompany = row.dataset.company;
+          activeFilter  = null;
+          setFilterButtons(null);
+          document.getElementById('td-company').value = activeCompany;
+          syncSelectActive();
+          render();
+          document.getElementById('td-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     });
+
+    applyClashClasses();
   }
 
   function openCalendar() {
@@ -3780,8 +3899,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     document.documentElement.style.zoom = '';
     if (!calYear) {
       var now = new Date();
-      calYear  = now.getFullYear();
-      calMonth = now.getMonth();
+      calYear = now.getFullYear(); calMonth = now.getMonth();
     }
     renderCalendar();
     calOverlay.classList.add('open');
@@ -3801,13 +3919,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     if (e.key === 'Escape' && calOverlay.classList.contains('open')) closeCalendar();
   });
   calPrev.addEventListener('click', function() {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
     renderCalendar();
   });
   calNext.addEventListener('click', function() {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+  calClashBtn.addEventListener('click', function() {
+    clashMode = !clashMode;
+    selectedShow = null;
+    calClashBtn.classList.toggle('active', clashMode);
     renderCalendar();
   });
 })();
