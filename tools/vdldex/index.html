@@ -427,6 +427,79 @@
       .vd-results-bar { padding: 10px 28px; }
       .vd-insights { padding: 20px 28px 24px; }
     }
+    /* ── VDL QUIZ ── */
+    .vd-header-btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .vd-header-btn {
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--lime); background: none; border: 1px solid var(--lime);
+      padding: 7px 14px; border-radius: 2px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .vd-header-btn:hover { background: var(--lime); color: var(--black); }
+    .vd-quiz-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 20px;
+    }
+    .vd-quiz-overlay.open { display: flex; }
+    .vd-quiz-modal {
+      width: 100%; max-width: 680px; background: var(--black); border: 2px solid var(--lime);
+      display: flex; flex-direction: column;
+    }
+    .vd-quiz-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid rgba(212,255,26,0.2); flex-shrink: 0;
+    }
+    .vd-quiz-label {
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(212,255,26,0.6);
+    }
+    .vd-quiz-close {
+      font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+      background: none; border: 1px solid rgba(212,255,26,0.35); color: rgba(212,255,26,0.7);
+      padding: 5px 11px; line-height: 1.6; text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .vd-quiz-close:hover { background: var(--purple); border-color: var(--purple); color: var(--lime); }
+    .vd-quiz-body { padding: 28px 24px; display: flex; flex-direction: column; gap: 20px; }
+    .vd-quiz-q {
+      font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.7;
+      color: rgba(255,255,255,0.9); letter-spacing: 0.3px; min-height: 48px;
+    }
+    .vd-quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+    .vd-quiz-opt {
+      font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; line-height: 1.4;
+      text-align: left; padding: 10px 14px; cursor: pointer;
+      background: none; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7);
+      transition: all 0.15s;
+    }
+    .vd-quiz-opt:hover:not(:disabled) { border-color: var(--lime); color: var(--lime); }
+    .vd-quiz-opt:disabled { cursor: default; }
+    .vd-quiz-opt.correct { border-color: #4ade80; background: rgba(74,222,128,0.1); color: #4ade80; }
+    .vd-quiz-opt.wrong   { border-color: #f87171; background: rgba(248,113,113,0.1); color: #f87171; }
+    .vd-quiz-footer {
+      display: flex; align-items: center; gap: 12px; padding: 0 24px 24px;
+    }
+    .vd-quiz-result {
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      flex: 1;
+    }
+    .vd-quiz-result.ok  { color: #4ade80; }
+    .vd-quiz-result.bad { color: #f87171; }
+    .vd-quiz-next {
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 8px 16px; background: none; border: 1px solid var(--lime); color: var(--lime);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .vd-quiz-next:hover { background: var(--lime); color: var(--black); }
+    @media (max-width: 639px) {
+      .vd-quiz-overlay { padding: 0; }
+      .vd-quiz-modal { max-height: 100dvh; overflow-y: auto; }
+      .vd-quiz-body { padding: 20px 16px; }
+      .vd-quiz-footer { padding: 0 16px 20px; }
+      .vd-quiz-q { font-size: 15px; }
+      .vd-quiz-opt { font-size: 13px; padding: 12px 14px; }
+    }
+
   </style>
 </head>
 <body>
@@ -442,6 +515,9 @@
   </div>
   <h1 class="vd-title">VDLdex</h1>
   <p class="vd-subtitle">The Victorian Drama League Entrants Archive ·<br>1997–2026</p>
+  <div class="vd-header-btn-row">
+    <button id="vd-quiz-btn" class="vd-header-btn">VDL Quiz ◈</button>
+  </div>
 </header>
 
 <!-- CONTROLS -->
@@ -589,7 +665,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
     try {
       const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
-      allRows = parseCSV(await res.text());
+      allRows = window._vdlRows = parseCSV(await res.text());
       buildGenreChips();
       buildCompanyDropdown();
       buildYearDropdown();
@@ -838,6 +914,197 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
   }, { passive: true });
   btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 })();
+
+/* ── VDL QUIZ ── */
+(function () {
+  const overlay  = document.getElementById('vd-quiz-overlay');
+  const closeBtn = document.getElementById('vd-quiz-close');
+  const quizBtn  = document.getElementById('vd-quiz-btn');
+  const qEl      = document.getElementById('vd-quiz-q');
+  const optsEl   = document.getElementById('vd-quiz-opts');
+  const nextBtn  = document.getElementById('vd-quiz-next');
+  const resultEl = document.getElementById('vd-quiz-result');
+
+  function rows()           { return window._vdlRows || []; }
+  function sample(arr)      { return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(arr)     { return [...arr].sort(() => Math.random() - 0.5); }
+  function uniq(arr)        { return [...new Set(arr.filter(Boolean))]; }
+  function pick(pool, excl, n = 3) {
+    return shuffle(pool.filter(x => x && x !== excl)).slice(0, n);
+  }
+
+  const Q = [
+    function companyYearToProduction() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const wrong = pick(uniq(rows().map(r => r.PRODUCTION)), row.PRODUCTION);
+      if (wrong.length < 3) return null;
+      return { q: `What production did ${row.COMPANY} submit in ${row.YEAR}?`,
+               correct: row.PRODUCTION, opts: shuffle([row.PRODUCTION, ...wrong]) };
+    },
+    function companyOfProduction() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const wrong = pick(uniq(rows().map(r => r.COMPANY)), row.COMPANY);
+      if (wrong.length < 3) return null;
+      return { q: `Which company submitted "${row.PRODUCTION}" in ${row.YEAR}?`,
+               correct: row.COMPANY, opts: shuffle([row.COMPANY, ...wrong]) };
+    },
+    function yearOfSubmission() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const wrong = pick(uniq(rows().map(r => r.YEAR)), row.YEAR);
+      if (wrong.length < 3) return null;
+      return { q: `In what year did ${row.COMPANY} submit "${row.PRODUCTION}"?`,
+               correct: row.YEAR, opts: shuffle([row.YEAR, ...wrong]) };
+    },
+    function submissionCount() {
+      const r = rows().filter(r => r.PRODUCTION);
+      if (r.length < 10) return null;
+      const counts = {};
+      r.forEach(x => { counts[x.PRODUCTION] = (counts[x.PRODUCTION] || 0) + 1; });
+      const prod = sample(Object.keys(counts));
+      const correct = String(counts[prod]);
+      const wrong = pick(uniq(Object.values(counts).map(String)), correct);
+      if (wrong.length < 3) return null;
+      return { q: `How many times has "${prod}" been submitted as a VDL entry?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+    function directorOfProduction() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION && r.DIRECTOR);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const correct = row.DIRECTOR.split(/ & |,/)[0].trim();
+      if (!correct) return null;
+      const pool = uniq(rows().flatMap(r => r.DIRECTOR ? r.DIRECTOR.split(/ & |,/).map(d => d.trim()) : []));
+      const wrong = pick(pool, correct);
+      if (wrong.length < 3) return null;
+      return { q: `Who directed ${row.COMPANY}'s production of "${row.PRODUCTION}" in ${row.YEAR}?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+    function playwrightOfProduction() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION && r.PLAYWRIGHT);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const correct = row.PLAYWRIGHT.split(/ & |,/)[0].trim();
+      if (!correct) return null;
+      const pool = uniq(rows().flatMap(r => r.PLAYWRIGHT ? r.PLAYWRIGHT.split(/ & |,/).map(p => p.trim()) : []));
+      const wrong = pick(pool, correct);
+      if (wrong.length < 3) return null;
+      return { q: `Who wrote "${row.PRODUCTION}", submitted by ${row.COMPANY} in ${row.YEAR}?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+    function productionInYear() {
+      const years = uniq(rows().map(r => r.YEAR));
+      if (years.length < 4) return null;
+      const year = sample(years);
+      const inYear = rows().filter(r => r.YEAR === year && r.PRODUCTION);
+      if (!inYear.length) return null;
+      const correct = sample(inYear).PRODUCTION;
+      const wrong = pick(uniq(rows().filter(r => r.YEAR !== year).map(r => r.PRODUCTION)), correct);
+      if (wrong.length < 3) return null;
+      return { q: `Which of these productions was submitted to the VDL in ${year}?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+    function totalEntriesForCompany() {
+      const cos = uniq(rows().filter(r => r.COMPANY && !r.COMPANY.includes(' & ')).map(r => r.COMPANY));
+      if (cos.length < 4) return null;
+      const co = sample(cos);
+      const correct = String(rows().filter(r => r.COMPANY === co).length);
+      const wrong = pick(uniq(cos.map(c => String(rows().filter(r => r.COMPANY === c).length))), correct);
+      if (wrong.length < 3) return null;
+      return { q: `How many VDL entries has ${co} submitted across all years?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+    function directorMostRecentEntry() {
+      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION && r.DIRECTOR);
+      if (v.length < 5) return null;
+      const row = sample(v);
+      const pool = uniq(rows().flatMap(r => r.DIRECTOR ? r.DIRECTOR.split(/ & |,/).map(d => d.trim()) : []));
+      const wrong = pick(pool, row.DIRECTOR.split(/ & |,/)[0].trim());
+      if (wrong.length < 3) return null;
+      const correct = row.DIRECTOR.split(/ & |,/)[0].trim();
+      return { q: `Who directed "${row.PRODUCTION}" for ${row.COMPANY} — the same year as their ${row.YEAR} submission?`,
+               correct, opts: shuffle([correct, ...wrong]) };
+    },
+  ];
+
+  function nextQuestion() {
+    for (let i = 0; i < 20; i++) {
+      const q = sample(Q)();
+      if (q) return q;
+    }
+    return null;
+  }
+
+  function renderQuestion() {
+    nextBtn.hidden = true;
+    resultEl.textContent = '';
+    resultEl.className = 'vd-quiz-result';
+    optsEl.innerHTML = '';
+    const q = nextQuestion();
+    if (!q) { qEl.textContent = 'Data is still loading — try again in a moment.'; return; }
+    qEl.textContent = q.q;
+    let answered = false;
+    q.opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'vd-quiz-opt';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        const isCorrect = opt === q.correct;
+        optsEl.querySelectorAll('.vd-quiz-opt').forEach(b => {
+          b.disabled = true;
+          if (b.textContent === q.correct) b.classList.add('correct');
+          else if (b === btn) b.classList.add('wrong');
+        });
+        resultEl.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect';
+        resultEl.classList.add(isCorrect ? 'ok' : 'bad');
+        nextBtn.hidden = false;
+      });
+      optsEl.appendChild(btn);
+    });
+  }
+
+  function openQuiz() {
+    const saved = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
+    overlay.dataset.savedZoom = saved;
+    overlay.classList.add('open');
+    renderQuestion();
+  }
+  function closeQuiz() {
+    overlay.classList.remove('open');
+    document.documentElement.style.zoom = overlay.dataset.savedZoom || '';
+  }
+
+  quizBtn.addEventListener('click', openQuiz);
+  closeBtn.addEventListener('click', closeQuiz);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeQuiz(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeQuiz(); });
+  nextBtn.addEventListener('click', renderQuestion);
+})();
 </script>
+
+<div class="vd-quiz-overlay" id="vd-quiz-overlay">
+  <div class="vd-quiz-modal">
+    <div class="vd-quiz-topbar">
+      <span class="vd-quiz-label">VDL Quiz</span>
+      <button class="vd-quiz-close" id="vd-quiz-close">ESC<br>CLOSE</button>
+    </div>
+    <div class="vd-quiz-body">
+      <div class="vd-quiz-q" id="vd-quiz-q"></div>
+      <div class="vd-quiz-opts" id="vd-quiz-opts"></div>
+    </div>
+    <div class="vd-quiz-footer">
+      <span class="vd-quiz-result" id="vd-quiz-result"></span>
+      <button class="vd-quiz-next" id="vd-quiz-next" hidden>Next Question →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
