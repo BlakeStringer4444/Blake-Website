@@ -4047,27 +4047,52 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         CAL_MONTHS_SHORT[mi] + (active && clashLevel !== 'none' ? '<br>⚠' : '') + '</div>';
     }
 
+    /* Render proportional bar segments — one div per month column, gradient-clipped
+       to the exact start/end day within that column so bars are day-accurate. */
+    function partialBar(isReh, rowCls, startDate, endDate, tip) {
+      /* Clamp both dates to 2026 */
+      var y0 = new Date(YEAR, 0, 1), y1 = new Date(YEAR, 11, 31);
+      var sC = new Date(Math.max(startDate.getTime(), y0.getTime()));
+      var eC = new Date(Math.min(endDate.getTime(),   y1.getTime()));
+      if (sC > eC) return '';
+      var isB       = rowCls === 'td-cal-row-b';
+      var fillColor = isReh
+        ? (isB ? 'rgba(34,211,238,0.22)' : 'rgba(100,74,228,0.22)')
+        : (isB ? '#22d3ee' : 'var(--purple)');
+      var h    = isReh ? 13 : 22;
+      var base = 'height:' + h + 'px;align-self:center;border-radius:2px;'
+               + 'margin:0 1px;pointer-events:none;'
+               + (isReh ? '' : 'opacity:0.85;');
+      var html = '', sM = sC.getMonth(), eM = eC.getMonth();
+      for (var mi = sM; mi <= eM; mi++) {
+        var dInM = new Date(YEAR, mi + 1, 0).getDate();
+        var dS   = (mi === sM) ? sC.getDate() : 1;
+        var dE   = (mi === eM) ? eC.getDate() : dInM;
+        var p0   = ((dS - 1) / dInM * 100).toFixed(2);
+        var p1   = (dE       / dInM * 100).toFixed(2);
+        var bg   = 'linear-gradient(to right,'
+                 + 'transparent ' + p0 + '%,' + fillColor + ' ' + p0 + '%,'
+                 + fillColor + ' ' + p1 + '%,transparent ' + p1 + '%)';
+        html += '<div style="grid-column:' + (mi + 1) + '/' + (mi + 2) + ';'
+              + base + 'background:' + bg + '" title="' + tip + '"></div>';
+      }
+      return html;
+    }
+
     /* Build a row for one show */
     function makeRow(show, rowCls) {
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return '';
-      var rs = new Date(s.getTime() - REHEARSAL_MS);
+      if (e < s) e = s;
+      var rs     = new Date(s.getTime() - REHEARSAL_MS);
+      var rehEnd = new Date(s.getTime() - 86400000);  // day before perf starts
 
-      var rehStartM  = mIdx(rs);
-      var perfStartM = mIdx(s);
-      var perfEndM   = mIdx(e);
-
-      /* Rehearsal bar: months from rehStartM up to (but not including) perfStartM */
-      var rehH = (rehStartM !== null && perfStartM !== null && rehStartM < perfStartM)
-        ? '<div class="td-cal-rehbar" style="grid-column:' + (rehStartM + 1) + '/' + (perfStartM + 1) + '"' +
-            ' title="Rehearsals est. from ' + fmtShort(rs) + '"></div>'
+      var rehH  = (rs < s)
+        ? partialBar(true,  rowCls, rs, rehEnd,
+            'Rehearsals est. from ' + fmtShort(rs))
         : '';
-
-      /* Performance bar: months from perfStartM through perfEndM */
-      var perfH = (perfStartM !== null && perfEndM !== null)
-        ? '<div class="td-cal-bar" style="grid-column:' + (perfStartM + 1) + '/' + (perfEndM + 2) + '"' +
-            ' title="' + esc(show.title) + ' · ' + esc(fmtRange(show)) + '"></div>'
-        : '';
+      var perfH = partialBar(false, rowCls, s, e,
+            esc(show.title) + ' · ' + esc(fmtRange(show)));
 
       return '<div class="td-cal-row ' + rowCls + '" style="cursor:default;min-height:52px">' +
         '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">' +
