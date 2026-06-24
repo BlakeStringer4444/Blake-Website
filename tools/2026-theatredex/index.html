@@ -1234,9 +1234,8 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-rows { }
 .td-cal-row {
   display: flex; border-bottom: 1px solid rgba(128,128,128,0.08);
-  cursor: pointer; transition: background 0.1s; min-height: 34px;
+  min-height: 34px;
 }
-.td-cal-row:hover { background: rgba(100,74,228,0.06); }
 .td-cal-row-label {
   flex-shrink: 0; width: 200px; padding: 5px 10px;
   border-right: 1px solid rgba(212,255,26,0.08);
@@ -1263,7 +1262,7 @@ button.td-link { background: none; cursor: pointer; }
   opacity: 0.8; margin: 0 1px; transition: opacity 0.1s;
   position: relative; z-index: 1;
 }
-.td-cal-row:hover .td-cal-bar { opacity: 1; }
+
 .td-cal-bar--approx { opacity: 0.4; }
 /* Rehearsal bar */
 .td-cal-rehbar {
@@ -3973,18 +3972,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       }
     }
 
-    calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
-      row.addEventListener('click', function() {
-        closeCalendar();
-        activeCompany = row.dataset.company;
-        activeFilter  = null;
-        setFilterButtons(null);
-        document.getElementById('td-company').value = activeCompany;
-        syncSelectActive();
-        render();
-        document.getElementById('td-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
   }
 
   /* ── YEARLY CLASH VIEW ── */
