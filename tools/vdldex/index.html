@@ -995,15 +995,6 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       return { q: `Who wrote "${row.PRODUCTION}", submitted by ${row.COMPANY} in ${row.YEAR}?`,
                correct, opts: shuffle([correct, ...wrong]) };
     },
-    function genreOfProduction() {
-      const v = rows().filter(r => r.COMPANY && r.YEAR && r.PRODUCTION && r.GENRE);
-      if (v.length < 5) return null;
-      const row = sample(v);
-      const wrong = pick(uniq(rows().map(r => r.GENRE)), row.GENRE);
-      if (wrong.length < 3) return null;
-      return { q: `What genre was ${row.COMPANY}'s submission "${row.PRODUCTION}" in ${row.YEAR}?`,
-               correct: row.GENRE, opts: shuffle([row.GENRE, ...wrong]) };
-    },
     function productionInYear() {
       const years = uniq(rows().map(r => r.YEAR));
       if (years.length < 4) return null;
