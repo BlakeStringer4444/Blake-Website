@@ -1287,8 +1287,9 @@ button.td-link { background: none; cursor: pointer; }
   border-bottom: 1px solid rgba(212,255,26,0.1);
   font-family: 'DM Mono', monospace; font-size: 9px;
   letter-spacing: 0.3px; line-height: 1.7;
+  flex-direction: column; gap: 2px;
 }
-.td-cal-info.visible { display: block; }
+.td-cal-info.visible { display: flex; }
 /* Yearly month separator */
 .td-cal-month-sep {
   display: flex; align-items: center; gap: 10px;
@@ -1367,7 +1368,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-clash-input.chosen { border-color: var(--lime); color: var(--fg); }
 .td-clash-suggestions {
   display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
-  background: var(--card); border: 1px solid rgba(128,128,128,0.25); border-top: none;
+  background: var(--card-bg); border: 1px solid rgba(128,128,128,0.25); border-top: none;
   max-height: 200px; overflow-y: auto;
 }
 .td-clash-suggestions.open { display: block; }
@@ -4018,10 +4019,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
     /* Compact single-line legend */
     calInfo.innerHTML =
-      '<span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) +
-      '&emsp;<span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) +
-      '&emsp;·&emsp;Solid = performance &nbsp; Dashed = rehearsal (est. 8 wk) &nbsp;·&emsp;' +
-      clashText;
+      '<div><span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) + '</div>' +
+      '<div><span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) + '</div>' +
+      '<div>Solid = performance · Dashed = rehearsal (est. 8 wk)</div>' +
+      '<div>' + clashText + '</div>';
     calInfo.classList.add('visible');
 
     /* Month column headers — coloured by clash level where both shows are active */
