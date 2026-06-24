@@ -1215,7 +1215,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
 .td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
 .td-cal-head {
-  display: flex; position: sticky; top: 0; z-index: 2;
+  display: flex; position: sticky; top: 0; z-index: 10;
   background: var(--bg); border-bottom: 1px solid rgba(212,255,26,0.15);
 }
 .td-cal-head-label {
@@ -1223,6 +1223,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(212,255,26,0.1);
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
   text-transform: uppercase; color: var(--muted); white-space: nowrap;
+  position: sticky; left: 0; z-index: 11; background: var(--bg);
 }
 .td-cal-head-days { flex: 1; display: grid; }
 .td-cal-day-num {
@@ -1241,6 +1242,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(212,255,26,0.08);
   display: flex; flex-direction: column; justify-content: center; gap: 2px;
   overflow: hidden;
+  position: sticky; left: 0; z-index: 6; background: var(--bg);
 }
 .td-cal-row-company {
   font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.5px;
@@ -1423,8 +1425,8 @@ button.td-link { background: none; cursor: pointer; }
   .td-cal-modal-title { display: none; }
   .td-cal-month-label { font-size: 10px; min-width: 110px; letter-spacing: 1px; }
   .td-cal-nav-btn { font-size: 9px; padding: 5px 8px; }
-  .td-cal-head-label { width: 90px; font-size: 8px; }
-  .td-cal-row-label { width: 90px; }
+  .td-cal-head-label { width: 140px; font-size: 8px; }
+  .td-cal-row-label { width: 140px; }
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3921,7 +3923,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     var numDays = daysInMonth(y, m);
     var todayY  = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
     var isNow   = (y === todayY && m === todayM);
-    var labelW  = window.innerWidth < 640 ? 90 : 200;
+    var labelW  = window.innerWidth < 640 ? 140 : 200;
     var gtc     = 'repeat(' + numDays + ',minmax(18px,1fr))';
     var mStart  = new Date(y, m, 1), mEnd = new Date(y, m, numDays);
 
@@ -3970,7 +3972,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
     calBody.innerHTML =
       '<div class="td-cal-head">' +
-        '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Company · Show</div>' +
+        '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Show</div>' +
         '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
       '</div>' +
       '<div class="td-cal-rows">' + todayOverlay + rowsHTML + '</div>';
@@ -4000,27 +4002,33 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return rs <= mE && e >= mS;
     }
 
-    /* Total overlapping days between the two commitment windows */
+    /* Number of days ANYTHING overlaps between the two shows' full
+       commitment windows (rehearsal start → performance end). */
     function totalOverlapDays() {
-      var sA = parseDate(showA.date_start), eA = parseDate(showA.date_end) || sA;
-      var sB = parseDate(showB.date_start), eB = parseDate(showB.date_end) || sB;
+      var sA = parseDate(showA.date_start);
+      var sB = parseDate(showB.date_start);
       if (!sA || !sB) return 0;
-      var rsA = new Date(sA.getTime() - REHEARSAL_MS);
-      var rsB = new Date(sB.getTime() - REHEARSAL_MS);
-      var oS = new Date(Math.max(rsA.getTime(), rsB.getTime()));
-      var oE = new Date(Math.min(eA.getTime(), eB.getTime()));
-      if (oS > oE) return 0;
-      return Math.round((oE - oS) / 86400000) + 1;
+      var eA = parseDate(showA.date_end) || sA;
+      var eB = parseDate(showB.date_end) || sB;
+      if (eA < sA) eA = sA;               // guard against blank/reversed end dates
+      if (eB < sB) eB = sB;
+      var startA = sA.getTime() - REHEARSAL_MS;   // includes the 8-week rehearsal window
+      var startB = sB.getTime() - REHEARSAL_MS;
+      var oStart = Math.max(startA, startB);
+      var oEnd   = Math.min(eA.getTime(), eB.getTime());
+      if (oStart > oEnd) return 0;
+      return Math.floor((oEnd - oStart) / 86400000) + 1;  // inclusive day count
     }
 
     var overlapDays = totalOverlapDays();
-    var clashLevel  = overlapDays === 0 ? '' : overlapDays >= 30 ? 'major' : 'minor';
-    var clashColour = clashLevel === 'major' ? '#ef4444' : '#f59e0b';
+    var dayWord     = overlapDays === 1 ? 'day' : 'days';
+    /* >30 days = major (red) · 1–30 days = minor (amber) · 0 = no clash (green) */
+    var clashLevel  = overlapDays === 0 ? 'none' : overlapDays > 30 ? 'major' : 'minor';
     var clashText   = clashLevel === 'major'
-      ? '<span style="color:#ef4444">⚠ Major clash · ~' + overlapDays + ' days overlap</span>'
+      ? '<span style="color:#ef4444">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
       : clashLevel === 'minor'
-        ? '<span style="color:#f59e0b">⚠ Potential clash · ~' + overlapDays + ' days overlap</span>'
-        : '<span style="color:var(--muted)">No clash detected</span>';
+        ? '<span style="color:#f59e0b">⚠ Minor overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
+        : '<span style="color:#22c55e">✓ No clash detected</span>';
 
     /* Compact single-line legend */
     calInfo.innerHTML =
@@ -4036,7 +4044,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var active = activeInMonth(showA, mi) && activeInMonth(showB, mi);
       var colCls = active ? (clashLevel === 'major' ? ' has-clash-major' : clashLevel === 'minor' ? ' has-clash' : '') : '';
       monthHead += '<div class="td-cal-month-col' + colCls + '">' +
-        CAL_MONTHS_SHORT[mi] + (active && clashLevel ? '<br>⚠' : '') + '</div>';
+        CAL_MONTHS_SHORT[mi] + (active && clashLevel !== 'none' ? '<br>⚠' : '') + '</div>';
     }
 
     /* Build a row for one show */
