@@ -1231,7 +1231,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(128,128,128,0.08);
 }
 .td-cal-day-num.td-cal-today-col { color: #e53935; }
-.td-cal-rows { }
+.td-cal-rows { position: relative; }
 .td-cal-row {
   display: flex; border-bottom: 1px solid rgba(128,128,128,0.08);
   min-height: 34px;
@@ -1252,10 +1252,15 @@ button.td-link { background: none; cursor: pointer; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .td-cal-row-grid { flex: 1; display: grid; align-items: stretch; }
-.td-cal-today-line {
-  position: absolute; top: 0; bottom: 0; width: 2px;
-  background: #e53935; pointer-events: none; z-index: 5;
-  transform: translateX(-50%);
+/* TODAY line — grid overlay that mirrors the row layout exactly, so it
+   stays aligned at any zoom / orientation / column width (no pixel math) */
+.td-cal-today-overlay {
+  position: absolute; inset: 0; display: flex;
+  pointer-events: none; z-index: 5;
+}
+.td-cal-today-track { flex: 1; display: grid; }
+.td-cal-today-cell {
+  background: linear-gradient(#e53935, #e53935) center / 2px 100% no-repeat;
 }
 .td-cal-bar {
   height: 16px; align-self: center; background: var(--purple); border-radius: 2px;
@@ -3951,26 +3956,24 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           '</div>';
         }).join('');
 
+    /* TODAY line overlay — mirrors a row's flex(label + grid) structure so the
+       line sits in the same grid column as the bars. Pure CSS grid, no pixel
+       measurement, so it stays aligned under zoom, rotation and PREV/NEXT. */
+    var todayOverlay = (isNow && shows.length > 0)
+      ? '<div class="td-cal-today-overlay">' +
+          '<div style="width:' + labelW + 'px;min-width:' + labelW + 'px"></div>' +
+          '<div class="td-cal-today-track" style="grid-template-columns:' + gtc + '">' +
+            '<div class="td-cal-today-cell" style="grid-column:' + todayD + '/' + (todayD + 1) + '"></div>' +
+          '</div>' +
+        '</div>'
+      : '';
+
     calBody.innerHTML =
       '<div class="td-cal-head">' +
         '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Company · Show</div>' +
         '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
       '</div>' +
-      '<div class="td-cal-rows">' + rowsHTML + '</div>';
-
-    /* Single continuous today line — measured after DOM is ready */
-    if (isNow) {
-      var todayEl = calBody.querySelector('.td-cal-today-col');
-      if (todayEl) {
-        var bRect = calBody.getBoundingClientRect();
-        var cRect = todayEl.getBoundingClientRect();
-        var x = cRect.left + cRect.width / 2 - bRect.left;
-        var line = document.createElement('div');
-        line.className = 'td-cal-today-line';
-        line.style.left = Math.round(x) + 'px';
-        calBody.appendChild(line);
-      }
-    }
+      '<div class="td-cal-rows">' + todayOverlay + rowsHTML + '</div>';
 
   }
 
