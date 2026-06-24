@@ -1264,37 +1264,112 @@ button.td-link { background: none; cursor: pointer; }
 }
 .td-cal-row:hover .td-cal-bar { opacity: 1; }
 .td-cal-bar--approx { opacity: 0.4; }
-/* Rehearsal bar (clash mode) */
+/* Rehearsal bar */
 .td-cal-rehbar {
   height: 10px; align-self: center; border-radius: 2px;
   border: 1px dashed rgba(100,74,228,0.45); background: rgba(100,74,228,0.1);
   margin: 0 1px; pointer-events: none;
 }
-/* Clash mode button */
-.td-cal-clash-btn {
+.td-cal-row-b .td-cal-bar   { background: #22d3ee; }
+.td-cal-row-b .td-cal-rehbar { border-color: rgba(34,211,238,0.45); background: rgba(34,211,238,0.1); }
+/* Back button (yearly mode) */
+.td-cal-back {
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: rgba(212,255,26,0.65); font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
   letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
-  transition: all 0.15s;
+  transition: background 0.15s; display: none;
 }
-.td-cal-clash-btn:hover { background: rgba(212,255,26,0.08); color: var(--lime); }
-.td-cal-clash-btn.active { background: var(--lime); color: #000; border-color: var(--lime); }
-/* Clash mode info bar */
+.td-cal-back.visible { display: block; }
+.td-cal-back:hover { background: rgba(212,255,26,0.1); }
+/* Yearly legend / info bar */
 .td-cal-info {
-  display: none; padding: 7px 16px; flex-shrink: 0;
-  background: rgba(212,255,26,0.04); border-bottom: 1px solid rgba(212,255,26,0.12);
-  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--lime);
-  letter-spacing: 0.3px; line-height: 1.6;
+  display: none; padding: 8px 16px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(212,255,26,0.1);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 0.3px; line-height: 1.8;
 }
 .td-cal-info.visible { display: block; }
-/* Clash mode row states */
-.td-cal-row--selected .td-cal-bar { background: var(--lime); opacity: 1; }
-.td-cal-row--selected .td-cal-row-show { color: var(--lime); }
-.td-cal-row--selected .td-cal-row-company { color: rgba(212,255,26,0.6); }
-.td-cal-row--clash .td-cal-bar { background: #f59e0b; opacity: 1; }
-.td-cal-row--clash .td-cal-rehbar { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.1); }
-.td-cal-row--clash .td-cal-row-show { color: #f59e0b; }
-.td-cal-row--safe { opacity: 0.25; }
+/* Yearly month separator */
+.td-cal-month-sep {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 10px;
+  background: rgba(212,255,26,0.03);
+  border-top: 1px solid rgba(212,255,26,0.08);
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+  flex-shrink: 0;
+}
+.td-cal-month-sep.has-clash {
+  color: #f59e0b; background: rgba(245,158,11,0.05);
+  border-top-color: rgba(245,158,11,0.25);
+}
+/* Picker modal */
+.td-clash-overlay {
+  position: fixed; inset: 0; z-index: 1200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.8); padding: 20px; box-sizing: border-box;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.td-clash-overlay.open { opacity: 1; pointer-events: auto; }
+.td-clash-modal {
+  background: var(--bg); border: 1px solid var(--lime);
+  width: 100%; max-width: 480px;
+  display: flex; flex-direction: column;
+}
+.td-clash-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #111; border-bottom: 1px solid rgba(212,255,26,0.2);
+  padding: 10px 16px; flex-shrink: 0;
+}
+.td-clash-topbar-title {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime);
+}
+.td-clash-close {
+  background: none; border: 1px solid rgba(212,255,26,0.35);
+  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 1px; text-transform: uppercase; text-align: center;
+  padding: 4px 10px; cursor: pointer; line-height: 1.4; transition: background 0.15s;
+}
+.td-clash-close:hover { background: rgba(212,255,26,0.15); }
+.td-clash-body { padding: 24px 20px; display: flex; flex-direction: column; gap: 18px; }
+.td-clash-desc {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+  letter-spacing: 0.3px; line-height: 1.6; margin: 0;
+}
+.td-clash-field { display: flex; flex-direction: column; gap: 6px; }
+.td-clash-label {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.td-clash-label-a { color: var(--purple); }
+.td-clash-label-b { color: #22d3ee; }
+.td-clash-select {
+  width: 100%; padding: 9px 36px 9px 12px; box-sizing: border-box;
+  background: var(--card); border: 1px solid rgba(128,128,128,0.25);
+  color: var(--fg); font-family: 'DM Mono', monospace; font-size: 11px;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.td-clash-select:focus { outline: none; border-color: var(--purple); }
+.td-clash-compare {
+  align-self: center; padding: 10px 32px;
+  background: var(--lime); color: #000; border: none;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; cursor: pointer; transition: opacity 0.15s;
+}
+.td-clash-compare:hover { opacity: 0.85; }
+.td-clash-compare:disabled { opacity: 0.35; cursor: not-allowed; }
+.td-clash-note {
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
+  letter-spacing: 0.3px; text-align: center; margin: 0;
+}
+@media (max-width: 639px) {
+  .td-clash-overlay { padding: 0; }
+  .td-clash-modal { max-height: 100dvh; border-left: none; border-right: none; }
+  .td-clash-body { padding: 20px 16px; }
+}
 .td-cal-empty {
   padding: 48px 20px; text-align: center;
   font-family: 'DM Mono', monospace; font-size: 12px;
@@ -1333,6 +1408,7 @@ button.td-link { background: none; cursor: pointer; }
     <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
     <button id="td-cal-btn" class="td-header-btn">Calendar View ◈</button>
+    <button id="td-clash-btn" class="td-header-btn">Will it Clash? ◈</button>
     <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Current Auditions ↗</a>
   </div>
 </header>
@@ -1389,17 +1465,39 @@ button.td-link { background: none; cursor: pointer; }
 <div class="td-cal-overlay" id="td-cal-overlay">
   <div class="td-cal-modal">
     <div class="td-cal-topbar">
-      <span class="td-cal-modal-title">Calendar View · 2026</span>
-      <div class="td-cal-nav">
+      <button class="td-cal-back" id="td-cal-back">← Back</button>
+      <span class="td-cal-modal-title" id="td-cal-modal-title">Calendar View · 2026</span>
+      <div class="td-cal-nav" id="td-cal-nav">
         <button class="td-cal-nav-btn" id="td-cal-prev">← PREV</button>
         <span class="td-cal-month-label" id="td-cal-month-label"></span>
         <button class="td-cal-nav-btn" id="td-cal-next">NEXT →</button>
       </div>
-      <button class="td-cal-clash-btn" id="td-cal-clash-btn" title="Show rehearsal windows and detect clashing shows">Will it Clash? ◈</button>
       <button class="td-cal-close" id="td-cal-close">ESC<br>CLOSE</button>
     </div>
     <div class="td-cal-info" id="td-cal-info"></div>
     <div class="td-cal-body" id="td-cal-body"></div>
+  </div>
+</div>
+
+<div class="td-clash-overlay" id="td-clash-overlay">
+  <div class="td-clash-modal">
+    <div class="td-clash-topbar">
+      <span class="td-clash-topbar-title">Will it Clash? ◈</span>
+      <button class="td-clash-close" id="td-clash-close">ESC<br>CLOSE</button>
+    </div>
+    <div class="td-clash-body">
+      <p class="td-clash-desc">Select two shows to compare their rehearsal and performance schedules side by side across the full year.</p>
+      <div class="td-clash-field">
+        <label class="td-clash-label td-clash-label-a" for="td-clash-a">■ Show A</label>
+        <select class="td-clash-select" id="td-clash-a"><option value="">— Select a show —</option></select>
+      </div>
+      <div class="td-clash-field">
+        <label class="td-clash-label td-clash-label-b" for="td-clash-b">■ Show B</label>
+        <select class="td-clash-select" id="td-clash-b"><option value="">— Select a show —</option></select>
+      </div>
+      <button class="td-clash-compare" id="td-clash-compare" disabled>Compare ◈</button>
+      <p class="td-clash-note">Rehearsal windows are estimated at 8 weeks before opening night.</p>
+    </div>
   </div>
 </div>
 
@@ -3693,244 +3791,313 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   addrClear.addEventListener('click', clearAddr);
 })();
 
-/* ── CALENDAR VIEW ── */
+/* ── CALENDAR VIEW + WILL IT CLASH? ── */
 (function () {
-  var CAL_MONTHS = ['January','February','March','April','May','June',
-                    'July','August','September','October','November','December'];
-  var REHEARSAL_MS = 56 * 86400000; // 8 weeks in milliseconds
+  var CAL_MONTHS       = ['January','February','March','April','May','June',
+                          'July','August','September','October','November','December'];
+  var CAL_MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN',
+                          'JUL','AUG','SEP','OCT','NOV','DEC'];
+  var REHEARSAL_MS = 56 * 86400000; // 8 weeks
 
-  var calBtn      = document.getElementById('td-cal-btn');
-  var calOverlay  = document.getElementById('td-cal-overlay');
-  var calClose    = document.getElementById('td-cal-close');
-  var calPrev     = document.getElementById('td-cal-prev');
-  var calNext     = document.getElementById('td-cal-next');
-  var calLabel    = document.getElementById('td-cal-month-label');
-  var calBody     = document.getElementById('td-cal-body');
-  var calClashBtn = document.getElementById('td-cal-clash-btn');
-  var calInfo     = document.getElementById('td-cal-info');
+  /* ── DOM refs ── */
+  var calBtn        = document.getElementById('td-cal-btn');
+  var calOverlay    = document.getElementById('td-cal-overlay');
+  var calClose      = document.getElementById('td-cal-close');
+  var calPrev       = document.getElementById('td-cal-prev');
+  var calNext       = document.getElementById('td-cal-next');
+  var calLabel      = document.getElementById('td-cal-month-label');
+  var calBody       = document.getElementById('td-cal-body');
+  var calBack       = document.getElementById('td-cal-back');
+  var calNav        = document.getElementById('td-cal-nav');
+  var calModalTitle = document.getElementById('td-cal-modal-title');
+  var calInfo       = document.getElementById('td-cal-info');
+  var clashBtn      = document.getElementById('td-clash-btn');
+  var clashOverlay  = document.getElementById('td-clash-overlay');
+  var clashClose    = document.getElementById('td-clash-close');
+  var clashSelectA  = document.getElementById('td-clash-a');
+  var clashSelectB  = document.getElementById('td-clash-b');
+  var clashCompare  = document.getElementById('td-clash-compare');
 
   var calYear = 0, calMonth = 0;
   var _calSavedZoom = '';
-  var clashMode = false;
-  var selectedShow = null;
+  var _yearlyMode = false;
 
+  /* ── Helpers ── */
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
   function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  function fmtShort(d) { return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
 
-  function rehStart(show) {
-    var s = parseDate(show.date_start);
-    return s ? new Date(s.getTime() - REHEARSAL_MS) : null;
-  }
-
-  function windowsOverlap(a, b) {
-    var as = rehStart(a), ae = parseDate(a.date_end) || parseDate(a.date_start);
-    var bs = rehStart(b), be = parseDate(b.date_end) || parseDate(b.date_start);
-    if (!as || !ae || !bs || !be) return false;
-    return as <= be && bs <= ae;
-  }
-
-  /* Clamp a date to the calendar month. Returns 1..numDays or null if entirely outside. */
+  /* Clamp a date to the bounds of a given month. Returns 1..nd or null if outside. */
   function clampS(date, y, m) {
     if (!date) return null;
-    if (date.getFullYear() > y || (date.getFullYear() === y && date.getMonth() > m)) return null;
-    if (date.getFullYear() < y || (date.getFullYear() === y && date.getMonth() < m)) return 1;
+    var dy = date.getFullYear(), dm = date.getMonth();
+    if (dy > y || (dy === y && dm > m)) return null;
+    if (dy < y || (dy === y && dm < m)) return 1;
     return date.getDate();
   }
   function clampE(date, y, m, nd) {
     if (!date) return null;
-    if (date.getFullYear() < y || (date.getFullYear() === y && date.getMonth() < m)) return null;
-    if (date.getFullYear() > y || (date.getFullYear() === y && date.getMonth() > m)) return nd;
+    var dy = date.getFullYear(), dm = date.getMonth();
+    if (dy < y || (dy === y && dm < m)) return null;
+    if (dy > y || (dy === y && dm > m)) return nd;
     return date.getDate();
   }
 
-  function fmtShort(date) {
-    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  function barHTML(cls, gcS, gcE, tip) {
+    return '<div class="' + cls + '" style="grid-column:' + gcS + '/' + (gcE + 1) + '"' +
+           (tip ? ' title="' + tip + '"' : '') + '></div>';
   }
 
-  function updateInfoBar() {
-    if (!clashMode) { calInfo.classList.remove('visible'); return; }
-    if (!selectedShow) {
-      calInfo.innerHTML =
-        '◈ Will it Clash? — click any show to reveal clashes &nbsp;·&nbsp; ' +
-        'dashed bars = estimated 8-week rehearsal window &nbsp;·&nbsp; solid bars = performance run';
-      calInfo.classList.add('visible');
-      return;
-    }
-    var s = parseDate(selectedShow.date_start);
-    var rs = s ? new Date(s.getTime() - REHEARSAL_MS) : null;
-    calInfo.innerHTML =
-      '◎ <strong>' + esc(selectedShow.title) + '</strong> · ' + esc(selectedShow.company) +
-      (rs ? ' — commitment est. from ~' + fmtShort(rs) : '') +
-      ' &nbsp;·&nbsp; <span style="color:#f59e0b">■</span> amber = clashes &nbsp; faded = safe to double';
-    calInfo.classList.add('visible');
+  /* ── Topbar mode helpers ── */
+  function setMonthlyMode() {
+    _yearlyMode = false;
+    calBack.classList.remove('visible');
+    calNav.style.display = '';
+    calModalTitle.textContent = 'Calendar View · 2026';
+    calInfo.classList.remove('visible');
+  }
+  function setYearlyMode() {
+    _yearlyMode = true;
+    calBack.classList.add('visible');
+    calNav.style.display = 'none';
+    calModalTitle.textContent = 'Yearly Clash View · 2026';
   }
 
-  function applyClashClasses() {
-    calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
-      row.classList.remove('td-cal-row--selected', 'td-cal-row--clash', 'td-cal-row--safe');
-      if (!clashMode || !selectedShow) return;
-      var co = row.dataset.company, ti = row.dataset.title;
-      if (co === selectedShow.company && ti === selectedShow.title) {
-        row.classList.add('td-cal-row--selected');
-      } else {
-        var show = allShows.find(function(s) { return s.company === co && s.title === ti; });
-        row.classList.add(show && windowsOverlap(show, selectedShow) ? 'td-cal-row--clash' : 'td-cal-row--safe');
-      }
-    });
-    updateInfoBar();
-  }
-
+  /* ── MONTHLY CALENDAR ── */
   function renderCalendar() {
     var y = calYear, m = calMonth;
     var numDays = daysInMonth(y, m);
-    var todayY = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
-    var isCurrentMonth = (y === todayY && m === todayM);
+    var todayY  = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
+    var isNow   = (y === todayY && m === todayM);
     var labelW  = window.innerWidth < 640 ? 90 : 200;
-    var gtcDays = 'repeat(' + numDays + ',minmax(18px,1fr))';
-    var monthStart = new Date(y, m, 1);
-    var monthEnd   = new Date(y, m, numDays);
+    var gtc     = 'repeat(' + numDays + ',minmax(18px,1fr))';
+    var mStart  = new Date(y, m, 1), mEnd = new Date(y, m, numDays);
 
     var shows = allShows.filter(function(s) {
-      var start = parseDate(s.date_start);
-      var end   = parseDate(s.date_end) || start;
-      if (!start) return false;
-      if (clashMode) {
-        var rs = new Date(start.getTime() - REHEARSAL_MS);
-        return rs <= monthEnd && end >= monthStart;
-      }
-      return start <= monthEnd && end >= monthStart;
+      var start = parseDate(s.date_start), end = parseDate(s.date_end) || start;
+      return start && start <= mEnd && end >= mStart;
     }).sort(function(a, b) {
-      var as = clashMode ? rehStart(a) : parseDate(a.date_start);
-      var bs = clashMode ? rehStart(b) : parseDate(b.date_start);
-      return (as && bs) ? as - bs : (a.date_start || '').localeCompare(b.date_start || '');
+      return (a.date_start || '').localeCompare(b.date_start || '');
     });
 
     calLabel.textContent = CAL_MONTHS[m] + ' ' + y;
 
-    var dayHeadHTML = '';
+    var dayHead = '';
     for (var d = 1; d <= numDays; d++) {
-      dayHeadHTML += '<div class="td-cal-day-num' + (isCurrentMonth && d === todayD ? ' td-cal-today-col' : '') + '">' + d + '</div>';
+      dayHead += '<div class="td-cal-day-num' + (isNow && d === todayD ? ' td-cal-today-col' : '') + '">' + d + '</div>';
     }
+    var todayStripe = isNow ? barHTML('td-cal-today-stripe', todayD, todayD, '') : '';
 
-    var todayHTML = isCurrentMonth
-      ? '<div class="td-cal-today-stripe" style="grid-column:' + todayD + '/' + (todayD + 1) + '"></div>'
-      : '';
-
-    var rowsHTML = '';
-    if (shows.length === 0) {
-      rowsHTML = '<div class="td-cal-empty">No shows' + (clashMode ? ' or rehearsals' : '') + ' this month</div>';
-    } else {
-      shows.forEach(function(s) {
-        var start    = parseDate(s.date_start);
-        var end      = parseDate(s.date_end) || start;
-        var isApprox = s.date_approximate === '1' || s.date_approximate === 'true';
-
-        /* Performance bar */
-        var perfS = clampS(start, y, m), perfE = clampE(end, y, m, numDays);
-        var perfHTML = (perfS && perfE && perfS <= perfE)
-          ? '<div class="td-cal-bar' + (isApprox ? ' td-cal-bar--approx' : '') + '" ' +
-              'style="grid-column:' + perfS + '/' + (perfE + 1) + '" ' +
-              'title="' + esc(s.title) + ' · ' + esc(fmtRange(s)) + '"></div>'
-          : '';
-
-        /* Rehearsal bar — only in clash mode, spans from ~8wk before open to day before open */
-        var rehHTML = '';
-        if (clashMode) {
-          var rs = new Date(start.getTime() - REHEARSAL_MS);
-          var re = new Date(start.getTime() - 86400000);
-          var rsC = clampS(rs, y, m), reC = clampE(re, y, m, numDays);
-          if (rsC && reC && rsC <= reC) {
-            rehHTML = '<div class="td-cal-rehbar" style="grid-column:' + rsC + '/' + (reC + 1) + '" ' +
-              'title="Rehearsals est. from ' + fmtShort(rs) + '"></div>';
-          }
-        }
-
-        rowsHTML +=
-          '<div class="td-cal-row" data-company="' + esc(s.company) + '" data-title="' + esc(s.title) + '">' +
+    var rowsHTML = shows.length === 0
+      ? '<div class="td-cal-empty">No shows this month</div>'
+      : shows.map(function(s) {
+          var start = parseDate(s.date_start), end = parseDate(s.date_end) || start;
+          var pS = clampS(start, y, m), pE = clampE(end, y, m, numDays);
+          var perf = (pS && pE && pS <= pE)
+            ? barHTML('td-cal-bar' + (s.date_approximate === '1' ? ' td-cal-bar--approx' : ''), pS, pE,
+                      esc(s.title) + ' · ' + esc(fmtRange(s)))
+            : '';
+          return '<div class="td-cal-row" data-company="' + esc(s.company) + '" data-title="' + esc(s.title) + '">' +
             '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">' +
               '<div class="td-cal-row-company" title="' + esc(s.company) + '">' + esc(s.company) + '</div>' +
               '<div class="td-cal-row-show" title="' + esc(s.title) + '">' + esc(s.title) + '</div>' +
             '</div>' +
-            '<div class="td-cal-row-grid" style="grid-template-columns:' + gtcDays + '">' +
-              todayHTML + rehHTML + perfHTML +
-            '</div>' +
+            '<div class="td-cal-row-grid" style="grid-template-columns:' + gtc + '">' + todayStripe + perf + '</div>' +
           '</div>';
-      });
-    }
+        }).join('');
 
     calBody.innerHTML =
       '<div class="td-cal-head">' +
         '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">Company · Show</div>' +
-        '<div class="td-cal-head-days" style="grid-template-columns:' + gtcDays + '">' + dayHeadHTML + '</div>' +
+        '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
       '</div>' +
       '<div class="td-cal-rows">' + rowsHTML + '</div>';
 
     calBody.querySelectorAll('.td-cal-row').forEach(function(row) {
       row.addEventListener('click', function() {
-        if (clashMode) {
-          var co = row.dataset.company, ti = row.dataset.title;
-          if (selectedShow && selectedShow.company === co && selectedShow.title === ti) {
-            selectedShow = null;
-          } else {
-            selectedShow = allShows.find(function(s) { return s.company === co && s.title === ti; }) || null;
-          }
-          applyClashClasses();
-        } else {
-          closeCalendar();
-          activeCompany = row.dataset.company;
-          activeFilter  = null;
-          setFilterButtons(null);
-          document.getElementById('td-company').value = activeCompany;
-          syncSelectActive();
-          render();
-          document.getElementById('td-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        closeCalendar();
+        activeCompany = row.dataset.company;
+        activeFilter  = null;
+        setFilterButtons(null);
+        document.getElementById('td-company').value = activeCompany;
+        syncSelectActive();
+        render();
+        document.getElementById('td-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
-
-    applyClashClasses();
   }
 
+  /* ── YEARLY CLASH VIEW ── */
+  function renderYearly(showA, showB) {
+    var YEAR    = 2026;
+    var labelW  = window.innerWidth < 640 ? 60 : 160;
+    var gtc     = 'repeat(31,minmax(0,1fr))';
+    var todayY  = TODAY.getFullYear(), todayM = TODAY.getMonth(), todayD = TODAY.getDate();
+
+    /* Legend */
+    calInfo.innerHTML =
+      '<span style="color:var(--purple)">■ ' + esc(showA.title) + ' · ' + esc(showA.company) + '</span>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;' +
+      '<span style="color:#22d3ee">■ ' + esc(showB.title) + ' · ' + esc(showB.company) + '</span>' +
+      '<br><span style="opacity:0.55">Solid = performance · Dashed = est. 8-week rehearsal &nbsp;·&nbsp; </span>' +
+      '<span style="color:#f59e0b">⚠ amber month = windows overlap</span>';
+    calInfo.classList.add('visible');
+
+    /* Day header 1-31 (fixed) */
+    var dayHead = '';
+    for (var d = 1; d <= 31; d++) dayHead += '<div class="td-cal-day-num">' + d + '</div>';
+
+    var rowsHTML = '';
+
+    for (var mi = 0; mi < 12; mi++) {
+      var nd         = daysInMonth(YEAR, mi);
+      var mStart     = new Date(YEAR, mi, 1);
+      var mEnd       = new Date(YEAR, mi, nd);
+
+      /* Compute effective windows for clash detection */
+      function effWindow(show) {
+        var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
+        if (!s) return null;
+        return { start: new Date(s.getTime() - REHEARSAL_MS), end: e };
+      }
+      var wA = effWindow(showA), wB = effWindow(showB);
+      var aActive = wA && wA.start <= mEnd && wA.end >= mStart;
+      var bActive = wB && wB.start <= mEnd && wB.end >= mStart;
+      if (!aActive && !bActive) continue; // skip months with no activity
+
+      var hasClash = aActive && bActive && wA.start <= wB.end && wB.start <= wA.end;
+
+      /* Month separator */
+      rowsHTML += '<div class="td-cal-month-sep' + (hasClash ? ' has-clash' : '') + '">' +
+        '<span style="width:' + labelW + 'px;flex-shrink:0">' + CAL_MONTHS_SHORT[mi] + '</span>' +
+        (hasClash ? '<span>⚠ potential clash</span>' : '') +
+      '</div>';
+
+      /* Build one show's bars for this month */
+      function showRow(show, rowCls) {
+        var s  = parseDate(show.date_start), e = parseDate(show.date_end) || s;
+        if (!s) return '';
+        var rs = new Date(s.getTime() - REHEARSAL_MS);
+        var re = new Date(s.getTime() - 86400000);
+
+        var isNow  = (YEAR === todayY && mi === todayM);
+        var todayH = isNow ? barHTML('td-cal-today-stripe', todayD, todayD, '') : '';
+
+        var pS = clampS(s, YEAR, mi), pE = clampE(e, YEAR, mi, nd);
+        var perfH = (pS && pE && pS <= pE) ? barHTML('td-cal-bar', pS, pE, esc(show.title) + ' · ' + esc(fmtRange(show))) : '';
+
+        var rS = clampS(rs, YEAR, mi), rE = clampE(re, YEAR, mi, nd);
+        var rehH  = (rS && rE && rS <= rE) ? barHTML('td-cal-rehbar', rS, rE, 'Rehearsals est. from ' + fmtShort(rs)) : '';
+
+        /* Grey shade for days beyond this month's length (e.g. day 29-31 in Feb) */
+        var shadeH = nd < 31 ? '<div style="grid-column:' + (nd+1) + '/32;background:rgba(128,128,128,0.05);pointer-events:none"></div>' : '';
+
+        return '<div class="td-cal-row ' + rowCls + '" style="cursor:default;min-height:28px">' +
+          '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px;justify-content:center">' +
+            '<div class="td-cal-row-show" style="font-size:9px" title="' + esc(show.title) + '">' + esc(show.title) + '</div>' +
+          '</div>' +
+          '<div class="td-cal-row-grid" style="grid-template-columns:' + gtc + '">' +
+            todayH + rehH + perfH + shadeH +
+          '</div>' +
+        '</div>';
+      }
+
+      rowsHTML += showRow(showA, 'td-cal-row-a');
+      rowsHTML += showRow(showB, 'td-cal-row-b');
+    }
+
+    calBody.innerHTML =
+      '<div class="td-cal-head">' +
+        '<div class="td-cal-head-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px"></div>' +
+        '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + dayHead + '</div>' +
+      '</div>' +
+      '<div class="td-cal-rows">' + rowsHTML + '</div>';
+  }
+
+  /* ── OPEN / CLOSE ── */
   function openCalendar() {
     _calSavedZoom = document.documentElement.style.zoom || '';
     document.documentElement.style.zoom = '';
-    if (!calYear) {
-      var now = new Date();
-      calYear = now.getFullYear(); calMonth = now.getMonth();
-    }
+    if (!calYear) { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
+    setMonthlyMode();
     renderCalendar();
     calOverlay.classList.add('open');
     calBtn.classList.add('td-header-btn--active');
+  }
+
+  function openCalendarYearly(showA, showB) {
+    _calSavedZoom = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
+    setYearlyMode();
+    renderYearly(showA, showB);
+    calOverlay.classList.add('open');
   }
 
   function closeCalendar() {
     calOverlay.classList.remove('open');
     calBtn.classList.remove('td-header-btn--active');
     document.documentElement.style.zoom = _calSavedZoom;
+    if (_yearlyMode) setMonthlyMode();
   }
 
+  /* ── PICKER ── */
+  function openPicker() {
+    /* Populate dropdowns from allShows */
+    var opts = allShows
+      .filter(function(s) { return s.date_start; })
+      .sort(function(a, b) { return (a.company||'').localeCompare(b.company||'') || (a.title||'').localeCompare(b.title||''); })
+      .map(function(s) {
+        var k = esc(s.title + '|||' + s.company);
+        return '<option value="' + k + '">' + esc(s.company + ' · ' + s.title) + '</option>';
+      }).join('');
+    var blank = '<option value="">— Select a show —</option>';
+    clashSelectA.innerHTML = blank + opts;
+    clashSelectB.innerHTML = blank + opts;
+    clashCompare.disabled = true;
+    clashOverlay.classList.add('open');
+    clashBtn.classList.add('td-header-btn--active');
+  }
+
+  function closePicker() {
+    clashOverlay.classList.remove('open');
+    clashBtn.classList.remove('td-header-btn--active');
+  }
+
+  function findShow(key) {
+    var parts = key.split('|||');
+    return allShows.find(function(s) { return s.title === parts[0] && s.company === parts[1]; }) || null;
+  }
+
+  function validatePicker() {
+    clashCompare.disabled = !clashSelectA.value || !clashSelectB.value || clashSelectA.value === clashSelectB.value;
+  }
+
+  /* ── EVENT LISTENERS ── */
   calBtn.addEventListener('click', openCalendar);
   calClose.addEventListener('click', closeCalendar);
   calOverlay.addEventListener('click', function(e) { if (e.target === calOverlay) closeCalendar(); });
+  calBack.addEventListener('click', function() { closeCalendar(); openPicker(); });
+  calPrev.addEventListener('click', function() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
+  calNext.addEventListener('click', function() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
+
+  clashBtn.addEventListener('click', openPicker);
+  clashClose.addEventListener('click', closePicker);
+  clashOverlay.addEventListener('click', function(e) { if (e.target === clashOverlay) closePicker(); });
+  clashSelectA.addEventListener('change', validatePicker);
+  clashSelectB.addEventListener('change', validatePicker);
+  clashCompare.addEventListener('click', function() {
+    var showA = findShow(clashSelectA.value), showB = findShow(clashSelectB.value);
+    if (!showA || !showB) return;
+    closePicker();
+    openCalendarYearly(showA, showB);
+  });
+
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && calOverlay.classList.contains('open')) closeCalendar();
-  });
-  calPrev.addEventListener('click', function() {
-    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
-  });
-  calNext.addEventListener('click', function() {
-    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
-  });
-  calClashBtn.addEventListener('click', function() {
-    clashMode = !clashMode;
-    selectedShow = null;
-    calClashBtn.classList.toggle('active', clashMode);
-    renderCalendar();
+    if (e.key !== 'Escape') return;
+    if (clashOverlay.classList.contains('open')) { closePicker(); return; }
+    if (calOverlay.classList.contains('open')) closeCalendar();
   });
 })();
 
