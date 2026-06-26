@@ -169,6 +169,23 @@
     #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
     #pdf-canvas-wrap canvas { max-width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
+    /* ── CAST & CREW MODAL CONTENT ── */
+    .cc-section-label {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 24px 10px; background: var(--bg); position: sticky; top: 0; z-index: 1;
+      border-bottom: 1px solid var(--border);
+    }
+    .cc-row {
+      display: grid; grid-template-columns: 1fr 1fr auto;
+      gap: 16px; padding: 11px 24px; border-bottom: 1px solid var(--border); align-items: center;
+    }
+    .cc-role { font-size: 11px; color: var(--fg); }
+    .cc-name { font-size: 11px; color: var(--fg); }
+    .cc-name.tbc { color: var(--muted); font-style: italic; }
+    .cc-contact { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+    .cc-contact a { font-size: 9px; color: var(--muted); text-decoration: none; letter-spacing: 0.5px; transition: color 0.15s; }
+    .cc-contact a:hover { color: var(--lime); }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 720px) {
       .asak-header { padding: 18px 20px 14px; }
@@ -217,7 +234,7 @@
           <div class="card-title">The Team</div>
           <div class="card-desc">Everyone involved in bringing this production to life.</div>
         </div>
-        <div class="card-coming">Coming soon</div>
+        <button class="card-open-btn" id="open-cast">View Cast &amp; Crew →</button>
       </div>
 
       <!-- Card: Script -->
@@ -257,6 +274,19 @@
       </div>
       <div class="modal-body" id="sched-body">
         <div class="sched-loading">Loading schedule…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Cast & Crew ── -->
+  <div class="modal-overlay" id="modal-cast" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Cast &amp; Crew</span>
+        <button class="modal-close" data-close="modal-cast" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="cast-body">
+        <div class="sched-loading">Loading…</div>
       </div>
     </div>
   </div>
@@ -345,6 +375,10 @@
     openModal('modal-schedule');
     loadSchedule();
   });
+  document.getElementById('open-cast').addEventListener('click', function () {
+    openModal('modal-cast');
+    loadCast();
+  });
   document.getElementById('open-script').addEventListener('click', function () {
     openModal('modal-script');
     loadPDF();
@@ -375,7 +409,7 @@ var scheduleLoaded = false;
 function loadSchedule() {
   if (scheduleLoaded) return;
 
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?output=csv';
+  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?gid=0&single=true&output=csv';
   var body    = document.getElementById('sched-body');
 
   function parseRow(line) {
@@ -481,6 +515,88 @@ function loadSchedule() {
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function (txt) { var rows = parseCSV(txt); if (!rows.length) throw new Error('empty'); render(rows); })
     .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load schedule.<br>' + esc(err.message) + '</div>'; });
+}
+
+/* ── CAST & CREW ── */
+var castLoaded = false;
+function loadCast() {
+  if (castLoaded) return;
+
+  var CC_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?gid=43169221&single=true&output=csv';
+  var body   = document.getElementById('cast-body');
+
+  function parseRow(line) {
+    var r = [], c = '', q = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') { q = !q; }
+      else if (ch === ',' && !q) { r.push(c); c = ''; }
+      else { c += ch; }
+    }
+    r.push(c);
+    return r;
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function render(rows) {
+    var cast = rows.filter(function (r) { return r.role_cast; });
+    var crew = rows.filter(function (r) { return r.role_crew; });
+
+    function makeRow(role, name, number, email) {
+      var nameHtml = name
+        ? '<span class="cc-name">' + esc(name) + '</span>'
+        : '<span class="cc-name tbc">TBC</span>';
+      var contact = '';
+      if (number) contact += '<a href="tel:' + esc(number) + '">' + esc(number) + '</a>';
+      if (email)  contact += '<a href="mailto:' + esc(email) + '">' + esc(email) + '</a>';
+      return '<div class="cc-row">'
+           + '<div class="cc-role">' + esc(role) + '</div>'
+           + nameHtml
+           + '<div class="cc-contact">' + contact + '</div>'
+           + '</div>';
+    }
+
+    var html = '';
+
+    if (cast.length) {
+      html += '<div class="cc-section-label">Cast</div>';
+      cast.forEach(function (r) {
+        html += makeRow(r.role_cast, r.name, '', '');
+      });
+    }
+
+    if (crew.length) {
+      html += '<div class="cc-section-label">Crew</div>';
+      crew.forEach(function (r) {
+        html += makeRow(r.role_crew, r.name, r.number, r.email);
+      });
+    }
+
+    body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
+    castLoaded = true;
+  }
+
+  function parseCSV(txt) {
+    var lines   = txt.split(/\r?\n/);
+    var headers = parseRow(lines[0]).map(function (h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+    var rows    = [];
+    for (var i = 1; i < lines.length; i++) {
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      var cols = parseRow(ln), obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.role_cast || obj.role_crew || obj.name) rows.push(obj);
+    }
+    return rows;
+  }
+
+  function esc2(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  fetch(CC_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) { render(parseCSV(txt)); })
+    .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load cast &amp; crew.<br>' + esc2(err.message) + '</div>'; });
 }
 
 /* ── PDF VIEWER ── */
