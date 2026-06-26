@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PlayAnalysisDex</title>
+  <link rel="icon" type="image/png" href="/Images/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
@@ -11,22 +12,41 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:     #0a0a0a;
-      --fg:     #f0f0eb;
-      --lime:   #d4ff1a;
-      --purple: #6448e4;
-      --muted:  rgba(240,240,235,0.45);
-      --card:   #141414;
-      --border: rgba(255,255,255,0.1);
-      --font:   'DM Mono', monospace;
+      --lime:    #D4FF1A;
+      --purple:  #6448e4;
+      --black:   #0a0a0a;
+      --bg:      #f5f5f0;
+      --card-bg: #ffffff;
+      --fg:      #111111;
+      --muted:   rgba(0,0,0,0.45);
+      --border:  rgba(0,0,0,0.1);
+      --font:    'DM Mono', monospace;
+    }
+    [data-theme="dark"] {
+      --bg:      #0e0e0e;
+      --card-bg: #141414;
+      --fg:      rgba(255,255,255,0.85);
+      --muted:   rgba(240,240,235,0.4);
+      --border:  rgba(255,255,255,0.09);
+    }
+    [data-theme="terminal"] {
+      --bg:      #000000;
+      --card-bg: #111111;
+      --fg:      #D4FF1A;
+      --muted:   rgba(212,255,26,0.4);
+      --border:  rgba(212,255,26,0.14);
     }
 
-    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; }
+    html, body {
+      height: 100%; font-family: var(--font);
+      background: var(--bg); color: var(--fg); font-size: 13px;
+      transition: background 0.2s, color 0.2s;
+    }
 
     /* ── PASSWORD OVERLAY ── */
     #pass-overlay {
       position: fixed; inset: 0; z-index: 9999;
-      background: var(--bg);
+      background: #0a0a0a;
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
     }
@@ -35,12 +55,12 @@
       max-width: 360px; width: 100%;
       display: flex; flex-direction: column; gap: 16px; text-align: center;
     }
-    .pass-logo { font-size: 28px; }
+    .pass-logo  { font-size: 28px; }
     .pass-title { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
-    .pass-sub   { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); line-height: 1.7; }
+    .pass-sub   { font-size: 10px; letter-spacing: 0.5px; color: rgba(240,240,235,0.45); line-height: 1.7; }
     .pass-input {
-      background: var(--card); border: 1px solid var(--border);
-      color: var(--fg); font-family: var(--font); font-size: 16px;
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);
+      color: #f0f0eb; font-family: var(--font); font-size: 16px;
       padding: 10px 14px; text-align: center; letter-spacing: 6px; width: 100%;
     }
     .pass-input:focus { outline: none; border-color: var(--purple); }
@@ -57,18 +77,29 @@
 
     /* ── TOP BAR ── */
     .topbar {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 20px; background: #0d0d0d;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; background: var(--black);
+      border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
     }
-    .topbar-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
-    .topbar-playtitle { font-size: 10px; color: var(--muted); letter-spacing: 1px; display: none; }
+    .topbar-title      { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
+    .topbar-playtitle  { font-size: 10px; color: rgba(212,255,26,0.5); letter-spacing: 1px; display: none; }
     .topbar-playtitle.visible { display: block; }
+    .topbar-spacer     { flex: 1; }
+    .topbar-icon-btn {
+      background: none; border: 1px solid rgba(212,255,26,0.25);
+      color: rgba(212,255,26,0.7); font-family: var(--font); font-size: 12px;
+      letter-spacing: -0.5px; width: 36px; height: 36px; border-radius: 2px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .topbar-icon-btn:hover  { border-color: var(--lime); color: var(--lime); }
+    .topbar-icon-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
     .topbar-back {
       background: none; border: 1px solid rgba(212,255,26,0.35);
       color: var(--lime); font-family: var(--font); font-size: 10px;
       letter-spacing: 1px; padding: 5px 12px; cursor: pointer;
-      transition: background 0.15s; display: none; margin-left: auto;
+      transition: background 0.15s; display: none; border-radius: 2px; white-space: nowrap;
     }
     .topbar-back:hover { background: rgba(212,255,26,0.1); }
     .topbar-back.visible { display: block; }
@@ -79,7 +110,12 @@
       align-items: center; justify-content: center;
       padding: 40px 20px; gap: 20px;
     }
-    .upload-heading { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--lime); text-align: center; }
+    .upload-heading {
+      font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--purple); text-align: center;
+    }
+    [data-theme="dark"]     .upload-heading,
+    [data-theme="terminal"] .upload-heading { color: var(--lime); }
     .upload-warning {
       font-size: 10px; color: var(--muted); letter-spacing: 0.5px;
       line-height: 1.9; text-align: center; max-width: 460px;
@@ -88,12 +124,22 @@
     }
     .upload-warning strong { color: #f59e0b; }
     .drop-zone {
-      border: 2px dashed rgba(212,255,26,0.3); padding: 48px 40px;
+      border: 2px dashed rgba(100,72,228,0.35); padding: 48px 40px;
       text-align: center; cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      max-width: 460px; width: 100%;
+      max-width: 460px; width: 100%; background: var(--card-bg);
     }
-    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--lime); background: rgba(212,255,26,0.04); }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--purple); background: rgba(100,72,228,0.04);
+    }
+    [data-theme="dark"] .drop-zone,
+    [data-theme="terminal"] .drop-zone { border-color: rgba(212,255,26,0.3); }
+    [data-theme="dark"]     .drop-zone:hover,
+    [data-theme="dark"]     .drop-zone.drag-over,
+    [data-theme="terminal"] .drop-zone:hover,
+    [data-theme="terminal"] .drop-zone.drag-over {
+      border-color: var(--lime); background: rgba(212,255,26,0.04);
+    }
     .drop-icon { font-size: 30px; margin-bottom: 12px; }
     .drop-text { font-size: 11px; letter-spacing: 1.5px; color: var(--fg); }
     .drop-sub  { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
@@ -111,27 +157,13 @@
     /* ── ANALYSIS SCREEN ── */
     #analysis-screen { display: none; flex: 1; flex-direction: row; overflow: hidden; }
 
-    /* LEFT: Scene panel */
-    .scene-panel {
-      width: 38%; min-width: 240px; border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; overflow: hidden;
-    }
+    /* Character panel — full width */
+    .char-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .panel-header {
       padding: 10px 16px; border-bottom: 1px solid var(--border);
       font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--muted); flex-shrink: 0;
+      color: var(--muted); flex-shrink: 0; background: var(--bg);
     }
-    .scene-list { flex: 1; overflow-y: auto; }
-    .scene-item {
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding: 12px 16px;
-    }
-    .scene-heading { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime); margin-bottom: 5px; }
-    .scene-chars   { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; line-height: 1.6; }
-    .scene-count   { font-size: 8px; color: rgba(240,240,235,0.25); margin-top: 3px; }
-
-    /* RIGHT: Character panel */
-    .char-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .char-table-wrap { flex: 1; overflow-y: auto; }
     .char-table { width: 100%; border-collapse: collapse; }
     .char-table thead th {
@@ -140,20 +172,25 @@
       color: var(--muted); border-bottom: 1px solid var(--border);
       position: sticky; top: 0; background: var(--bg); z-index: 1; white-space: nowrap;
     }
-    .char-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.1s; }
+    .char-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
     .char-table tbody tr:hover { background: rgba(100,72,228,0.06); }
-    .char-table tbody td { padding: 10px 16px; font-size: 11px; vertical-align: middle; }
+    .char-table tbody td { padding: 10px 16px; font-size: 11px; vertical-align: middle; color: var(--fg); }
     .char-bar-wrap { min-width: 80px; }
-    .char-bar-bg   { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .char-bar-bg   { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .char-bar-fill { height: 100%; background: var(--purple); border-radius: 2px; }
     .char-bar-pct  { font-size: 8px; color: var(--muted); margin-top: 2px; }
     .export-btn {
-      background: none; border: 1px solid rgba(212,255,26,0.25);
-      color: var(--lime); font-family: var(--font); font-size: 9px;
+      background: none; border: 1px solid rgba(100,72,228,0.35);
+      color: var(--purple); font-family: var(--font); font-size: 9px;
       letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 5px 10px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+      padding: 5px 10px; cursor: pointer; transition: background 0.15s;
+      white-space: nowrap; border-radius: 2px;
     }
-    .export-btn:hover { background: rgba(212,255,26,0.08); }
+    .export-btn:hover { background: rgba(100,72,228,0.08); }
+    [data-theme="dark"]     .export-btn,
+    [data-theme="terminal"] .export-btn { border-color: rgba(212,255,26,0.25); color: var(--lime); }
+    [data-theme="dark"]     .export-btn:hover,
+    [data-theme="terminal"] .export-btn:hover { background: rgba(212,255,26,0.08); }
 
     /* ── EMPTY STATE ── */
     .empty { padding: 40px 20px; text-align: center; font-size: 10px; color: var(--muted); letter-spacing: 1px; }
@@ -161,7 +198,7 @@
     /* ── TOAST ── */
     #toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--card); border: 1px solid var(--border);
+      background: var(--card-bg); border: 1px solid var(--border);
       color: var(--fg); font-family: var(--font); font-size: 10px;
       letter-spacing: 1px; padding: 10px 20px;
       opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
@@ -169,13 +206,13 @@
     #toast.show { opacity: 1; }
 
     /* ── SCROLLBARS ── */
-    .scene-list::-webkit-scrollbar, .char-table-wrap::-webkit-scrollbar { width: 4px; }
-    .scene-list::-webkit-scrollbar-thumb, .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
+    .char-table-wrap::-webkit-scrollbar { width: 4px; }
+    .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(100,72,228,0.2); }
+    [data-theme="dark"]     .char-table-wrap::-webkit-scrollbar-thumb,
+    [data-theme="terminal"] .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
 
     /* ── MOBILE ── */
     @media (max-width: 639px) {
-      #analysis-screen { flex-direction: column; }
-      .scene-panel { width: 100%; min-width: unset; max-height: 38vh; border-right: none; border-bottom: 1px solid var(--border); }
       .pass-box { padding: 32px 24px; }
     }
   </style>
@@ -200,7 +237,10 @@
   <div class="topbar">
     <span class="topbar-title">PlayAnalysisDex ◈</span>
     <span class="topbar-playtitle" id="topbar-playtitle"></span>
-    <button class="topbar-back" id="topbar-back">← Upload New Script</button>
+    <div class="topbar-spacer"></div>
+    <button class="topbar-icon-btn" id="pa-font-btn" title="Adjust text size">Aa</button>
+    <button class="topbar-icon-btn" id="pa-theme-btn" title="Toggle theme">☾</button>
+    <button class="topbar-back" id="topbar-back">← New Script</button>
   </div>
 
   <!-- UPLOAD SCREEN -->
@@ -236,12 +276,6 @@
 
   <!-- ANALYSIS SCREEN -->
   <div id="analysis-screen">
-
-    <div class="scene-panel">
-      <div class="panel-header">Scene Breakdown</div>
-      <div class="scene-list" id="scene-list"></div>
-    </div>
-
     <div class="char-panel">
       <div class="panel-header">Characters · sorted by word count</div>
       <div class="char-table-wrap">
@@ -260,7 +294,6 @@
         </table>
       </div>
     </div>
-
   </div>
 
 </div>
@@ -271,9 +304,36 @@
 <script>
 'use strict';
 
-/* ── DESKTOP ZOOM ── */
+/* ── THEME ── */
 (function () {
-  if (window.innerWidth >= 640) document.documentElement.style.zoom = '1.25';
+  var CYCLE = ['light', 'dark', 'terminal'];
+  var btn   = document.getElementById('pa-theme-btn');
+  function iconFor(t) { return t === 'terminal' ? '⌨' : t === 'dark' ? '☀' : '☾'; }
+  var t = localStorage.getItem('theme') || 'light';
+  function apply(v) {
+    t = v;
+    if (v === 'light') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', v);
+    btn.textContent = iconFor(v);
+    localStorage.setItem('theme', v);
+  }
+  apply(t);
+  btn.addEventListener('click', function () { apply(CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]); });
+})();
+
+/* ── FONT ZOOM ── */
+(function () {
+  var isDesktop = window.innerWidth >= 640;
+  var z = localStorage.getItem('font-zoom') === '1';
+  var btn = document.getElementById('pa-font-btn');
+  function apply() {
+    document.documentElement.style.zoom = z
+      ? (isDesktop ? '1.5' : '1.25')
+      : (isDesktop ? '1.25' : '');
+    btn.classList.toggle('active', z);
+  }
+  apply();
+  btn.addEventListener('click', function () { z = !z; localStorage.setItem('font-zoom', z ? '1' : '0'); apply(); });
 })();
 
 /* ── PDF.JS ── */
@@ -281,11 +341,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 /* ── PASSWORD ── */
-const PASSWORD    = '48163264';
-const passOverlay = document.getElementById('pass-overlay');
-const passInput   = document.getElementById('pass-input');
-const passBtn     = document.getElementById('pass-btn');
-const passError   = document.getElementById('pass-error');
+var PASSWORD    = '48163264';
+var passOverlay = document.getElementById('pass-overlay');
+var passInput   = document.getElementById('pass-input');
+var passBtn     = document.getElementById('pass-btn');
+var passError   = document.getElementById('pass-error');
 
 if (sessionStorage.getItem('pad-unlocked') === '1') passOverlay.style.display = 'none';
 
@@ -300,34 +360,33 @@ function checkPassword() {
   }
 }
 passBtn.addEventListener('click', checkPassword);
-passInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+passInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') checkPassword(); });
 
 /* ── DOM ── */
-const uploadScreen   = document.getElementById('upload-screen');
-const analysisScreen = document.getElementById('analysis-screen');
-const dropZone       = document.getElementById('drop-zone');
-const fileInput      = document.getElementById('file-input');
-const scanError      = document.getElementById('scan-error');
-const parseStatus    = document.getElementById('parse-status');
-const topbarBack     = document.getElementById('topbar-back');
-const topbarPlaytitle = document.getElementById('topbar-playtitle');
-const sceneList      = document.getElementById('scene-list');
-const charTbody      = document.getElementById('char-tbody');
-const toast          = document.getElementById('toast');
+var uploadScreen    = document.getElementById('upload-screen');
+var analysisScreen  = document.getElementById('analysis-screen');
+var dropZone        = document.getElementById('drop-zone');
+var fileInput       = document.getElementById('file-input');
+var scanError       = document.getElementById('scan-error');
+var parseStatus     = document.getElementById('parse-status');
+var topbarBack      = document.getElementById('topbar-back');
+var topbarPlaytitle = document.getElementById('topbar-playtitle');
+var charTbody       = document.getElementById('char-tbody');
+var toast           = document.getElementById('toast');
 
 /* ── UPLOAD EVENTS ── */
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
+dropZone.addEventListener('click', function () { fileInput.click(); });
+dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('drag-over'); });
+dropZone.addEventListener('drop', function (e) {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
+  var f = e.dataTransfer.files[0];
   if (f && f.type === 'application/pdf') handleFile(f);
 });
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+fileInput.addEventListener('change', function () { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
 
-topbarBack.addEventListener('click', () => {
+topbarBack.addEventListener('click', function () {
   analysisScreen.style.display = 'none';
   uploadScreen.style.display   = 'flex';
   topbarBack.classList.remove('visible');
@@ -340,27 +399,32 @@ topbarBack.addEventListener('click', () => {
 
 /* ── PDF TEXT EXTRACTION ── */
 async function extractLines(arrayBuffer) {
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const allLines = [];
+  var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  var allLines = [];
 
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page    = await pdf.getPage(p);
-    const content = await page.getTextContent();
+  for (var p = 1; p <= pdf.numPages; p++) {
+    var page    = await pdf.getPage(p);
+    var content = await page.getTextContent();
 
-    /* Group text items by Y position (2-unit tolerance handles sub-pixel drift) */
-    const lineMap = new Map();
-    for (const item of content.items) {
-      const y = Math.round(item.transform[5] / 2) * 2;
+    /* Group items by Y position (2-unit tolerance for sub-pixel drift) */
+    var lineMap = new Map();
+    for (var item of content.items) {
+      var y = Math.round(item.transform[5] / 2) * 2;
       if (!lineMap.has(y)) lineMap.set(y, []);
       lineMap.get(y).push({ x: item.transform[4], str: item.str });
     }
 
-    /* Sort top-to-bottom (PDF Y coords are bottom-up, so descending = reading order) */
-    const ys = [...lineMap.keys()].sort((a, b) => b - a);
-    for (const y of ys) {
-      const text = lineMap.get(y)
-        .sort((a, b) => a.x - b.x)
-        .map(i => i.str).join('').trim();
+    /* Sort top-to-bottom (PDF Y is bottom-up, so descending = reading order) */
+    var ys = [...lineMap.keys()].sort(function (a, b) { return b - a; });
+
+    /* Skip the very top Y position on pages with 4+ lines — it's the running header */
+    var start = ys.length >= 4 ? 1 : 0;
+
+    for (var i = start; i < ys.length; i++) {
+      var items = lineMap.get(ys[i]).sort(function (a, b) { return a.x - b.x; });
+      /* Filter out standalone digit items (inline page numbers) */
+      var filtered = items.filter(function (it) { return !/^\s*\d+\s*$/.test(it.str); });
+      var text = filtered.map(function (it) { return it.str; }).join('').trim();
       if (text) allLines.push(text);
     }
     allLines.push(''); /* page separator */
@@ -369,52 +433,78 @@ async function extractLines(arrayBuffer) {
 }
 
 /* ── SCRIPT PARSER ── */
-/* Scene heading patterns */
-const SCENE_RE = /^(?:ACT\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|SCENE\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|PROLOGUE|EPILOGUE|INTERMISSION|INTERVAL)(?:[,:\s].*)?$/i;
+var SCENE_RE = /^(?:ACT\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|SCENE\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|PROLOGUE|EPILOGUE|INTERMISSION|INTERVAL)(?:[,:\s].*)?$/i;
 
-/* Words/phrases that look like ALL CAPS character names but aren't */
-const NON_CHARS = new Set([
+var NON_CHARS = new Set([
+  /* Stage directions */
   'BLACKOUT','FADE OUT','FADE IN','FADE TO BLACK','LIGHTS UP','LIGHTS DOWN','LIGHTS OUT',
   'THE END','END OF PLAY','END OF ACT','END OF SCENE','END','FINIS',
   'CURTAIN','CURTAIN CALL','EXEUNT','EXEUNT ALL',
   'CUT TO','DISSOLVE','SMASH CUT','MATCH CUT',
   'INT','EXT','INT.','EXT.','CONTINUED','CONT','MORE',
   'SOUND','MUSIC','LIGHTS','NOTE','NOTES',
-  'OFFSTAGE','ONSTAGE','STAGE','STAGE MANAGER',
+  'OFFSTAGE','ONSTAGE','STAGE',
+  /* Production roles */
+  'DIRECTOR',"DIRECTOR'S NOTE","DIRECTORS NOTE","DIRECTORS'S NOTE",
+  'WRITER',"WRITER'S NOTE","WRITERS NOTE","PLAYWRIGHT'S NOTE","PLAYWRIGHTS NOTE",
+  "A NOTE FROM THE DIRECTOR","FROM THE DIRECTOR","A WORD FROM THE DIRECTOR",
+  "A NOTE FROM THE WRITER","A NOTE FROM THE PLAYWRIGHT",
+  'LIGHTING DESIGN','LIGHTING DESIGNER','LIGHTING DESIGNS',
+  'SOUND DESIGN','SOUND DESIGNER',
+  'SET DESIGN','SET DESIGNER',
+  'COSTUME DESIGN','COSTUME DESIGNER',
+  'SET AND COSTUME DESIGN','SET AND COSTUME DESIGNER',
+  'SET COSTUME AND PROPS','PROPS DESIGN','PROPS DESIGNER',
+  'STAGE MANAGER','DEPUTY STAGE MANAGER','ASSISTANT STAGE MANAGER',
+  'ASSISTANT DIRECTOR','MUSICAL DIRECTOR','MUSIC DIRECTOR',
+  'CHOREOGRAPHER','MOVEMENT DIRECTOR',
+  'PRODUCER','EXECUTIVE PRODUCER','PRODUCTION MANAGER','PRODUCTION TEAM',
+  'STAGE MANAGEMENT',
+  /* Cast/character list headings */
+  'CAST','CAST LIST','CHARACTERS','CHARACTER LIST','THE CAST','CAST OF CHARACTERS',
+  'DRAMATIS PERSONAE','THE CHARACTERS','ROLES','THE ROLE OF',
+  /* Setting/front matter */
+  'SETTING','THE SETTING','TIME AND PLACE','TIME','PLACE','LOCATION',
+  'ACKNOWLEDGEMENTS','ACKNOWLEDGMENTS','FOREWORD','PREFACE','INTRODUCTION',
+  'BIOGRAPHY','BIOGRAPHIES','BIOS',
+  'SYNOPSIS','PLOT','SUMMARY','ABOUT THE PLAY','ABOUT THE PLAYWRIGHT',
+  'SCENE','SCENES','PAGE','PAGES',
 ]);
 
-/* Group / shared-line identifiers — every character gets these lines in their export */
-const GROUP_RE = /^(ALL|ENSEMBLE|COMPANY|CHORUS|BOTH|EVERYONE|ALL CAST|VOICES|VOICE)$/i;
+var GROUP_RE = /^(ALL|ENSEMBLE|COMPANY|CHORUS|BOTH|EVERYONE|ALL CAST|VOICES|VOICE)$/i;
 
 function cleanCharName(raw) {
-  return raw.replace(/\s*\((?:CONT(?:'|'|')?D?|V\.O\.?|O\.S\.?|O\.C\.?|MORE|CONT\.?)\)\s*$/i, '').trim();
+  return raw
+    /* normalise curly apostrophes so NON_CHARS matches work */
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/\s*\((?:CONT(?:'|'|')?D?|V\.O\.?|O\.S\.?|O\.C\.?|MORE|CONT\.?)\)\s*$/i, '')
+    .trim();
 }
 
 function looksLikeCharName(line) {
-  const c = cleanCharName(line);
+  var c = cleanCharName(line);
   if (!c || c.length < 2) return null;
-  if (/[a-z]/.test(c)) return null;          /* has lowercase → dialogue */
-  if (/^\d+$/.test(c)) return null;           /* page number */
-  if (c.split(/\s+/).length > 6) return null; /* too long */
-  if (SCENE_RE.test(c)) return null;          /* scene heading */
+  if (/[a-z]/.test(c)) return null;           /* has lowercase → dialogue */
+  if (/^\d/.test(c)) return null;             /* starts with digit → page ref */
+  if (/^\d+$/.test(c)) return null;           /* pure number */
+  if (c.split(/\s+/).length > 6) return null; /* too many words */
+  if (SCENE_RE.test(c)) return null;           /* scene heading */
   if (NON_CHARS.has(c.toUpperCase())) return null;
-  if (!/[A-Z]/.test(c)) return null;          /* no letters at all */
+  if (!/[A-Z]/.test(c)) return null;
   return c;
 }
 
 function parseScript(lines, title) {
-  const script = { title, scenes: [], characters: {}, totalWords: 0 };
+  var script = { title: title, scenes: [], characters: {}, totalWords: 0 };
 
-  let currentScene  = { heading: 'OPENING', speeches: [] };
+  var currentScene  = { heading: 'OPENING', speeches: [] };
   script.scenes.push(currentScene);
-  let currentSpeech = null;
+  var currentSpeech = null;
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-
+  for (var ri = 0; ri < lines.length; ri++) {
+    var line = lines[ri].trim();
     if (!line) { continue; }
 
-    /* Scene heading */
     if (SCENE_RE.test(line)) {
       currentScene  = { heading: line.toUpperCase(), speeches: [] };
       currentSpeech = null;
@@ -422,8 +512,7 @@ function parseScript(lines, title) {
       continue;
     }
 
-    /* Character name? */
-    const charName = looksLikeCharName(line);
+    var charName = looksLikeCharName(line);
     if (charName) {
       if (!script.characters[charName]) {
         script.characters[charName] = { speeches: 0, words: 0, lineCount: 0 };
@@ -434,23 +523,25 @@ function parseScript(lines, title) {
       continue;
     }
 
-    /* Dialogue / stage direction */
     if (currentSpeech) {
       currentSpeech.lines.push(line);
-      const wc = line.split(/\s+/).filter(Boolean).length;
+      var wc = line.split(/\s+/).filter(Boolean).length;
       script.characters[currentSpeech.character].words += wc;
       script.characters[currentSpeech.character].lineCount++;
       script.totalWords += wc;
     }
   }
 
-  /* Remove noise: anything with fewer than 2 words AND fewer than 2 speeches */
-  for (const name of Object.keys(script.characters)) {
-    const d = script.characters[name];
-    if (d.words < 2 && d.speeches < 2) delete script.characters[name];
+  /* Remove noise: no dialogue words at all, or only 1 speech with fewer than 5 words */
+  var names = Object.keys(script.characters);
+  for (var ni = 0; ni < names.length; ni++) {
+    var name = names[ni];
+    var d = script.characters[name];
+    if (d.words === 0 || (d.speeches < 2 && d.words < 5)) {
+      delete script.characters[name];
+    }
   }
 
-  /* Drop empty opening placeholder */
   if (script.scenes[0].heading === 'OPENING' && script.scenes[0].speeches.length === 0) {
     script.scenes.shift();
   }
@@ -459,7 +550,7 @@ function parseScript(lines, title) {
 }
 
 /* ── HANDLE FILE ── */
-let parsedScript = null;
+var parsedScript = null;
 
 async function handleFile(file) {
   scanError.style.display   = 'none';
@@ -467,11 +558,10 @@ async function handleFile(file) {
   parseStatus.textContent   = 'Reading PDF…';
 
   try {
-    const buf   = await file.arrayBuffer();
-    const lines = await extractLines(buf);
+    var buf   = await file.arrayBuffer();
+    var lines = await extractLines(buf);
 
-    /* Scanned PDF check */
-    const totalChars = lines.join('').replace(/\s/g, '').length;
+    var totalChars = lines.join('').replace(/\s/g, '').length;
     if (totalChars < 80) {
       parseStatus.style.display = 'none';
       scanError.style.display   = 'block';
@@ -479,10 +569,10 @@ async function handleFile(file) {
     }
 
     parseStatus.textContent = 'Analysing script…';
-    const title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
+    var title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
     parsedScript = parseScript(lines, title);
 
-    const charCount = Object.keys(parsedScript.characters).length;
+    var charCount = Object.keys(parsedScript.characters).length;
     if (charCount === 0) {
       parseStatus.textContent =
         'No characters detected. Is this a standard playscript with character names in BLOCK CAPITALS?';
@@ -490,7 +580,7 @@ async function handleFile(file) {
     }
 
     parseStatus.style.display = 'none';
-    renderDashboard();
+    renderChars();
     uploadScreen.style.display   = 'none';
     analysisScreen.style.display = 'flex';
     topbarBack.classList.add('visible');
@@ -504,36 +594,17 @@ async function handleFile(file) {
 }
 
 /* ── RENDER ── */
-function renderDashboard() { renderScenes(); renderChars(); }
-
-function renderScenes() {
-  sceneList.innerHTML = '';
-  const active = parsedScript.scenes.filter(s => s.speeches.length > 0);
-  if (!active.length) {
-    sceneList.innerHTML = '<div class="empty">No scene structure detected.</div>';
-    return;
-  }
-  for (const scene of active) {
-    const uniqueChars = [...new Set(scene.speeches.map(s => s.character))];
-    const el = document.createElement('div');
-    el.className = 'scene-item';
-    el.innerHTML =
-      '<div class="scene-heading">' + esc(scene.heading) + '</div>' +
-      '<div class="scene-chars">'   + uniqueChars.map(esc).join(' · ') + '</div>' +
-      '<div class="scene-count">'   + scene.speeches.length + ' speech' + (scene.speeches.length !== 1 ? 'es' : '') + '</div>';
-    sceneList.appendChild(el);
-  }
-}
-
 function renderChars() {
   charTbody.innerHTML = '';
-  const sorted  = Object.entries(parsedScript.characters).sort((a, b) => b[1].words - a[1].words);
-  const maxWords = sorted[0] ? sorted[0][1].words : 1;
+  var sorted   = Object.entries(parsedScript.characters).sort(function (a, b) { return b[1].words - a[1].words; });
+  var maxWords = sorted[0] ? sorted[0][1].words : 1;
 
-  for (const [name, d] of sorted) {
-    const pct  = parsedScript.totalWords > 0 ? ((d.words / parsedScript.totalWords) * 100).toFixed(1) : '0.0';
-    const barW = Math.round((d.words / Math.max(maxWords, 1)) * 100);
-    const tr   = document.createElement('tr');
+  for (var si = 0; si < sorted.length; si++) {
+    var name = sorted[si][0];
+    var d    = sorted[si][1];
+    var pct  = parsedScript.totalWords > 0 ? ((d.words / parsedScript.totalWords) * 100).toFixed(1) : '0.0';
+    var barW = Math.round((d.words / Math.max(maxWords, 1)) * 100);
+    var tr   = document.createElement('tr');
     tr.innerHTML =
       '<td>' + esc(name) + '</td>' +
       '<td>' + d.speeches + '</td>' +
@@ -546,31 +617,30 @@ function renderChars() {
       '<td><button class="export-btn" data-char="' + esc(name) + '">Export .txt</button></td>';
     charTbody.appendChild(tr);
   }
-  charTbody.querySelectorAll('.export-btn').forEach(btn => {
-    btn.addEventListener('click', () => exportChar(btn.dataset.char));
+  charTbody.querySelectorAll('.export-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { exportChar(btn.dataset.char); });
   });
 }
 
 /* ── EXPORT ── */
 function exportChar(charName) {
-  const out = [];
+  var out = [];
   out.push(parsedScript.title.toUpperCase());
   out.push('');
   out.push('Lines for: ' + charName);
   out.push('Generated by PlayAnalysisDex');
   out.push('');
 
-  let hasContent = false;
+  var hasContent = false;
 
-  for (const scene of parsedScript.scenes) {
-    /* Include: solo speeches, shared speeches naming this character, and group lines */
-    const speeches = scene.speeches.filter(s => {
+  for (var si = 0; si < parsedScript.scenes.length; si++) {
+    var scene = parsedScript.scenes[si];
+    var speeches = scene.speeches.filter(function (s) {
       if (!s.lines.length) return false;
       if (s.character === charName) return true;
       if (GROUP_RE.test(s.character)) return true;
-      /* Shared lines: "CHAR & OTHER" or "CHAR / OTHER" */
-      const parts = s.character.split(/\s*[&\/,]\s*/);
-      return parts.some(p => p.trim().toUpperCase() === charName.toUpperCase());
+      var parts = s.character.split(/\s*[&\/,]\s*/);
+      return parts.some(function (p) { return p.trim().toUpperCase() === charName.toUpperCase(); });
     });
 
     if (!speeches.length) continue;
@@ -580,13 +650,13 @@ function exportChar(charName) {
     out.push('──────────────────────────────────────');
     out.push('');
 
-    for (const speech of speeches) {
-      /* Label shared / group lines so the actor knows */
+    for (var pi = 0; pi < speeches.length; pi++) {
+      var speech = speeches[pi];
       if (speech.character !== charName) {
         out.push('[' + speech.character + ']');
       }
-      for (const line of speech.lines) {
-        out.push('* ' + line);
+      for (var li = 0; li < speech.lines.length; li++) {
+        out.push('* ' + speech.lines[li]);
       }
       out.push('');
       hasContent = true;
@@ -595,9 +665,9 @@ function exportChar(charName) {
 
   if (!hasContent) { showToast('No lines found for ' + charName); return; }
 
-  const blob = new Blob([out.join('\n')], { type: 'text/plain;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  var blob = new Blob([out.join('\n')], { type: 'text/plain;charset=utf-8' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
   a.href     = url;
   a.download = parsedScript.title + ' — ' + charName + ' lines.txt';
   document.body.appendChild(a);
@@ -609,15 +679,15 @@ function exportChar(charName) {
 
 /* ── UTILS ── */
 function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-let toastTimer;
+var toastTimer;
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+  toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2800);
 }
 </script>
 </body>
