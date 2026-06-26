@@ -144,22 +144,20 @@
     .sched-error { padding: 32px 24px; font-size: 10px; color: #ef4444; text-align: center; line-height: 1.8; }
 
     /* ── CAST & CREW MODAL CONTENT ── */
-    .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .cc-section-label {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 16px 16px 8px; border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+    .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
     .cc-table thead th {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
       padding: 10px 16px; text-align: left; font-weight: 400;
       border-bottom: 1px solid var(--border); background: var(--bg);
-      position: sticky; top: 0; z-index: 1;
     }
-    .cc-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; }
+    .cc-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cc-table td.tbc { color: var(--muted); font-style: italic; }
     .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; }
     .cc-table td a:hover { color: var(--lime); }
-    .cc-section-row td {
-      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 14px 16px 6px; background: var(--bg); font-weight: 400;
-      border-bottom: 1px solid var(--border);
-    }
 
     /* ── PDF MODAL CONTENT ── */
     .pdf-nav-wrap { display: flex; align-items: center; gap: 6px; }
@@ -183,6 +181,8 @@
     #pdf-canvas-wrap canvas { max-width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
     /* ── RESPONSIVE ── */
+    /* ── SWIPE HANDLE ── */
+    .modal-handle { display: none; }
     @media (max-width: 720px) {
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
@@ -190,10 +190,15 @@
       .btn-row { grid-template-columns: 1fr; gap: 2px; }
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
-      .sched-row { grid-template-columns: 88px 1fr auto; gap: 10px; padding: 10px 16px; }
-      .sched-row.today, .sched-row.next-up { padding-left: 13px; }
-      .modal-overlay { padding: 0; align-items: flex-end; }
-      .modal { max-height: 92vh; max-width: 100%; }
+      .modal-overlay { padding: 12px 12px 0; align-items: flex-end; }
+      .modal { max-height: 92vh; max-width: 100%; border-radius: 8px 8px 0 0; }
+      .modal-handle {
+        display: block; width: 36px; height: 4px; border-radius: 2px;
+        background: var(--border); margin: 10px auto 0;
+      }
+      .modal-close { font-size: 24px; padding: 6px 10px; min-width: 40px; min-height: 40px; }
+      .modal-header { padding: 10px 14px; }
+      .modal-body { -webkit-overflow-scrolling: touch; }
     }
   </style>
 </head>
@@ -215,7 +220,7 @@
 
     <div class="btn-row">
       <button class="big-btn" id="open-schedule">Schedule</button>
-      <button class="big-btn" id="open-cast">Cast &amp; Crew</button>
+      <button class="big-btn" id="open-cast">Creatives</button>
       <button class="big-btn" id="open-script">Script</button>
     </div>
 
@@ -236,6 +241,7 @@
   <!-- ── MODAL: Schedule ── -->
   <div class="modal-overlay" id="modal-schedule" role="dialog" aria-modal="true">
     <div class="modal">
+      <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">Rehearsal Schedule</span>
         <button class="modal-close" data-close="modal-schedule" aria-label="Close">×</button>
@@ -246,11 +252,12 @@
     </div>
   </div>
 
-  <!-- ── MODAL: Cast & Crew ── -->
+  <!-- ── MODAL: Creatives ── -->
   <div class="modal-overlay" id="modal-cast" role="dialog" aria-modal="true">
     <div class="modal">
+      <div class="modal-handle"></div>
       <div class="modal-header">
-        <span class="modal-header-title">Cast &amp; Crew</span>
+        <span class="modal-header-title">Creatives</span>
         <button class="modal-close" data-close="modal-cast" aria-label="Close">×</button>
       </div>
       <div class="modal-body" id="cast-body">
@@ -262,6 +269,7 @@
   <!-- ── MODAL: Script ── -->
   <div class="modal-overlay" id="modal-script" role="dialog" aria-modal="true">
     <div class="modal">
+      <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">The Script — A Simple Act of Kindness</span>
         <div class="pdf-nav-wrap" id="pdf-nav" style="display:none;">
@@ -373,6 +381,25 @@
     if (e.key === 'Escape') {
       document.querySelectorAll('.modal-overlay.open').forEach(function (el) { closeModal(el.id); });
     }
+  });
+
+  /* Swipe-down-to-close on mobile (handle + top 48px of header only) */
+  document.querySelectorAll('.modal').forEach(function (modal) {
+    var startY = 0, startOnHandle = false;
+    modal.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      var rect = modal.getBoundingClientRect();
+      startY = t.clientY;
+      startOnHandle = (t.clientY - rect.top) < 56; /* handle + header zone */
+    }, { passive: true });
+    modal.addEventListener('touchend', function (e) {
+      if (!startOnHandle) return;
+      var dy = e.changedTouches[0].clientY - startY;
+      if (dy > 60) {
+        var overlay = modal.closest('.modal-overlay');
+        if (overlay) closeModal(overlay.id);
+      }
+    }, { passive: true });
   });
 })();
 
@@ -539,23 +566,27 @@ function loadCast() {
   function render(rows) {
     var cast = rows.filter(function (r) { return r.role_cast; });
     var crew = rows.filter(function (r) { return r.role_crew; });
-
-    var html = '<table class="cc-table"><thead><tr>'
-             + '<th>Role</th><th>Name</th><th>Phone</th><th>Email</th>'
-             + '</tr></thead><tbody>';
+    var html = '';
 
     if (cast.length) {
-      html += '<tr class="cc-section-row"><td colspan="4">Cast</td></tr>';
+      html += '<div class="cc-section-label">Cast</div>'
+            + '<table class="cc-table"><colgroup>'
+            + '<col style="width:50%"><col style="width:50%>'
+            + '</colgroup><thead><tr><th>Character</th><th>Actor</th></tr></thead><tbody>';
       cast.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_cast) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '<td></td><td></td></tr>';
+              + '</tr>';
       });
+      html += '</tbody></table>';
     }
 
     if (crew.length) {
-      html += '<tr class="cc-section-row"><td colspan="4">Crew</td></tr>';
+      html += '<div class="cc-section-label">Crew</div>'
+            + '<table class="cc-table"><colgroup>'
+            + '<col style="width:34%"><col style="width:26%"><col style="width:18%"><col style="width:22%">'
+            + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Email</th></tr></thead><tbody>';
       crew.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_crew) + '</td>'
@@ -564,9 +595,9 @@ function loadCast() {
               + '<td>' + (r.email  ? '<a href="mailto:' + esc(r.email)  + '">' + esc(r.email)  + '</a>' : '') + '</td>'
               + '</tr>';
       });
+      html += '</tbody></table>';
     }
 
-    html += '</tbody></table>';
     body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
     castLoaded = true;
   }
@@ -698,6 +729,23 @@ function loadPDF() {
       if (curPage > 1) renderPage(curPage - 1);
     }
   });
+
+  /* Touch-swipe page navigation (left = next, right = prev) */
+  var touchX0 = 0, touchY0 = 0;
+  var pdfBodyEl = document.getElementById('pdf-body');
+  pdfBodyEl.addEventListener('touchstart', function (e) {
+    touchX0 = e.touches[0].clientX;
+    touchY0 = e.touches[0].clientY;
+  }, { passive: true });
+  pdfBodyEl.addEventListener('touchend', function (e) {
+    var dx = e.changedTouches[0].clientX - touchX0;
+    var dy = e.changedTouches[0].clientY - touchY0;
+    /* Only trigger if horizontal swipe is dominant and >= 40px */
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) >= 40) {
+      if (dx < 0 && curPage < numPages) renderPage(curPage + 1);
+      if (dx > 0 && curPage > 1)        renderPage(curPage - 1);
+    }
+  }, { passive: true });
 }
 </script>
 </body>
