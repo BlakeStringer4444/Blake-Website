@@ -56,42 +56,29 @@
     .asak-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 88px); letter-spacing: 5px; color: var(--lime); line-height: 1; }
     .asak-subtitle { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
 
-    /* ── CARDS GRID ── */
-    .cards-wrap { max-width: 1080px; margin: 0 auto; padding: 48px; }
-    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    /* ── MAIN LAYOUT ── */
+    .page-body { max-width: 1080px; margin: 0 auto; padding: 48px; display: flex; flex-direction: column; gap: 0; }
 
-    .card {
+    /* ── 3 BIG BUTTONS ── */
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+    .big-btn {
       background: var(--card-bg); border: 1px solid var(--border);
-      padding: 32px 32px 28px;
-      display: flex; flex-direction: column; gap: 20px;
-      transition: border-color 0.2s;
+      color: var(--fg); font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(28px, 3.5vw, 52px); letter-spacing: 4px;
+      padding: 52px 24px; cursor: pointer; text-align: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      line-height: 1;
     }
-    .card:hover { border-color: rgba(212,255,26,0.25); }
+    .big-btn:hover { background: var(--lime); color: #000; border-color: var(--lime); }
 
-    .card-eyebrow { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
-    .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--fg); line-height: 1; margin-top: 4px; }
-    .card-desc { font-size: 11px; color: var(--muted); line-height: 1.7; margin-top: 6px; }
-
-    /* open button */
-    .card-open-btn {
-      align-self: flex-start; margin-top: auto;
-      background: var(--lime); color: #000; border: none;
-      font-family: var(--font); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      padding: 10px 20px; cursor: pointer; transition: opacity 0.15s;
-    }
-    .card-open-btn:hover { opacity: 0.82; }
-
-    /* coming soon */
-    .card-coming { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--border); margin-top: auto; }
-
-    /* countdown card */
-    .cd-nums { display: flex; align-items: flex-end; gap: 2px; margin-top: 4px; }
-    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 5vw, 64px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
-    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 52px); color: var(--lime); line-height: 1; padding-bottom: 12px; opacity: 0.5; }
+    /* ── COUNTDOWN ── */
+    .cd-wrap { display: flex; justify-content: center; align-items: center; padding: 56px 24px; }
+    .cd-nums { display: flex; align-items: flex-end; gap: 4px; }
+    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 7vw, 88px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
+    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 72px); color: var(--lime); line-height: 1; padding-bottom: 18px; opacity: 0.4; }
     .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    .cd-date { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); margin-top: 14px; }
-    .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--lime); letter-spacing: 4px; }
+    .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 72px); color: var(--lime); letter-spacing: 4px; }
 
     /* ── MODALS ── */
     .modal-overlay {
@@ -190,9 +177,10 @@
     @media (max-width: 720px) {
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
-      .cards-wrap { padding: 24px 20px; }
-      .cards-grid { grid-template-columns: 1fr; gap: 14px; }
-      .card { padding: 24px 22px 20px; }
+      .page-body { padding: 24px 16px; }
+      .btn-row { grid-template-columns: 1fr; gap: 2px; }
+      .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
+      .cd-wrap { padding: 36px 16px; }
       .sched-row { grid-template-columns: 88px 1fr auto; gap: 10px; padding: 10px 16px; }
       .sched-row.today, .sched-row.next-up { padding-left: 13px; }
       .modal-overlay { padding: 0; align-items: flex-end; }
@@ -211,58 +199,29 @@
       </div>
     </div>
     <h1 class="asak-title">A Simple Act of Kindness</h1>
-    <p class="asak-subtitle">Brink Productions · Season 2026</p>
+    <p class="asak-subtitle">Brighton Theatre Company · 6 – 21 Nov 2026</p>
   </header>
 
-  <div class="cards-wrap">
-    <div class="cards-grid">
+  <div class="page-body">
 
-      <!-- Card: Schedule -->
-      <div class="card">
-        <div>
-          <div class="card-eyebrow">Rehearsal Schedule</div>
-          <div class="card-title">When &amp; What</div>
-          <div class="card-desc">Sep 6 – Nov 21, 2026<br>Weekly sessions through to opening night.</div>
-        </div>
-        <button class="card-open-btn" id="open-schedule">View Schedule →</button>
-      </div>
-
-      <!-- Card: Cast & Crew -->
-      <div class="card">
-        <div>
-          <div class="card-eyebrow">Cast &amp; Crew</div>
-          <div class="card-title">The Team</div>
-          <div class="card-desc">Everyone involved in bringing this production to life.</div>
-        </div>
-        <button class="card-open-btn" id="open-cast">View Cast &amp; Crew →</button>
-      </div>
-
-      <!-- Card: Script -->
-      <div class="card">
-        <div>
-          <div class="card-eyebrow">The Script</div>
-          <div class="card-title">Read Along</div>
-          <div class="card-desc">A Simple Act of Kindness<br>by Ross Mueller</div>
-        </div>
-        <button class="card-open-btn" id="open-script">Open Script →</button>
-      </div>
-
-      <!-- Card: Countdown -->
-      <div class="card">
-        <div class="card-eyebrow" id="cd-eyebrow">Opening Night</div>
-        <div class="cd-nums" id="cd-blocks">
-          <div class="cd-block"><div class="cd-num" id="cd-days">--</div><div class="cd-unit">days</div></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-block"><div class="cd-num" id="cd-hours">--</div><div class="cd-unit">hrs</div></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-block"><div class="cd-num" id="cd-mins">--</div><div class="cd-unit">min</div></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-unit">sec</div></div>
-        </div>
-        <div class="cd-date">6 November 2026 · 8:00pm</div>
-      </div>
-
+    <div class="btn-row">
+      <button class="big-btn" id="open-schedule">Schedule</button>
+      <button class="big-btn" id="open-cast">Cast &amp; Crew</button>
+      <button class="big-btn" id="open-script">Script</button>
     </div>
+
+    <div class="cd-wrap">
+      <div class="cd-nums" id="cd-blocks">
+        <div class="cd-block"><div class="cd-num" id="cd-days">--</div><div class="cd-unit">days</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-hours">--</div><div class="cd-unit">hrs</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-mins">--</div><div class="cd-unit">min</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-unit">sec</div></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── MODAL: Schedule ── -->
@@ -347,7 +306,6 @@
   function tick() {
     var diff = target - Date.now();
     if (diff <= 0) {
-      document.getElementById('cd-eyebrow').textContent = 'now showing';
       document.getElementById('cd-blocks').innerHTML = '<div class="cd-live">CURTAIN UP</div>';
       return;
     }
