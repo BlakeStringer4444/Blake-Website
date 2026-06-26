@@ -1044,13 +1044,14 @@ footer {
     position: fixed;
     left: 0;
     top: 5px; /* clear the top-bar */
-    height: calc(100vh - 5px);
+    /* Desktop base zoom is 1.25× — divide so the sidebar fills the screen correctly */
+    height: calc((100vh - 5px) / 1.25);
     z-index: 10;
   }
   .site-wrap   { margin-left: 72px; }
   header       { padding-left: 104px; } /* 72px sidebar + 32px original gap */
-  /* When Aa zoom (1.25×) is active, counteract its effect on the fixed sidebar */
-  body.font-zoomed .tab-sidebar { height: calc((100vh - 5px) / 1.25); }
+  /* Aa boost raises zoom to 1.5× — recalculate sidebar height accordingly */
+  body.font-zoomed .tab-sidebar { height: calc((100vh - 5px) / 1.5); }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -4188,9 +4189,13 @@ if (darkToggle) {
 /* ── TEXT SIZE TOGGLE ── */
 (function () {
   const btn = document.getElementById('font-size-toggle');
+  const isDesktop = window.innerWidth >= 640;
   let zoomed = localStorage.getItem('font-zoom') === '1';
   function apply() {
-    document.documentElement.style.zoom = zoomed ? '1.25' : '';
+    /* Desktop base is 125%; Aa boosts to 150%. Mobile base is 100%; Aa boosts to 125%. */
+    document.documentElement.style.zoom = zoomed
+      ? (isDesktop ? '1.5' : '1.25')
+      : (isDesktop ? '1.25' : '');
     document.body.classList.toggle('font-zoomed', zoomed);
     btn.classList.toggle('active', zoomed);
   }
