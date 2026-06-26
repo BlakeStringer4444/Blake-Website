@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlayAnalysisDex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0a0a0a;
+      --fg:     #f0f0eb;
+      --lime:   #d4ff1a;
+      --purple: #6448e4;
+      --muted:  rgba(240,240,235,0.45);
+      --card:   #141414;
+      --border: rgba(255,255,255,0.1);
+      --font:   'DM Mono', monospace;
+    }
+
+    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; }
+
+    /* ── PASSWORD OVERLAY ── */
+    #pass-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .pass-box {
+      border: 1px solid var(--lime); padding: 40px 48px;
+      max-width: 360px; width: 100%;
+      display: flex; flex-direction: column; gap: 16px; text-align: center;
+    }
+    .pass-logo { font-size: 28px; }
+    .pass-title { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
+    .pass-sub   { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); line-height: 1.7; }
+    .pass-input {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--fg); font-family: var(--font); font-size: 16px;
+      padding: 10px 14px; text-align: center; letter-spacing: 6px; width: 100%;
+    }
+    .pass-input:focus { outline: none; border-color: var(--purple); }
+    .pass-btn {
+      background: var(--lime); color: #000; border: none;
+      font-family: var(--font); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; padding: 12px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .pass-btn:hover { opacity: 0.85; }
+    .pass-error { font-size: 10px; color: #ef4444; letter-spacing: 1px; min-height: 14px; }
+
+    /* ── APP SHELL ── */
+    #app { height: 100%; display: flex; flex-direction: column; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; background: #0d0d0d;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .topbar-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
+    .topbar-playtitle { font-size: 10px; color: var(--muted); letter-spacing: 1px; display: none; }
+    .topbar-playtitle.visible { display: block; }
+    .topbar-back {
+      background: none; border: 1px solid rgba(212,255,26,0.35);
+      color: var(--lime); font-family: var(--font); font-size: 10px;
+      letter-spacing: 1px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s; display: none; margin-left: auto;
+    }
+    .topbar-back:hover { background: rgba(212,255,26,0.1); }
+    .topbar-back.visible { display: block; }
+
+    /* ── UPLOAD SCREEN ── */
+    #upload-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 20px; gap: 20px;
+    }
+    .upload-heading { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--lime); text-align: center; }
+    .upload-warning {
+      font-size: 10px; color: var(--muted); letter-spacing: 0.5px;
+      line-height: 1.9; text-align: center; max-width: 460px;
+      border: 1px solid rgba(245,158,11,0.3); padding: 14px 18px;
+      background: rgba(245,158,11,0.04);
+    }
+    .upload-warning strong { color: #f59e0b; }
+    .drop-zone {
+      border: 2px dashed rgba(212,255,26,0.3); padding: 48px 40px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      max-width: 460px; width: 100%;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--lime); background: rgba(212,255,26,0.04); }
+    .drop-icon { font-size: 30px; margin-bottom: 12px; }
+    .drop-text { font-size: 11px; letter-spacing: 1.5px; color: var(--fg); }
+    .drop-sub  { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
+    #parse-status { font-size: 10px; color: var(--muted); letter-spacing: 1px; display: none; text-align: center; }
+
+    /* ── SCAN ERROR ── */
+    #scan-error {
+      display: none; max-width: 460px; width: 100%;
+      border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.06); padding: 20px;
+    }
+    .scan-error-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #ef4444; margin-bottom: 10px; }
+    .scan-error-body  { font-size: 10px; color: var(--muted); line-height: 1.9; letter-spacing: 0.3px; }
+    .scan-error-body strong { color: var(--fg); }
+
+    /* ── ANALYSIS SCREEN ── */
+    #analysis-screen { display: none; flex: 1; flex-direction: row; overflow: hidden; }
+
+    /* LEFT: Scene panel */
+    .scene-panel {
+      width: 38%; min-width: 240px; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .panel-header {
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); flex-shrink: 0;
+    }
+    .scene-list { flex: 1; overflow-y: auto; }
+    .scene-item {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 12px 16px;
+    }
+    .scene-heading { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime); margin-bottom: 5px; }
+    .scene-chars   { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; line-height: 1.6; }
+    .scene-count   { font-size: 8px; color: rgba(240,240,235,0.25); margin-top: 3px; }
+
+    /* RIGHT: Character panel */
+    .char-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .char-table-wrap { flex: 1; overflow-y: auto; }
+    .char-table { width: 100%; border-collapse: collapse; }
+    .char-table thead th {
+      padding: 10px 16px; text-align: left;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--bg); z-index: 1; white-space: nowrap;
+    }
+    .char-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.1s; }
+    .char-table tbody tr:hover { background: rgba(100,72,228,0.06); }
+    .char-table tbody td { padding: 10px 16px; font-size: 11px; vertical-align: middle; }
+    .char-bar-wrap { min-width: 80px; }
+    .char-bar-bg   { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .char-bar-fill { height: 100%; background: var(--purple); border-radius: 2px; }
+    .char-bar-pct  { font-size: 8px; color: var(--muted); margin-top: 2px; }
+    .export-btn {
+      background: none; border: 1px solid rgba(212,255,26,0.25);
+      color: var(--lime); font-family: var(--font); font-size: 9px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 5px 10px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+    }
+    .export-btn:hover { background: rgba(212,255,26,0.08); }
+
+    /* ── EMPTY STATE ── */
+    .empty { padding: 40px 20px; text-align: center; font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--fg); font-family: var(--font); font-size: 10px;
+      letter-spacing: 1px; padding: 10px 20px;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── SCROLLBARS ── */
+    .scene-list::-webkit-scrollbar, .char-table-wrap::-webkit-scrollbar { width: 4px; }
+    .scene-list::-webkit-scrollbar-thumb, .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 639px) {
+      #analysis-screen { flex-direction: column; }
+      .scene-panel { width: 100%; min-width: unset; max-height: 38vh; border-right: none; border-bottom: 1px solid var(--border); }
+      .pass-box { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── PASSWORD OVERLAY ── -->
+<div id="pass-overlay">
+  <div class="pass-box">
+    <div class="pass-logo">📜</div>
+    <div class="pass-title">PlayAnalysisDex ◈</div>
+    <div class="pass-sub">This tool is in early access.<br>Enter your password to continue.</div>
+    <input class="pass-input" id="pass-input" type="password" placeholder="········" autocomplete="off">
+    <button class="pass-btn" id="pass-btn">Unlock →</button>
+    <div class="pass-error" id="pass-error"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+
+  <div class="topbar">
+    <span class="topbar-title">PlayAnalysisDex ◈</span>
+    <span class="topbar-playtitle" id="topbar-playtitle"></span>
+    <button class="topbar-back" id="topbar-back">← Upload New Script</button>
+  </div>
+
+  <!-- UPLOAD SCREEN -->
+  <div id="upload-screen">
+    <div class="upload-heading">Upload Your Script</div>
+
+    <div class="upload-warning">
+      <strong>⚠ Scanned PDFs are not supported.</strong><br>
+      This tool requires a text-based PDF — exported directly from Final Draft, Microsoft Word, Google Docs, or similar. If your PDF was created by scanning a physical script, it will not work.
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">📄</div>
+      <div class="drop-text">Drop your PDF here</div>
+      <div class="drop-sub">or click to browse · PDF only</div>
+    </div>
+    <input type="file" id="file-input" accept="application/pdf" style="display:none">
+
+    <div id="parse-status"></div>
+
+    <div id="scan-error">
+      <div class="scan-error-title">⚠ Scanned script detected</div>
+      <div class="scan-error-body">
+        This PDF contains <strong>scanned images</strong> rather than readable text — PlayAnalysisDex cannot extract the script from image-based pages.<br><br>
+        To use this tool, export a <strong>text-based PDF</strong> from your script software:<br><br>
+        · <strong>Final Draft</strong> → File → Export → PDF<br>
+        · <strong>Microsoft Word</strong> → File → Save As → PDF<br>
+        · <strong>Google Docs</strong> → File → Download → PDF<br><br>
+        If you only have a physical copy, you'll need to transcribe it digitally first.
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS SCREEN -->
+  <div id="analysis-screen">
+
+    <div class="scene-panel">
+      <div class="panel-header">Scene Breakdown</div>
+      <div class="scene-list" id="scene-list"></div>
+    </div>
+
+    <div class="char-panel">
+      <div class="panel-header">Characters · sorted by word count</div>
+      <div class="char-table-wrap">
+        <table class="char-table">
+          <thead>
+            <tr>
+              <th>Character</th>
+              <th>Speeches</th>
+              <th>Lines</th>
+              <th>Words</th>
+              <th>Share of script</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="char-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+'use strict';
+
+/* ── DESKTOP ZOOM ── */
+(function () {
+  if (window.innerWidth >= 640) document.documentElement.style.zoom = '1.25';
+})();
+
+/* ── PDF.JS ── */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ── PASSWORD ── */
+const PASSWORD    = '48163264';
+const passOverlay = document.getElementById('pass-overlay');
+const passInput   = document.getElementById('pass-input');
+const passBtn     = document.getElementById('pass-btn');
+const passError   = document.getElementById('pass-error');
+
+if (sessionStorage.getItem('pad-unlocked') === '1') passOverlay.style.display = 'none';
+
+function checkPassword() {
+  if (passInput.value === PASSWORD) {
+    passOverlay.style.display = 'none';
+    sessionStorage.setItem('pad-unlocked', '1');
+  } else {
+    passError.textContent = 'Incorrect password.';
+    passInput.value = '';
+    passInput.focus();
+  }
+}
+passBtn.addEventListener('click', checkPassword);
+passInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+/* ── DOM ── */
+const uploadScreen   = document.getElementById('upload-screen');
+const analysisScreen = document.getElementById('analysis-screen');
+const dropZone       = document.getElementById('drop-zone');
+const fileInput      = document.getElementById('file-input');
+const scanError      = document.getElementById('scan-error');
+const parseStatus    = document.getElementById('parse-status');
+const topbarBack     = document.getElementById('topbar-back');
+const topbarPlaytitle = document.getElementById('topbar-playtitle');
+const sceneList      = document.getElementById('scene-list');
+const charTbody      = document.getElementById('char-tbody');
+const toast          = document.getElementById('toast');
+
+/* ── UPLOAD EVENTS ── */
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') handleFile(f);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+topbarBack.addEventListener('click', () => {
+  analysisScreen.style.display = 'none';
+  uploadScreen.style.display   = 'flex';
+  topbarBack.classList.remove('visible');
+  topbarPlaytitle.classList.remove('visible');
+  topbarPlaytitle.textContent = '';
+  scanError.style.display   = 'none';
+  parseStatus.style.display = 'none';
+  fileInput.value = '';
+});
+
+/* ── PDF TEXT EXTRACTION ── */
+async function extractLines(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const allLines = [];
+
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page    = await pdf.getPage(p);
+    const content = await page.getTextContent();
+
+    /* Group text items by Y position (2-unit tolerance handles sub-pixel drift) */
+    const lineMap = new Map();
+    for (const item of content.items) {
+      const y = Math.round(item.transform[5] / 2) * 2;
+      if (!lineMap.has(y)) lineMap.set(y, []);
+      lineMap.get(y).push({ x: item.transform[4], str: item.str });
+    }
+
+    /* Sort top-to-bottom (PDF Y coords are bottom-up, so descending = reading order) */
+    const ys = [...lineMap.keys()].sort((a, b) => b - a);
+    for (const y of ys) {
+      const text = lineMap.get(y)
+        .sort((a, b) => a.x - b.x)
+        .map(i => i.str).join('').trim();
+      if (text) allLines.push(text);
+    }
+    allLines.push(''); /* page separator */
+  }
+  return allLines;
+}
+
+/* ── SCRIPT PARSER ── */
+/* Scene heading patterns */
+const SCENE_RE = /^(?:ACT\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|SCENE\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|PROLOGUE|EPILOGUE|INTERMISSION|INTERVAL)(?:[,:\s].*)?$/i;
+
+/* Words/phrases that look like ALL CAPS character names but aren't */
+const NON_CHARS = new Set([
+  'BLACKOUT','FADE OUT','FADE IN','FADE TO BLACK','LIGHTS UP','LIGHTS DOWN','LIGHTS OUT',
+  'THE END','END OF PLAY','END OF ACT','END OF SCENE','END','FINIS',
+  'CURTAIN','CURTAIN CALL','EXEUNT','EXEUNT ALL',
+  'CUT TO','DISSOLVE','SMASH CUT','MATCH CUT',
+  'INT','EXT','INT.','EXT.','CONTINUED','CONT','MORE',
+  'SOUND','MUSIC','LIGHTS','NOTE','NOTES',
+  'OFFSTAGE','ONSTAGE','STAGE','STAGE MANAGER',
+]);
+
+/* Group / shared-line identifiers — every character gets these lines in their export */
+const GROUP_RE = /^(ALL|ENSEMBLE|COMPANY|CHORUS|BOTH|EVERYONE|ALL CAST|VOICES|VOICE)$/i;
+
+function cleanCharName(raw) {
+  return raw.replace(/\s*\((?:CONT(?:'|'|')?D?|V\.O\.?|O\.S\.?|O\.C\.?|MORE|CONT\.?)\)\s*$/i, '').trim();
+}
+
+function looksLikeCharName(line) {
+  const c = cleanCharName(line);
+  if (!c || c.length < 2) return null;
+  if (/[a-z]/.test(c)) return null;          /* has lowercase → dialogue */
+  if (/^\d+$/.test(c)) return null;           /* page number */
+  if (c.split(/\s+/).length > 6) return null; /* too long */
+  if (SCENE_RE.test(c)) return null;          /* scene heading */
+  if (NON_CHARS.has(c.toUpperCase())) return null;
+  if (!/[A-Z]/.test(c)) return null;          /* no letters at all */
+  return c;
+}
+
+function parseScript(lines, title) {
+  const script = { title, scenes: [], characters: {}, totalWords: 0 };
+
+  let currentScene  = { heading: 'OPENING', speeches: [] };
+  script.scenes.push(currentScene);
+  let currentSpeech = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) { continue; }
+
+    /* Scene heading */
+    if (SCENE_RE.test(line)) {
+      currentScene  = { heading: line.toUpperCase(), speeches: [] };
+      currentSpeech = null;
+      script.scenes.push(currentScene);
+      continue;
+    }
+
+    /* Character name? */
+    const charName = looksLikeCharName(line);
+    if (charName) {
+      if (!script.characters[charName]) {
+        script.characters[charName] = { speeches: 0, words: 0, lineCount: 0 };
+      }
+      script.characters[charName].speeches++;
+      currentSpeech = { character: charName, lines: [] };
+      currentScene.speeches.push(currentSpeech);
+      continue;
+    }
+
+    /* Dialogue / stage direction */
+    if (currentSpeech) {
+      currentSpeech.lines.push(line);
+      const wc = line.split(/\s+/).filter(Boolean).length;
+      script.characters[currentSpeech.character].words += wc;
+      script.characters[currentSpeech.character].lineCount++;
+      script.totalWords += wc;
+    }
+  }
+
+  /* Remove noise: anything with fewer than 2 words AND fewer than 2 speeches */
+  for (const name of Object.keys(script.characters)) {
+    const d = script.characters[name];
+    if (d.words < 2 && d.speeches < 2) delete script.characters[name];
+  }
+
+  /* Drop empty opening placeholder */
+  if (script.scenes[0].heading === 'OPENING' && script.scenes[0].speeches.length === 0) {
+    script.scenes.shift();
+  }
+
+  return script;
+}
+
+/* ── HANDLE FILE ── */
+let parsedScript = null;
+
+async function handleFile(file) {
+  scanError.style.display   = 'none';
+  parseStatus.style.display = 'block';
+  parseStatus.textContent   = 'Reading PDF…';
+
+  try {
+    const buf   = await file.arrayBuffer();
+    const lines = await extractLines(buf);
+
+    /* Scanned PDF check */
+    const totalChars = lines.join('').replace(/\s/g, '').length;
+    if (totalChars < 80) {
+      parseStatus.style.display = 'none';
+      scanError.style.display   = 'block';
+      return;
+    }
+
+    parseStatus.textContent = 'Analysing script…';
+    const title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
+    parsedScript = parseScript(lines, title);
+
+    const charCount = Object.keys(parsedScript.characters).length;
+    if (charCount === 0) {
+      parseStatus.textContent =
+        'No characters detected. Is this a standard playscript with character names in BLOCK CAPITALS?';
+      return;
+    }
+
+    parseStatus.style.display = 'none';
+    renderDashboard();
+    uploadScreen.style.display   = 'none';
+    analysisScreen.style.display = 'flex';
+    topbarBack.classList.add('visible');
+    topbarPlaytitle.textContent = '· ' + parsedScript.title;
+    topbarPlaytitle.classList.add('visible');
+
+  } catch (err) {
+    parseStatus.textContent = 'Could not read PDF. Please try another file.';
+    console.error(err);
+  }
+}
+
+/* ── RENDER ── */
+function renderDashboard() { renderScenes(); renderChars(); }
+
+function renderScenes() {
+  sceneList.innerHTML = '';
+  const active = parsedScript.scenes.filter(s => s.speeches.length > 0);
+  if (!active.length) {
+    sceneList.innerHTML = '<div class="empty">No scene structure detected.</div>';
+    return;
+  }
+  for (const scene of active) {
+    const uniqueChars = [...new Set(scene.speeches.map(s => s.character))];
+    const el = document.createElement('div');
+    el.className = 'scene-item';
+    el.innerHTML =
+      '<div class="scene-heading">' + esc(scene.heading) + '</div>' +
+      '<div class="scene-chars">'   + uniqueChars.map(esc).join(' · ') + '</div>' +
+      '<div class="scene-count">'   + scene.speeches.length + ' speech' + (scene.speeches.length !== 1 ? 'es' : '') + '</div>';
+    sceneList.appendChild(el);
+  }
+}
+
+function renderChars() {
+  charTbody.innerHTML = '';
+  const sorted  = Object.entries(parsedScript.characters).sort((a, b) => b[1].words - a[1].words);
+  const maxWords = sorted[0] ? sorted[0][1].words : 1;
+
+  for (const [name, d] of sorted) {
+    const pct  = parsedScript.totalWords > 0 ? ((d.words / parsedScript.totalWords) * 100).toFixed(1) : '0.0';
+    const barW = Math.round((d.words / Math.max(maxWords, 1)) * 100);
+    const tr   = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + esc(name) + '</td>' +
+      '<td>' + d.speeches + '</td>' +
+      '<td>' + d.lineCount + '</td>' +
+      '<td>' + d.words.toLocaleString() + '</td>' +
+      '<td class="char-bar-wrap">' +
+        '<div class="char-bar-bg"><div class="char-bar-fill" style="width:' + barW + '%"></div></div>' +
+        '<div class="char-bar-pct">' + pct + '%</div>' +
+      '</td>' +
+      '<td><button class="export-btn" data-char="' + esc(name) + '">Export .txt</button></td>';
+    charTbody.appendChild(tr);
+  }
+  charTbody.querySelectorAll('.export-btn').forEach(btn => {
+    btn.addEventListener('click', () => exportChar(btn.dataset.char));
+  });
+}
+
+/* ── EXPORT ── */
+function exportChar(charName) {
+  const out = [];
+  out.push(parsedScript.title.toUpperCase());
+  out.push('');
+  out.push('Lines for: ' + charName);
+  out.push('Generated by PlayAnalysisDex');
+  out.push('');
+
+  let hasContent = false;
+
+  for (const scene of parsedScript.scenes) {
+    /* Include: solo speeches, shared speeches naming this character, and group lines */
+    const speeches = scene.speeches.filter(s => {
+      if (!s.lines.length) return false;
+      if (s.character === charName) return true;
+      if (GROUP_RE.test(s.character)) return true;
+      /* Shared lines: "CHAR & OTHER" or "CHAR / OTHER" */
+      const parts = s.character.split(/\s*[&\/,]\s*/);
+      return parts.some(p => p.trim().toUpperCase() === charName.toUpperCase());
+    });
+
+    if (!speeches.length) continue;
+
+    out.push('──────────────────────────────────────');
+    out.push(scene.heading);
+    out.push('──────────────────────────────────────');
+    out.push('');
+
+    for (const speech of speeches) {
+      /* Label shared / group lines so the actor knows */
+      if (speech.character !== charName) {
+        out.push('[' + speech.character + ']');
+      }
+      for (const line of speech.lines) {
+        out.push('* ' + line);
+      }
+      out.push('');
+      hasContent = true;
+    }
+  }
+
+  if (!hasContent) { showToast('No lines found for ' + charName); return; }
+
+  const blob = new Blob([out.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = parsedScript.title + ' — ' + charName + ' lines.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Exported ' + charName + ' ✓');
+}
+
+/* ── UTILS ── */
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
