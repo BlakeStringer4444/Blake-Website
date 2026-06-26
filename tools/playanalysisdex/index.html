@@ -205,6 +205,32 @@
     }
     #toast.show { opacity: 1; }
 
+    /* ── ANOMALY SECTION ── */
+    .anomaly-section { border-top: 1px solid var(--border); flex-shrink: 0; display: none; }
+    .anomaly-section.visible { display: block; }
+    .anomaly-toggle {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 16px; cursor: pointer;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); transition: background 0.1s; user-select: none;
+    }
+    .anomaly-toggle:hover { background: rgba(0,0,0,0.03); }
+    [data-theme="dark"]     .anomaly-toggle:hover,
+    [data-theme="terminal"] .anomaly-toggle:hover { background: rgba(255,255,255,0.02); }
+    .anomaly-arrow { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+    .anomaly-section.open .anomaly-arrow { transform: rotate(90deg); }
+    .anomaly-pill {
+      background: rgba(0,0,0,0.08); border-radius: 10px;
+      padding: 1px 8px; font-size: 8px; letter-spacing: 1px;
+    }
+    [data-theme="dark"]     .anomaly-pill,
+    [data-theme="terminal"] .anomaly-pill { background: rgba(255,255,255,0.1); }
+    .anomaly-hint { font-size: 8px; letter-spacing: 0.3px; opacity: 0.6; text-transform: none; letter-spacing: 0.3px; }
+    .anomaly-body { display: none; }
+    .anomaly-section.open .anomaly-body { display: block; }
+    .anomaly-body .char-table tbody td { opacity: 0.55; font-size: 10px; padding: 7px 16px; }
+    .anomaly-body .char-table tbody tr:hover td { opacity: 0.8; }
+
     /* ── SCROLLBARS ── */
     .char-table-wrap::-webkit-scrollbar { width: 4px; }
     .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(100,72,228,0.2); }
@@ -283,7 +309,6 @@
           <thead>
             <tr>
               <th>Character</th>
-              <th>Speeches</th>
               <th>Lines</th>
               <th>Words</th>
               <th>Share of script</th>
@@ -292,6 +317,20 @@
           </thead>
           <tbody id="char-tbody"></tbody>
         </table>
+      </div>
+      <!-- Unverified detections: entries below 2% of total words -->
+      <div class="anomaly-section" id="anomaly-section">
+        <div class="anomaly-toggle" id="anomaly-toggle">
+          <span class="anomaly-arrow">▸</span>
+          <span class="anomaly-label">Unverified Detections</span>
+          <span class="anomaly-pill" id="anomaly-count"></span>
+          <span class="anomaly-hint">each &lt;2% of script — may be formatting artefacts</span>
+        </div>
+        <div class="anomaly-body">
+          <table class="char-table">
+            <tbody id="anomaly-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -631,32 +670,65 @@ async function handleFile(file) {
 }
 
 /* ── RENDER ── */
+var anomalySection = document.getElementById('anomaly-section');
+var anomalyToggle  = document.getElementById('anomaly-toggle');
+var anomalyCount   = document.getElementById('anomaly-count');
+var anomalyTbody   = document.getElementById('anomaly-tbody');
+
+anomalyToggle.addEventListener('click', function () {
+  anomalySection.classList.toggle('open');
+});
+
+var ANOMALY_THRESHOLD = 2.0; /* percent of total words */
+
+function buildCharRow(name, d, maxWords, showExport) {
+  var pct  = parsedScript.totalWords > 0 ? ((d.words / parsedScript.totalWords) * 100).toFixed(1) : '0.0';
+  var barW = Math.round((d.words / Math.max(maxWords, 1)) * 100);
+  var tr   = document.createElement('tr');
+  tr.innerHTML =
+    '<td>' + esc(name) + '</td>' +
+    '<td>' + d.lineCount + '</td>' +
+    '<td>' + d.words.toLocaleString() + '</td>' +
+    '<td class="char-bar-wrap">' +
+      '<div class="char-bar-bg"><div class="char-bar-fill" style="width:' + barW + '%"></div></div>' +
+      '<div class="char-bar-pct">' + pct + '%</div>' +
+    '</td>' +
+    '<td>' + (showExport ? '<button class="export-btn" data-char="' + esc(name) + '">Export .txt</button>' : '') + '</td>';
+  return tr;
+}
+
 function renderChars() {
-  charTbody.innerHTML = '';
+  charTbody.innerHTML   = '';
+  anomalyTbody.innerHTML = '';
+  anomalySection.classList.remove('visible', 'open');
+
   var sorted   = Object.entries(parsedScript.characters).sort(function (a, b) { return b[1].words - a[1].words; });
   var maxWords = sorted[0] ? sorted[0][1].words : 1;
 
+  var main      = [];
+  var anomalies = [];
   for (var si = 0; si < sorted.length; si++) {
-    var name = sorted[si][0];
-    var d    = sorted[si][1];
-    var pct  = parsedScript.totalWords > 0 ? ((d.words / parsedScript.totalWords) * 100).toFixed(1) : '0.0';
-    var barW = Math.round((d.words / Math.max(maxWords, 1)) * 100);
-    var tr   = document.createElement('tr');
-    tr.innerHTML =
-      '<td>' + esc(name) + '</td>' +
-      '<td>' + d.speeches + '</td>' +
-      '<td>' + d.lineCount + '</td>' +
-      '<td>' + d.words.toLocaleString() + '</td>' +
-      '<td class="char-bar-wrap">' +
-        '<div class="char-bar-bg"><div class="char-bar-fill" style="width:' + barW + '%"></div></div>' +
-        '<div class="char-bar-pct">' + pct + '%</div>' +
-      '</td>' +
-      '<td><button class="export-btn" data-char="' + esc(name) + '">Export .txt</button></td>';
+    var pct = parsedScript.totalWords > 0 ? (sorted[si][1].words / parsedScript.totalWords * 100) : 0;
+    if (pct >= ANOMALY_THRESHOLD) main.push(sorted[si]);
+    else anomalies.push(sorted[si]);
+  }
+
+  for (var mi = 0; mi < main.length; mi++) {
+    var tr = buildCharRow(main[mi][0], main[mi][1], maxWords, true);
     charTbody.appendChild(tr);
   }
   charTbody.querySelectorAll('.export-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { exportChar(btn.dataset.char); });
   });
+
+  if (anomalies.length > 0) {
+    anomalyCount.textContent = anomalies.length;
+    for (var ai = 0; ai < anomalies.length; ai++) {
+      var atr = buildCharRow(anomalies[ai][0], anomalies[ai][1], maxWords, false);
+      anomalyTbody.appendChild(atr);
+    }
+    anomalySection.classList.add('visible');
+  }
 }
 
 /* ── EXPORT ── */
