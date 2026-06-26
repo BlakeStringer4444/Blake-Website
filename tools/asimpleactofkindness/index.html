@@ -117,61 +117,70 @@
     .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     /* ── SCHEDULE MODAL CONTENT ── */
-    .week-label {
+    .sched-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .sched-table thead th {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 12px 24px 8px; background: var(--bg);
-      position: sticky; top: 0; z-index: 1;
-      border-bottom: 1px solid var(--border);
+      padding: 10px 14px; text-align: left; font-weight: 400;
+      border-bottom: 1px solid var(--border); background: var(--bg);
+      position: sticky; top: 0; z-index: 1; white-space: nowrap;
     }
-    .sched-row {
-      display: grid; grid-template-columns: 100px 1fr auto;
-      gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--border);
-      align-items: start; transition: opacity 0.15s;
+    .sched-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--fg); }
+    .sched-tr.past td { opacity: 0.35; text-decoration: line-through; color: var(--muted); }
+    .sched-tr.today { background: rgba(212,255,26,0.07); }
+    .sched-tr.today td:first-child { border-left: 3px solid var(--lime); padding-left: 11px; }
+    .sched-tr.next-up { background: rgba(100,72,228,0.06); }
+    .sched-tr.next-up td:first-child { border-left: 3px solid var(--purple); padding-left: 11px; }
+    .sched-tr.performance { background: rgba(212,255,26,0.03); }
+    .sched-tr.performance.today { background: rgba(212,255,26,0.12); }
+    .week-sep-row td {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 14px 6px; background: var(--bg); font-weight: 400;
     }
-    .sched-row.past { opacity: 0.3; }
-    .sched-row.today { background: rgba(212,255,26,0.07); border-left: 3px solid var(--lime); padding-left: 21px; }
-    .sched-row.next-up { background: rgba(100,72,228,0.06); border-left: 3px solid var(--purple); padding-left: 21px; }
-    .sched-row.performance { background: rgba(212,255,26,0.03); }
-    .sched-row.performance.today { background: rgba(212,255,26,0.12); }
-    .sched-date { font-size: 12px; font-weight: 500; color: var(--fg); }
-    .sched-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
-    .sched-what { font-size: 12px; color: var(--fg); }
-    .sched-sub { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
-    .sched-badge { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; white-space: nowrap; }
+    .sched-badge { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; white-space: nowrap; }
     .badge-show { background: var(--lime); color: #000; }
     .badge-today { background: var(--lime); color: #000; }
     .badge-next { background: var(--purple); color: #fff; }
     .sched-loading { padding: 32px 24px; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-align: center; }
     .sched-error { padding: 32px 24px; font-size: 10px; color: #ef4444; text-align: center; line-height: 1.8; }
 
+    /* ── CAST & CREW MODAL CONTENT ── */
+    .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .cc-table thead th {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 10px 16px; text-align: left; font-weight: 400;
+      border-bottom: 1px solid var(--border); background: var(--bg);
+      position: sticky; top: 0; z-index: 1;
+    }
+    .cc-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; }
+    .cc-table td.tbc { color: var(--muted); font-style: italic; }
+    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; }
+    .cc-table td a:hover { color: var(--lime); }
+    .cc-section-row td {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 16px 6px; background: var(--bg); font-weight: 400;
+      border-bottom: 1px solid var(--border);
+    }
+
     /* ── PDF MODAL CONTENT ── */
-    .pdf-nav-wrap { display: flex; align-items: center; gap: 8px; }
+    .pdf-nav-wrap { display: flex; align-items: center; gap: 6px; }
     .pdf-nav-btn {
       background: rgba(255,255,255,0.06); border: 1px solid var(--border);
       color: var(--fg); font-family: var(--font); font-size: 13px;
-      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s;
+      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s; line-height: 1;
     }
     .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
-    .pdf-page-info { font-size: 9px; color: var(--muted); min-width: 50px; text-align: center; }
-    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
+    .pdf-page-input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; width: 42px; text-align: center;
+      padding: 3px 4px; -moz-appearance: textfield;
+    }
+    .pdf-page-input::-webkit-inner-spin-button,
+    .pdf-page-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .pdf-page-sep { font-size: 9px; color: var(--muted); white-space: nowrap; }
+    .pdf-zoom-divider { width: 1px; height: 14px; background: var(--border); margin: 0 2px; }
+    .pdf-zoom-label { font-size: 9px; color: var(--muted); min-width: 34px; text-align: center; }
+    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
     #pdf-canvas-wrap canvas { max-width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
-
-    /* ── CAST & CREW MODAL CONTENT ── */
-    .cc-section-label {
-      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 14px 24px 10px; background: var(--bg); position: sticky; top: 0; z-index: 1;
-      border-bottom: 1px solid var(--border);
-    }
-    .cc-row {
-      display: grid; grid-template-columns: 1fr 1fr auto;
-      gap: 16px; padding: 11px 24px; border-bottom: 1px solid var(--border); align-items: center;
-    }
-    .cc-role { font-size: 11px; color: var(--fg); }
-    .cc-name { font-size: 11px; color: var(--fg); }
-    .cc-name.tbc { color: var(--muted); font-style: italic; }
-    .cc-contact { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
-    .cc-contact a { font-size: 9px; color: var(--muted); text-decoration: none; letter-spacing: 0.5px; transition: color 0.15s; }
-    .cc-contact a:hover { color: var(--lime); }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 720px) {
@@ -257,8 +266,13 @@
         <span class="modal-header-title">The Script — A Simple Act of Kindness</span>
         <div class="pdf-nav-wrap" id="pdf-nav" style="display:none;">
           <button class="pdf-nav-btn" id="pdf-prev" disabled>‹</button>
-          <span class="pdf-page-info" id="pdf-page-info"></span>
+          <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" disabled>
+          <span class="pdf-page-sep" id="pdf-page-sep">/ --</span>
           <button class="pdf-nav-btn" id="pdf-next" disabled>›</button>
+          <div class="pdf-zoom-divider"></div>
+          <button class="pdf-nav-btn" id="pdf-zoom-out" disabled>−</button>
+          <span class="pdf-zoom-label" id="pdf-zoom-label">100%</span>
+          <button class="pdf-nav-btn" id="pdf-zoom-in" disabled>+</button>
         </div>
         <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
       </div>
@@ -427,6 +441,29 @@ function loadSchedule() {
       if (d && d > now) { nextIdx = i; break; }
     }
 
+    /* Detect which optional columns have any data */
+    var has = { pages: false, act: false, scene: false, characters: false, context: false };
+    rows.forEach(function (r) {
+      if (r.pages)      has.pages = true;
+      if (r.act)        has.act = true;
+      if (r.scene)      has.scene = true;
+      if (r.characters) has.characters = true;
+      if (r.context)    has.context = true;
+    });
+
+    /* Colspan = date + time + optional cols + badge */
+    var colCount = 2 + (has.pages?1:0) + (has.act?1:0) + (has.scene?1:0) + (has.characters?1:0) + (has.context?1:0) + 1;
+
+    var html = '<table class="sched-table"><thead><tr>'
+             + '<th>Date</th><th>Time</th>'
+             + (has.pages      ? '<th>Pages</th>'      : '')
+             + (has.act        ? '<th>Act</th>'        : '')
+             + (has.scene      ? '<th>Scene</th>'      : '')
+             + (has.characters ? '<th>Characters</th>' : '')
+             + (has.context    ? '<th>Notes</th>'      : '')
+             + '<th></th></tr></thead><tbody>';
+
+    /* Group by week */
     var groups = [], gmap = {};
     rows.forEach(function (row, idx) {
       var wk = row.week || 'Schedule';
@@ -434,9 +471,8 @@ function loadSchedule() {
       gmap[wk].push({ row: row, idx: idx });
     });
 
-    var html = '';
     groups.forEach(function (g) {
-      html += '<div><div class="week-label">' + esc(g.label) + '</div>';
+      html += '<tr class="week-sep-row"><td colspan="' + colCount + '">' + esc(g.label) + '</td></tr>';
       g.items.forEach(function (entry) {
         var row = entry.row, d = parseDT(row.datetime);
         if (!d) return;
@@ -444,23 +480,26 @@ function loadSchedule() {
         var isPast  = !isToday && d < now;
         var isNext  = entry.idx === nextIdx && !isToday;
         var isPerf  = !!row.performance;
-        var cls     = 'sched-row' + (isPast ? ' past' : '') + (isToday ? ' today' : '') + (isNext ? ' next-up' : '') + (isPerf ? ' performance' : '');
-        var badge   = isToday ? '<span class="sched-badge badge-today">today</span>'
-                    : isNext  ? '<span class="sched-badge badge-next">next</span>'
-                    : (isPerf && !isPast) ? '<span class="sched-badge badge-show">' + esc(row.performance) + '</span>'
-                    : '';
-        var what = row.context || ([row.act, row.scene].filter(Boolean).join(' · ') || (isPerf ? 'Performance' : 'Rehearsal'));
-        var sub  = (row.pages ? 'pp ' + row.pages : '') + (row.characters ? (row.pages ? ' · ' : '') + row.characters : '');
+        var cls = 'sched-tr' + (isPast?' past':'') + (isToday?' today':'') + (isNext?' next-up':'') + (isPerf?' performance':'');
+        var badge = isToday ? '<span class="sched-badge badge-today">today</span>'
+                  : isNext  ? '<span class="sched-badge badge-next">next</span>'
+                  : (isPerf && !isPast) ? '<span class="sched-badge badge-show">' + esc(row.performance) + '</span>'
+                  : '';
         var anchor = isToday ? ' id="sched-today"' : (isNext ? ' id="sched-next"' : '');
-        html += '<div class="' + cls + '"' + anchor + '>'
-              + '<div><div class="sched-date">' + fmtDate(d) + '</div><div class="sched-time">' + fmtTime(d) + '</div></div>'
-              + '<div><div class="sched-what">' + esc(what) + '</div>' + (sub ? '<div class="sched-sub">' + esc(sub) + '</div>' : '') + '</div>'
-              + '<div>' + badge + '</div></div>';
+        html += '<tr class="' + cls + '"' + anchor + '>'
+              + '<td>' + fmtDate(d) + '</td>'
+              + '<td>' + fmtTime(d) + '</td>'
+              + (has.pages      ? '<td>' + esc(row.pages      || '') + '</td>' : '')
+              + (has.act        ? '<td>' + esc(row.act        || '') + '</td>' : '')
+              + (has.scene      ? '<td>' + esc(row.scene      || '') + '</td>' : '')
+              + (has.characters ? '<td>' + esc(row.characters || '') + '</td>' : '')
+              + (has.context    ? '<td>' + esc(row.context    || '') + '</td>' : '')
+              + '<td>' + badge + '</td></tr>';
       });
-      html += '</div>';
     });
 
-    body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
+    html += '</tbody></table>';
+    body.innerHTML = html;
     scheduleLoaded = true;
 
     setTimeout(function () {
@@ -501,36 +540,33 @@ function loadCast() {
     var cast = rows.filter(function (r) { return r.role_cast; });
     var crew = rows.filter(function (r) { return r.role_crew; });
 
-    function makeRow(role, name, number, email) {
-      var nameHtml = name
-        ? '<span class="cc-name">' + esc(name) + '</span>'
-        : '<span class="cc-name tbc">TBC</span>';
-      var contact = '';
-      if (number) contact += '<a href="tel:' + esc(number) + '">' + esc(number) + '</a>';
-      if (email)  contact += '<a href="mailto:' + esc(email) + '">' + esc(email) + '</a>';
-      return '<div class="cc-row">'
-           + '<div class="cc-role">' + esc(role) + '</div>'
-           + nameHtml
-           + '<div class="cc-contact">' + contact + '</div>'
-           + '</div>';
-    }
-
-    var html = '';
+    var html = '<table class="cc-table"><thead><tr>'
+             + '<th>Role</th><th>Name</th><th>Phone</th><th>Email</th>'
+             + '</tr></thead><tbody>';
 
     if (cast.length) {
-      html += '<div class="cc-section-label">Cast</div>';
+      html += '<tr class="cc-section-row"><td colspan="4">Cast</td></tr>';
       cast.forEach(function (r) {
-        html += makeRow(r.role_cast, r.name, '', '');
+        html += '<tr>'
+              + '<td>' + esc(r.role_cast) + '</td>'
+              + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
+              + '<td></td><td></td></tr>';
       });
     }
 
     if (crew.length) {
-      html += '<div class="cc-section-label">Crew</div>';
+      html += '<tr class="cc-section-row"><td colspan="4">Crew</td></tr>';
       crew.forEach(function (r) {
-        html += makeRow(r.role_crew, r.name, r.number, r.email);
+        html += '<tr>'
+              + '<td>' + esc(r.role_crew) + '</td>'
+              + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
+              + '<td>' + (r.number ? '<a href="tel:' + esc(r.number) + '">' + esc(r.number) + '</a>' : '') + '</td>'
+              + '<td>' + (r.email  ? '<a href="mailto:' + esc(r.email)  + '">' + esc(r.email)  + '</a>' : '') + '</td>'
+              + '</tr>';
       });
     }
 
+    html += '</tbody></table>';
     body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
     castLoaded = true;
   }
@@ -569,33 +605,57 @@ function loadPDF() {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  var wrap    = document.getElementById('pdf-canvas-wrap');
-  var nav     = document.getElementById('pdf-nav');
-  var prevBtn = document.getElementById('pdf-prev');
-  var nextBtn = document.getElementById('pdf-next');
-  var pageInfo = document.getElementById('pdf-page-info');
-  var pdfDoc  = null, curPage = 1, numPages = 0, rendering = false;
+  var wrap      = document.getElementById('pdf-canvas-wrap');
+  var pdfBody   = document.getElementById('pdf-body');
+  var nav       = document.getElementById('pdf-nav');
+  var prevBtn   = document.getElementById('pdf-prev');
+  var nextBtn   = document.getElementById('pdf-next');
+  var pageInput = document.getElementById('pdf-page-input');
+  var pageSep   = document.getElementById('pdf-page-sep');
+  var zoomInBtn = document.getElementById('pdf-zoom-in');
+  var zoomOutBtn= document.getElementById('pdf-zoom-out');
+  var zoomLabel = document.getElementById('pdf-zoom-label');
+
+  var pdfDoc = null, curPage = 1, numPages = 0, rendering = false;
+  var zoomMult = 1.0; /* multiplier on top of fit-to-page base scale */
 
   pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
-    pdfDoc    = pdf;
-    numPages  = pdf.numPages;
+    pdfDoc   = pdf;
+    numPages = pdf.numPages;
     nav.style.display = 'flex';
+    [prevBtn, nextBtn, pageInput, zoomInBtn, zoomOutBtn].forEach(function (el) { el.disabled = false; });
+    pageSep.textContent = '/ ' + numPages;
+    pageInput.max = numPages;
     renderPage(1);
   }).catch(function () {
     wrap.innerHTML = '<div class="sched-loading">Could not load PDF.</div>';
   });
 
+  function fitScale(page) {
+    /* Scale so the full A4 page fits in the visible modal body */
+    var maxW = Math.max(wrap.clientWidth  - 32, 300);
+    var maxH = Math.max(pdfBody.clientHeight - 32, 400);
+    var vp   = page.getViewport({ scale: 1 });
+    return Math.min(maxW / vp.width, maxH / vp.height);
+  }
+
+  function updateZoom() {
+    zoomLabel.textContent = Math.round(zoomMult * 100) + '%';
+    zoomOutBtn.disabled = zoomMult <= 0.25;
+    zoomInBtn.disabled  = zoomMult >= 4.0;
+  }
+
   function renderPage(n) {
     if (rendering) return;
     rendering = true;
     curPage   = n;
-    prevBtn.disabled = n <= 1;
-    nextBtn.disabled = n >= numPages;
-    pageInfo.textContent = n + ' / ' + numPages;
+    prevBtn.disabled  = n <= 1;
+    nextBtn.disabled  = n >= numPages;
+    pageInput.value   = n;
+
     pdfDoc.getPage(n).then(function (page) {
-      var maxW  = Math.min(wrap.clientWidth - 40, 720);
-      var scale = maxW / page.getViewport({ scale: 1 }).width;
-      var vp    = page.getViewport({ scale: scale });
+      var scale  = fitScale(page) * zoomMult;
+      var vp     = page.getViewport({ scale: scale });
       var canvas = document.createElement('canvas');
       canvas.width  = vp.width;
       canvas.height = vp.height;
@@ -603,11 +663,41 @@ function loadPDF() {
       wrap.appendChild(canvas);
       page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise
         .then(function () { rendering = false; });
+      updateZoom();
     });
   }
 
+  zoomInBtn.addEventListener('click', function () {
+    zoomMult = Math.min(4.0, parseFloat((zoomMult + 0.25).toFixed(2)));
+    renderPage(curPage);
+  });
+  zoomOutBtn.addEventListener('click', function () {
+    zoomMult = Math.max(0.25, parseFloat((zoomMult - 0.25).toFixed(2)));
+    renderPage(curPage);
+  });
+
   prevBtn.addEventListener('click', function () { if (curPage > 1) renderPage(curPage - 1); });
   nextBtn.addEventListener('click', function () { if (curPage < numPages) renderPage(curPage + 1); });
+
+  pageInput.addEventListener('change', function () {
+    var n = parseInt(this.value, 10);
+    if (!isNaN(n) && n >= 1 && n <= numPages) renderPage(n);
+    else this.value = curPage;
+  });
+  pageInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
+
+  /* Arrow-key navigation when the script modal is open */
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('modal-script').classList.contains('open')) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (curPage < numPages) renderPage(curPage + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (curPage > 1) renderPage(curPage - 1);
+    }
+  });
 }
 </script>
 </body>
