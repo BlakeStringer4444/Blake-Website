@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PlayAnalysisDex</title>
+  <title>Play Analysis | Blake Stringer</title>
   <link rel="icon" type="image/png" href="/Images/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -75,34 +75,53 @@
     /* ── APP SHELL ── */
     #app { height: 100%; display: flex; flex-direction: column; }
 
-    /* ── TOP BAR ── */
-    .topbar {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 20px; background: var(--black);
-      border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
+    /* ── HEADER ── */
+    .pa-header {
+      background: var(--black);
+      padding: 28px 48px 24px;
+      flex-shrink: 0;
     }
-    .topbar-title      { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
-    .topbar-playtitle  { font-size: 10px; color: rgba(212,255,26,0.5); letter-spacing: 1px; display: none; }
-    .topbar-playtitle.visible { display: block; }
-    .topbar-spacer     { flex: 1; }
-    .topbar-icon-btn {
+    .pa-header-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .pa-back-link {
+      font-family: var(--font); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(212,255,26,0.55); text-decoration: none; transition: color 0.2s; padding-top: 6px;
+    }
+    .pa-back-link:hover { color: var(--lime); }
+    .pa-header-actions { display: flex; align-items: center; gap: 10px; }
+    .pa-new-btn {
+      font-family: var(--font); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(212,255,26,0.55); background: none;
+      border: 1px solid rgba(212,255,26,0.25); padding: 0 13px; height: 34px;
+      display: none; align-items: center; border-radius: 2px; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .pa-new-btn:hover  { color: var(--lime); border-color: var(--lime); }
+    .pa-new-btn.visible { display: inline-flex; }
+    .pa-icon-btn {
       background: none; border: 1px solid rgba(212,255,26,0.25);
-      color: rgba(212,255,26,0.7); font-family: var(--font); font-size: 12px;
-      letter-spacing: -0.5px; width: 36px; height: 36px; border-radius: 2px;
+      color: rgba(212,255,26,0.7); width: 44px; height: 44px; border-radius: 2px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; flex-shrink: 0;
+      transition: all 0.2s; flex-shrink: 0; font-family: var(--font);
+      font-size: 13px; letter-spacing: -0.5px;
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
-    .topbar-icon-btn:hover  { border-color: var(--lime); color: var(--lime); }
-    .topbar-icon-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
-    .topbar-back {
-      background: none; border: 1px solid rgba(212,255,26,0.35);
-      color: var(--lime); font-family: var(--font); font-size: 10px;
-      letter-spacing: 1px; padding: 5px 12px; cursor: pointer;
-      transition: background 0.15s; display: none; border-radius: 2px; white-space: nowrap;
+    .pa-icon-btn:hover  { border-color: var(--lime); color: var(--lime); }
+    .pa-icon-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
+    .pa-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 9vw, 104px); letter-spacing: 6px; line-height: 1; color: var(--lime);
     }
-    .topbar-back:hover { background: rgba(212,255,26,0.1); }
-    .topbar-back.visible { display: block; }
+    .pa-subtitle {
+      font-family: var(--font); font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(212,255,26,0.5); margin-top: 6px; display: none;
+    }
+    .pa-subtitle.visible { display: block; }
+    @media (max-width: 639px) {
+      .pa-header { padding: 20px 20px 16px; }
+    }
 
     /* ── UPLOAD SCREEN ── */
     #upload-screen {
@@ -179,13 +198,15 @@
     .char-bar-bg   { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .char-bar-fill { height: 100%; background: var(--purple); border-radius: 2px; }
     .char-bar-pct  { font-size: 8px; color: var(--muted); margin-top: 2px; }
+    .export-cell { text-align: right; white-space: nowrap; }
     .export-btn {
       background: none; border: 1px solid rgba(100,72,228,0.35);
-      color: var(--purple); font-family: var(--font); font-size: 9px;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 5px 10px; cursor: pointer; transition: background 0.15s;
-      white-space: nowrap; border-radius: 2px;
+      color: var(--purple); font-family: var(--font); font-size: 8px;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 8px; cursor: pointer; border-radius: 2px;
+      transition: background 0.15s; white-space: nowrap; margin-left: 3px;
     }
+    .export-btn:first-child { margin-left: 0; }
     .export-btn:hover { background: rgba(100,72,228,0.08); }
     [data-theme="dark"]     .export-btn,
     [data-theme="terminal"] .export-btn { border-color: rgba(212,255,26,0.25); color: var(--lime); }
@@ -240,6 +261,7 @@
     /* ── MOBILE ── */
     @media (max-width: 639px) {
       .pass-box { padding: 32px 24px; }
+      .export-btn { padding: 4px 5px; font-size: 7px; margin-left: 2px; }
     }
   </style>
 </head>
@@ -260,14 +282,18 @@
 <!-- ── APP ── -->
 <div id="app">
 
-  <div class="topbar">
-    <span class="topbar-title">PlayAnalysisDex ◈</span>
-    <span class="topbar-playtitle" id="topbar-playtitle"></span>
-    <div class="topbar-spacer"></div>
-    <button class="topbar-icon-btn" id="pa-font-btn" title="Adjust text size">Aa</button>
-    <button class="topbar-icon-btn" id="pa-theme-btn" title="Toggle theme">☾</button>
-    <button class="topbar-back" id="topbar-back">← New Script</button>
-  </div>
+  <header class="pa-header">
+    <div class="pa-header-top">
+      <a class="pa-back-link" href="/">← blakestringer.com</a>
+      <div class="pa-header-actions">
+        <button class="pa-new-btn" id="topbar-back">← New Script</button>
+        <button class="pa-icon-btn" id="pa-font-btn" title="Adjust text size">Aa</button>
+        <button class="pa-icon-btn" id="pa-theme-btn" title="Toggle theme">☾</button>
+      </div>
+    </div>
+    <h1 class="pa-title">Play Analysis</h1>
+    <p class="pa-subtitle" id="topbar-playtitle"></p>
+  </header>
 
   <!-- UPLOAD SCREEN -->
   <div id="upload-screen">
@@ -660,7 +686,7 @@ async function handleFile(file) {
     uploadScreen.style.display   = 'none';
     analysisScreen.style.display = 'flex';
     topbarBack.classList.add('visible');
-    topbarPlaytitle.textContent = '· ' + parsedScript.title;
+    topbarPlaytitle.textContent = parsedScript.title;
     topbarPlaytitle.classList.add('visible');
 
   } catch (err) {
@@ -693,7 +719,13 @@ function buildCharRow(name, d, maxWords, showExport) {
       '<div class="char-bar-bg"><div class="char-bar-fill" style="width:' + barW + '%"></div></div>' +
       '<div class="char-bar-pct">' + pct + '%</div>' +
     '</td>' +
-    '<td>' + (showExport ? '<button class="export-btn" data-char="' + esc(name) + '">Export .txt</button>' : '') + '</td>';
+    (showExport
+      ? '<td class="export-cell">' +
+          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="txt">.txt</button>' +
+          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="doc">.doc</button>' +
+          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="pdf">.pdf</button>' +
+        '</td>'
+      : '<td></td>');
   return tr;
 }
 
@@ -714,12 +746,8 @@ function renderChars() {
   }
 
   for (var mi = 0; mi < main.length; mi++) {
-    var tr = buildCharRow(main[mi][0], main[mi][1], maxWords, true);
-    charTbody.appendChild(tr);
+    charTbody.appendChild(buildCharRow(main[mi][0], main[mi][1], maxWords, true));
   }
-  charTbody.querySelectorAll('.export-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () { exportChar(btn.dataset.char); });
-  });
 
   if (anomalies.length > 0) {
     anomalyCount.textContent = anomalies.length;
@@ -732,16 +760,16 @@ function renderChars() {
 }
 
 /* ── EXPORT ── */
-function exportChar(charName) {
+
+/* Build the export line array shared by all formats */
+function buildExportLines(charName) {
   var out = [];
   out.push(parsedScript.title.toUpperCase());
   out.push('');
   out.push('Lines for: ' + charName);
-  out.push('Generated by PlayAnalysisDex');
+  out.push('Generated by Play Analysis — blakestringer.com');
   out.push('');
-
   var hasContent = false;
-
   for (var si = 0; si < parsedScript.scenes.length; si++) {
     var scene = parsedScript.scenes[si];
     var speeches = scene.speeches.filter(function (s) {
@@ -751,40 +779,91 @@ function exportChar(charName) {
       var parts = s.character.split(/\s*[&\/,]\s*/);
       return parts.some(function (p) { return p.trim().toUpperCase() === charName.toUpperCase(); });
     });
-
     if (!speeches.length) continue;
-
     out.push('──────────────────────────────────────');
     out.push(scene.heading);
     out.push('──────────────────────────────────────');
     out.push('');
-
     for (var pi = 0; pi < speeches.length; pi++) {
       var speech = speeches[pi];
-      if (speech.character !== charName) {
-        out.push('[' + speech.character + ']');
-      }
-      for (var li = 0; li < speech.lines.length; li++) {
-        out.push('* ' + speech.lines[li]);
-      }
+      if (speech.character !== charName) out.push('[' + speech.character + ']');
+      for (var li = 0; li < speech.lines.length; li++) out.push('* ' + speech.lines[li]);
       out.push('');
       hasContent = true;
     }
   }
+  return hasContent ? out : null;
+}
 
-  if (!hasContent) { showToast('No lines found for ' + charName); return; }
-
-  var blob = new Blob([out.join('\n')], { type: 'text/plain;charset=utf-8' });
+function triggerDownload(content, mimeType, filename) {
+  var blob = new Blob([content], { type: mimeType });
   var url  = URL.createObjectURL(blob);
   var a    = document.createElement('a');
-  a.href     = url;
-  a.download = parsedScript.title + ' — ' + charName + ' lines.txt';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('Exported ' + charName + ' ✓');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
 }
+
+function exportCharTxt(charName) {
+  var lines = buildExportLines(charName);
+  if (!lines) { showToast('No lines found for ' + charName); return; }
+  triggerDownload(lines.join('\n'), 'text/plain;charset=utf-8',
+    parsedScript.title + ' — ' + charName + ' lines.txt');
+  showToast('Exported ' + charName + ' (.txt) ✓');
+}
+
+function exportCharDoc(charName) {
+  var lines = buildExportLines(charName);
+  if (!lines) { showToast('No lines found for ' + charName); return; }
+  var body = lines.map(function (l) {
+    if (!l) return '<p style="margin:0;height:12pt">&nbsp;</p>';
+    if (/^─+$/.test(l)) return '<hr style="border:none;border-top:1px solid #999;margin:6pt 0">';
+    return '<p style="margin:2pt 0;font-family:Courier New,monospace;font-size:12pt">' +
+           l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>';
+  }).join('');
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+    'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="utf-8"></head>' +
+    '<body style="margin:2cm;font-family:Courier New,monospace">' + body + '</body></html>';
+  triggerDownload(html, 'application/msword',
+    parsedScript.title + ' — ' + charName + ' lines.doc');
+  showToast('Exported ' + charName + ' (.doc) ✓');
+}
+
+function exportCharPdf(charName) {
+  var lines = buildExportLines(charName);
+  if (!lines) { showToast('No lines found for ' + charName); return; }
+  var body = lines.map(function (l) {
+    if (!l) return '<p style="margin:0;height:0.7em">&nbsp;</p>';
+    if (/^─+$/.test(l)) return '<hr style="border:none;border-top:1px solid #bbb;margin:5pt 0">';
+    return '<p style="margin:1pt 0">' +
+           l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>';
+  }).join('');
+  var win = window.open('', '_blank');
+  if (!win) { showToast('Allow pop-ups for PDF export'); return; }
+  win.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<title>' + esc(parsedScript.title) + ' — ' + esc(charName) + '</title>' +
+    '<style>body{font-family:"Courier New",Courier,monospace;font-size:11pt;margin:2cm}' +
+    '@media print{body{margin:1.5cm}}</style></head>' +
+    '<body>' + body +
+    '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},150);}' +
+    '<\/scr' + 'ipt></body></html>'
+  );
+  win.document.close();
+}
+
+/* Delegate all export clicks via single listener */
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('.export-btn');
+  if (!btn) return;
+  var charName = btn.dataset.char;
+  var fmt      = btn.dataset.fmt;
+  if (!charName || !fmt) return;
+  if (fmt === 'txt') exportCharTxt(charName);
+  else if (fmt === 'doc') exportCharDoc(charName);
+  else if (fmt === 'pdf') exportCharPdf(charName);
+});
 
 /* ── UTILS ── */
 function esc(s) {
