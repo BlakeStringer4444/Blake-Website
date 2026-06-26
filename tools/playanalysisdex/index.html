@@ -433,7 +433,8 @@ async function extractLines(arrayBuffer) {
 }
 
 /* ── SCRIPT PARSER ── */
-var SCENE_RE = /^(?:ACT\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|SCENE\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|PROLOGUE|EPILOGUE|INTERMISSION|INTERVAL)(?:[,:\s].*)?$/i;
+/* Matches scene headings with any separator after the heading word — including dashes */
+var SCENE_RE = /^(?:ACT\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|SCENE\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)|PROLOGUE|EPILOGUE|INTERMISSION|INTERVAL)(?:[,:\s\-—].*)?$/i;
 
 var NON_CHARS = new Set([
   /* Stage directions */
@@ -469,6 +470,10 @@ var NON_CHARS = new Set([
   'BIOGRAPHY','BIOGRAPHIES','BIOS',
   'SYNOPSIS','PLOT','SUMMARY','ABOUT THE PLAY','ABOUT THE PLAYWRIGHT',
   'SCENE','SCENES','PAGE','PAGES',
+  /* Common false positives */
+  'PLAYWRIGHT','PLAYWRIGHTS','THE PLAYWRIGHT',
+  'SETTING AND DESIGN','MAJOR PARTNERS','PRODUCTION NOTES',
+  'INTERVAL','INTERMISSION','BREAK',
 ]);
 
 var GROUP_RE = /^(ALL|ENSEMBLE|COMPANY|CHORUS|BOTH|EVERYONE|ALL CAST|VOICES|VOICE)$/i;
@@ -494,6 +499,16 @@ function looksLikeCharName(line) {
   return c;
 }
 
+/* Inline-speech regex: "CHARACTER: dialogue text" or "CHARACTER : dialogue text" */
+var INLINE_RE = /^([A-Z][A-Z0-9\s\.]{0,28}?)\s*:\s+(.+)$/;
+
+function addWords(script, charName, text) {
+  var wc = text.split(/\s+/).filter(Boolean).length;
+  script.characters[charName].words     += wc;
+  script.characters[charName].lineCount += 1;
+  script.totalWords += wc;
+}
+
 function parseScript(lines, title) {
   var script = { title: title, scenes: [], characters: {}, totalWords: 0 };
 
@@ -501,10 +516,22 @@ function parseScript(lines, title) {
   script.scenes.push(currentScene);
   var currentSpeech = null;
 
-  for (var ri = 0; ri < lines.length; ri++) {
-    var line = lines[ri].trim();
-    if (!line) { continue; }
+  /* Skip front matter by finding first scene heading. Everything before it
+     (cast lists, bios, production notes) is ignored.
+     Falls back gracefully if no scene headings exist in the script. */
+  var firstSceneIdx = -1;
+  for (var fi = 0; fi < lines.length; fi++) {
+    if (SCENE_RE.test(lines[fi].trim())) { firstSceneIdx = fi; break; }
+  }
+  var startIdx = firstSceneIdx >= 0 ? firstSceneIdx : 0;
 
+  for (var ri = startIdx; ri < lines.length; ri++) {
+    var line = lines[ri].trim();
+
+    /* Blank line: close current speech so stray text doesn't bleed across gaps */
+    if (!line) { currentSpeech = null; continue; }
+
+    /* Scene heading */
     if (SCENE_RE.test(line)) {
       currentScene  = { heading: line.toUpperCase(), speeches: [] };
       currentSpeech = null;
@@ -512,33 +539,43 @@ function parseScript(lines, title) {
       continue;
     }
 
+    /* Inline format: "CHARACTER: dialogue text on the same line" */
+    var inm = line.match(INLINE_RE);
+    if (inm) {
+      var cn = looksLikeCharName(inm[1]);
+      if (cn) {
+        if (!script.characters[cn]) script.characters[cn] = { speeches: 0, words: 0, lineCount: 0 };
+        script.characters[cn].speeches++;
+        currentSpeech = { character: cn, lines: [inm[2]] };
+        currentScene.speeches.push(currentSpeech);
+        addWords(script, cn, inm[2]);
+        continue;
+      }
+    }
+
+    /* Standard format: character name on its own line */
     var charName = looksLikeCharName(line);
     if (charName) {
-      if (!script.characters[charName]) {
-        script.characters[charName] = { speeches: 0, words: 0, lineCount: 0 };
-      }
+      if (!script.characters[charName]) script.characters[charName] = { speeches: 0, words: 0, lineCount: 0 };
       script.characters[charName].speeches++;
       currentSpeech = { character: charName, lines: [] };
       currentScene.speeches.push(currentSpeech);
       continue;
     }
 
+    /* Dialogue / stage direction continuation */
     if (currentSpeech) {
       currentSpeech.lines.push(line);
-      var wc = line.split(/\s+/).filter(Boolean).length;
-      script.characters[currentSpeech.character].words += wc;
-      script.characters[currentSpeech.character].lineCount++;
-      script.totalWords += wc;
+      addWords(script, currentSpeech.character, line);
     }
   }
 
-  /* Remove noise: no dialogue words at all, or only 1 speech with fewer than 5 words */
+  /* Noise filter: remove anything with no words, or only 1 speech AND fewer than 8 words */
   var names = Object.keys(script.characters);
   for (var ni = 0; ni < names.length; ni++) {
-    var name = names[ni];
-    var d = script.characters[name];
-    if (d.words === 0 || (d.speeches < 2 && d.words < 5)) {
-      delete script.characters[name];
+    var d = script.characters[names[ni]];
+    if (d.words === 0 || (d.speeches < 2 && d.words < 8)) {
+      delete script.characters[names[ni]];
     }
   }
 
