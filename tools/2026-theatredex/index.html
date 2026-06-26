@@ -1191,7 +1191,7 @@ button.td-link { background: none; cursor: pointer; }
   flex-shrink: 0; margin-right: 4px;
 }
 .td-cal-nav {
-  display: flex; align-items: center; gap: 8px; margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
 }
 .td-cal-nav-btn {
   background: none; border: 1px solid rgba(212,255,26,0.35);
@@ -1210,7 +1210,7 @@ button.td-link { background: none; cursor: pointer; }
   color: var(--lime); font-family: 'DM Mono', monospace; font-size: 9px;
   letter-spacing: 1px; text-transform: uppercase; text-align: center;
   padding: 4px 10px; cursor: pointer; line-height: 1.4; flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.15s; margin-left: auto;
 }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
 .td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
@@ -4029,9 +4029,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     /* 21+ days = major (red) · 1–20 days = minor (amber) · 0 = no clash (green) */
     var clashLevel  = overlapDays === 0 ? 'none' : overlapDays >= 21 ? 'major' : 'minor';
     var clashText   = clashLevel === 'major'
-      ? '<span style="color:#ef4444">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
+      ? '<span style="color:#ef4444">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + '</span>'
       : clashLevel === 'minor'
-        ? '<span style="color:#f59e0b">⚠ Minor overlap · ' + overlapDays + ' ' + dayWord + ' overlap</span>'
+        ? '<span style="color:#f59e0b">⚠ Minor overlap · ' + overlapDays + ' ' + dayWord + '</span>'
         : '<span style="color:#22c55e">✓ No clash detected</span>';
 
     /* Compact single-line legend */
@@ -4122,8 +4122,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   /* ── OPEN / CLOSE ── */
   function openCalendar() {
-    _calSavedZoom = document.documentElement.style.zoom || '';
-    document.documentElement.style.zoom = '';
     if (!calYear) { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
     setMonthlyMode();
     renderCalendar();
@@ -4132,8 +4130,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function openCalendarYearly(showA, showB) {
-    _calSavedZoom = document.documentElement.style.zoom || '';
-    document.documentElement.style.zoom = '';
     setYearlyMode();
     renderYearly(showA, showB);
     calOverlay.classList.add('open');
@@ -4142,7 +4138,6 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   function closeCalendar() {
     calOverlay.classList.remove('open');
     calBtn.classList.remove('td-header-btn--active');
-    document.documentElement.style.zoom = _calSavedZoom;
     if (_yearlyMode) setMonthlyMode();
   }
 
