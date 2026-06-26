@@ -115,10 +115,9 @@
       font-size: clamp(52px, 9vw, 104px); letter-spacing: 6px; line-height: 1; color: var(--lime);
     }
     .pa-subtitle {
-      font-family: var(--font); font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
-      color: rgba(212,255,26,0.5); margin-top: 6px; display: none;
+      font-family: var(--font); font-size: 8px; letter-spacing: 1.5px;
+      color: rgba(212,255,26,0.5); margin-top: 6px;
     }
-    .pa-subtitle.visible { display: block; }
     @media (max-width: 639px) {
       .pa-header { padding: 20px 20px 16px; }
     }
@@ -292,7 +291,7 @@
       </div>
     </div>
     <h1 class="pa-title">Play Analysis</h1>
-    <p class="pa-subtitle" id="topbar-playtitle"></p>
+    <p class="pa-subtitle">an attempt at summarising role size and lines for your PDF script</p>
   </header>
 
   <!-- UPLOAD SCREEN -->
@@ -329,7 +328,7 @@
   <!-- ANALYSIS SCREEN -->
   <div id="analysis-screen">
     <div class="char-panel">
-      <div class="panel-header">Characters · sorted by word count</div>
+      <div class="panel-header">sorted by approximate word count</div>
       <div class="char-table-wrap">
         <table class="char-table">
           <thead>
@@ -366,6 +365,7 @@
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 'use strict';
 
@@ -434,9 +434,8 @@ var dropZone        = document.getElementById('drop-zone');
 var fileInput       = document.getElementById('file-input');
 var scanError       = document.getElementById('scan-error');
 var parseStatus     = document.getElementById('parse-status');
-var topbarBack      = document.getElementById('topbar-back');
-var topbarPlaytitle = document.getElementById('topbar-playtitle');
-var charTbody       = document.getElementById('char-tbody');
+var topbarBack = document.getElementById('topbar-back');
+var charTbody  = document.getElementById('char-tbody');
 var toast           = document.getElementById('toast');
 
 /* ── UPLOAD EVENTS ── */
@@ -455,8 +454,7 @@ topbarBack.addEventListener('click', function () {
   analysisScreen.style.display = 'none';
   uploadScreen.style.display   = 'flex';
   topbarBack.classList.remove('visible');
-  topbarPlaytitle.classList.remove('visible');
-  topbarPlaytitle.textContent = '';
+  document.title = 'Play Analysis | Blake Stringer';
   scanError.style.display   = 'none';
   parseStatus.style.display = 'none';
   fileInput.value = '';
@@ -686,8 +684,7 @@ async function handleFile(file) {
     uploadScreen.style.display   = 'none';
     analysisScreen.style.display = 'flex';
     topbarBack.classList.add('visible');
-    topbarPlaytitle.textContent = parsedScript.title;
-    topbarPlaytitle.classList.add('visible');
+    document.title = parsedScript.title + ' — Play Analysis';
 
   } catch (err) {
     parseStatus.textContent = 'Could not read PDF. Please try another file.';
@@ -722,7 +719,7 @@ function buildCharRow(name, d, maxWords, showExport) {
     (showExport
       ? '<td class="export-cell">' +
           '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="txt">.txt</button>' +
-          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="doc">.doc</button>' +
+          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="doc">.docx</button>' +
           '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="pdf">.pdf</button>' +
         '</td>'
       : '<td></td>');
@@ -795,10 +792,12 @@ function buildExportLines(charName) {
   return hasContent ? out : null;
 }
 
-function triggerDownload(content, mimeType, filename) {
-  var blob = new Blob([content], { type: mimeType });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
+function triggerDownload(contentOrBlob, mimeType, filename) {
+  var blob = (contentOrBlob instanceof Blob)
+    ? contentOrBlob
+    : new Blob([contentOrBlob], { type: mimeType });
+  var url = URL.createObjectURL(blob);
+  var a   = document.createElement('a');
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
@@ -812,22 +811,57 @@ function exportCharTxt(charName) {
   showToast('Exported ' + charName + ' (.txt) ✓');
 }
 
-function exportCharDoc(charName) {
+async function exportCharDocx(charName) {
   var lines = buildExportLines(charName);
   if (!lines) { showToast('No lines found for ' + charName); return; }
-  var body = lines.map(function (l) {
-    if (!l) return '<p style="margin:0;height:12pt">&nbsp;</p>';
-    if (/^─+$/.test(l)) return '<hr style="border:none;border-top:1px solid #999;margin:6pt 0">';
-    return '<p style="margin:2pt 0;font-family:Courier New,monospace;font-size:12pt">' +
-           l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>';
+
+  /* Build OOXML paragraphs */
+  var NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  var paras = lines.map(function (l) {
+    var t = l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var bold = (!l) ? '' : (/^─+$/.test(l) || l === lines[0] || l.startsWith('Lines for:'))
+      ? '<w:rPr><w:b/></w:rPr>' : '';
+    var rpr = '<w:rPr><w:rFonts w:ascii="Courier New" w:hAnsi="Courier New"/><w:sz w:val="22"/>' +
+              (bold ? '<w:b/>' : '') + '</w:rPr>';
+    if (!l) return '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
+    if (/^─+$/.test(l)) {
+      return '<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="999999"/></w:pBdr></w:pPr></w:p>';
+    }
+    return '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr><w:r>' + rpr + '<w:t xml:space="preserve">' + t + '</w:t></w:r></w:p>';
   }).join('');
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-    'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
-    '<head><meta charset="utf-8"></head>' +
-    '<body style="margin:2cm;font-family:Courier New,monospace">' + body + '</body></html>';
-  triggerDownload(html, 'application/msword',
-    parsedScript.title + ' — ' + charName + ' lines.doc');
-  showToast('Exported ' + charName + ' (.doc) ✓');
+
+  var docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:body>' + paras + '</w:body></w:document>';
+
+  var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '</Types>';
+
+  var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+    '</Relationships>';
+
+  var wordRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+
+  var zip = new JSZip();
+  zip.file('[Content_Types].xml', ct);
+  zip.folder('_rels').file('.rels', rels);
+  zip.folder('word').file('document.xml', docXml);
+  zip.folder('word').folder('_rels').file('document.xml.rels', wordRels);
+
+  var blob = await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+  triggerDownload(blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    parsedScript.title + ' — ' + charName + ' lines.docx');
+  showToast('Exported ' + charName + ' (.docx) ✓');
 }
 
 function exportCharPdf(charName) {
@@ -861,7 +895,7 @@ document.addEventListener('click', function (e) {
   var fmt      = btn.dataset.fmt;
   if (!charName || !fmt) return;
   if (fmt === 'txt') exportCharTxt(charName);
-  else if (fmt === 'doc') exportCharDoc(charName);
+  else if (fmt === 'doc') exportCharDocx(charName);
   else if (fmt === 'pdf') exportCharPdf(charName);
 });
 
