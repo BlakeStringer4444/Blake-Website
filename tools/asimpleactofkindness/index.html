@@ -38,12 +38,10 @@
       --border:  rgba(212,255,26,0.14);
     }
 
-    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; transition: background 0.2s, color 0.2s; }
+    html, body { min-height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; transition: background 0.2s, color 0.2s; }
 
     /* ── HEADER ── */
-    #app { height: 100%; display: flex; flex-direction: column; }
-
-    .asak-header { background: var(--black); padding: 28px 48px 24px; flex-shrink: 0; }
+    .asak-header { background: var(--black); padding: 28px 48px 24px; }
     .asak-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .asak-back-link { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.6); text-decoration: none; transition: color 0.15s; }
     .asak-back-link:hover { color: var(--lime); }
@@ -56,95 +54,154 @@
     }
     .asak-icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--lime); }
     .asak-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 88px); letter-spacing: 5px; color: var(--lime); line-height: 1; }
-    .asak-subtitle { font-family: var(--font); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
+    .asak-subtitle { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
 
-    /* ── 2×2 GRID ── */
-    .asak-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      flex: 1;
-      min-height: 0;
+    /* ── CARDS GRID ── */
+    .cards-wrap { max-width: 1080px; margin: 0 auto; padding: 48px; }
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      padding: 32px 32px 28px;
+      display: flex; flex-direction: column; gap: 20px;
+      transition: border-color 0.2s;
     }
-    .quad { border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; min-height: 300px; }
-    .quad-header {
+    .card:hover { border-color: rgba(212,255,26,0.25); }
+
+    .card-eyebrow { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
+    .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--fg); line-height: 1; margin-top: 4px; }
+    .card-desc { font-size: 11px; color: var(--muted); line-height: 1.7; margin-top: 6px; }
+
+    /* open button */
+    .card-open-btn {
+      align-self: flex-start; margin-top: auto;
+      background: var(--lime); color: #000; border: none;
+      font-family: var(--font); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 10px 20px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .card-open-btn:hover { opacity: 0.82; }
+
+    /* coming soon */
+    .card-coming { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--border); margin-top: auto; }
+
+    /* countdown card */
+    .cd-nums { display: flex; align-items: flex-end; gap: 2px; margin-top: 4px; }
+    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 5vw, 64px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
+    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 52px); color: var(--lime); line-height: 1; padding-bottom: 12px; opacity: 0.5; }
+    .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .cd-date { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); margin-top: 14px; }
+    .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--lime); letter-spacing: 4px; }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--bg); border: 1px solid var(--border);
+      width: 100%; max-width: 860px;
+      max-height: 88vh;
+      display: flex; flex-direction: column;
+      transform: scale(0.97); transition: transform 0.22s;
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+
+    .modal-header {
       background: var(--card-bg); border-bottom: 1px solid var(--border);
-      padding: 10px 18px; display: flex; align-items: center;
-      justify-content: space-between; flex-shrink: 0;
+      padding: 14px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;
     }
-    .quad-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-weight: 400; }
-    .quad-body { flex: 1; overflow-y: auto; background: var(--bg); }
-    .quad-body::-webkit-scrollbar { width: 4px; }
-    .quad-body::-webkit-scrollbar-track { background: transparent; }
-    .quad-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .modal-header-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); flex: 1; }
+    .modal-close {
+      background: none; border: none; color: var(--muted); font-size: 20px; line-height: 1;
+      cursor: pointer; padding: 2px 6px; transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--fg); }
+    .modal-body { flex: 1; overflow-y: auto; }
+    .modal-body::-webkit-scrollbar { width: 4px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    /* ── Q1: SCHEDULE ── */
+    /* ── SCHEDULE MODAL CONTENT ── */
     .week-label {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 10px 18px 6px; background: var(--bg); position: sticky; top: 0; z-index: 1;
+      padding: 12px 24px 8px; background: var(--bg);
+      position: sticky; top: 0; z-index: 1;
       border-bottom: 1px solid var(--border);
     }
     .sched-row {
-      display: grid; grid-template-columns: 88px 1fr auto;
-      gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 100px 1fr auto;
+      gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--border);
       align-items: start; transition: opacity 0.15s;
     }
-    .sched-row.past { opacity: 0.32; }
-    .sched-row.today { background: rgba(212,255,26,0.07); border-left: 3px solid var(--lime); padding-left: 15px; }
-    .sched-row.next-up { background: rgba(100,72,228,0.06); border-left: 3px solid var(--purple); padding-left: 15px; }
+    .sched-row.past { opacity: 0.3; }
+    .sched-row.today { background: rgba(212,255,26,0.07); border-left: 3px solid var(--lime); padding-left: 21px; }
+    .sched-row.next-up { background: rgba(100,72,228,0.06); border-left: 3px solid var(--purple); padding-left: 21px; }
     .sched-row.performance { background: rgba(212,255,26,0.03); }
     .sched-row.performance.today { background: rgba(212,255,26,0.12); }
-    .sched-date { font-size: 11px; font-weight: 500; color: var(--fg); }
-    .sched-time { font-size: 9px; color: var(--muted); margin-top: 2px; }
-    .sched-what { font-size: 11px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sched-sub { font-size: 9px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sched-badge { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; white-space: nowrap; }
+    .sched-date { font-size: 12px; font-weight: 500; color: var(--fg); }
+    .sched-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .sched-what { font-size: 12px; color: var(--fg); }
+    .sched-sub { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .sched-badge { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; white-space: nowrap; }
     .badge-show { background: var(--lime); color: #000; }
     .badge-today { background: var(--lime); color: #000; }
     .badge-next { background: var(--purple); color: #fff; }
-    .sched-loading { padding: 24px 18px; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-align: center; }
-    .sched-error { padding: 24px 18px; font-size: 10px; letter-spacing: 1px; color: #ef4444; text-align: center; line-height: 1.8; }
+    .sched-loading { padding: 32px 24px; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-align: center; }
+    .sched-error { padding: 32px 24px; font-size: 10px; color: #ef4444; text-align: center; line-height: 1.8; }
 
-    /* ── Q2: CAST & CREW ── */
-    .placeholder-box { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; gap: 10px; }
-    .placeholder-icon { font-size: 28px; opacity: 0.3; }
-    .placeholder-text { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-
-    /* ── Q3: PDF VIEWER ── */
-    #pdf-canvas-container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }
-    #pdf-canvas-container canvas { max-width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
-    .pdf-controls { display: flex; align-items: center; gap: 8px; }
+    /* ── PDF MODAL CONTENT ── */
+    .pdf-nav-wrap { display: flex; align-items: center; gap: 8px; }
     .pdf-nav-btn {
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(240,240,235,0.7); font-family: var(--font); font-size: 11px;
-      padding: 3px 9px; cursor: pointer; transition: opacity 0.15s;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--fg); font-family: var(--font); font-size: 13px;
+      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s;
     }
     .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
-    .pdf-page-info { font-size: 9px; color: rgba(212,255,26,0.5); }
+    .pdf-page-info { font-size: 9px; color: var(--muted); min-width: 50px; text-align: center; }
+    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
+    #pdf-canvas-wrap canvas { max-width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
-    /* ── Q4: COUNTDOWN ── */
-    .countdown-body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 32px 20px; gap: 20px; }
-    .countdown-eyebrow { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
-    .countdown-blocks { display: flex; align-items: flex-end; gap: 4px; }
-    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 5vw, 60px); color: var(--lime); line-height: 1; padding-bottom: 14px; opacity: 0.5; }
-    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px, 6vw, 72px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
-    .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    .countdown-date-str { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); }
-    .countdown-live { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--lime); letter-spacing: 4px; text-align: center; }
+    /* ── CAST & CREW MODAL CONTENT ── */
+    .cc-section-label {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 24px 10px; background: var(--bg); position: sticky; top: 0; z-index: 1;
+      border-bottom: 1px solid var(--border);
+    }
+    .cc-row {
+      display: grid; grid-template-columns: 1fr 1fr auto;
+      gap: 16px; padding: 11px 24px; border-bottom: 1px solid var(--border); align-items: center;
+    }
+    .cc-role { font-size: 11px; color: var(--fg); }
+    .cc-name { font-size: 11px; color: var(--fg); }
+    .cc-name.tbc { color: var(--muted); font-style: italic; }
+    .cc-contact { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+    .cc-contact a { font-size: 9px; color: var(--muted); text-decoration: none; letter-spacing: 0.5px; transition: color 0.15s; }
+    .cc-contact a:hover { color: var(--lime); }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
+    @media (max-width: 720px) {
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
-      .asak-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
-      .quad { min-height: 260px; max-height: 420px; }
-      .sched-row { grid-template-columns: 76px 1fr auto; gap: 8px; padding: 8px 14px; }
+      .cards-wrap { padding: 24px 20px; }
+      .cards-grid { grid-template-columns: 1fr; gap: 14px; }
+      .card { padding: 24px 22px 20px; }
+      .sched-row { grid-template-columns: 88px 1fr auto; gap: 10px; padding: 10px 16px; }
+      .sched-row.today, .sched-row.next-up { padding-left: 13px; }
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal { max-height: 92vh; max-width: 100%; }
     }
   </style>
 </head>
 <body>
-<div id="app">
+
   <header class="asak-header">
     <div class="asak-header-top">
       <a class="asak-back-link" href="/">← blakestringer.com</a>
@@ -157,86 +214,100 @@
     <p class="asak-subtitle">Brink Productions · Season 2026</p>
   </header>
 
-  <main class="asak-grid">
+  <div class="cards-wrap">
+    <div class="cards-grid">
 
-    <!-- Q1: Rehearsal Schedule -->
-    <section class="quad">
-      <div class="quad-header">
-        <span class="quad-title">Rehearsal Schedule</span>
+      <!-- Card: Schedule -->
+      <div class="card">
+        <div>
+          <div class="card-eyebrow">Rehearsal Schedule</div>
+          <div class="card-title">When &amp; What</div>
+          <div class="card-desc">Sep 6 – Nov 21, 2026<br>Weekly sessions through to opening night.</div>
+        </div>
+        <button class="card-open-btn" id="open-schedule">View Schedule →</button>
       </div>
-      <div class="quad-body" id="sched-body">
+
+      <!-- Card: Cast & Crew -->
+      <div class="card">
+        <div>
+          <div class="card-eyebrow">Cast &amp; Crew</div>
+          <div class="card-title">The Team</div>
+          <div class="card-desc">Everyone involved in bringing this production to life.</div>
+        </div>
+        <button class="card-open-btn" id="open-cast">View Cast &amp; Crew →</button>
+      </div>
+
+      <!-- Card: Script -->
+      <div class="card">
+        <div>
+          <div class="card-eyebrow">The Script</div>
+          <div class="card-title">Read Along</div>
+          <div class="card-desc">A Simple Act of Kindness<br>by Ross Mueller</div>
+        </div>
+        <button class="card-open-btn" id="open-script">Open Script →</button>
+      </div>
+
+      <!-- Card: Countdown -->
+      <div class="card">
+        <div class="card-eyebrow" id="cd-eyebrow">Opening Night</div>
+        <div class="cd-nums" id="cd-blocks">
+          <div class="cd-block"><div class="cd-num" id="cd-days">--</div><div class="cd-unit">days</div></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-block"><div class="cd-num" id="cd-hours">--</div><div class="cd-unit">hrs</div></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-block"><div class="cd-num" id="cd-mins">--</div><div class="cd-unit">min</div></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-unit">sec</div></div>
+        </div>
+        <div class="cd-date">6 November 2026 · 8:00pm</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── MODAL: Schedule ── -->
+  <div class="modal-overlay" id="modal-schedule" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Rehearsal Schedule</span>
+        <button class="modal-close" data-close="modal-schedule" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="sched-body">
         <div class="sched-loading">Loading schedule…</div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- Q2: Cast & Crew -->
-    <section class="quad">
-      <div class="quad-header">
-        <span class="quad-title">Cast &amp; Crew</span>
+  <!-- ── MODAL: Cast & Crew ── -->
+  <div class="modal-overlay" id="modal-cast" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Cast &amp; Crew</span>
+        <button class="modal-close" data-close="modal-cast" aria-label="Close">×</button>
       </div>
-      <div class="quad-body">
-        <div class="placeholder-box">
-          <div class="placeholder-icon">🎭</div>
-          <div class="placeholder-text">Coming soon</div>
-        </div>
+      <div class="modal-body" id="cast-body">
+        <div class="sched-loading">Loading…</div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- Q3: Script PDF -->
-    <section class="quad">
-      <div class="quad-header">
-        <span class="quad-title">The Script</span>
-        <div id="pdf-controls" class="pdf-controls" style="display:none;">
+  <!-- ── MODAL: Script ── -->
+  <div class="modal-overlay" id="modal-script" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">The Script — A Simple Act of Kindness</span>
+        <div class="pdf-nav-wrap" id="pdf-nav" style="display:none;">
           <button class="pdf-nav-btn" id="pdf-prev" disabled>‹</button>
           <span class="pdf-page-info" id="pdf-page-info"></span>
           <button class="pdf-nav-btn" id="pdf-next" disabled>›</button>
         </div>
+        <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
       </div>
-      <div class="quad-body" id="pdf-body">
-        <div class="placeholder-box" id="pdf-placeholder">
-          <div class="placeholder-icon">📄</div>
-          <div class="placeholder-text">Script coming soon</div>
-        </div>
-        <div id="pdf-canvas-container"></div>
+      <div class="modal-body" id="pdf-body">
+        <div id="pdf-canvas-wrap"></div>
       </div>
-    </section>
-
-    <!-- Q4: Countdown -->
-    <section class="quad">
-      <div class="quad-header">
-        <span class="quad-title">Opening Night</span>
-      </div>
-      <div class="quad-body">
-        <div class="countdown-body" id="countdown-body">
-          <div class="countdown-eyebrow" id="cd-eyebrow">until curtain up</div>
-          <div class="countdown-blocks" id="cd-blocks">
-            <div class="cd-block">
-              <div class="cd-num" id="cd-days">--</div>
-              <div class="cd-unit">days</div>
-            </div>
-            <div class="cd-sep">:</div>
-            <div class="cd-block">
-              <div class="cd-num" id="cd-hours">--</div>
-              <div class="cd-unit">hours</div>
-            </div>
-            <div class="cd-sep">:</div>
-            <div class="cd-block">
-              <div class="cd-num" id="cd-mins">--</div>
-              <div class="cd-unit">mins</div>
-            </div>
-            <div class="cd-sep">:</div>
-            <div class="cd-block">
-              <div class="cd-num" id="cd-secs">--</div>
-              <div class="cd-unit">secs</div>
-            </div>
-          </div>
-          <div class="countdown-date-str">6 November 2026 · 8:00pm</div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-</div>
+    </div>
+  </div>
 
 <script>
 /* ── THEME ── */
@@ -258,7 +329,7 @@
 
 /* ── FONT ZOOM ── */
 (function () {
-  var desktop = window.innerWidth >= 769;
+  var desktop = window.innerWidth >= 720;
   var levels  = desktop ? [1.0, 1.2] : ['', 1.15];
   var idx     = parseInt(localStorage.getItem('asak-zoom') || '0', 10);
   if (idx >= levels.length) idx = 0;
@@ -271,232 +342,315 @@
 
 /* ── COUNTDOWN ── */
 (function () {
-  /* Opening night: Fri 6 Nov 2026, 8pm ACDT (UTC+10:30 — Adelaide DST) */
-  var target = new Date('2026-11-06T20:00:00+10:30');
-
+  var target = new Date('2026-11-06T20:00:00+10:30'); /* ACDT — Adelaide */
   function pad(n) { return String(n).padStart(2, '0'); }
-
   function tick() {
     var diff = target - Date.now();
     if (diff <= 0) {
       document.getElementById('cd-eyebrow').textContent = 'now showing';
-      document.getElementById('cd-blocks').innerHTML =
-        '<div class="countdown-live">CURTAIN UP</div>';
+      document.getElementById('cd-blocks').innerHTML = '<div class="cd-live">CURTAIN UP</div>';
       return;
     }
-    var d = Math.floor(diff / 86400000);
-    var h = Math.floor((diff % 86400000) / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    var s = Math.floor((diff % 60000) / 1000);
-    document.getElementById('cd-days').textContent  = d;
-    document.getElementById('cd-hours').textContent = pad(h);
-    document.getElementById('cd-mins').textContent  = pad(m);
-    document.getElementById('cd-secs').textContent  = pad(s);
+    document.getElementById('cd-days').textContent  = Math.floor(diff / 86400000);
+    document.getElementById('cd-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
+    document.getElementById('cd-mins').textContent  = pad(Math.floor((diff % 3600000) / 60000));
+    document.getElementById('cd-secs').textContent  = pad(Math.floor((diff % 60000) / 1000));
   }
   tick();
   setInterval(tick, 1000);
 })();
 
-/* ── SCHEDULE ── */
+/* ── MODALS ── */
 (function () {
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?output=csv';
-  var schedBody = document.getElementById('sched-body');
-
-  /* ── CSV parser ── */
-  function parseCSVRow(line) {
-    var result = [], cur = '', inQ = false;
-    for (var i = 0; i < line.length; i++) {
-      var c = line[i];
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-      else { cur += c; }
-    }
-    result.push(cur);
-    return result;
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
   }
 
-  function parseCSV(text) {
-    var lines   = text.split(/\r?\n/);
-    var headers = parseCSVRow(lines[0]).map(function (h) { return h.trim().toLowerCase(); });
+  document.getElementById('open-schedule').addEventListener('click', function () {
+    openModal('modal-schedule');
+    loadSchedule();
+  });
+  document.getElementById('open-cast').addEventListener('click', function () {
+    openModal('modal-cast');
+    loadCast();
+  });
+  document.getElementById('open-script').addEventListener('click', function () {
+    openModal('modal-script');
+    loadPDF();
+  });
+
+  /* Close buttons */
+  document.querySelectorAll('[data-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () { closeModal(btn.getAttribute('data-close')); });
+  });
+
+  /* Click outside modal */
+  document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal(overlay.id);
+    });
+  });
+
+  /* Escape key */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(function (el) { closeModal(el.id); });
+    }
+  });
+})();
+
+/* ── SCHEDULE ── */
+var scheduleLoaded = false;
+function loadSchedule() {
+  if (scheduleLoaded) return;
+
+  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?gid=0&single=true&output=csv';
+  var body    = document.getElementById('sched-body');
+
+  function parseRow(line) {
+    var r = [], c = '', q = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') { q = !q; }
+      else if (ch === ',' && !q) { r.push(c); c = ''; }
+      else { c += ch; }
+    }
+    r.push(c);
+    return r;
+  }
+
+  function parseCSV(txt) {
+    var lines   = txt.split(/\r?\n/);
+    var headers = parseRow(lines[0]).map(function (h) { return h.trim().toLowerCase(); });
     var rows    = [];
     for (var i = 1; i < lines.length; i++) {
       var ln = lines[i].trim();
       if (!ln) continue;
-      var cols = parseCSVRow(ln);
-      var obj  = {};
+      var cols = parseRow(ln), obj = {};
       headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
       if (obj.datetime) rows.push(obj);
     }
     return rows;
   }
 
-  /* ── Date helpers ── */
-  function parseDT(str) {
-    /* Expects YYYY-MM-DD-HH-MM */
-    if (!str) return null;
-    var p = str.split('-');
+  function parseDT(s) {
+    if (!s) return null;
+    var p = s.split('-');
     if (p.length < 3) return null;
-    var yr = parseInt(p[0], 10), mo = parseInt(p[1], 10) - 1, dy = parseInt(p[2], 10);
-    var hr = p.length >= 4 ? parseInt(p[3], 10) : 0;
-    var mn = p.length >= 5 ? parseInt(p[4], 10) : 0;
-    if (isNaN(yr) || isNaN(mo) || isNaN(dy)) return null;
-    return new Date(yr, mo, dy, hr, mn);
+    var yr = +p[0], mo = +p[1] - 1, dy = +p[2];
+    var hr = p[3] != null ? +p[3] : 0, mn = p[4] != null ? +p[4] : 0;
+    return (isNaN(yr) || isNaN(mo) || isNaN(dy)) ? null : new Date(yr, mo, dy, hr, mn);
   }
 
-  var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var MON_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  function fmtDate(d) { return DAY_NAMES[d.getDay()] + ' ' + d.getDate() + ' ' + MON_NAMES[d.getMonth()]; }
+  function fmtDate(d) { return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
   function fmtTime(d) {
-    var h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'pm' : 'am';
+    var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'pm' : 'am';
     h = h % 12 || 12;
-    return h + (m ? ':' + String(m).padStart(2, '0') : '') + ampm;
+    return h + (m ? ':' + String(m).padStart(2,'0') : '') + ap;
   }
-  function sameDay(a, b) {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function escH(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  /* ── Render ── */
   function render(rows) {
     var now   = new Date();
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    /* Find first event that hasn't started yet */
     var nextIdx = -1;
     for (var i = 0; i < rows.length; i++) {
       var d = parseDT(rows[i].datetime);
       if (d && d > now) { nextIdx = i; break; }
     }
 
-    /* Group by week column */
-    var groups = [], groupMap = {};
+    var groups = [], gmap = {};
     rows.forEach(function (row, idx) {
       var wk = row.week || 'Schedule';
-      if (!groupMap[wk]) { groupMap[wk] = []; groups.push({ label: wk, rows: groupMap[wk] }); }
-      groupMap[wk].push({ row: row, idx: idx });
+      if (!gmap[wk]) { gmap[wk] = []; groups.push({ label: wk, items: gmap[wk] }); }
+      gmap[wk].push({ row: row, idx: idx });
     });
 
     var html = '';
     groups.forEach(function (g) {
-      html += '<div class="week-group"><div class="week-label">' + escH(g.label) + '</div>';
-      g.rows.forEach(function (entry) {
-        var row = entry.row, idx = entry.idx;
-        var d = parseDT(row.datetime);
+      html += '<div><div class="week-label">' + esc(g.label) + '</div>';
+      g.items.forEach(function (entry) {
+        var row = entry.row, d = parseDT(row.datetime);
         if (!d) return;
-
-        var isToday  = sameDay(d, today);
-        var isPast   = !isToday && d < now;
-        var isNext   = idx === nextIdx && !isToday;
-        var isPerf   = !!row.performance;
-
-        var cls = 'sched-row';
-        if (isPast)  cls += ' past';
-        if (isToday) cls += ' today';
-        if (isNext)  cls += ' next-up';
-        if (isPerf)  cls += ' performance';
-
-        var badge = '';
-        if (isToday) {
-          badge = '<span class="sched-badge badge-today">today</span>';
-        } else if (isNext) {
-          badge = '<span class="sched-badge badge-next">next</span>';
-        } else if (isPerf && !isPast) {
-          badge = '<span class="sched-badge badge-show">' + escH(row.performance) + '</span>';
-        }
-
-        var what = row.context || (row.act || row.scene ? [row.act, row.scene].filter(Boolean).join(' · ') : (isPerf ? 'Performance' : 'Rehearsal'));
-        var sub  = '';
-        if (row.pages)      sub += 'pp ' + row.pages;
-        if (row.characters) sub += (sub ? ' · ' : '') + row.characters;
-
+        var isToday = sameDay(d, today);
+        var isPast  = !isToday && d < now;
+        var isNext  = entry.idx === nextIdx && !isToday;
+        var isPerf  = !!row.performance;
+        var cls     = 'sched-row' + (isPast ? ' past' : '') + (isToday ? ' today' : '') + (isNext ? ' next-up' : '') + (isPerf ? ' performance' : '');
+        var badge   = isToday ? '<span class="sched-badge badge-today">today</span>'
+                    : isNext  ? '<span class="sched-badge badge-next">next</span>'
+                    : (isPerf && !isPast) ? '<span class="sched-badge badge-show">' + esc(row.performance) + '</span>'
+                    : '';
+        var what = row.context || ([row.act, row.scene].filter(Boolean).join(' · ') || (isPerf ? 'Performance' : 'Rehearsal'));
+        var sub  = (row.pages ? 'pp ' + row.pages : '') + (row.characters ? (row.pages ? ' · ' : '') + row.characters : '');
         var anchor = isToday ? ' id="sched-today"' : (isNext ? ' id="sched-next"' : '');
-        html += '<div class="' + cls + '"' + anchor + '>';
-        html += '<div><div class="sched-date">' + fmtDate(d) + '</div><div class="sched-time">' + fmtTime(d) + '</div></div>';
-        html += '<div><div class="sched-what">' + escH(what) + '</div>' + (sub ? '<div class="sched-sub">' + escH(sub) + '</div>' : '') + '</div>';
-        html += '<div>' + badge + '</div>';
-        html += '</div>';
+        html += '<div class="' + cls + '"' + anchor + '>'
+              + '<div><div class="sched-date">' + fmtDate(d) + '</div><div class="sched-time">' + fmtTime(d) + '</div></div>'
+              + '<div><div class="sched-what">' + esc(what) + '</div>' + (sub ? '<div class="sched-sub">' + esc(sub) + '</div>' : '') + '</div>'
+              + '<div>' + badge + '</div></div>';
       });
       html += '</div>';
     });
 
-    schedBody.innerHTML = html || '<div class="sched-loading">No schedule entries found.</div>';
+    body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
+    scheduleLoaded = true;
 
-    /* Scroll to today / next */
     setTimeout(function () {
       var el = document.getElementById('sched-today') || document.getElementById('sched-next');
       if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 150);
+    }, 120);
   }
 
   fetch(CSV_URL)
-    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(function (txt) {
-      var rows = parseCSV(txt);
-      if (!rows.length) throw new Error('empty');
-      render(rows);
-    })
-    .catch(function (err) {
-      schedBody.innerHTML = '<div class="sched-error">Could not load schedule.<br>' + escH(err.message) + '</div>';
-    });
-})();
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) { var rows = parseCSV(txt); if (!rows.length) throw new Error('empty'); render(rows); })
+    .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load schedule.<br>' + esc(err.message) + '</div>'; });
+}
 
-/* ── PDF VIEWER ── */
-(function () {
-  /* Place script.pdf in the same folder when ready */
-  var PDF_PATH = '/tools/asimpleactofkindness/script.pdf';
+/* ── CAST & CREW ── */
+var castLoaded = false;
+function loadCast() {
+  if (castLoaded) return;
 
-  fetch(PDF_PATH, { method: 'HEAD' })
-    .then(function (r) { if (r.ok) initPDF(PDF_PATH); })
-    .catch(function () { /* placeholder stays */ });
+  var CC_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?gid=43169221&single=true&output=csv';
+  var body   = document.getElementById('cast-body');
 
-  function initPDF(url) {
-    if (typeof pdfjsLib === 'undefined') return;
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  function parseRow(line) {
+    var r = [], c = '', q = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') { q = !q; }
+      else if (ch === ',' && !q) { r.push(c); c = ''; }
+      else { c += ch; }
+    }
+    r.push(c);
+    return r;
+  }
 
-    document.getElementById('pdf-placeholder').style.display = 'none';
-    document.getElementById('pdf-controls').style.display    = 'flex';
-    var container = document.getElementById('pdf-canvas-container');
-    var prevBtn   = document.getElementById('pdf-prev');
-    var nextBtn   = document.getElementById('pdf-next');
-    var pageInfo  = document.getElementById('pdf-page-info');
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    var pdfDoc = null, curPage = 1, numPages = 0, rendering = false;
+  function render(rows) {
+    var cast = rows.filter(function (r) { return r.role_cast; });
+    var crew = rows.filter(function (r) { return r.role_crew; });
 
-    pdfjsLib.getDocument(url).promise.then(function (pdf) {
-      pdfDoc    = pdf;
-      numPages  = pdf.numPages;
-      renderPage(1);
-    });
+    function makeRow(role, name, number, email) {
+      var nameHtml = name
+        ? '<span class="cc-name">' + esc(name) + '</span>'
+        : '<span class="cc-name tbc">TBC</span>';
+      var contact = '';
+      if (number) contact += '<a href="tel:' + esc(number) + '">' + esc(number) + '</a>';
+      if (email)  contact += '<a href="mailto:' + esc(email) + '">' + esc(email) + '</a>';
+      return '<div class="cc-row">'
+           + '<div class="cc-role">' + esc(role) + '</div>'
+           + nameHtml
+           + '<div class="cc-contact">' + contact + '</div>'
+           + '</div>';
+    }
 
-    function renderPage(n) {
-      if (rendering) return;
-      rendering = true;
-      curPage   = n;
-      prevBtn.disabled = n <= 1;
-      nextBtn.disabled = n >= numPages;
-      pageInfo.textContent = n + ' / ' + numPages;
-      pdfDoc.getPage(n).then(function (page) {
-        var scale = Math.min((container.clientWidth - 24) / page.getViewport({ scale: 1 }).width, 2);
-        var vp     = page.getViewport({ scale: scale });
-        var canvas = document.createElement('canvas');
-        canvas.width  = vp.width;
-        canvas.height = vp.height;
-        container.innerHTML = '';
-        container.appendChild(canvas);
-        page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise
-          .then(function () { rendering = false; });
+    var html = '';
+
+    if (cast.length) {
+      html += '<div class="cc-section-label">Cast</div>';
+      cast.forEach(function (r) {
+        html += makeRow(r.role_cast, r.name, '', '');
       });
     }
 
-    prevBtn.addEventListener('click', function () { if (curPage > 1) renderPage(curPage - 1); });
-    nextBtn.addEventListener('click', function () { if (curPage < numPages) renderPage(curPage + 1); });
+    if (crew.length) {
+      html += '<div class="cc-section-label">Crew</div>';
+      crew.forEach(function (r) {
+        html += makeRow(r.role_crew, r.name, r.number, r.email);
+      });
+    }
+
+    body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
+    castLoaded = true;
   }
-})();
+
+  function parseCSV(txt) {
+    var lines   = txt.split(/\r?\n/);
+    var headers = parseRow(lines[0]).map(function (h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+    var rows    = [];
+    for (var i = 1; i < lines.length; i++) {
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      var cols = parseRow(ln), obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.role_cast || obj.role_crew || obj.name) rows.push(obj);
+    }
+    return rows;
+  }
+
+  function esc2(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  fetch(CC_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) { render(parseCSV(txt)); })
+    .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load cast &amp; crew.<br>' + esc2(err.message) + '</div>'; });
+}
+
+/* ── PDF VIEWER ── */
+var pdfLoaded = false;
+function loadPDF() {
+  if (pdfLoaded) return;
+  pdfLoaded = true;
+
+  var PDF_PATH = '/tools/asimpleactofkindness/script.pdf';
+  if (typeof pdfjsLib === 'undefined') return;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  var wrap    = document.getElementById('pdf-canvas-wrap');
+  var nav     = document.getElementById('pdf-nav');
+  var prevBtn = document.getElementById('pdf-prev');
+  var nextBtn = document.getElementById('pdf-next');
+  var pageInfo = document.getElementById('pdf-page-info');
+  var pdfDoc  = null, curPage = 1, numPages = 0, rendering = false;
+
+  pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
+    pdfDoc    = pdf;
+    numPages  = pdf.numPages;
+    nav.style.display = 'flex';
+    renderPage(1);
+  }).catch(function () {
+    wrap.innerHTML = '<div class="sched-loading">Could not load PDF.</div>';
+  });
+
+  function renderPage(n) {
+    if (rendering) return;
+    rendering = true;
+    curPage   = n;
+    prevBtn.disabled = n <= 1;
+    nextBtn.disabled = n >= numPages;
+    pageInfo.textContent = n + ' / ' + numPages;
+    pdfDoc.getPage(n).then(function (page) {
+      var maxW  = Math.min(wrap.clientWidth - 40, 720);
+      var scale = maxW / page.getViewport({ scale: 1 }).width;
+      var vp    = page.getViewport({ scale: scale });
+      var canvas = document.createElement('canvas');
+      canvas.width  = vp.width;
+      canvas.height = vp.height;
+      wrap.innerHTML = '';
+      wrap.appendChild(canvas);
+      page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise
+        .then(function () { rendering = false; });
+    });
+  }
+
+  prevBtn.addEventListener('click', function () { if (curPage > 1) renderPage(curPage - 1); });
+  nextBtn.addEventListener('click', function () { if (curPage < numPages) renderPage(curPage + 1); });
+}
 </script>
 </body>
 </html>
