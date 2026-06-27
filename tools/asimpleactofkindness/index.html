@@ -47,13 +47,17 @@
     .asak-back-link:hover { color: var(--lime); }
     .asak-header-actions { display: flex; gap: 8px; }
     .asak-icon-btn {
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(240,240,235,0.7); font-family: var(--font); font-size: 11px;
-      letter-spacing: 1px; padding: 5px 10px; cursor: pointer; border-radius: 2px;
-      transition: background 0.15s, color 0.15s;
+      background: none; border: 1px solid rgba(212,255,26,0.25);
+      color: rgba(212,255,26,0.7); width: 44px; height: 44px; border-radius: 2px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0; line-height: 1;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
-    .asak-icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--lime); }
-    .asak-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 88px); letter-spacing: 5px; color: var(--lime); line-height: 1; }
+    .asak-icon-btn:hover { border-color: var(--lime); color: var(--lime); }
+    #font-btn { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+    #font-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
+    #theme-btn { font-size: 16px; }
+    .asak-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 9vw, 104px); letter-spacing: 6px; color: var(--lime); line-height: 1; }
     .asak-subtitle { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
 
     /* ── MAIN LAYOUT ── */
