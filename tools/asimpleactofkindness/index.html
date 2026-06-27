@@ -160,13 +160,21 @@
     .cc-table td a:hover { color: var(--lime); }
 
     /* ── PDF MODAL CONTENT ── */
-    .pdf-nav-wrap { display: flex; align-items: center; gap: 6px; }
-    .pdf-nav-btn {
-      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-      color: var(--fg); font-family: var(--font); font-size: 13px;
-      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s; line-height: 1;
+    .pdf-toolbar {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
+      padding: 8px 16px; flex-shrink: 0;
     }
+    .pdf-nav-btn {
+      background: rgba(125,125,125,0.08); border: 1px solid var(--border);
+      color: var(--fg); font-family: var(--font); font-size: 12px;
+      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s, background 0.15s; line-height: 1;
+      text-decoration: none; display: inline-flex; align-items: center; border-radius: 2px;
+    }
+    .pdf-nav-btn:hover { background: rgba(125,125,125,0.16); }
     .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .pdf-download-btn { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 11px; background: var(--lime); color: #000; border-color: var(--lime); }
+    .pdf-download-btn:hover { opacity: 0.82; background: var(--lime); }
     .pdf-page-input {
       background: var(--bg); border: 1px solid var(--border); color: var(--fg);
       font-family: var(--font); font-size: 11px; width: 42px; text-align: center;
@@ -175,10 +183,33 @@
     .pdf-page-input::-webkit-inner-spin-button,
     .pdf-page-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .pdf-page-sep { font-size: 9px; color: var(--muted); white-space: nowrap; }
-    .pdf-zoom-divider { width: 1px; height: 14px; background: var(--border); margin: 0 2px; }
-    .pdf-zoom-label { font-size: 9px; color: var(--muted); min-width: 34px; text-align: center; }
-    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
-    #pdf-canvas-wrap canvas { max-width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
+    .pdf-zoom-divider { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
+    .pdf-zoom-label { font-size: 9px; color: var(--muted); min-width: 38px; text-align: center; }
+    .pdf-find-input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; width: 120px;
+      padding: 4px 8px; border-radius: 2px;
+    }
+    .pdf-find-input:focus { outline: none; border-color: var(--lime); }
+    .pdf-find-count { font-size: 9px; color: var(--muted); min-width: 36px; text-align: center; white-space: nowrap; }
+
+    #pdf-body { overflow: auto; }
+    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; padding: 16px; gap: 16px; }
+    .pdf-page { position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.12); flex-shrink: 0; }
+    .pdf-page canvas { display: block; }
+
+    /* PDF.js text layer (for find/highlight) */
+    .textLayer {
+      position: absolute; inset: 0; overflow: hidden; line-height: 1;
+      text-align: initial; transform-origin: 0 0; z-index: 2;
+      forced-color-adjust: none;
+    }
+    .textLayer span, .textLayer br {
+      color: transparent; position: absolute; white-space: pre;
+      cursor: text; transform-origin: 0 0;
+    }
+    .textLayer mark.hl { background: rgba(212,255,26,0.45); color: transparent; border-radius: 1px; }
+    .textLayer mark.hl.active { background: #ffb700; }
 
     /* ── RESPONSIVE ── */
     /* ── SWIPE HANDLE ── */
@@ -272,17 +303,24 @@
       <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">The Script — A Simple Act of Kindness</span>
-        <div class="pdf-nav-wrap" id="pdf-nav" style="display:none;">
-          <button class="pdf-nav-btn" id="pdf-prev" disabled>‹</button>
-          <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" disabled>
-          <span class="pdf-page-sep" id="pdf-page-sep">/ --</span>
-          <button class="pdf-nav-btn" id="pdf-next" disabled>›</button>
-          <div class="pdf-zoom-divider"></div>
-          <button class="pdf-nav-btn" id="pdf-zoom-out" disabled>−</button>
-          <span class="pdf-zoom-label" id="pdf-zoom-label">100%</span>
-          <button class="pdf-nav-btn" id="pdf-zoom-in" disabled>+</button>
-        </div>
         <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
+      </div>
+      <div class="pdf-toolbar" id="pdf-nav" style="display:none;">
+        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="/tools/asimpleactofkindness/script.pdf" download="A Simple Act of Kindness — Ross Mueller.pdf">Download</a>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="pdf-prev" disabled>‹</button>
+        <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" disabled>
+        <span class="pdf-page-sep" id="pdf-page-sep">/ --</span>
+        <button class="pdf-nav-btn" id="pdf-next" disabled>›</button>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="pdf-zoom-out" disabled>−</button>
+        <span class="pdf-zoom-label" id="pdf-zoom-label">200%</span>
+        <button class="pdf-nav-btn" id="pdf-zoom-in" disabled>+</button>
+        <div class="pdf-zoom-divider"></div>
+        <input class="pdf-find-input" id="pdf-find-input" type="text" placeholder="Find in script…" disabled>
+        <span class="pdf-find-count" id="pdf-find-count"></span>
+        <button class="pdf-nav-btn" id="pdf-find-prev" disabled>‹</button>
+        <button class="pdf-nav-btn" id="pdf-find-next" disabled>›</button>
       </div>
       <div class="modal-body" id="pdf-body">
         <div id="pdf-canvas-wrap"></div>
@@ -624,7 +662,7 @@ function loadCast() {
     .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load cast &amp; crew.<br>' + esc2(err.message) + '</div>'; });
 }
 
-/* ── PDF VIEWER ── */
+/* ── PDF VIEWER (continuous scroll + find) ── */
 var pdfLoaded = false;
 function loadPDF() {
   if (pdfLoaded) return;
@@ -646,104 +684,278 @@ function loadPDF() {
   var zoomInBtn = document.getElementById('pdf-zoom-in');
   var zoomOutBtn= document.getElementById('pdf-zoom-out');
   var zoomLabel = document.getElementById('pdf-zoom-label');
+  var findInput = document.getElementById('pdf-find-input');
+  var findCount = document.getElementById('pdf-find-count');
+  var findPrev  = document.getElementById('pdf-find-prev');
+  var findNext  = document.getElementById('pdf-find-next');
 
-  var pdfDoc = null, curPage = 1, numPages = 0, rendering = false;
-  var zoomMult = 1.0; /* multiplier on top of fit-to-page base scale */
+  var pdfDoc = null, numPages = 0, curPage = 1;
+  var baseScale = 1, zoomMult = (window.innerWidth >= 720) ? 2.0 : 1.0;
+  var ZOOM_MIN = 0.5, ZOOM_MAX = 3.0;
+
+  var pageObjs = {};   /* pdf page objects */
+  var pageTexts = {};  /* textContent objects */
+  var pageEls = [];    /* .pdf-page wrapper elements */
+  var pageDivs = {};   /* text-layer span arrays per page */
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
     pdfDoc   = pdf;
     numPages = pdf.numPages;
     nav.style.display = 'flex';
-    [prevBtn, nextBtn, pageInput, zoomInBtn, zoomOutBtn].forEach(function (el) { el.disabled = false; });
     pageSep.textContent = '/ ' + numPages;
     pageInput.max = numPages;
-    renderPage(1);
+    [prevBtn, nextBtn, pageInput, zoomInBtn, zoomOutBtn, findInput, findPrev, findNext]
+      .forEach(function (el) { el.disabled = false; });
+
+    /* Fetch all pages + their text, then build & render */
+    var jobs = [];
+    for (var n = 1; n <= numPages; n++) jobs.push(n);
+    return jobs.reduce(function (chain, n) {
+      return chain.then(function () {
+        return pdfDoc.getPage(n).then(function (page) {
+          pageObjs[n] = page;
+          return page.getTextContent().then(function (tc) { pageTexts[n] = tc; });
+        });
+      });
+    }, Promise.resolve());
+  }).then(function () {
+    baseScale = computeBase();
+    buildSkeleton();
+    return renderAll();
+  }).then(function () {
+    updateZoomLabel();
+    scrollToPage(1);
   }).catch(function () {
     wrap.innerHTML = '<div class="sched-loading">Could not load PDF.</div>';
   });
 
-  function fitScale(page) {
-    /* Scale so the full A4 page fits in the visible modal body */
-    var maxW = Math.max(wrap.clientWidth  - 32, 300);
-    var maxH = Math.max(pdfBody.clientHeight - 32, 400);
-    var vp   = page.getViewport({ scale: 1 });
+  function computeBase() {
+    var vp = pageObjs[1].getViewport({ scale: 1 });
+    var maxW = Math.max(pdfBody.clientWidth  - 40, 300);
+    var maxH = Math.max(pdfBody.clientHeight - 40, 400);
     return Math.min(maxW / vp.width, maxH / vp.height);
   }
 
-  function updateZoom() {
-    zoomLabel.textContent = Math.round(zoomMult * 100) + '%';
-    zoomOutBtn.disabled = zoomMult <= 0.25;
-    zoomInBtn.disabled  = zoomMult >= 4.0;
+  function buildSkeleton() {
+    wrap.innerHTML = '';
+    pageEls = [];
+    for (var n = 1; n <= numPages; n++) {
+      var el = document.createElement('div');
+      el.className = 'pdf-page';
+      el.setAttribute('data-page', n);
+      wrap.appendChild(el);
+      pageEls.push(el);
+    }
   }
 
-  function renderPage(n) {
-    if (rendering) return;
-    rendering = true;
-    curPage   = n;
-    prevBtn.disabled  = n <= 1;
-    nextBtn.disabled  = n >= numPages;
-    pageInput.value   = n;
-
-    pdfDoc.getPage(n).then(function (page) {
-      var scale  = fitScale(page) * zoomMult;
-      var vp     = page.getViewport({ scale: scale });
-      var canvas = document.createElement('canvas');
-      canvas.width  = vp.width;
-      canvas.height = vp.height;
-      wrap.innerHTML = '';
-      wrap.appendChild(canvas);
-      page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise
-        .then(function () { rendering = false; });
-      updateZoom();
+  function renderAll() {
+    var scale = baseScale * zoomMult;
+    pageDivs = {};
+    var chain = Promise.resolve();
+    for (var n = 1; n <= numPages; n++) {
+      (function (n) {
+        chain = chain.then(function () { return renderOne(n, scale); });
+      })(n);
+    }
+    return chain.then(function () {
+      if (findInput.value.trim()) runSearch(findInput.value.trim());
     });
   }
 
-  zoomInBtn.addEventListener('click', function () {
-    zoomMult = Math.min(4.0, parseFloat((zoomMult + 0.25).toFixed(2)));
-    renderPage(curPage);
-  });
-  zoomOutBtn.addEventListener('click', function () {
-    zoomMult = Math.max(0.25, parseFloat((zoomMult - 0.25).toFixed(2)));
-    renderPage(curPage);
+  function renderOne(n, scale) {
+    var page = pageObjs[n];
+    var vp   = page.getViewport({ scale: scale });
+    var el   = pageEls[n - 1];
+    el.style.width  = vp.width + 'px';
+    el.style.height = vp.height + 'px';
+    el.innerHTML = '';
+
+    var canvas = document.createElement('canvas');
+    canvas.width  = vp.width;
+    canvas.height = vp.height;
+    el.appendChild(canvas);
+
+    var tl = document.createElement('div');
+    tl.className = 'textLayer';
+    tl.style.width  = vp.width + 'px';
+    tl.style.height = vp.height + 'px';
+    tl.style.setProperty('--scale-factor', scale);
+    el.appendChild(tl);
+
+    var renderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+    var divs = [];
+    var textTask = pdfjsLib.renderTextLayer({
+      textContentSource: pageTexts[n],
+      container: tl,
+      viewport: vp,
+      textDivs: divs
+    });
+    pageDivs[n] = divs;
+
+    return Promise.all([renderTask.promise, textTask.promise]).catch(function () {});
+  }
+
+  /* ── Navigation ── */
+  function scrollToPage(n) {
+    var el = pageEls[n - 1];
+    if (!el) return;
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var elRect   = el.getBoundingClientRect();
+    pdfBody.scrollTop += (elRect.top - bodyRect.top) - 12;
+  }
+
+  function updateCurrentPage() {
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var mark = bodyRect.top + bodyRect.height * 0.35;
+    var best = 1;
+    for (var i = 0; i < pageEls.length; i++) {
+      if (pageEls[i].getBoundingClientRect().top <= mark) best = i + 1; else break;
+    }
+    curPage = best;
+    if (document.activeElement !== pageInput) pageInput.value = best;
+    prevBtn.disabled = best <= 1;
+    nextBtn.disabled = best >= numPages;
+  }
+
+  var scrollTick = false;
+  pdfBody.addEventListener('scroll', function () {
+    if (scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(function () { updateCurrentPage(); scrollTick = false; });
   });
 
-  prevBtn.addEventListener('click', function () { if (curPage > 1) renderPage(curPage - 1); });
-  nextBtn.addEventListener('click', function () { if (curPage < numPages) renderPage(curPage + 1); });
+  prevBtn.addEventListener('click', function () { if (curPage > 1) scrollToPage(curPage - 1); });
+  nextBtn.addEventListener('click', function () { if (curPage < numPages) scrollToPage(curPage + 1); });
 
   pageInput.addEventListener('change', function () {
     var n = parseInt(this.value, 10);
-    if (!isNaN(n) && n >= 1 && n <= numPages) renderPage(n);
+    if (!isNaN(n) && n >= 1 && n <= numPages) scrollToPage(n);
     else this.value = curPage;
   });
   pageInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
 
-  /* Arrow-key navigation when the script modal is open */
+  /* ── Zoom ── */
+  function updateZoomLabel() {
+    zoomLabel.textContent = Math.round(zoomMult * 100) + '%';
+    zoomOutBtn.disabled = zoomMult <= ZOOM_MIN + 0.001;
+    zoomInBtn.disabled  = zoomMult >= ZOOM_MAX - 0.001;
+  }
+  function applyZoom() {
+    var keep = curPage;
+    updateZoomLabel();
+    renderAll().then(function () { scrollToPage(keep); });
+  }
+  zoomInBtn.addEventListener('click', function () {
+    zoomMult = Math.min(ZOOM_MAX, parseFloat((zoomMult + 0.25).toFixed(2)));
+    applyZoom();
+  });
+  zoomOutBtn.addEventListener('click', function () {
+    zoomMult = Math.max(ZOOM_MIN, parseFloat((zoomMult - 0.25).toFixed(2)));
+    applyZoom();
+  });
+
+  /* ── Find ── */
+  var matches = [], matchIdx = -1;
+
+  function clearHighlights() {
+    for (var n = 1; n <= numPages; n++) {
+      var divs = pageDivs[n];
+      if (!divs) continue;
+      for (var i = 0; i < divs.length; i++) {
+        if (divs[i] && divs[i]._hl) { divs[i].textContent = divs[i]._orig; divs[i]._hl = false; }
+      }
+    }
+    matches = []; matchIdx = -1;
+  }
+
+  function updateFindCount() {
+    findCount.textContent = matches.length ? (matchIdx + 1) + ' / ' + matches.length : (findInput.value.trim() ? '0 / 0' : '');
+    findPrev.disabled = matches.length < 2;
+    findNext.disabled = matches.length < 2;
+  }
+
+  function activateMatch(i, scroll) {
+    if (!matches.length) return;
+    if (matches[matchIdx]) matches[matchIdx].classList.remove('active');
+    matchIdx = (i + matches.length) % matches.length;
+    var m = matches[matchIdx];
+    m.classList.add('active');
+    if (scroll) {
+      var bodyRect = pdfBody.getBoundingClientRect();
+      var r = m.getBoundingClientRect();
+      pdfBody.scrollTop += (r.top - bodyRect.top) - bodyRect.height * 0.3;
+    }
+    updateFindCount();
+  }
+
+  function runSearch(q) {
+    clearHighlights();
+    if (!q) { updateFindCount(); return; }
+    var ql = q.toLowerCase();
+    for (var n = 1; n <= numPages; n++) {
+      var divs = pageDivs[n];
+      if (!divs) continue;
+      for (var d = 0; d < divs.length; d++) {
+        var sp = divs[d];
+        if (!sp) continue;
+        if (sp._orig == null) sp._orig = sp.textContent;
+        var txt = sp._orig, low = txt.toLowerCase();
+        if (low.indexOf(ql) === -1) continue;
+        var html = '', i = 0, idx;
+        while ((idx = low.indexOf(ql, i)) !== -1) {
+          html += escHtml(txt.slice(i, idx)) + '<mark class="hl">' + escHtml(txt.slice(idx, idx + ql.length)) + '</mark>';
+          i = idx + ql.length;
+        }
+        html += escHtml(txt.slice(i));
+        sp.innerHTML = html;
+        sp._hl = true;
+        var ms = sp.getElementsByClassName('hl');
+        for (var k = 0; k < ms.length; k++) matches.push(ms[k]);
+      }
+    }
+    if (matches.length) { matchIdx = -1; activateMatch(0, true); }
+    else updateFindCount();
+  }
+
+  var findTimer = null;
+  findInput.addEventListener('input', function () {
+    clearTimeout(findTimer);
+    var v = this.value.trim();
+    findTimer = setTimeout(function () { runSearch(v); }, 200);
+  });
+  findInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (matches.length) activateMatch(matchIdx + (e.shiftKey ? -1 : 1), true);
+    }
+  });
+  findPrev.addEventListener('click', function () { activateMatch(matchIdx - 1, true); });
+  findNext.addEventListener('click', function () { activateMatch(matchIdx + 1, true); });
+
+  /* ── Arrow keys (page nav when not typing) ── */
   document.addEventListener('keydown', function (e) {
     if (!document.getElementById('modal-script').classList.contains('open')) return;
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (curPage < numPages) renderPage(curPage + 1);
+      e.preventDefault(); if (curPage < numPages) scrollToPage(curPage + 1);
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (curPage > 1) renderPage(curPage - 1);
+      e.preventDefault(); if (curPage > 1) scrollToPage(curPage - 1);
     }
   });
 
-  /* Touch-swipe page navigation (left = next, right = prev) */
+  /* ── Touch-swipe page navigation (left = next, right = prev) ── */
   var touchX0 = 0, touchY0 = 0;
-  var pdfBodyEl = document.getElementById('pdf-body');
-  pdfBodyEl.addEventListener('touchstart', function (e) {
-    touchX0 = e.touches[0].clientX;
-    touchY0 = e.touches[0].clientY;
+  pdfBody.addEventListener('touchstart', function (e) {
+    touchX0 = e.touches[0].clientX; touchY0 = e.touches[0].clientY;
   }, { passive: true });
-  pdfBodyEl.addEventListener('touchend', function (e) {
+  pdfBody.addEventListener('touchend', function (e) {
     var dx = e.changedTouches[0].clientX - touchX0;
     var dy = e.changedTouches[0].clientY - touchY0;
-    /* Only trigger if horizontal swipe is dominant and >= 40px */
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) >= 40) {
-      if (dx < 0 && curPage < numPages) renderPage(curPage + 1);
-      if (dx > 0 && curPage > 1)        renderPage(curPage - 1);
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) >= 50) {
+      if (dx < 0 && curPage < numPages) scrollToPage(curPage + 1);
+      if (dx > 0 && curPage > 1)        scrollToPage(curPage - 1);
     }
   }, { passive: true });
 }
