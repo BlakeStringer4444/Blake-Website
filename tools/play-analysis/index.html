@@ -61,35 +61,6 @@
       transition: background 0.2s, color 0.2s;
     }
 
-    /* ── PASSWORD OVERLAY ── */
-    #pass-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #0a0a0a;
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .pass-box {
-      border: 1px solid var(--lime); padding: 40px 48px;
-      max-width: 360px; width: 100%;
-      display: flex; flex-direction: column; gap: 16px; text-align: center;
-    }
-    .pass-logo  { font-size: 28px; }
-    .pass-title { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); }
-    .pass-sub   { font-size: 10px; letter-spacing: 0.5px; color: rgba(240,240,235,0.45); line-height: 1.7; }
-    .pass-input {
-      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);
-      color: #f0f0eb; font-family: var(--font); font-size: 16px;
-      padding: 10px 14px; text-align: center; letter-spacing: 6px; width: 100%;
-    }
-    .pass-input:focus { outline: none; border-color: var(--purple); }
-    .pass-btn {
-      background: var(--lime); color: #000; border: none;
-      font-family: var(--font); font-size: 11px; letter-spacing: 2px;
-      text-transform: uppercase; padding: 12px; cursor: pointer; transition: opacity 0.15s;
-    }
-    .pass-btn:hover { opacity: 0.85; }
-    .pass-error { font-size: 10px; color: #ef4444; letter-spacing: 1px; min-height: 14px; }
-
     /* ── APP SHELL ── */
     #app { height: 100%; display: flex; flex-direction: column; }
 
@@ -123,9 +94,10 @@
       color: rgba(212,255,26,0.7); width: 44px; height: 44px; border-radius: 2px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all 0.2s; flex-shrink: 0; font-family: var(--font);
-      font-size: 13px; letter-spacing: -0.5px;
+      font-size: 13px; letter-spacing: -0.5px; line-height: 1;
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
+    #pa-theme-btn { font-size: 16px; }
     .pa-icon-btn:hover  { border-color: var(--lime); color: var(--lime); }
     .pa-icon-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
     .pa-title {
@@ -409,25 +381,12 @@
 
     /* ── MOBILE ── */
     @media (max-width: 639px) {
-      .pass-box { padding: 32px 24px; }
       .export-btn { padding: 4px 5px; font-size: 7px; margin-left: 2px; }
       .progress-card { padding: 28px 22px 20px; }
     }
   </style>
 </head>
 <body>
-
-<!-- ── PASSWORD OVERLAY ── -->
-<div id="pass-overlay">
-  <div class="pass-box">
-    <div class="pass-logo">📜</div>
-    <div class="pass-title">PlayAnalysisDex ◈</div>
-    <div class="pass-sub">This tool is in early access.<br>Enter your password to continue.</div>
-    <input class="pass-input" id="pass-input" type="password" placeholder="········" autocomplete="off">
-    <button class="pass-btn" id="pass-btn">Unlock →</button>
-    <div class="pass-error" id="pass-error"></div>
-  </div>
-</div>
 
 <!-- ── APP ── -->
 <div id="app">
@@ -442,7 +401,7 @@
       </div>
     </div>
     <h1 class="pa-title">Play Analysis</h1>
-    <p class="pa-subtitle">Character &amp; line totals, and scene breakdown for any PDF play</p>
+    <p class="pa-subtitle">Character line totals and scene breakdown for any PDF play</p>
   </header>
 
   <!-- UPLOAD SCREEN -->
@@ -452,7 +411,7 @@
     <div class="drop-zone" id="drop-zone">
       <div class="drop-icon">📄</div>
       <div class="drop-text">Drop your PDF here</div>
-      <div class="drop-sub">or click to browse · PDF only</div>
+      <div class="drop-sub">or click to browse</div>
     </div>
     <input type="file" id="file-input" accept="application/pdf" style="display:none">
 
@@ -547,15 +506,17 @@
 
 /* ── THEME ── */
 (function () {
-  var CYCLE = ['light', 'dark', 'terminal'];
-  var btn   = document.getElementById('pa-theme-btn');
-  function iconFor(t) { return t === 'terminal' ? '⌨' : t === 'dark' ? '☀' : '☾'; }
+  var CYCLE   = ['light', 'dark', 'terminal'];
+  var btn     = document.getElementById('pa-theme-btn');
+  var sunSVG  = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>';
+  var lockSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+  function iconFor(t) { return t === 'terminal' ? lockSVG : t === 'dark' ? sunSVG : '☾'; }
   var t = localStorage.getItem('theme') || 'light';
   function apply(v) {
     t = v;
     if (v === 'light') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', v);
-    btn.textContent = iconFor(v);
+    btn.innerHTML = iconFor(v);
     localStorage.setItem('theme', v);
   }
   apply(t);
@@ -586,28 +547,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
    Paste the deployed worker URL here. If it's unreachable, the tool falls back
    to the offline heuristic parser automatically. */
 var PA_WORKER_URL = 'https://play-analysis.blakestringer.workers.dev';
-
-/* ── PASSWORD ── */
-var PASSWORD    = '48163264';
-var passOverlay = document.getElementById('pass-overlay');
-var passInput   = document.getElementById('pass-input');
-var passBtn     = document.getElementById('pass-btn');
-var passError   = document.getElementById('pass-error');
-
-if (sessionStorage.getItem('pad-unlocked') === '1') passOverlay.style.display = 'none';
-
-function checkPassword() {
-  if (passInput.value === PASSWORD) {
-    passOverlay.style.display = 'none';
-    sessionStorage.setItem('pad-unlocked', '1');
-  } else {
-    passError.textContent = 'Incorrect password.';
-    passInput.value = '';
-    passInput.focus();
-  }
-}
-passBtn.addEventListener('click', checkPassword);
-passInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') checkPassword(); });
 
 /* ── DOM ── */
 var uploadScreen    = document.getElementById('upload-screen');
