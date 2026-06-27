@@ -24,14 +24,35 @@
  *                     Claude produces a scene-by-scene breakdown of the play.
  *                     → { text: "<JSON>" }
  *
+ *   5. "library-check" — { mode:"library-check", fileHash?:"…", fingerprint?:"…" }
+ *                     Looks the play up in the shared, PRIVATE library (Cloudflare KV).
+ *                     This is a cache, never a public list: it only ever returns a
+ *                     previously-computed analysis to someone who has just uploaded a
+ *                     matching script themselves. Prevents the same play being scanned
+ *                     (and paid for) twice across all users.
+ *                     → { hit:<bool>, script?:<analysis JSON> }
+ *
+ *   6. "library-save"  — { mode:"library-save", fileHash?:"…", fingerprint?:"…", script:{…} }
+ *                     Stores a freshly-computed analysis in the library under both keys.
+ *                     → { ok:<bool> }
+ *
  * Secrets required:
  *   ANTHROPIC_API_KEY  — from console.anthropic.com
  *
+ * KV namespace required (for the shared library — modes 5 & 6):
+ *   PLAY_LIBRARY  — a Workers KV namespace bound to this Worker.
+ *                   If it is NOT bound, the library modes degrade gracefully
+ *                   (every check is a miss, every save is a no-op) and the tool
+ *                   still works exactly as before — just without cross-user dedup.
+ *
  * Deploy steps (done once):
  *   1. workers.cloudflare.com → Create Worker → paste this file
- *   2. Settings → Variables → Add secret: ANTHROPIC_API_KEY = <your key>
- *   3. Copy the worker URL (e.g. https://play-analysis.YOUR-NAME.workers.dev)
- *   4. Paste that URL into PA_WORKER_URL in tools/play-analysis/index.html
+ *   2. Settings → Variables and Secrets → Add secret: ANTHROPIC_API_KEY = <your key>
+ *   3. Storage & Databases → KV → Create a namespace (e.g. "play-library")
+ *   4. Worker → Settings → Bindings → Add → KV namespace:
+ *        Variable name: PLAY_LIBRARY   →   the namespace from step 3
+ *   5. Copy the worker URL (e.g. https://play-analysis.YOUR-NAME.workers.dev)
+ *   6. Paste that URL into PA_WORKER_URL in tools/play-analysis/index.html
  *
  * Model note: MODEL is set to Sonnet for the best accuracy/cost balance. To
  * maximise accuracy, switch MODEL to 'claude-opus-4-8'.
@@ -68,10 +89,12 @@ export default {
     const mode = body.mode;
 
     try {
-      if (mode === 'ocr')       return await handleOcr(body, env);
-      if (mode === 'structure') return await handleStructure(body, env);
-      if (mode === 'normalize') return await handleNormalize(body, env);
-      if (mode === 'summary')   return await handleSummary(body, env);
+      if (mode === 'ocr')           return await handleOcr(body, env);
+      if (mode === 'structure')     return await handleStructure(body, env);
+      if (mode === 'normalize')     return await handleNormalize(body, env);
+      if (mode === 'summary')       return await handleSummary(body, env);
+      if (mode === 'library-check') return await handleLibraryCheck(body, env);
+      if (mode === 'library-save')  return await handleLibrarySave(body, env);
       return json({ error: 'Unknown mode: ' + mode }, 400);
     } catch (e) {
       return json({ error: e.message || String(e) }, 502);
@@ -218,6 +241,51 @@ async function handleSummary(body, env) {
     content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
   });
   return json({ text: out });
+}
+
+/* ─────────────────── MODE: LIBRARY-CHECK ───────────────────── */
+/* The shared library is a PRIVATE cache, not a public list. It only ever returns
+   an analysis to a caller who has just uploaded a matching script themselves, so
+   no script is ever exposed to someone who doesn't already have it. We look up by
+   exact file hash first (identical file), then by content fingerprint (the same
+   play uploaded as a different file). */
+async function handleLibraryCheck(body, env) {
+  if (!env.PLAY_LIBRARY) return json({ hit: false });   /* namespace not bound yet */
+
+  const fileHash    = typeof body.fileHash    === 'string' ? body.fileHash    : '';
+  const fingerprint = typeof body.fingerprint === 'string' ? body.fingerprint : '';
+
+  let raw = null;
+  if (fileHash)            raw = await env.PLAY_LIBRARY.get('file:' + fileHash);
+  if (!raw && fingerprint) raw = await env.PLAY_LIBRARY.get('fp:'   + fingerprint);
+  if (!raw) return json({ hit: false });
+
+  let script;
+  try { script = JSON.parse(raw); } catch { return json({ hit: false }); }
+  return json({ hit: true, script });
+}
+
+/* ─────────────────── MODE: LIBRARY-SAVE ────────────────────── */
+async function handleLibrarySave(body, env) {
+  if (!env.PLAY_LIBRARY) return json({ ok: false, reason: 'no-namespace' });
+
+  const fileHash    = typeof body.fileHash    === 'string' ? body.fileHash    : '';
+  const fingerprint = typeof body.fingerprint === 'string' ? body.fingerprint : '';
+  const script      = body.script;
+  if (!script || typeof script !== 'object') return json({ ok: false, reason: 'no-script' });
+  if (!fileHash && !fingerprint)             return json({ ok: false, reason: 'no-key' });
+
+  const payload = JSON.stringify(script);
+  if (payload.length > 20 * 1024 * 1024) return json({ ok: false, reason: 'too-large' });
+
+  /* Store under both keys so either an identical file or a matching content
+     fingerprint will find it next time. KV writes are cheap; one play is small. */
+  const writes = [];
+  if (fileHash)    writes.push(env.PLAY_LIBRARY.put('file:' + fileHash,    payload));
+  if (fingerprint) writes.push(env.PLAY_LIBRARY.put('fp:'   + fingerprint, payload));
+  await Promise.all(writes);
+
+  return json({ ok: true });
 }
 
 /* ───────────────────────── HELPERS ─────────────────────────── */

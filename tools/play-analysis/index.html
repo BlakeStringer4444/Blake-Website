@@ -866,6 +866,47 @@ function safeJson(s) {
   return JSON.parse(t);
 }
 
+/* ── SHARED LIBRARY (private cross-user cache; see the Worker) ──
+   Returns the parsed JSON object from the Worker. Library calls are best-effort:
+   if the Worker/namespace is unreachable, the tool behaves exactly as before. */
+async function paFetch(payload) {
+  var res  = await fetch(PA_WORKER_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
+  var data = await res.json();
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+
+/* Ask the library whether this play has already been analysed (by anyone).
+   Returns the stored analysis object, or null on miss / any error. */
+async function libraryCheck(keys) {
+  try {
+    var d = await paFetch(Object.assign({ mode: 'library-check' }, keys));
+    return d && d.hit ? d.script : null;
+  } catch (e) { return null; }
+}
+
+/* Store a freshly-computed analysis so the next person isn't charged to redo it. */
+async function librarySave(entry) {
+  try { await paFetch(Object.assign({ mode: 'library-save' }, entry)); } catch (e) {}
+}
+
+/* Content fingerprint: a stable hash of the opening of the script's text, so the
+   SAME play uploaded as a DIFFERENT file (re-export, different filename) still
+   matches. Punctuation/whitespace/case are stripped so trivial differences don't
+   break the match. Returns null when there's too little text to fingerprint. */
+async function fingerprintText(lines) {
+  var joined = Array.isArray(lines) ? lines.join('\n') : String(lines || '');
+  var norm   = joined.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (norm.length < 60) return null;
+  var slice  = norm.slice(0, 6000);
+  try { return await sha256Hex(new TextEncoder().encode(slice).buffer); }
+  catch (e) { return null; }
+}
+
 /* Bounded-concurrency map. */
 async function pool(items, n, fn, onDone) {
   var i = 0, out = new Array(items.length), done = 0;
@@ -1351,6 +1392,24 @@ var NOT_A_PLAY_MSG =
   "This PDF doesn't appear to contain a script — no character cues, dialogue or " +
   "scene headings were found. Please upload a stage or screen play.";
 
+/* Present an analysis pulled from the shared library exactly as if we'd just
+   computed it: cache it locally (so it's instant next time), add it to this
+   user's Recently Analysed list, and show it. */
+function useLibraryResult(script, hash, buf) {
+  parsedScript = script;
+  paSource = { hash: hash, title: script.title, buf: buf };
+  if (hash) {
+    cacheSave(hash, script);
+    addRecent({ hash: hash, title: script.title,
+                chars: Object.keys(script.characters || {}).length,
+                when: Date.now(), cached: true });
+  }
+  progressHide();
+  renderRecents();
+  finishAnalysis();
+  showToast('Already analysed before — loaded instantly, no re-scan needed ✓');
+}
+
 async function handleFile(file) {
   scanError.style.display   = 'none';
   parseStatus.style.display = 'none';
@@ -1376,6 +1435,13 @@ async function handleFile(file) {
     }
   }
 
+  /* ── 0b. Shared library — exact file match (covers a new device or another
+     user uploading this very same file). No AI spend, no scan. ── */
+  if (hash) {
+    var libByFile = await libraryCheck({ fileHash: hash });
+    if (libByFile) { useLibraryResult(libByFile, hash, buf); return; }
+  }
+
   /* ── 1. Smart (AI) pipeline ── */
   progressShow();
   progressStep('read', 5, 'Reading the PDF…');
@@ -1385,6 +1451,7 @@ async function handleFile(file) {
     var textChars = lines.join('').replace(/\s/g, '').length;
     var scanned   = textChars < Math.max(120, pdf.numPages * 40);
     var n         = pdf.numPages;
+    var fp        = null;   /* content fingerprint — set once we have script text */
 
     if (scanned) {
       /* OCR the first pages only, then check it's a script before scanning the rest. */
@@ -1396,6 +1463,13 @@ async function handleFile(file) {
       });
       if (!looksLikePlay(triage)) { progressHide(); showError("This doesn't look like a play", NOT_A_PLAY_MSG); return; }
 
+      /* Fingerprint the opening and check the library BEFORE the expensive full OCR. */
+      fp = await fingerprintText(triage);
+      if (fp) {
+        var libS = await libraryCheck({ fingerprint: fp });
+        if (libS) { useLibraryResult(libS, hash, buf); return; }
+      }
+
       var rest = triageEnd < n ? await ocrRange(pdf, triageEnd + 1, n, function (p, last) {
         progressStep('ocr', 12 + ((p - 1) / n) * 33, 'AI reading page ' + p + (last > p ? '–' + last : '') + ' of ' + n + '…');
       }) : [];
@@ -1403,6 +1477,13 @@ async function handleFile(file) {
     } else {
       /* Text PDF: guard for free before spending any AI calls. */
       if (!looksLikePlay(lines)) { progressHide(); showError("This doesn't look like a play", NOT_A_PLAY_MSG); return; }
+
+      /* Same play, different file? Check the library before any AI spend. */
+      fp = await fingerprintText(lines);
+      if (fp) {
+        var libT = await libraryCheck({ fingerprint: fp });
+        if (libT) { useLibraryResult(libT, hash, buf); return; }
+      }
     }
 
     var sBase = scanned ? 48 : 12, sSpan = scanned ? 37 : 70;
@@ -1438,6 +1519,8 @@ async function handleFile(file) {
                   when: Date.now(), cached: true });
       renderRecents();
     }
+    /* Add to the shared library so nobody (incl. other users) re-scans this play. */
+    librarySave({ fileHash: hash || undefined, fingerprint: fp || undefined, script: parsedScript });
     await new Promise(function (r) { setTimeout(r, 350); }); /* let the bar finish */
     finishAnalysis();
     return;
