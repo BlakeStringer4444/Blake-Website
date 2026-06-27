@@ -109,7 +109,7 @@
       position: fixed; inset: 0; z-index: 100;
       background: rgba(0,0,0,0.72);
       display: flex; align-items: center; justify-content: center;
-      padding: 24px;
+      padding: 72px 24px 24px;
       opacity: 0; pointer-events: none;
       transition: opacity 0.22s;
     }
@@ -118,7 +118,7 @@
     .modal {
       background: var(--bg); border: 1px solid var(--border);
       width: 100%; max-width: 860px;
-      max-height: 88vh;
+      max-height: calc(100vh - 96px);
       display: flex; flex-direction: column;
       transform: scale(0.97); transition: transform 0.22s;
       overflow: hidden;
