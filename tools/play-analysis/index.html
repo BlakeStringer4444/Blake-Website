@@ -275,10 +275,93 @@
     [data-theme="dark"]     .char-table-wrap::-webkit-scrollbar-thumb,
     [data-theme="terminal"] .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
 
+    /* ── RECENT SCRIPTS ── */
+    #recent-section { max-width: 460px; width: 100%; display: none; margin-top: 4px; }
+    .recent-title {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px; text-align: center;
+    }
+    .recent-list { display: flex; flex-direction: column; gap: 4px; }
+    .recent-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      background: var(--card-bg); border: 1px solid var(--border);
+      padding: 10px 12px; cursor: pointer; text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .recent-item:hover { border-color: var(--purple); background: rgba(100,72,228,0.04); }
+    [data-theme="dark"]     .recent-item:hover,
+    [data-theme="terminal"] .recent-item:hover { border-color: var(--lime); background: rgba(212,255,26,0.05); }
+    .recent-item-name {
+      flex: 1; min-width: 0; font-size: 11px; letter-spacing: 0.3px; color: var(--fg);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .recent-item-meta { font-size: 8px; color: var(--muted); letter-spacing: 0.5px; white-space: nowrap; }
+    .recent-item-go { font-size: 13px; color: var(--purple); line-height: 1; }
+    [data-theme="dark"]     .recent-item-go,
+    [data-theme="terminal"] .recent-item-go { color: var(--lime); }
+    .recent-remove {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 2px 4px; flex-shrink: 0; font-family: var(--font);
+    }
+    .recent-remove:hover { color: #ef4444; }
+
+    /* ── PROGRESS OVERLAY ── */
+    #progress-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(8,8,8,0.82);
+      display: none; align-items: center; justify-content: center; padding: 24px;
+    }
+    #progress-overlay.show { display: flex; }
+    .progress-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      width: 100%; max-width: 420px; padding: 34px 30px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+    }
+    .progress-spinner {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 3px solid rgba(100,72,228,0.18); border-top-color: var(--purple);
+      animation: pa-spin 0.8s linear infinite;
+    }
+    [data-theme="dark"]     .progress-spinner,
+    [data-theme="terminal"] .progress-spinner { border-color: rgba(212,255,26,0.18); border-top-color: var(--lime); }
+    @keyframes pa-spin { to { transform: rotate(360deg); } }
+    .progress-title { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--fg); }
+    .progress-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--purple); border-radius: 3px; transition: width 0.45s ease; }
+    [data-theme="dark"]     .progress-bar-fill,
+    [data-theme="terminal"] .progress-bar-fill { background: var(--lime); }
+    .progress-steps { width: 100%; display: flex; flex-direction: column; gap: 9px; }
+    .progress-step {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11px; letter-spacing: 0.4px; color: var(--muted); transition: color 0.2s;
+    }
+    .progress-step.skip { display: none; }
+    .progress-step .ps-ico {
+      width: 17px; height: 17px; flex-shrink: 0; border-radius: 50%; position: relative;
+      border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: var(--muted);
+    }
+    .progress-step.active { color: var(--fg); }
+    .progress-step.active .ps-ico { border-color: transparent; }
+    .progress-step.active .ps-ico::after {
+      content: ''; position: absolute; inset: -1.5px; border-radius: 50%;
+      border: 1.5px solid rgba(100,72,228,0.2); border-top-color: var(--purple);
+      animation: pa-spin 0.7s linear infinite;
+    }
+    [data-theme="dark"]     .progress-step.active .ps-ico::after,
+    [data-theme="terminal"] .progress-step.active .ps-ico::after { border-color: rgba(212,255,26,0.2); border-top-color: var(--lime); }
+    .progress-step.done { color: var(--fg); }
+    .progress-step.done .ps-ico { background: var(--purple); border-color: var(--purple); color: #fff; }
+    [data-theme="dark"]     .progress-step.done .ps-ico,
+    [data-theme="terminal"] .progress-step.done .ps-ico { background: var(--lime); border-color: var(--lime); color: #000; }
+    .progress-detail { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; min-height: 13px; text-align: center; }
+    .progress-note { font-size: 9px; color: var(--muted); opacity: 0.7; letter-spacing: 0.5px; line-height: 1.6; text-align: center; }
+
     /* ── MOBILE ── */
     @media (max-width: 639px) {
       .pass-box { padding: 32px 24px; }
       .export-btn { padding: 4px 5px; font-size: 7px; margin-left: 2px; }
+      .progress-card { padding: 28px 22px 20px; }
     }
   </style>
 </head>
@@ -331,15 +414,14 @@
     <div id="parse-status"></div>
 
     <div id="scan-error">
-      <div class="scan-error-title">⚠ Scanned script detected</div>
-      <div class="scan-error-body">
-        This PDF contains <strong>scanned images</strong> rather than readable text — PlayAnalysisDex cannot extract the script from image-based pages.<br><br>
-        To use this tool, export a <strong>text-based PDF</strong> from your script software:<br><br>
-        · <strong>Final Draft</strong> → File → Export → PDF<br>
-        · <strong>Microsoft Word</strong> → File → Save As → PDF<br>
-        · <strong>Google Docs</strong> → File → Download → PDF<br><br>
-        If you only have a physical copy, you'll need to transcribe it digitally first.
-      </div>
+      <div class="scan-error-title" id="upload-error-title">⚠ Problem</div>
+      <div class="scan-error-body" id="upload-error-body"></div>
+    </div>
+
+    <!-- RECENT SCRIPTS -->
+    <div id="recent-section">
+      <div class="recent-title">Recently analysed</div>
+      <div class="recent-list" id="recent-list"></div>
     </div>
   </div>
 
@@ -378,6 +460,23 @@
     </div>
   </div>
 
+</div>
+
+<!-- ── PROGRESS OVERLAY ── -->
+<div id="progress-overlay">
+  <div class="progress-card">
+    <div class="progress-spinner"></div>
+    <div class="progress-title">Analysing your script</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+    <div class="progress-steps" id="progress-steps">
+      <div class="progress-step" data-step="read"><span class="ps-ico"></span><span class="ps-label">Reading the PDF</span></div>
+      <div class="progress-step" data-step="ocr"><span class="ps-ico"></span><span class="ps-label">Reading scanned pages with AI</span></div>
+      <div class="progress-step" data-step="structure"><span class="ps-ico"></span><span class="ps-label">Working out scenes &amp; dialogue</span></div>
+      <div class="progress-step" data-step="characters"><span class="ps-ico"></span><span class="ps-label">Identifying characters</span></div>
+    </div>
+    <div class="progress-detail" id="progress-detail"></div>
+    <div class="progress-note">Please keep this tab open — long or scanned scripts can take a minute.</div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -482,6 +581,7 @@ topbarBack.addEventListener('click', function () {
   scanError.style.display   = 'none';
   parseStatus.style.display = 'none';
   fileInput.value = '';
+  renderRecents();
 });
 
 /* ── PDF TEXT EXTRACTION ── */
@@ -724,11 +824,11 @@ async function pool(items, n, fn, onDone) {
   return out;
 }
 
-/* Render scanned pages to images and OCR them via Claude vision. */
-async function ocrPdf(pdf, onProg) {
-  var lines = [], BATCH = 3, n = pdf.numPages;
-  for (var p = 1; p <= n; p += BATCH) {
-    var last = Math.min(p + BATCH - 1, n);
+/* Render a range of scanned pages to images and OCR them via Claude vision. */
+async function ocrRange(pdf, startPage, endPage, onProg) {
+  var lines = [], BATCH = 3;
+  for (var p = startPage; p <= endPage; p += BATCH) {
+    var last = Math.min(p + BATCH - 1, endPage);
     var imgs = [];
     for (var q = p; q <= last; q++) {
       var page = await pdf.getPage(q);
@@ -739,13 +839,45 @@ async function ocrPdf(pdf, onProg) {
       imgs.push(canvas.toDataURL('image/png'));
       canvas.width = canvas.height = 0; /* free memory */
     }
-    if (onProg) onProg(p, last, n);
+    if (onProg) onProg(p, last);
     var text = await paWorker({ mode: 'ocr', images: imgs });
     var pl = String(text).split('\n');
     for (var li = 0; li < pl.length; li++) lines.push(pl[li].replace(/\s+$/, ''));
     lines.push(''); /* page separator */
   }
   return lines;
+}
+
+/* Quick, free heuristic: does the extracted text actually look like a script?
+   Returns true if it looks like a play OR is too short to judge (let it through).
+   Returns false only when there's substantial text but almost no script structure —
+   i.e. a clearly non-play PDF (article, resume, invoice…). Used to avoid running the
+   AI pipeline (and especially full OCR) on documents that aren't scripts. */
+function looksLikePlay(lines) {
+  var textLen = 0, cueCount = 0, inlineCount = 0, sceneCount = 0, names = {};
+  for (var i = 0; i < lines.length; i++) {
+    var ln = (lines[i] || '').trim();
+    if (!ln) continue;
+    textLen += ln.length;
+    if (SCENE_RE.test(ln)) { sceneCount++; continue; }
+    var cleaned = ln.replace(/\(.*?\)/g, '').replace(/[:.]\s*$/, '').trim();
+    if (cleaned.length >= 2 && cleaned.length <= 30 &&
+        !/[a-z]/.test(cleaned) && /[A-Z]/.test(cleaned) &&
+        cleaned.split(/\s+/).length <= 5 && !/^\d+$/.test(cleaned)) {
+      cueCount++; names[cleaned] = 1;
+    }
+    if (/^[A-Z][A-Z0-9 .'’-]{0,28}:\s+\S/.test(ln)) {
+      inlineCount++; names[ln.split(':')[0].trim()] = 1;
+    }
+  }
+  /* Lenient on purpose: only block when there's plenty of text but essentially no
+     script structure (cue lines / scene headings / inline dialogue). This catches
+     articles, resumes and letters while never blocking a genuine — if oddly
+     formatted — play. */
+  var signals = cueCount + inlineCount + sceneCount;
+  if (textLen < 400) return true;   /* too little to judge — let it through */
+  if (signals >= 6)  return true;   /* has clear script structure */
+  return false;                     /* substantial prose, no structure → not a play */
 }
 
 /* Segment numbered lines into scenes + speeches via Claude (chunked, parallel). */
@@ -870,11 +1002,189 @@ function buildSmartScript(lines, struct, norm, title) {
   return ps;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   CACHE & RECENT SCRIPTS (localStorage)
+   Identical uploads are recognised by a SHA-256 of their bytes, so the
+   same file is never re-scanned. Results power a "recently analysed" list.
+   ════════════════════════════════════════════════════════════════ */
+var PA_CACHE_PREFIX = 'pa-cache-v1:';
+var PA_RECENT_KEY   = 'pa-recent-v1';
+var PA_RECENT_MAX   = 10;
+
+var recentSection = document.getElementById('recent-section');
+var recentList    = document.getElementById('recent-list');
+
+async function sha256Hex(buf) {
+  if (!(window.crypto && crypto.subtle)) return null;
+  var digest = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(digest))
+    .map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function getRecents() {
+  try { return JSON.parse(localStorage.getItem(PA_RECENT_KEY) || '[]') || []; }
+  catch (e) { return []; }
+}
+function setRecents(list) {
+  try { localStorage.setItem(PA_RECENT_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function cacheGet(hash) {
+  try { var raw = localStorage.getItem(PA_CACHE_PREFIX + hash); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function evictOldest(keepHash) {
+  var list = getRecents();
+  for (var i = list.length - 1; i >= 0; i--) {
+    var h = list[i].hash;
+    if (h === keepHash) continue;
+    if (localStorage.getItem(PA_CACHE_PREFIX + h) != null) {
+      try { localStorage.removeItem(PA_CACHE_PREFIX + h); } catch (e) {}
+      list[i].cached = false; setRecents(list);
+      return true;
+    }
+  }
+  return false;
+}
+function cacheSave(hash, script) {
+  if (!hash) return false;
+  var payload = JSON.stringify(script);
+  for (var attempt = 0; attempt < 8; attempt++) {
+    try { localStorage.setItem(PA_CACHE_PREFIX + hash, payload); return true; }
+    catch (e) { if (!evictOldest(hash)) return false; }
+  }
+  return false;
+}
+function addRecent(meta) {
+  var list = getRecents().filter(function (r) { return r.hash !== meta.hash; });
+  list.unshift(meta);
+  while (list.length > PA_RECENT_MAX) {
+    var drop = list.pop();
+    try { localStorage.removeItem(PA_CACHE_PREFIX + drop.hash); } catch (e) {}
+  }
+  setRecents(list);
+}
+function touchRecent(hash) {
+  var list = getRecents();
+  var idx = -1;
+  for (var i = 0; i < list.length; i++) if (list[i].hash === hash) { idx = i; break; }
+  if (idx > 0) {
+    var item = list.splice(idx, 1)[0];
+    item.when = Date.now();
+    list.unshift(item);
+    setRecents(list);
+  }
+}
+
+var PA_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtRecentDate(ts) {
+  var d = new Date(ts);
+  return d.getDate() + ' ' + PA_MON[d.getMonth()];
+}
+function renderRecents() {
+  var list = getRecents().filter(function (r) { return r.cached !== false; });
+  if (!list.length) { recentSection.style.display = 'none'; recentList.innerHTML = ''; return; }
+  recentSection.style.display = 'block';
+  recentList.innerHTML = list.map(function (r) {
+    var n = r.chars + ' character' + (r.chars === 1 ? '' : 's');
+    return '<div class="recent-item" data-hash="' + esc(r.hash) + '">' +
+      '<span class="recent-item-name">' + esc(r.title || 'Untitled script') + '</span>' +
+      '<span class="recent-item-meta">' + n + ' · ' + fmtRecentDate(r.when) + '</span>' +
+      '<span class="recent-item-go">→</span>' +
+      '<button class="recent-remove" data-remove="' + esc(r.hash) + '" title="Remove" aria-label="Remove">×</button>' +
+      '</div>';
+  }).join('');
+}
+
+recentList.addEventListener('click', function (e) {
+  var rm = e.target.closest('.recent-remove');
+  if (rm) {
+    e.stopPropagation();
+    var h = rm.getAttribute('data-remove');
+    try { localStorage.removeItem(PA_CACHE_PREFIX + h); } catch (err) {}
+    setRecents(getRecents().filter(function (r) { return r.hash !== h; }));
+    renderRecents();
+    return;
+  }
+  var item = e.target.closest('.recent-item');
+  if (!item) return;
+  var hash = item.getAttribute('data-hash');
+  var script = cacheGet(hash);
+  if (!script) {
+    setRecents(getRecents().filter(function (r) { return r.hash !== hash; }));
+    renderRecents();
+    showToast('That script is no longer saved — please re-upload it.');
+    return;
+  }
+  parsedScript = script;
+  touchRecent(hash); renderRecents();
+  finishAnalysis();
+});
+
+/* ════════════════════════════════════════════════════════════════
+   PROGRESS OVERLAY
+   ════════════════════════════════════════════════════════════════ */
+var progressOverlay = document.getElementById('progress-overlay');
+var progressBar     = document.getElementById('progress-bar-fill');
+var progressDetail  = document.getElementById('progress-detail');
+var progressSteps   = document.getElementById('progress-steps');
+var PA_STEPS = ['read', 'ocr', 'structure', 'characters'];
+
+function progStepEl(s) { return progressSteps.querySelector('[data-step="' + s + '"]'); }
+
+function progressShow() {
+  for (var i = 0; i < PA_STEPS.length; i++) {
+    var el = progStepEl(PA_STEPS[i]);
+    el.classList.remove('active', 'done', 'skip');
+    el.querySelector('.ps-ico').textContent = '';
+  }
+  progStepEl('ocr').classList.add('skip');   /* hidden unless the script is scanned */
+  progressBar.style.width = '0%';
+  progressDetail.textContent = '';
+  progressOverlay.classList.add('show');
+}
+function progressEnableOcr() { progStepEl('ocr').classList.remove('skip'); }
+function progressHide() { progressOverlay.classList.remove('show'); }
+
+function progressStep(step, pct, detail) {
+  var reached = false;
+  for (var i = 0; i < PA_STEPS.length; i++) {
+    var s = PA_STEPS[i], el = progStepEl(s);
+    if (el.classList.contains('skip')) continue;
+    var ico = el.querySelector('.ps-ico');
+    if (s === step) {
+      el.classList.add('active'); el.classList.remove('done'); ico.textContent = '';
+      reached = true;
+    } else if (!reached) {
+      el.classList.remove('active'); el.classList.add('done'); ico.textContent = '✓';
+    } else {
+      el.classList.remove('active', 'done'); ico.textContent = '';
+    }
+  }
+  if (pct != null)    progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  if (detail != null) progressDetail.textContent = detail;
+}
+function progressDone() {
+  for (var i = 0; i < PA_STEPS.length; i++) {
+    var el = progStepEl(PA_STEPS[i]);
+    if (el.classList.contains('skip')) continue;
+    el.classList.remove('active'); el.classList.add('done');
+    el.querySelector('.ps-ico').textContent = '✓';
+  }
+  progressBar.style.width = '100%';
+}
+
 /* ── HANDLE FILE ── */
 var parsedScript = null;
 
+function showError(title, body) {
+  document.getElementById('upload-error-title').textContent = title;
+  document.getElementById('upload-error-body').innerHTML = body;
+  scanError.style.display = 'block';
+}
+
 function finishAnalysis() {
   parseStatus.style.display    = 'none';
+  progressHide();
   renderChars();
   uploadScreen.style.display   = 'none';
   analysisScreen.style.display = 'flex';
@@ -882,37 +1192,71 @@ function finishAnalysis() {
   document.title = parsedScript.title + ' — Play Analysis';
 }
 
+var NOT_A_PLAY_MSG =
+  "This PDF doesn't appear to contain a script — no character cues, dialogue or " +
+  "scene headings were found. Please upload a stage or screen play.";
+
 async function handleFile(file) {
   scanError.style.display   = 'none';
-  parseStatus.style.display = 'block';
-  parseStatus.textContent   = 'Reading PDF…';
+  parseStatus.style.display = 'none';
 
   var title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
   var buf;
   try { buf = await file.arrayBuffer(); }
-  catch (e) { parseStatus.textContent = 'Could not read that file.'; return; }
+  catch (e) { showError('Could not read that file', 'Please try selecting the PDF again.'); return; }
+
+  /* ── 0. Identical-file cache: skip everything if we've seen these exact bytes ── */
+  var hash = null;
+  try { hash = await sha256Hex(buf.slice(0)); } catch (e) { hash = null; }
+  if (hash) {
+    var cached = cacheGet(hash);
+    if (cached) {
+      parsedScript = cached;
+      touchRecent(hash); renderRecents();
+      finishAnalysis();
+      showToast('Loaded from your previous analysis — no re-scan needed ✓');
+      return;
+    }
+  }
 
   /* ── 1. Smart (AI) pipeline ── */
+  progressShow();
+  progressStep('read', 5, 'Reading the PDF…');
   try {
     var pdf       = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
     var lines     = await extractLinesFromPdf(pdf);
     var textChars = lines.join('').replace(/\s/g, '').length;
     var scanned   = textChars < Math.max(120, pdf.numPages * 40);
+    var n         = pdf.numPages;
 
     if (scanned) {
-      parseStatus.textContent = 'Scanned script detected — reading pages with AI vision…';
-      lines = await ocrPdf(pdf, function (p, last, n) {
-        parseStatus.textContent = 'AI reading page ' + p + (last > p ? ('–' + last) : '') + ' of ' + n + '…';
+      /* OCR the first pages only, then check it's a script before scanning the rest. */
+      progressEnableOcr();
+      progressStep('ocr', 12, 'Reading scanned pages with AI…');
+      var triageEnd = Math.min(3, n);
+      var triage = await ocrRange(pdf, 1, triageEnd, function (p, last) {
+        progressStep('ocr', 12, 'AI reading page ' + p + (last > p ? '–' + last : '') + ' of ' + n + '…');
       });
+      if (!looksLikePlay(triage)) { progressHide(); showError("This doesn't look like a play", NOT_A_PLAY_MSG); return; }
+
+      var rest = triageEnd < n ? await ocrRange(pdf, triageEnd + 1, n, function (p, last) {
+        progressStep('ocr', 12 + ((p - 1) / n) * 33, 'AI reading page ' + p + (last > p ? '–' + last : '') + ' of ' + n + '…');
+      }) : [];
+      lines = triage.concat(rest);
+    } else {
+      /* Text PDF: guard for free before spending any AI calls. */
+      if (!looksLikePlay(lines)) { progressHide(); showError("This doesn't look like a play", NOT_A_PLAY_MSG); return; }
     }
 
-    parseStatus.textContent = 'Analysing structure with AI…';
+    var sBase = scanned ? 48 : 12, sSpan = scanned ? 37 : 70;
+    progressStep('structure', sBase, 'Working out scenes & dialogue…');
     var struct = await structureLines(lines, function (done, total) {
-      parseStatus.textContent = 'Analysing structure with AI… ' + Math.round(done / total * 100) + '%';
+      progressStep('structure', sBase + (done / total) * sSpan,
+        'Working out scenes & dialogue… ' + Math.round(done / total * 100) + '%');
     });
     if (!struct.speeches.length) throw new Error('no-speeches-detected');
 
-    parseStatus.textContent = 'Identifying characters…';
+    progressStep('characters', 90, 'Identifying characters…');
     var labels = [], seen = {};
     for (var i = 0; i < struct.speeches.length; i++) {
       var s = struct.speeches[i].speaker;
@@ -923,6 +1267,15 @@ async function handleFile(file) {
     parsedScript = buildSmartScript(lines, struct, norm, title);
     if (!Object.keys(parsedScript.characters).length) throw new Error('no-characters');
 
+    progressDone();
+    if (hash) {
+      cacheSave(hash, parsedScript);
+      addRecent({ hash: hash, title: parsedScript.title,
+                  chars: Object.keys(parsedScript.characters).length,
+                  when: Date.now(), cached: true });
+      renderRecents();
+    }
+    await new Promise(function (r) { setTimeout(r, 350); }); /* let the bar finish */
     finishAnalysis();
     return;
   } catch (err) {
@@ -930,18 +1283,31 @@ async function handleFile(file) {
   }
 
   /* ── 2. Offline heuristic fallback ── */
+  progressHide();
   try {
     parseStatus.style.display = 'block';
     parseStatus.textContent   = 'AI unavailable — using offline parser…';
     var flines = await extractLines(buf.slice(0));
     var fchars = flines.join('').replace(/\s/g, '').length;
-    if (fchars < 80) { parseStatus.style.display = 'none'; scanError.style.display = 'block'; return; }
+    if (fchars < 80) {
+      parseStatus.style.display = 'none';
+      showError('Could not read this PDF',
+        'It looks like a scanned or image-only PDF and the AI reader is currently unavailable. Please try again shortly, or upload a text-based PDF.');
+      return;
+    }
 
     parsedScript = parseScript(flines, title);
     if (!Object.keys(parsedScript.characters).length) {
       parseStatus.textContent =
         'No characters detected. Try a clearer scan or a text-based PDF.';
       return;
+    }
+    if (hash) {
+      cacheSave(hash, parsedScript);
+      addRecent({ hash: hash, title: parsedScript.title,
+                  chars: Object.keys(parsedScript.characters).length,
+                  when: Date.now(), cached: true });
+      renderRecents();
     }
     finishAnalysis();
   } catch (err2) {
@@ -1169,6 +1535,9 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2800);
 }
+
+/* ── INIT ── */
+renderRecents();
 </script>
 </body>
 </html>
