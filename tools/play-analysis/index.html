@@ -191,16 +191,17 @@
     .scan-error-body strong { color: var(--fg); }
 
     /* ── ANALYSIS SCREEN ── */
-    #analysis-screen { display: none; flex: 1; flex-direction: row; overflow: hidden; }
+    /* Scrolls as one column: character table first, play summary underneath. */
+    #analysis-screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
 
     /* Character panel — full width */
-    .char-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .char-panel { display: flex; flex-direction: column; flex-shrink: 0; }
     .panel-header {
       padding: 10px 16px; border-bottom: 1px solid var(--border);
       font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
       color: var(--muted); flex-shrink: 0; background: var(--bg);
     }
-    .char-table-wrap { flex: 1; overflow-y: auto; }
+    .char-table-wrap { }
     .char-table { width: 100%; border-collapse: collapse; }
     .char-table thead th {
       padding: 10px 16px; text-align: left;
@@ -229,6 +230,55 @@
     [data-theme="terminal"] .export-btn { border-color: rgba(212,255,26,0.25); color: var(--lime); }
     [data-theme="dark"]     .export-btn:hover,
     [data-theme="terminal"] .export-btn:hover { background: rgba(212,255,26,0.08); }
+
+    /* ── PLAY SUMMARY ── */
+    .summary-panel { border-top: 6px solid var(--border); flex-shrink: 0; }
+    .summary-head {
+      padding: 14px 16px 12px; border-bottom: 1px solid var(--border);
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); background: var(--bg);
+      position: sticky; top: 0; z-index: 1;
+    }
+    #summary-body { padding: 4px 16px 40px; max-width: 760px; }
+    .summary-loading, .summary-failed {
+      padding: 30px 4px; text-align: center; font-size: 10px;
+      color: var(--muted); letter-spacing: 1px; line-height: 1.8;
+    }
+    .summary-retry {
+      margin-top: 14px; background: none; border: 1px solid var(--purple);
+      color: var(--purple); font-family: var(--font); font-size: 9px;
+      letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 16px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .summary-retry:hover { background: rgba(100,72,228,0.08); }
+    [data-theme="dark"]     .summary-retry,
+    [data-theme="terminal"] .summary-retry { border-color: var(--lime); color: var(--lime); }
+    [data-theme="dark"]     .summary-retry:hover,
+    [data-theme="terminal"] .summary-retry:hover { background: rgba(212,255,26,0.08); }
+    .summary-synopsis {
+      font-size: 12px; line-height: 1.9; color: var(--fg); letter-spacing: 0.2px;
+      padding: 20px 0 18px; border-bottom: 1px solid var(--border);
+    }
+    .summary-scene { padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .ss-heading {
+      font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 1.5px;
+      color: var(--fg); line-height: 1.1; margin-bottom: 5px;
+    }
+    .ss-chars {
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--purple); margin-bottom: 9px;
+    }
+    [data-theme="dark"]     .ss-chars,
+    [data-theme="terminal"] .ss-chars { color: var(--lime); }
+    .ss-text { font-size: 11px; line-height: 1.85; color: var(--fg); letter-spacing: 0.2px; }
+    .summary-themes {
+      padding: 18px 0 0; font-size: 10px; line-height: 1.9; color: var(--muted); letter-spacing: 0.5px;
+    }
+    .summary-themes strong { color: var(--fg); text-transform: uppercase; letter-spacing: 1.5px; font-size: 9px; }
+    .summary-theme-tag {
+      display: inline-block; border: 1px solid var(--border); border-radius: 2px;
+      padding: 3px 9px; margin: 3px 4px 0 0; font-size: 10px; color: var(--fg); letter-spacing: 0.5px;
+    }
 
     /* ── EMPTY STATE ── */
     .empty { padding: 40px 20px; text-align: center; font-size: 10px; color: var(--muted); letter-spacing: 1px; }
@@ -270,10 +320,14 @@
     .anomaly-body .char-table tbody tr:hover td { opacity: 0.8; }
 
     /* ── SCROLLBARS ── */
-    .char-table-wrap::-webkit-scrollbar { width: 4px; }
-    .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(100,72,228,0.2); }
+    .char-table-wrap::-webkit-scrollbar,
+    #analysis-screen::-webkit-scrollbar { width: 4px; }
+    .char-table-wrap::-webkit-scrollbar-thumb,
+    #analysis-screen::-webkit-scrollbar-thumb { background: rgba(100,72,228,0.2); }
     [data-theme="dark"]     .char-table-wrap::-webkit-scrollbar-thumb,
-    [data-theme="terminal"] .char-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
+    [data-theme="terminal"] .char-table-wrap::-webkit-scrollbar-thumb,
+    [data-theme="dark"]     #analysis-screen::-webkit-scrollbar-thumb,
+    [data-theme="terminal"] #analysis-screen::-webkit-scrollbar-thumb { background: rgba(212,255,26,0.15); }
 
     /* ── RECENT SCRIPTS ── */
     #recent-section { max-width: 460px; width: 100%; display: none; margin-top: 4px; }
@@ -458,6 +512,12 @@
         </div>
       </div>
     </div>
+
+    <!-- PLAY SUMMARY -->
+    <div class="summary-panel" id="summary-panel">
+      <div class="summary-head">Scene-by-scene summary</div>
+      <div id="summary-body"></div>
+    </div>
   </div>
 
 </div>
@@ -473,6 +533,7 @@
       <div class="progress-step" data-step="ocr"><span class="ps-ico"></span><span class="ps-label">Reading scanned pages with AI</span></div>
       <div class="progress-step" data-step="structure"><span class="ps-ico"></span><span class="ps-label">Working out scenes &amp; dialogue</span></div>
       <div class="progress-step" data-step="characters"><span class="ps-ico"></span><span class="ps-label">Identifying characters</span></div>
+      <div class="progress-step" data-step="summary"><span class="ps-ico"></span><span class="ps-label">Summarising the play</span></div>
     </div>
     <div class="progress-detail" id="progress-detail"></div>
     <div class="progress-note">Please keep this tab open — long or scanned scripts can take a minute.</div>
@@ -1116,6 +1177,7 @@ recentList.addEventListener('click', function (e) {
     return;
   }
   parsedScript = script;
+  paSource = { hash: hash, title: script.title };  /* no file in hand from the recent list */
   touchRecent(hash); renderRecents();
   finishAnalysis();
 });
@@ -1127,7 +1189,7 @@ var progressOverlay = document.getElementById('progress-overlay');
 var progressBar     = document.getElementById('progress-bar-fill');
 var progressDetail  = document.getElementById('progress-detail');
 var progressSteps   = document.getElementById('progress-steps');
-var PA_STEPS = ['read', 'ocr', 'structure', 'characters'];
+var PA_STEPS = ['read', 'ocr', 'structure', 'characters', 'summary'];
 
 function progStepEl(s) { return progressSteps.querySelector('[data-step="' + s + '"]'); }
 
@@ -1173,6 +1235,95 @@ function progressDone() {
   progressBar.style.width = '100%';
 }
 
+/* ════════════════════════════════════════════════════════════════
+   PLAY SUMMARY (scene-by-scene)
+   ════════════════════════════════════════════════════════════════ */
+var summaryBody = document.getElementById('summary-body');
+/* Holds what we need to (re)generate a summary for the script on screen:
+   { hash, title, text?, scenes?, buf? }. text/buf may be absent for
+   results loaded from the recent list. */
+var paSource = null;
+
+async function generateSummary(text, scenes, title) {
+  try {
+    var raw  = await paWorker({ mode: 'summary', text: text, scenes: scenes || [], title: title || '' });
+    var data = safeJson(raw);
+    if (!data || !Array.isArray(data.scenes)) return null;
+    return data;
+  } catch (e) { console.warn('Summary generation failed:', e); return null; }
+}
+
+/* Obtain the full script text for summarising — from memory, or by
+   re-extracting the file buffer if that's all we kept (rare). */
+async function getSummarySourceText() {
+  if (paSource && paSource.text) return paSource.text;
+  if (paSource && paSource.buf) {
+    var pdf = await pdfjsLib.getDocument({ data: paSource.buf.slice(0) }).promise;
+    var ls  = await extractLinesFromPdf(pdf);
+    var tc  = ls.join('').replace(/\s/g, '').length;
+    if (tc < Math.max(120, pdf.numPages * 40)) ls = await ocrRange(pdf, 1, pdf.numPages);
+    paSource.text = ls.join('\n');
+    return paSource.text;
+  }
+  return null;
+}
+
+function renderSummary(sum) {
+  var html = '';
+  if (sum.synopsis) html += '<div class="summary-synopsis">' + esc(sum.synopsis) + '</div>';
+  for (var i = 0; i < sum.scenes.length; i++) {
+    var sc = sum.scenes[i] || {};
+    html += '<div class="summary-scene">';
+    html += '<div class="ss-heading">' + esc(sc.heading || ('Scene ' + (i + 1))) + '</div>';
+    if (Array.isArray(sc.characters) && sc.characters.length) {
+      html += '<div class="ss-chars">' + sc.characters.map(esc).join(' · ') + '</div>';
+    }
+    html += '<div class="ss-text">' + esc(sc.summary || '') + '</div>';
+    html += '</div>';
+  }
+  if (Array.isArray(sum.themes) && sum.themes.length) {
+    html += '<div class="summary-themes"><strong>Themes</strong><br>' +
+      sum.themes.map(function (t) { return '<span class="summary-theme-tag">' + esc(t) + '</span>'; }).join('') +
+      '</div>';
+  }
+  summaryBody.innerHTML = html;
+}
+
+function renderSummaryState() {
+  var sum = parsedScript && parsedScript.summary;
+  if (sum && Array.isArray(sum.scenes) && sum.scenes.length) { renderSummary(sum); return; }
+  var canGen = paSource && (paSource.text || paSource.buf);
+  summaryBody.innerHTML = '<div class="summary-failed">' +
+    (canGen
+      ? 'The play summary hasn’t been generated yet.<br><button class="summary-retry" id="summary-gen-btn">Generate summary</button>'
+      : 'No summary was saved for this script. Re-upload it to generate one.') +
+    '</div>';
+  var b = document.getElementById('summary-gen-btn');
+  if (b) b.addEventListener('click', regenerateSummary);
+}
+
+async function regenerateSummary() {
+  summaryBody.innerHTML =
+    '<div class="summary-loading">Summarising the play…<br>This can take up to a minute for a full script.</div>';
+  try {
+    var text = await getSummarySourceText();
+    if (!text) throw new Error('no-source');
+    var sum = await generateSummary(text, (paSource && paSource.scenes) || [],
+                                    (paSource && paSource.title) || parsedScript.title);
+    if (!sum) throw new Error('failed');
+    parsedScript.summary = sum;
+    if (paSource && paSource.hash) cacheSave(paSource.hash, parsedScript);
+    renderSummary(sum);
+  } catch (e) {
+    console.warn('Summary regenerate failed:', e);
+    summaryBody.innerHTML =
+      '<div class="summary-failed">Couldn’t generate the summary right now.<br>' +
+      '<button class="summary-retry" id="summary-gen-btn">Try again</button></div>';
+    var b = document.getElementById('summary-gen-btn');
+    if (b) b.addEventListener('click', regenerateSummary);
+  }
+}
+
 /* ── HANDLE FILE ── */
 var parsedScript = null;
 
@@ -1186,8 +1337,10 @@ function finishAnalysis() {
   parseStatus.style.display    = 'none';
   progressHide();
   renderChars();
+  renderSummaryState();
   uploadScreen.style.display   = 'none';
   analysisScreen.style.display = 'flex';
+  analysisScreen.scrollTop     = 0;
   topbarBack.classList.add('visible');
   document.title = parsedScript.title + ' — Play Analysis';
 }
@@ -1212,6 +1365,8 @@ async function handleFile(file) {
     var cached = cacheGet(hash);
     if (cached) {
       parsedScript = cached;
+      /* keep the file buffer so the summary can still be generated if it's missing */
+      paSource = { hash: hash, title: cached.title, buf: buf };
       touchRecent(hash); renderRecents();
       finishAnalysis();
       showToast('Loaded from your previous analysis — no re-scan needed ✓');
@@ -1256,7 +1411,7 @@ async function handleFile(file) {
     });
     if (!struct.speeches.length) throw new Error('no-speeches-detected');
 
-    progressStep('characters', 90, 'Identifying characters…');
+    progressStep('characters', 84, 'Identifying characters…');
     var labels = [], seen = {};
     for (var i = 0; i < struct.speeches.length; i++) {
       var s = struct.speeches[i].speaker;
@@ -1266,6 +1421,12 @@ async function handleFile(file) {
 
     parsedScript = buildSmartScript(lines, struct, norm, title);
     if (!Object.keys(parsedScript.characters).length) throw new Error('no-characters');
+
+    /* Part 2: scene-by-scene summary (best-effort — analysis is kept even if this fails). */
+    var sceneHeadings = struct.scenes.map(function (s) { return s.heading; });
+    paSource = { hash: hash, title: title, text: lines.join('\n'), scenes: sceneHeadings };
+    progressStep('summary', 92, 'Summarising the play…');
+    parsedScript.summary = await generateSummary(paSource.text, sceneHeadings, title);
 
     progressDone();
     if (hash) {
@@ -1302,6 +1463,8 @@ async function handleFile(file) {
         'No characters detected. Try a clearer scan or a text-based PDF.';
       return;
     }
+    /* No AI summary offline, but keep the text so it can be generated later. */
+    paSource = { hash: hash, title: title, text: flines.join('\n'), scenes: [] };
     if (hash) {
       cacheSave(hash, parsedScript);
       addRecent({ hash: hash, title: parsedScript.title,

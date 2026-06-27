@@ -20,6 +20,10 @@
  *                     Claude merges speaker-label variants into canonical characters.
  *                     → { text: "<JSON>" }
  *
+ *   4. "summary"    — { mode:"summary", text:"<full script>", scenes:[…], title:"…" }
+ *                     Claude produces a scene-by-scene breakdown of the play.
+ *                     → { text: "<JSON>" }
+ *
  * Secrets required:
  *   ANTHROPIC_API_KEY  — from console.anthropic.com
  *
@@ -67,6 +71,7 @@ export default {
       if (mode === 'ocr')       return await handleOcr(body, env);
       if (mode === 'structure') return await handleStructure(body, env);
       if (mode === 'normalize') return await handleNormalize(body, env);
+      if (mode === 'summary')   return await handleSummary(body, env);
       return json({ error: 'Unknown mode: ' + mode }, 400);
     } catch (e) {
       return json({ error: e.message || String(e) }, 502);
@@ -173,6 +178,46 @@ async function handleNormalize(body, env) {
     content: [{ type: 'text', text: JSON.stringify(labels) }],
   });
   return json({ text });
+}
+
+/* ──────────────────────── MODE: SUMMARY ────────────────────── */
+async function handleSummary(body, env) {
+  const text   = typeof body.text === 'string' ? body.text : '';
+  const scenes = Array.isArray(body.scenes) ? body.scenes : [];
+  const title  = typeof body.title === 'string' && body.title ? body.title : 'this play';
+  if (!text.trim()) return json({ error: 'No text provided' }, 400);
+
+  /* Guard against an absurdly long payload (very rare for a single play). */
+  const MAX = 600000;
+  const script = text.length > MAX ? text.slice(0, MAX) : text;
+
+  const sceneHint = scenes.length
+    ? 'These scene/act headings were detected in the script — use them as your scene ' +
+      'divisions wherever possible, in order: ' + JSON.stringify(scenes.slice(0, 200)) + '.'
+    : 'No scene headings were detected; divide the play into sensible scenes yourself.';
+
+  const system =
+    'You are a dramaturg preparing study notes for actors and directors. You receive the full ' +
+    'text of a stage or screen play. Produce a clear, accurate, scene-by-scene breakdown. ' +
+    'Base EVERYTHING strictly on the script provided — never invent characters or events. ' +
+    sceneHint + '\n\n' +
+    'Return ONLY valid JSON, no markdown, in exactly this shape:\n' +
+    '{"synopsis":"<2-4 sentence overview of the whole play>",' +
+    '"scenes":[{"heading":"<scene/act label>","characters":["<NAMES present in the scene>"],' +
+    '"summary":"<2-5 sentences: what happens, the key beats, and how relationships shift>"}],' +
+    '"themes":["<short theme phrase>"]}\n\n' +
+    'Rules:\n' +
+    '- Keep every summary concrete and specific to THIS script — not generic.\n' +
+    '- Names in the "characters" arrays should match how they appear in the script.\n' +
+    '- Cover the whole play in order. Use 3-8 themes maximum.\n' +
+    'Output JSON only.';
+
+  const out = await callClaude(env, {
+    system,
+    max_tokens: 8192,
+    content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
+  });
+  return json({ text: out });
 }
 
 /* ───────────────────────── HELPERS ─────────────────────────── */
