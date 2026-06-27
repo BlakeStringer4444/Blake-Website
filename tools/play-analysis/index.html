@@ -152,13 +152,6 @@
     }
     [data-theme="dark"]     .upload-heading,
     [data-theme="terminal"] .upload-heading { color: var(--lime); }
-    .upload-warning {
-      font-size: 10px; color: var(--muted); letter-spacing: 0.5px;
-      line-height: 1.9; text-align: center; max-width: 460px;
-      border: 1px solid rgba(34,197,94,0.3); padding: 14px 18px;
-      background: rgba(34,197,94,0.04);
-    }
-    .upload-warning strong { color: #16a34a; }
     .drop-zone {
       border: 2px dashed rgba(100,72,228,0.35); padding: 48px 40px;
       text-align: center; cursor: pointer;
@@ -449,17 +442,12 @@
       </div>
     </div>
     <h1 class="pa-title">Play Analysis</h1>
-    <p class="pa-subtitle">AI-powered character &amp; line breakdown for any PDF script — text or scanned</p>
+    <p class="pa-subtitle">Character &amp; line totals, and scene breakdown for any PDF play</p>
   </header>
 
   <!-- UPLOAD SCREEN -->
   <div id="upload-screen">
     <div class="upload-heading">Upload Your Script</div>
-
-    <div class="upload-warning">
-      <strong>✓ Text-based and scanned PDFs both work.</strong><br>
-      Text scripts (from Final Draft, Word, Google Docs, etc.) are read instantly. Scanned or photographed scripts are read by AI vision — accuracy depends on the quality of the scan.
-    </div>
 
     <div class="drop-zone" id="drop-zone">
       <div class="drop-icon">📄</div>
