@@ -21,8 +21,9 @@
  *                     → { text: "<JSON>" }
  *
  *   4. "summary"    — { mode:"summary", text:"<full script>", scenes:[…], title:"…" }
- *                     Claude produces a scene-by-scene breakdown of the play.
- *                     → { text: "<JSON>" }
+ *                     Claude produces character profiles (name, approx age, personality)
+ *                     and a scene-by-scene breakdown of the play.
+ *                     → { text: "<JSON: synopsis, profiles[], scenes[], themes[]>" }
  *
  *   5. "library-check" — { mode:"library-check", fileHash?:"…", fingerprint?:"…" }
  *                     Looks the play up in the shared, PRIVATE library (Cloudflare KV).
@@ -221,23 +222,34 @@ async function handleSummary(body, env) {
 
   const system =
     'You are a dramaturg preparing study notes for actors and directors. You receive the full ' +
-    'text of a stage or screen play. Produce a clear, accurate, scene-by-scene breakdown. ' +
+    'text of a stage or screen play. Produce (a) short character profiles and (b) a clear, ' +
+    'accurate, scene-by-scene breakdown. ' +
     'Base EVERYTHING strictly on the script provided — never invent characters or events. ' +
     sceneHint + '\n\n' +
     'Return ONLY valid JSON, no markdown, in exactly this shape:\n' +
     '{"synopsis":"<2-4 sentence overview of the whole play>",' +
+    '"profiles":[{"name":"<character name as printed>","age":"<approx age or range>",' +
+    '"summary":"<personality, role in the story, key relationships and how they change>"}],' +
     '"scenes":[{"heading":"<scene/act label>","characters":["<NAMES present in the scene>"],' +
     '"summary":"<2-5 sentences: what happens, the key beats, and how relationships shift>"}],' +
     '"themes":["<short theme phrase>"]}\n\n' +
     'Rules:\n' +
-    '- Keep every summary concrete and specific to THIS script — not generic.\n' +
+    '- PROFILES: include only the SIGNIFICANT characters (those who drive the story); you may ' +
+    'omit one-line or pure-ensemble roles. Order them by importance.\n' +
+    '- Each profile "summary" must be AT MOST two short paragraphs, grounded in the script — ' +
+    'their personality, what they want, their relationships and how they change. Be specific to ' +
+    'THIS play, never generic.\n' +
+    '- AGE: give an exact age if the script states one; otherwise give a realistic estimate or ' +
+    'range (e.g. "late 30s", "60s", "teenager") inferred from how the character is described and ' +
+    'their role. If there is genuinely no basis to judge, use "unspecified".\n' +
+    '- Keep every scene summary concrete and specific to THIS script — not generic.\n' +
     '- Names in the "characters" arrays should match how they appear in the script.\n' +
     '- Cover the whole play in order. Use 3-8 themes maximum.\n' +
     'Output JSON only.';
 
   const out = await callClaude(env, {
     system,
-    max_tokens: 8192,
+    max_tokens: 16000,
     content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
   });
   return json({ text: out });

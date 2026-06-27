@@ -156,8 +156,60 @@
     .scan-error-body strong { color: var(--fg); }
 
     /* ── ANALYSIS SCREEN ── */
-    /* Scrolls as one column: character table first, play summary underneath. */
-    #analysis-screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+    /* Scrolls as one column: navigator, character table, profiles, summary. */
+    #analysis-screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; position: relative; }
+
+    /* In-page navigator — jump between the three sections */
+    .analysis-nav {
+      position: sticky; top: 0; z-index: 6;
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 9px 16px; background: var(--bg);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .anav-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--font);
+      font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 11px; cursor: pointer; border-radius: 2px;
+      transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+    }
+    .anav-btn:hover { border-color: var(--purple); color: var(--purple); }
+    [data-theme="dark"]     .anav-btn:hover,
+    [data-theme="terminal"] .anav-btn:hover { border-color: var(--lime); color: var(--lime); }
+    .anav-btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+
+    /* Jump-to-top button — appears once scrolled down */
+    #jump-top-btn {
+      position: fixed; bottom: 22px; right: 22px; z-index: 50;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--purple); color: #fff; border: none; cursor: pointer;
+      font-size: 18px; line-height: 1; display: none;
+      align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.28); transition: opacity 0.2s, transform 0.2s;
+    }
+    [data-theme="dark"]     #jump-top-btn,
+    [data-theme="terminal"] #jump-top-btn { background: var(--lime); color: #000; }
+    #jump-top-btn.show { display: flex; }
+    #jump-top-btn:hover { transform: translateY(-2px); }
+    #jump-top-btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+    /* ── CHARACTER PROFILES ── */
+    .profiles-panel { border-top: 6px solid var(--border); flex-shrink: 0; }
+    #profiles-body { padding: 6px 16px 28px; max-width: 760px; }
+    .profile-card { padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .profile-name {
+      font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 1.5px;
+      color: var(--fg); line-height: 1.1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    }
+    .profile-age {
+      font-family: var(--font); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--purple);
+    }
+    [data-theme="dark"]     .profile-age,
+    [data-theme="terminal"] .profile-age { color: var(--lime); }
+    .profile-text { font-size: 11px; line-height: 1.85; color: var(--fg); letter-spacing: 0.2px; margin-top: 8px; }
+    .profile-text p { margin: 0 0 9px; }
+    .profile-text p:last-child { margin-bottom: 0; }
 
     /* Character panel — full width */
     .char-panel { display: flex; flex-direction: column; flex-shrink: 0; }
@@ -348,7 +400,13 @@
     [data-theme="terminal"] .progress-spinner { border-color: rgba(212,255,26,0.18); border-top-color: var(--lime); }
     @keyframes pa-spin { to { transform: rotate(360deg); } }
     .progress-title { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--fg); }
-    .progress-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-percent {
+      font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 0.9;
+      letter-spacing: 2px; color: var(--purple); margin: -2px 0 -4px;
+    }
+    [data-theme="dark"]     .progress-percent,
+    [data-theme="terminal"] .progress-percent { color: var(--lime); }
+    .progress-bar-bg { width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
     .progress-bar-fill { height: 100%; width: 0%; background: var(--purple); border-radius: 3px; transition: width 0.45s ease; }
     [data-theme="dark"]     .progress-bar-fill,
     [data-theme="terminal"] .progress-bar-fill { background: var(--lime); }
@@ -437,7 +495,12 @@
 
   <!-- ANALYSIS SCREEN -->
   <div id="analysis-screen">
-    <div class="char-panel">
+    <nav class="analysis-nav" id="analysis-nav" aria-label="Jump to section">
+      <button class="anav-btn" type="button" data-jump="char-panel">Line Count</button>
+      <button class="anav-btn" type="button" data-jump="profiles-panel" id="anav-profiles">Character Summary</button>
+      <button class="anav-btn" type="button" data-jump="summary-panel">Scene-by-Scene</button>
+    </nav>
+    <div class="char-panel" id="char-panel">
       <div class="panel-header">sorted by word count</div>
       <div class="char-table-wrap">
         <table class="char-table">
@@ -469,6 +532,12 @@
       </div>
     </div>
 
+    <!-- CHARACTER PROFILES -->
+    <div class="profiles-panel" id="profiles-panel" style="display:none">
+      <div class="panel-header">Character summary</div>
+      <div id="profiles-body"></div>
+    </div>
+
     <!-- PLAY SUMMARY -->
     <div class="summary-panel" id="summary-panel">
       <div class="summary-head">
@@ -490,6 +559,7 @@
   <div class="progress-card">
     <div class="progress-spinner"></div>
     <div class="progress-title">Analysing your script</div>
+    <div class="progress-percent" id="progress-percent" aria-hidden="true">0%</div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
     <div class="progress-steps" id="progress-steps">
       <div class="progress-step" data-step="read"><span class="ps-ico"></span><span class="ps-label">Reading the PDF</span></div>
@@ -498,10 +568,12 @@
       <div class="progress-step" data-step="characters"><span class="ps-ico"></span><span class="ps-label">Identifying characters</span></div>
       <div class="progress-step" data-step="summary"><span class="ps-ico"></span><span class="ps-label">Summarising the play</span></div>
     </div>
-    <div class="progress-detail" id="progress-detail"></div>
-    <div class="progress-note">Please keep this tab open — long or scanned scripts can take a minute.</div>
+    <div class="progress-detail" id="progress-detail" aria-live="polite"></div>
+    <div class="progress-note">Please keep this tab open — long or scanned scripts can take a couple of minutes.</div>
   </div>
 </div>
+
+<button id="jump-top-btn" type="button" aria-label="Jump to top" title="Jump to top">↑</button>
 
 <div id="toast"></div>
 
@@ -587,6 +659,32 @@ topbarBack.addEventListener('click', function () {
   parseStatus.style.display = 'none';
   fileInput.value = '';
   renderRecents();
+});
+
+/* ── IN-PAGE NAVIGATOR + JUMP-TO-TOP ── */
+var analysisNav = document.getElementById('analysis-nav');
+var jumpTopBtn  = document.getElementById('jump-top-btn');
+
+function jumpToSection(id) {
+  var el = document.getElementById(id);
+  if (!el || el.style.display === 'none') return;
+  var navH = analysisNav ? analysisNav.offsetHeight : 0;
+  analysisScreen.scrollTo({ top: Math.max(0, el.offsetTop - navH - 4), behavior: 'smooth' });
+}
+
+if (analysisNav) {
+  analysisNav.addEventListener('click', function (e) {
+    var btn = e.target.closest('.anav-btn');
+    if (btn) jumpToSection(btn.getAttribute('data-jump'));
+  });
+}
+if (jumpTopBtn) {
+  jumpTopBtn.addEventListener('click', function () {
+    analysisScreen.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+analysisScreen.addEventListener('scroll', function () {
+  jumpTopBtn.classList.toggle('show', analysisScreen.scrollTop > 320);
 });
 
 /* ── PDF TEXT EXTRACTION ── */
@@ -1172,25 +1270,46 @@ recentList.addEventListener('click', function (e) {
    ════════════════════════════════════════════════════════════════ */
 var progressOverlay = document.getElementById('progress-overlay');
 var progressBar     = document.getElementById('progress-bar-fill');
+var progressPercent = document.getElementById('progress-percent');
 var progressDetail  = document.getElementById('progress-detail');
 var progressSteps   = document.getElementById('progress-steps');
 var PA_STEPS = ['read', 'ocr', 'structure', 'characters', 'summary'];
 
 function progStepEl(s) { return progressSteps.querySelector('[data-step="' + s + '"]'); }
 
+/* Single place that moves both the bar and the big number, so they never disagree. */
+var paPct = 0;
+function setProgressPct(pct) {
+  paPct = Math.max(0, Math.min(100, pct));
+  progressBar.style.width = paPct + '%';
+  progressPercent.textContent = Math.round(paPct) + '%';
+}
+
+/* The summary step is a single network call with no sub-progress, so we gently
+   creep the number toward a ceiling while we wait, then snap to 100 when done. */
+var paCreep = null;
+function startCreep(to) {
+  stopCreep();
+  paCreep = setInterval(function () {
+    if (paPct < to) setProgressPct(paPct + Math.max(0.2, (to - paPct) * 0.08));
+  }, 260);
+}
+function stopCreep() { if (paCreep) { clearInterval(paCreep); paCreep = null; } }
+
 function progressShow() {
+  stopCreep();
   for (var i = 0; i < PA_STEPS.length; i++) {
     var el = progStepEl(PA_STEPS[i]);
     el.classList.remove('active', 'done', 'skip');
     el.querySelector('.ps-ico').textContent = '';
   }
   progStepEl('ocr').classList.add('skip');   /* hidden unless the script is scanned */
-  progressBar.style.width = '0%';
+  setProgressPct(0);
   progressDetail.textContent = '';
   progressOverlay.classList.add('show');
 }
 function progressEnableOcr() { progStepEl('ocr').classList.remove('skip'); }
-function progressHide() { progressOverlay.classList.remove('show'); }
+function progressHide() { stopCreep(); progressOverlay.classList.remove('show'); }
 
 function progressStep(step, pct, detail) {
   var reached = false;
@@ -1207,17 +1326,18 @@ function progressStep(step, pct, detail) {
       el.classList.remove('active', 'done'); ico.textContent = '';
     }
   }
-  if (pct != null)    progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  if (pct != null)    setProgressPct(pct);
   if (detail != null) progressDetail.textContent = detail;
 }
 function progressDone() {
+  stopCreep();
   for (var i = 0; i < PA_STEPS.length; i++) {
     var el = progStepEl(PA_STEPS[i]);
     if (el.classList.contains('skip')) continue;
     el.classList.remove('active'); el.classList.add('done');
     el.querySelector('.ps-ico').textContent = '✓';
   }
-  progressBar.style.width = '100%';
+  setProgressPct(100);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1276,8 +1396,35 @@ function renderSummary(sum) {
   summaryBody.innerHTML = html;
 }
 
+/* Character profiles panel (sits between the line table and the scene summary). */
+var profilesPanel = document.getElementById('profiles-panel');
+var profilesBody  = document.getElementById('profiles-body');
+var anavProfiles  = document.getElementById('anav-profiles');
+
+function renderProfiles(profiles) {
+  var has = Array.isArray(profiles) && profiles.length;
+  profilesPanel.style.display = has ? '' : 'none';
+  if (anavProfiles) anavProfiles.style.display = has ? '' : 'none';
+  if (!has) { profilesBody.innerHTML = ''; return; }
+  var html = '';
+  for (var i = 0; i < profiles.length; i++) {
+    var p = profiles[i] || {};
+    var paras = String(p.summary || '').split(/\n{2,}|\n/).filter(function (s) { return s.trim(); });
+    html += '<div class="profile-card">' +
+      '<div class="profile-name">' + esc(p.name || 'Character') +
+        (p.age ? '<span class="profile-age">approx. ' + esc(p.age) + '</span>' : '') +
+      '</div>' +
+      '<div class="profile-text">' +
+        (paras.length ? paras.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') : '') +
+      '</div>' +
+    '</div>';
+  }
+  profilesBody.innerHTML = html;
+}
+
 function renderSummaryState() {
   var sum = parsedScript && parsedScript.summary;
+  renderProfiles(sum && sum.profiles);
   if (sum && Array.isArray(sum.scenes) && sum.scenes.length) { renderSummary(sum); return; }
   var sa = document.getElementById('summary-actions');
   if (sa) sa.style.display = 'none';
@@ -1293,7 +1440,7 @@ function renderSummaryState() {
 
 async function regenerateSummary() {
   summaryBody.innerHTML =
-    '<div class="summary-loading">Summarising the play…<br>This can take up to a minute for a full script.</div>';
+    '<div class="summary-loading">Summarising the play &amp; profiling characters…<br>This can take a couple of minutes for a full script.</div>';
   try {
     var text = await getSummarySourceText();
     if (!text) throw new Error('no-source');
@@ -1301,7 +1448,8 @@ async function regenerateSummary() {
                                     (paSource && paSource.title) || parsedScript.title);
     if (!sum) throw new Error('failed');
     parsedScript.summary = sum;
-    if (paSource && paSource.hash) cacheSave(paSource.hash, parsedScript);
+    if (paSource && paSource.hash && looksComplete(parsedScript)) cacheSave(paSource.hash, parsedScript);
+    renderProfiles(sum.profiles);
     renderSummary(sum);
   } catch (e) {
     console.warn('Summary regenerate failed:', e);
@@ -1317,12 +1465,34 @@ async function regenerateSummary() {
 var parsedScript = null;
 
 function showError(title, body) {
+  scanInProgress = false;
   document.getElementById('upload-error-title').textContent = title;
   document.getElementById('upload-error-body').innerHTML = body;
   scanError.style.display = 'block';
 }
 
+/* Guard against trusting (or saving) a damaged / partial scan. A real script
+   worth analysing has far more than this; a truncated parse — e.g. an aborted
+   run that only caught a handful of lines — falls well below these floors, so we
+   refuse to cache it and rescan instead of serving it back. */
+function looksComplete(script) {
+  if (!script || !script.characters) return false;
+  var totalLines = 0;
+  for (var k in script.characters) {
+    if (script.characters.hasOwnProperty(k)) totalLines += (script.characters[k].lineCount || 0);
+  }
+  return (script.totalWords || 0) >= 150 && totalLines >= 20;
+}
+
+/* True while a scan is running — used to warn before the tab is closed and to
+   keep partial results from being persisted. */
+var scanInProgress = false;
+window.addEventListener('beforeunload', function (e) {
+  if (scanInProgress) { e.preventDefault(); e.returnValue = ''; return ''; }
+});
+
 function finishAnalysis() {
+  scanInProgress = false;
   parseStatus.style.display    = 'none';
   progressHide();
   renderChars();
@@ -1365,12 +1535,13 @@ async function handleFile(file) {
   try { buf = await file.arrayBuffer(); }
   catch (e) { showError('Could not read that file', 'Please try selecting the PDF again.'); return; }
 
-  /* ── 0. Identical-file cache: skip everything if we've seen these exact bytes ── */
+  /* ── 0. Identical-file cache: skip everything if we've seen these exact bytes.
+     A damaged/partial cached result is discarded so we rescan instead. ── */
   var hash = null;
   try { hash = await sha256Hex(buf.slice(0)); } catch (e) { hash = null; }
   if (hash) {
     var cached = cacheGet(hash);
-    if (cached) {
+    if (cached && looksComplete(cached)) {
       parsedScript = cached;
       /* keep the file buffer so the summary can still be generated if it's missing */
       paSource = { hash: hash, title: cached.title, buf: buf };
@@ -1379,16 +1550,21 @@ async function handleFile(file) {
       showToast('Loaded from your previous analysis — no re-scan needed ✓');
       return;
     }
+    if (cached) {   /* incomplete — drop it and re-scan from scratch */
+      try { localStorage.removeItem(PA_CACHE_PREFIX + hash); } catch (e) {}
+    }
   }
 
   /* ── 0b. Shared library — exact file match (covers a new device or another
-     user uploading this very same file). No AI spend, no scan. ── */
+     user uploading this very same file). No AI spend, no scan. Skip a damaged
+     library entry; the fresh scan below will overwrite it. ── */
   if (hash) {
     var libByFile = await libraryCheck({ fileHash: hash });
-    if (libByFile) { useLibraryResult(libByFile, hash, buf); return; }
+    if (libByFile && looksComplete(libByFile)) { useLibraryResult(libByFile, hash, buf); return; }
   }
 
   /* ── 1. Smart (AI) pipeline ── */
+  scanInProgress = true;
   progressShow();
   progressStep('read', 5, 'Reading the PDF…');
   try {
@@ -1413,7 +1589,7 @@ async function handleFile(file) {
       fp = await fingerprintText(triage);
       if (fp) {
         var libS = await libraryCheck({ fingerprint: fp });
-        if (libS) { useLibraryResult(libS, hash, buf); return; }
+        if (libS && looksComplete(libS)) { useLibraryResult(libS, hash, buf); return; }
       }
 
       var rest = triageEnd < n ? await ocrRange(pdf, triageEnd + 1, n, function (p, last) {
@@ -1428,7 +1604,7 @@ async function handleFile(file) {
       fp = await fingerprintText(lines);
       if (fp) {
         var libT = await libraryCheck({ fingerprint: fp });
-        if (libT) { useLibraryResult(libT, hash, buf); return; }
+        if (libT && looksComplete(libT)) { useLibraryResult(libT, hash, buf); return; }
       }
     }
 
@@ -1451,22 +1627,30 @@ async function handleFile(file) {
     parsedScript = buildSmartScript(lines, struct, norm, title);
     if (!Object.keys(parsedScript.characters).length) throw new Error('no-characters');
 
-    /* Part 2: scene-by-scene summary (best-effort — analysis is kept even if this fails). */
+    /* Part 2: character profiles + scene-by-scene summary (best-effort — the line
+       analysis is kept even if this fails). The summary call has no sub-progress,
+       so creep the bar toward 99% while we wait. */
     var sceneHeadings = struct.scenes.map(function (s) { return s.heading; });
     paSource = { hash: hash, title: title, text: lines.join('\n'), scenes: sceneHeadings };
-    progressStep('summary', 92, 'Summarising the play…');
+    progressStep('summary', 88, 'Summarising the play & profiling characters…');
+    startCreep(99);
     parsedScript.summary = await generateSummary(paSource.text, sceneHeadings, title);
+    stopCreep();
 
     progressDone();
-    if (hash) {
-      cacheSave(hash, parsedScript);
-      addRecent({ hash: hash, title: parsedScript.title,
-                  chars: Object.keys(parsedScript.characters).length,
-                  when: Date.now(), cached: true });
-      renderRecents();
+    /* Only persist a result that passes the completeness check, so a damaged or
+       partial scan can never be served back on re-upload. */
+    if (looksComplete(parsedScript)) {
+      if (hash) {
+        cacheSave(hash, parsedScript);
+        addRecent({ hash: hash, title: parsedScript.title,
+                    chars: Object.keys(parsedScript.characters).length,
+                    when: Date.now(), cached: true });
+        renderRecents();
+      }
+      /* Add to the shared library so nobody (incl. other users) re-scans this play. */
+      librarySave({ fileHash: hash || undefined, fingerprint: fp || undefined, script: parsedScript });
     }
-    /* Add to the shared library so nobody (incl. other users) re-scans this play. */
-    librarySave({ fileHash: hash || undefined, fingerprint: fp || undefined, script: parsedScript });
     await new Promise(function (r) { setTimeout(r, 350); }); /* let the bar finish */
     finishAnalysis();
     return;
@@ -1475,6 +1659,7 @@ async function handleFile(file) {
   }
 
   /* ── 2. Offline heuristic fallback ── */
+  scanInProgress = false;
   progressHide();
   try {
     parseStatus.style.display = 'block';
@@ -1496,7 +1681,7 @@ async function handleFile(file) {
     }
     /* No AI summary offline, but keep the text so it can be generated later. */
     paSource = { hash: hash, title: title, text: flines.join('\n'), scenes: [] };
-    if (hash) {
+    if (hash && looksComplete(parsedScript)) {
       cacheSave(hash, parsedScript);
       addRecent({ hash: hash, title: parsedScript.title,
                   chars: Object.keys(parsedScript.characters).length,
