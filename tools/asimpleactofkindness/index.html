@@ -229,8 +229,8 @@
       .btn-row { grid-template-columns: 1fr; gap: 2px; }
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
-      .modal-overlay { padding: 12px 12px 0; align-items: flex-end; }
-      .modal { max-height: 92vh; max-width: 100%; border-radius: 8px 8px 0 0; }
+      .modal-overlay { padding: 48px 12px 0; align-items: flex-end; }
+      .modal { max-height: calc(100vh - 48px); max-width: 100%; border-radius: 8px 8px 0 0; }
       .modal-handle {
         display: block; width: 36px; height: 4px; border-radius: 2px;
         background: var(--border); margin: 10px auto 0;
@@ -239,6 +239,9 @@
       .modal-header { padding: 10px 14px; }
       .modal-body { -webkit-overflow-scrolling: touch; }
       #sched-body, #cast-body { zoom: 1; }
+      #modal-cast .modal { min-height: 72vh; }
+      .cc-table td { white-space: normal; overflow: visible; text-overflow: clip; }
+      .cc-table td a { white-space: normal; overflow: visible; text-overflow: clip; }
       .pdf-toolbar { padding: 6px 10px; gap: 4px; }
       .pdf-find-input { width: 80px; font-size: 10px; }
       .pdf-download-btn { font-size: 8px; padding: 4px 8px; letter-spacing: 1px; }
