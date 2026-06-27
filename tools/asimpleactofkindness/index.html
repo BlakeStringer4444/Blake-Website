@@ -121,8 +121,7 @@
     .modal-body::-webkit-scrollbar { width: 4px; }
     .modal-body::-webkit-scrollbar-track { background: transparent; }
     .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    #sched-body { zoom: 1.5; }
-    #cast-body  { zoom: 1.25; }
+    #sched-body { zoom: 1.2; }
 
     /* ── SCHEDULE MODAL CONTENT ── */
     .sched-table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -369,12 +368,17 @@
 /* ── FONT ZOOM ── */
 (function () {
   var desktop = window.innerWidth >= 720;
-  var levels  = desktop ? [1.0, 1.2] : ['', 1.15];
+  var levels  = desktop ? [1.25, 1.5] : ['', 1.25];
   var idx     = parseInt(localStorage.getItem('asak-zoom') || '0', 10);
   if (idx >= levels.length) idx = 0;
-  function apply(i) { document.documentElement.style.zoom = levels[i]; localStorage.setItem('asak-zoom', i); }
+  var fontBtn = document.getElementById('font-btn');
+  function apply(i) {
+    document.documentElement.style.zoom = levels[i];
+    fontBtn.classList.toggle('active', i > 0);
+    localStorage.setItem('asak-zoom', i);
+  }
   apply(idx);
-  document.getElementById('font-btn').addEventListener('click', function () {
+  fontBtn.addEventListener('click', function () {
     apply((parseInt(localStorage.getItem('asak-zoom') || '0', 10) + 1) % levels.length);
   });
 })();
