@@ -29,12 +29,12 @@
  *   3. Copy the worker URL (e.g. https://play-analysis.YOUR-NAME.workers.dev)
  *   4. Paste that URL into PA_WORKER_URL in tools/play-analysis/index.html
  *
- * Model note: MODEL is set to Opus for maximum accuracy. To reduce cost on
- * straightforward text scripts, switch MODEL to 'claude-sonnet-4-6'.
+ * Model note: MODEL is set to Sonnet for the best accuracy/cost balance. To
+ * maximise accuracy, switch MODEL to 'claude-opus-4-8'.
  */
 
 const ALLOWED_ORIGIN = 'https://www.blakestringer.com';
-const MODEL          = 'claude-opus-4-8';
+const MODEL          = 'claude-sonnet-4-6';
 
 const CORS = {
   'Access-Control-Allow-Origin':  ALLOWED_ORIGIN,
