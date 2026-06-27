@@ -155,10 +155,10 @@
     .upload-warning {
       font-size: 10px; color: var(--muted); letter-spacing: 0.5px;
       line-height: 1.9; text-align: center; max-width: 460px;
-      border: 1px solid rgba(245,158,11,0.3); padding: 14px 18px;
-      background: rgba(245,158,11,0.04);
+      border: 1px solid rgba(34,197,94,0.3); padding: 14px 18px;
+      background: rgba(34,197,94,0.04);
     }
-    .upload-warning strong { color: #f59e0b; }
+    .upload-warning strong { color: #16a34a; }
     .drop-zone {
       border: 2px dashed rgba(100,72,228,0.35); padding: 48px 40px;
       text-align: center; cursor: pointer;
@@ -309,7 +309,7 @@
       </div>
     </div>
     <h1 class="pa-title">Play Analysis</h1>
-    <p class="pa-subtitle">an attempt at summarising role size and lines for your PDF script</p>
+    <p class="pa-subtitle">AI-powered character &amp; line breakdown for any PDF script — text or scanned</p>
   </header>
 
   <!-- UPLOAD SCREEN -->
@@ -317,8 +317,8 @@
     <div class="upload-heading">Upload Your Script</div>
 
     <div class="upload-warning">
-      <strong>⚠ Scanned PDFs are not supported.</strong><br>
-      This tool requires a text-based PDF — exported directly from Final Draft, Microsoft Word, Google Docs, or similar. If your PDF was created by scanning a physical script, it will not work.
+      <strong>✓ Text-based and scanned PDFs both work.</strong><br>
+      Text scripts (from Final Draft, Word, Google Docs, etc.) are read instantly. Scanned or photographed scripts are read by AI vision — accuracy depends on the quality of the scan.
     </div>
 
     <div class="drop-zone" id="drop-zone">
@@ -346,7 +346,7 @@
   <!-- ANALYSIS SCREEN -->
   <div id="analysis-screen">
     <div class="char-panel">
-      <div class="panel-header">sorted by approximate word count</div>
+      <div class="panel-header">sorted by word count</div>
       <div class="char-table-wrap">
         <table class="char-table">
           <thead>
@@ -423,6 +423,12 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+/* ── AI BACKEND ──
+   Cloudflare Worker that proxies to Claude (see workers/play-analysis-worker.js).
+   Paste the deployed worker URL here. If it's unreachable, the tool falls back
+   to the offline heuristic parser automatically. */
+var PA_WORKER_URL = 'https://play-analysis.blakestringer.workers.dev';
+
 /* ── PASSWORD ── */
 var PASSWORD    = '48163264';
 var passOverlay = document.getElementById('pass-overlay');
@@ -481,6 +487,10 @@ topbarBack.addEventListener('click', function () {
 /* ── PDF TEXT EXTRACTION ── */
 async function extractLines(arrayBuffer) {
   var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  return extractLinesFromPdf(pdf);
+}
+
+async function extractLinesFromPdf(pdf) {
   var allLines = [];
 
   for (var p = 1; p <= pdf.numPages; p++) {
@@ -667,46 +677,276 @@ function parseScript(lines, title) {
   return script;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   SMART (AI) PIPELINE
+   PDF.js keeps verbatim text; Claude (via the Worker) does the
+   understanding. Falls back to the offline heuristic parser if the
+   Worker is unreachable. See workers/play-analysis-worker.js.
+   ════════════════════════════════════════════════════════════════ */
+
+/* POST a payload to the Worker, return Claude's text. Throws on failure. */
+async function paWorker(payload) {
+  var res = await fetch(PA_WORKER_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
+  var raw = await res.text();
+  var data;
+  try { data = JSON.parse(raw); } catch (e) { data = { text: raw }; }
+  if (!res.ok) throw new Error(data.error || raw || ('HTTP ' + res.status));
+  return data.text != null ? data.text : raw;
+}
+
+/* Parse JSON that may be wrapped in ``` fences or have stray prose around it. */
+function safeJson(s) {
+  var t = String(s).trim();
+  t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  var a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a >= 0 && b >= a) t = t.slice(a, b + 1);
+  return JSON.parse(t);
+}
+
+/* Bounded-concurrency map. */
+async function pool(items, n, fn, onDone) {
+  var i = 0, out = new Array(items.length), done = 0;
+  async function run() {
+    while (i < items.length) {
+      var idx = i++;
+      out[idx] = await fn(items[idx], idx);
+      done++;
+      if (onDone) onDone(done, items.length);
+    }
+  }
+  var runners = [];
+  for (var k = 0; k < Math.min(n, items.length); k++) runners.push(run());
+  await Promise.all(runners);
+  return out;
+}
+
+/* Render scanned pages to images and OCR them via Claude vision. */
+async function ocrPdf(pdf, onProg) {
+  var lines = [], BATCH = 3, n = pdf.numPages;
+  for (var p = 1; p <= n; p += BATCH) {
+    var last = Math.min(p + BATCH - 1, n);
+    var imgs = [];
+    for (var q = p; q <= last; q++) {
+      var page = await pdf.getPage(q);
+      var vp   = page.getViewport({ scale: 2 });
+      var canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      imgs.push(canvas.toDataURL('image/png'));
+      canvas.width = canvas.height = 0; /* free memory */
+    }
+    if (onProg) onProg(p, last, n);
+    var text = await paWorker({ mode: 'ocr', images: imgs });
+    var pl = String(text).split('\n');
+    for (var li = 0; li < pl.length; li++) lines.push(pl[li].replace(/\s+$/, ''));
+    lines.push(''); /* page separator */
+  }
+  return lines;
+}
+
+/* Segment numbered lines into scenes + speeches via Claude (chunked, parallel). */
+async function structureLines(lines, onProg) {
+  var CHUNK = 400, chunks = [];
+  for (var i = 0; i < lines.length; i += CHUNK) {
+    chunks.push({ start: i, slice: lines.slice(i, i + CHUNK) });
+  }
+
+  var results = await pool(chunks, 4, async function (c) {
+    try {
+      var text = await paWorker({ mode: 'structure', lines: c.slice, offset: c.start });
+      return safeJson(text);
+    } catch (e) {
+      console.warn('structure chunk failed @' + c.start, e);
+      return { scenes: [], speeches: [] };
+    }
+  }, onProg);
+
+  var scenes = [], speeches = [];
+  for (var r = 0; r < results.length; r++) {
+    var R = results[r] || {};
+    if (Array.isArray(R.scenes))   for (var si = 0; si < R.scenes.length; si++)   scenes.push(R.scenes[si]);
+    if (Array.isArray(R.speeches)) for (var pi = 0; pi < R.speeches.length; pi++) speeches.push(R.speeches[pi]);
+  }
+
+  /* sanitise + sort + merge adjacent same-speaker speeches across chunk seams */
+  speeches = speeches
+    .filter(function (s) {
+      return s && typeof s.speaker === 'string' &&
+             isFinite(+s.start) && isFinite(+s.end) && +s.end >= +s.start;
+    })
+    .map(function (s) { return { speaker: s.speaker.trim(), start: +s.start, end: +s.end }; })
+    .sort(function (a, b) { return a.start - b.start; });
+
+  var merged = [];
+  for (var m = 0; m < speeches.length; m++) {
+    var cur = speeches[m], lastS = merged[merged.length - 1];
+    if (lastS && lastS.speaker === cur.speaker && cur.start <= lastS.end + 2) {
+      lastS.end = Math.max(lastS.end, cur.end);
+    } else {
+      merged.push({ speaker: cur.speaker, start: cur.start, end: cur.end });
+    }
+  }
+
+  scenes = scenes
+    .filter(function (s) { return s && isFinite(+s.line); })
+    .map(function (s) { return { line: +s.line, heading: String(s.heading || 'SCENE') }; })
+    .sort(function (a, b) { return a.line - b.line; });
+
+  return { speeches: merged, scenes: scenes };
+}
+
+/* Merge speaker-label variants into canonical characters via Claude. */
+async function normalizeSpeakers(labels) {
+  var text = await paWorker({ mode: 'normalize', labels: labels });
+  var data; try { data = safeJson(text); } catch (e) { data = { characters: [], drop: [] }; }
+
+  var map = {}, groups = {}, drop = {};
+  (data.drop || []).forEach(function (d) {
+    if (typeof d === 'string') drop[d.trim().toUpperCase()] = true;
+  });
+  (data.characters || []).forEach(function (c) {
+    if (!c || typeof c.canonical !== 'string') return;
+    var canon = c.canonical.trim();
+    map[canon.toUpperCase()] = canon;
+    (c.aliases || []).forEach(function (a) {
+      if (typeof a === 'string') map[a.trim().toUpperCase()] = canon;
+    });
+    if (c.isGroup) groups[canon.toUpperCase()] = true;
+  });
+  return { map: map, groups: groups, drop: drop };
+}
+
+/* Build the parsedScript shape (same as the offline parser) from AI structure,
+   pulling every dialogue line VERBATIM from the source line array. */
+function buildSmartScript(lines, struct, norm, title) {
+  var ps = { title: title, totalWords: 0, characters: {}, scenes: [] };
+
+  var sceneDefs = struct.scenes.length
+    ? struct.scenes.map(function (s) { return { heading: String(s.heading).toUpperCase(), start: s.line, speeches: [] }; })
+    : [{ heading: 'SCRIPT', start: 0, speeches: [] }];
+  sceneDefs.sort(function (a, b) { return a.start - b.start; });
+
+  function sceneIndexFor(line) {
+    var idx = 0;
+    for (var k = 0; k < sceneDefs.length; k++) {
+      if (sceneDefs[k].start <= line) idx = k; else break;
+    }
+    return idx;
+  }
+
+  for (var i = 0; i < struct.speeches.length; i++) {
+    var sp = struct.speeches[i];
+    var up = sp.speaker.toUpperCase();
+    if (norm.drop[up]) continue;
+    var canon = norm.map[up] || sp.speaker;
+
+    var dlg = [];
+    for (var L = Math.max(0, sp.start); L <= sp.end && L < lines.length; L++) {
+      var t = (lines[L] == null ? '' : String(lines[L])).trim();
+      if (t) dlg.push(t);
+    }
+    if (!dlg.length) continue;
+
+    var wc = 0;
+    for (var d = 0; d < dlg.length; d++) wc += dlg[d].split(/\s+/).filter(Boolean).length;
+
+    if (!ps.characters[canon]) ps.characters[canon] = { words: 0, lineCount: 0, speeches: 0 };
+    ps.characters[canon].words     += wc;
+    ps.characters[canon].lineCount += dlg.length;
+    ps.characters[canon].speeches  += 1;
+    ps.totalWords += wc;
+
+    sceneDefs[sceneIndexFor(sp.start)].speeches.push({ character: canon, lines: dlg });
+  }
+
+  ps.scenes = sceneDefs
+    .filter(function (s) { return s.speeches.length; })
+    .map(function (s) { return { heading: s.heading, speeches: s.speeches }; });
+
+  return ps;
+}
+
 /* ── HANDLE FILE ── */
 var parsedScript = null;
+
+function finishAnalysis() {
+  parseStatus.style.display    = 'none';
+  renderChars();
+  uploadScreen.style.display   = 'none';
+  analysisScreen.style.display = 'flex';
+  topbarBack.classList.add('visible');
+  document.title = parsedScript.title + ' — Play Analysis';
+}
 
 async function handleFile(file) {
   scanError.style.display   = 'none';
   parseStatus.style.display = 'block';
   parseStatus.textContent   = 'Reading PDF…';
 
+  var title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
+  var buf;
+  try { buf = await file.arrayBuffer(); }
+  catch (e) { parseStatus.textContent = 'Could not read that file.'; return; }
+
+  /* ── 1. Smart (AI) pipeline ── */
   try {
-    var buf   = await file.arrayBuffer();
-    var lines = await extractLines(buf);
+    var pdf       = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
+    var lines     = await extractLinesFromPdf(pdf);
+    var textChars = lines.join('').replace(/\s/g, '').length;
+    var scanned   = textChars < Math.max(120, pdf.numPages * 40);
 
-    var totalChars = lines.join('').replace(/\s/g, '').length;
-    if (totalChars < 80) {
-      parseStatus.style.display = 'none';
-      scanError.style.display   = 'block';
-      return;
+    if (scanned) {
+      parseStatus.textContent = 'Scanned script detected — reading pages with AI vision…';
+      lines = await ocrPdf(pdf, function (p, last, n) {
+        parseStatus.textContent = 'AI reading page ' + p + (last > p ? ('–' + last) : '') + ' of ' + n + '…';
+      });
     }
 
-    parseStatus.textContent = 'Analysing script…';
-    var title = file.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim();
-    parsedScript = parseScript(lines, title);
+    parseStatus.textContent = 'Analysing structure with AI…';
+    var struct = await structureLines(lines, function (done, total) {
+      parseStatus.textContent = 'Analysing structure with AI… ' + Math.round(done / total * 100) + '%';
+    });
+    if (!struct.speeches.length) throw new Error('no-speeches-detected');
 
-    var charCount = Object.keys(parsedScript.characters).length;
-    if (charCount === 0) {
-      parseStatus.textContent =
-        'No characters detected. Is this a standard playscript with character names in BLOCK CAPITALS?';
-      return;
+    parseStatus.textContent = 'Identifying characters…';
+    var labels = [], seen = {};
+    for (var i = 0; i < struct.speeches.length; i++) {
+      var s = struct.speeches[i].speaker;
+      if (!seen[s]) { seen[s] = 1; labels.push(s); }
     }
+    var norm = await normalizeSpeakers(labels);
 
-    parseStatus.style.display = 'none';
-    renderChars();
-    uploadScreen.style.display   = 'none';
-    analysisScreen.style.display = 'flex';
-    topbarBack.classList.add('visible');
-    document.title = parsedScript.title + ' — Play Analysis';
+    parsedScript = buildSmartScript(lines, struct, norm, title);
+    if (!Object.keys(parsedScript.characters).length) throw new Error('no-characters');
 
+    finishAnalysis();
+    return;
   } catch (err) {
+    console.warn('Smart analysis unavailable — falling back to offline parser:', err);
+  }
+
+  /* ── 2. Offline heuristic fallback ── */
+  try {
+    parseStatus.style.display = 'block';
+    parseStatus.textContent   = 'AI unavailable — using offline parser…';
+    var flines = await extractLines(buf.slice(0));
+    var fchars = flines.join('').replace(/\s/g, '').length;
+    if (fchars < 80) { parseStatus.style.display = 'none'; scanError.style.display = 'block'; return; }
+
+    parsedScript = parseScript(flines, title);
+    if (!Object.keys(parsedScript.characters).length) {
+      parseStatus.textContent =
+        'No characters detected. Try a clearer scan or a text-based PDF.';
+      return;
+    }
+    finishAnalysis();
+  } catch (err2) {
+    console.error(err2);
     parseStatus.textContent = 'Could not read PDF. Please try another file.';
-    console.error(err);
   }
 }
 
