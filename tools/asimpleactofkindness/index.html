@@ -144,20 +144,22 @@
     .sched-error { padding: 32px 24px; font-size: 10px; color: #ef4444; text-align: center; line-height: 1.8; }
 
     /* ── CAST & CREW MODAL CONTENT ── */
-    .cc-section-label {
-      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 16px 16px 8px; border-bottom: 1px solid var(--border); background: var(--bg);
-    }
     .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
     .cc-table thead th {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
       padding: 10px 16px; text-align: left; font-weight: 400;
-      border-bottom: 1px solid var(--border); background: var(--bg);
+      border-bottom: 2px solid var(--border); background: var(--bg);
+      position: sticky; top: 0; z-index: 1;
     }
     .cc-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cc-table td.tbc { color: var(--muted); font-style: italic; }
-    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; }
+    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; }
     .cc-table td a:hover { color: var(--lime); }
+    .cc-section-row td {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 16px 6px; background: var(--bg); font-weight: 400;
+      border-bottom: 1px solid var(--border);
+    }
 
     /* ── PDF MODAL CONTENT ── */
     .pdf-toolbar {
@@ -608,27 +610,23 @@ function loadCast() {
   function render(rows) {
     var cast = rows.filter(function (r) { return r.role_cast; });
     var crew = rows.filter(function (r) { return r.role_crew; });
-    var html = '';
+
+    var html = '<table class="cc-table"><colgroup>'
+             + '<col style="width:30%"><col style="width:28%"><col style="width:18%"><col style="width:24%">'
+             + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Email</th></tr></thead><tbody>';
 
     if (cast.length) {
-      html += '<div class="cc-section-label">Cast</div>'
-            + '<table class="cc-table"><colgroup>'
-            + '<col style="width:50%"><col style="width:50%>'
-            + '</colgroup><thead><tr><th>Character</th><th>Actor</th></tr></thead><tbody>';
+      html += '<tr class="cc-section-row"><td colspan="4">Cast</td></tr>';
       cast.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_cast) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '</tr>';
+              + '<td></td><td></td></tr>';
       });
-      html += '</tbody></table>';
     }
 
     if (crew.length) {
-      html += '<div class="cc-section-label">Crew</div>'
-            + '<table class="cc-table"><colgroup>'
-            + '<col style="width:34%"><col style="width:26%"><col style="width:18%"><col style="width:22%">'
-            + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Email</th></tr></thead><tbody>';
+      html += '<tr class="cc-section-row"><td colspan="4">Crew</td></tr>';
       crew.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_crew) + '</td>'
@@ -637,10 +635,10 @@ function loadCast() {
               + '<td>' + (r.email  ? '<a href="mailto:' + esc(r.email)  + '">' + esc(r.email)  + '</a>' : '') + '</td>'
               + '</tr>';
       });
-      html += '</tbody></table>';
     }
 
-    body.innerHTML = html || '<div class="sched-loading">No entries found.</div>';
+    html += '</tbody></table>';
+    body.innerHTML = (cast.length || crew.length) ? html : '<div class="sched-loading">No entries found.</div>';
     castLoaded = true;
   }
 
