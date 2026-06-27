@@ -238,7 +238,10 @@
       font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
       color: var(--muted); background: var(--bg);
       position: sticky; top: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
+    .summary-actions { display: flex; align-items: center; gap: 5px; }
+    .summary-actions-label { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); }
     #summary-body { padding: 4px 16px 40px; max-width: 760px; }
     .summary-loading, .summary-failed {
       padding: 30px 4px; text-align: center; font-size: 10px;
@@ -515,7 +518,14 @@
 
     <!-- PLAY SUMMARY -->
     <div class="summary-panel" id="summary-panel">
-      <div class="summary-head">Scene-by-scene summary</div>
+      <div class="summary-head">
+        <span>Scene-by-scene summary</span>
+        <span class="summary-actions" id="summary-actions" style="display:none">
+          <span class="summary-actions-label">Download</span>
+          <button class="export-btn" id="sum-dl-pdf">.pdf</button>
+          <button class="export-btn" id="sum-dl-doc">.docx</button>
+        </span>
+      </div>
       <div id="summary-body"></div>
     </div>
   </div>
@@ -1269,6 +1279,8 @@ async function getSummarySourceText() {
 }
 
 function renderSummary(sum) {
+  var sa = document.getElementById('summary-actions');
+  if (sa) sa.style.display = 'flex';
   var html = '';
   if (sum.synopsis) html += '<div class="summary-synopsis">' + esc(sum.synopsis) + '</div>';
   for (var i = 0; i < sum.scenes.length; i++) {
@@ -1292,6 +1304,8 @@ function renderSummary(sum) {
 function renderSummaryState() {
   var sum = parsedScript && parsedScript.summary;
   if (sum && Array.isArray(sum.scenes) && sum.scenes.length) { renderSummary(sum); return; }
+  var sa = document.getElementById('summary-actions');
+  if (sa) sa.style.display = 'none';
   var canGen = paSource && (paSource.text || paSource.buf);
   summaryBody.innerHTML = '<div class="summary-failed">' +
     (canGen
@@ -1685,6 +1699,146 @@ document.addEventListener('click', function (e) {
   else if (fmt === 'doc') exportCharDocx(charName);
   else if (fmt === 'pdf') exportCharPdf(charName);
 });
+
+/* ════════════════════════════════════════════════════════════════
+   SUMMARY EXPORT (.pdf / .docx)
+   ════════════════════════════════════════════════════════════════ */
+function escXml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* One Word paragraph. opts: {bold, italic, size(half-pt), color(hex), spaceAfter(twips), font} */
+function docxPara(text, o) {
+  o = o || {};
+  if (text === '') return '<w:p><w:pPr><w:spacing w:after="' + (o.spaceAfter != null ? o.spaceAfter : 0) + '"/></w:pPr></w:p>';
+  var rpr = '<w:rPr><w:rFonts w:ascii="' + (o.font || 'Calibri') + '" w:hAnsi="' + (o.font || 'Calibri') + '"/>';
+  if (o.bold)   rpr += '<w:b/>';
+  if (o.italic) rpr += '<w:i/>';
+  if (o.size)   rpr += '<w:sz w:val="' + o.size + '"/>';
+  if (o.color)  rpr += '<w:color w:val="' + o.color + '"/>';
+  rpr += '</w:rPr>';
+  var ppr = '<w:pPr><w:spacing w:after="' + (o.spaceAfter != null ? o.spaceAfter : 120) + '"/></w:pPr>';
+  return '<w:p>' + ppr + '<w:r>' + rpr + '<w:t xml:space="preserve">' + escXml(text) + '</w:t></w:r></w:p>';
+}
+
+async function zipDocx(docXml) {
+  var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '</Types>';
+  var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+    '</Relationships>';
+  var wordRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+  var zip = new JSZip();
+  zip.file('[Content_Types].xml', ct);
+  zip.folder('_rels').file('.rels', rels);
+  zip.folder('word').file('document.xml', docXml);
+  zip.folder('word').folder('_rels').file('document.xml.rels', wordRels);
+  return await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+}
+
+async function exportSummaryDocx() {
+  var sum = parsedScript && parsedScript.summary;
+  if (!sum || !Array.isArray(sum.scenes)) { showToast('No summary to export'); return; }
+
+  var p = '';
+  p += docxPara(parsedScript.title.toUpperCase(), { bold: true, size: 36, spaceAfter: 40 });
+  p += docxPara('Scene-by-scene summary', { size: 22, color: '666666', spaceAfter: 30 });
+  p += docxPara('Generated by Play Analysis — blakestringer.com', { italic: true, size: 16, color: '999999', spaceAfter: 260 });
+
+  if (sum.synopsis) {
+    p += docxPara('SYNOPSIS', { bold: true, size: 20, color: '444444', spaceAfter: 60 });
+    p += docxPara(sum.synopsis, { size: 22, spaceAfter: 260 });
+  }
+  for (var i = 0; i < sum.scenes.length; i++) {
+    var sc = sum.scenes[i] || {};
+    p += docxPara(sc.heading || ('Scene ' + (i + 1)), { bold: true, size: 26, color: '6448E4', spaceAfter: 40 });
+    if (Array.isArray(sc.characters) && sc.characters.length) {
+      p += docxPara(sc.characters.join('  ·  '), { italic: true, size: 18, color: '666666', spaceAfter: 60 });
+    }
+    p += docxPara(sc.summary || '', { size: 22, spaceAfter: 220 });
+  }
+  if (Array.isArray(sum.themes) && sum.themes.length) {
+    p += docxPara('THEMES', { bold: true, size: 20, color: '444444', spaceAfter: 60 });
+    p += docxPara(sum.themes.join('   ·   '), { size: 22, spaceAfter: 120 });
+  }
+
+  var docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:body>' + p + '</w:body></w:document>';
+
+  try {
+    var blob = await zipDocx(docXml);
+    triggerDownload(blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      parsedScript.title + ' — Summary.docx');
+    showToast('Exported summary (.docx) ✓');
+  } catch (e) { console.error(e); showToast('Could not export .docx'); }
+}
+
+function exportSummaryPdf() {
+  var sum = parsedScript && parsedScript.summary;
+  if (!sum || !Array.isArray(sum.scenes)) { showToast('No summary to export'); return; }
+
+  var body = '';
+  body += '<h1>' + esc(parsedScript.title) + '</h1>';
+  body += '<div class="sub">Scene-by-scene summary</div>';
+  body += '<div class="gen">Generated by Play Analysis · blakestringer.com</div>';
+  if (sum.synopsis) {
+    body += '<h2>Synopsis</h2><p class="syn">' + esc(sum.synopsis) + '</p>';
+  }
+  for (var i = 0; i < sum.scenes.length; i++) {
+    var sc = sum.scenes[i] || {};
+    body += '<div class="scene"><h3>' + esc(sc.heading || ('Scene ' + (i + 1))) + '</h3>';
+    if (Array.isArray(sc.characters) && sc.characters.length) {
+      body += '<div class="chars">' + esc(sc.characters.join('  ·  ')) + '</div>';
+    }
+    body += '<p>' + esc(sc.summary || '') + '</p></div>';
+  }
+  if (Array.isArray(sum.themes) && sum.themes.length) {
+    body += '<h2>Themes</h2><div class="themes">' +
+      sum.themes.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('') + '</div>';
+  }
+
+  var win = window.open('', '_blank');
+  if (!win) { showToast('Allow pop-ups for PDF export'); return; }
+  win.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<title>' + esc(parsedScript.title) + ' — Summary</title>' +
+    '<style>' +
+    'body{font-family:Helvetica,Arial,sans-serif;color:#1a1a1a;margin:2cm;line-height:1.6;font-size:11pt}' +
+    'h1{font-size:22pt;margin:0 0 2pt;letter-spacing:0.5px}' +
+    '.sub{font-size:10pt;letter-spacing:2px;text-transform:uppercase;color:#666}' +
+    '.gen{font-size:8pt;color:#999;margin:2pt 0 18pt;font-style:italic}' +
+    'h2{font-size:11pt;letter-spacing:2px;text-transform:uppercase;color:#444;border-bottom:1px solid #ddd;padding-bottom:4pt;margin:18pt 0 8pt}' +
+    '.syn{margin:0 0 6pt}' +
+    '.scene{margin:0 0 14pt;page-break-inside:avoid}' +
+    '.scene h3{font-size:13pt;color:#6448e4;margin:0 0 3pt;border-left:3px solid #6448e4;padding-left:8pt}' +
+    '.chars{font-size:9pt;color:#666;font-style:italic;margin:0 0 5pt;padding-left:8pt}' +
+    '.scene p{margin:0;padding-left:8pt}' +
+    '.themes span{display:inline-block;border:1px solid #ccc;border-radius:3px;padding:2pt 8pt;margin:0 4pt 4pt 0;font-size:10pt}' +
+    '@media print{body{margin:1.5cm}}' +
+    '</style></head><body>' + body +
+    '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},200);}<\/scr' + 'ipt>' +
+    '</body></html>'
+  );
+  win.document.close();
+}
+
+/* Summary download buttons */
+(function () {
+  var pdfBtn = document.getElementById('sum-dl-pdf');
+  var docBtn = document.getElementById('sum-dl-doc');
+  if (pdfBtn) pdfBtn.addEventListener('click', exportSummaryPdf);
+  if (docBtn) docBtn.addEventListener('click', exportSummaryDocx);
+})();
 
 /* ── UTILS ── */
 function esc(s) {
