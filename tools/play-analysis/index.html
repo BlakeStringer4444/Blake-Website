@@ -381,7 +381,13 @@
 
     /* ── MOBILE ── */
     @media (max-width: 639px) {
-      .export-btn { padding: 4px 5px; font-size: 7px; margin-left: 2px; }
+      /* Hide the Words column — Lines + % bar tell the story on small screens */
+      .char-table thead th:nth-child(3),
+      .char-table tbody td:nth-child(3) { display: none; }
+      .char-table thead th { padding: 8px 10px; }
+      .char-table tbody td { padding: 8px 10px; }
+      .char-bar-wrap { min-width: 56px; }
+      .export-btn { padding: 4px 6px; font-size: 7px; margin-left: 3px; }
       .progress-card { padding: 28px 22px 20px; }
     }
   </style>
@@ -397,7 +403,7 @@
       <div class="pa-header-actions">
         <button class="pa-new-btn" id="topbar-back">← New Script</button>
         <button class="pa-icon-btn" id="pa-font-btn" title="Adjust text size">Aa</button>
-        <button class="pa-icon-btn" id="pa-theme-btn" title="Toggle theme">☾</button>
+        <button class="pa-icon-btn" id="pa-theme-btn" title="Toggle theme"></button>
       </div>
     </div>
     <h1 class="pa-title">Play Analysis</h1>
@@ -440,7 +446,7 @@
               <th>Character</th>
               <th>Lines</th>
               <th>Words</th>
-              <th>Share of script</th>
+              <th>% of script</th>
               <th></th>
             </tr>
           </thead>
@@ -508,9 +514,10 @@
 (function () {
   var CYCLE   = ['light', 'dark', 'terminal'];
   var btn     = document.getElementById('pa-theme-btn');
+  var moonSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var sunSVG  = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>';
   var lockSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
-  function iconFor(t) { return t === 'terminal' ? lockSVG : t === 'dark' ? sunSVG : '☾'; }
+  function iconFor(t) { return t === 'terminal' ? lockSVG : t === 'dark' ? sunSVG : moonSVG; }
   var t = localStorage.getItem('theme') || 'light';
   function apply(v) {
     t = v;
@@ -1529,7 +1536,6 @@ function buildCharRow(name, d, maxWords, showExport) {
     '</td>' +
     (showExport
       ? '<td class="export-cell">' +
-          '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="txt">.txt</button>' +
           '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="doc">.docx</button>' +
           '<button class="export-btn" data-char="' + esc(name) + '" data-fmt="pdf">.pdf</button>' +
         '</td>'
@@ -1612,14 +1618,6 @@ function triggerDownload(contentOrBlob, mimeType, filename) {
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-
-function exportCharTxt(charName) {
-  var lines = buildExportLines(charName);
-  if (!lines) { showToast('No lines found for ' + charName); return; }
-  triggerDownload(lines.join('\n'), 'text/plain;charset=utf-8',
-    parsedScript.title + ' — ' + charName + ' lines.txt');
-  showToast('Exported ' + charName + ' (.txt) ✓');
 }
 
 async function exportCharDocx(charName) {
@@ -1705,8 +1703,7 @@ document.addEventListener('click', function (e) {
   var charName = btn.dataset.char;
   var fmt      = btn.dataset.fmt;
   if (!charName || !fmt) return;
-  if (fmt === 'txt') exportCharTxt(charName);
-  else if (fmt === 'doc') exportCharDocx(charName);
+  if (fmt === 'doc') exportCharDocx(charName);
   else if (fmt === 'pdf') exportCharPdf(charName);
 });
 
