@@ -1820,8 +1820,8 @@ function card(show) {
   if (show.url_web)       links.push(`<a class="td-link" href="${safeUrl(show.url_web)}"       target="_blank" rel="noopener noreferrer" aria-label="Website (opens in new tab)">${iconWeb} Web</a>`);
 
   const people = [
-    show.director   ? 'DIRECTOR · <span style="text-transform:none">'   + esc(show.director)   + '</span>' : '',
-    show.playwright ? 'PLAYWRIGHT · <span style="text-transform:none">' + esc(show.playwright)  + '</span>' : '',
+    show.director   ? 'DIRECTOR · <span style="text-transform:none">'   + escapeHtml(show.director)   + '</span>' : '',
+    show.playwright ? 'PLAYWRIGHT · <span style="text-transform:none">' + escapeHtml(show.playwright)  + '</span>' : '',
   ].filter(Boolean).join('<br>');
 
   let progressBar = '';
@@ -1843,10 +1843,10 @@ function card(show) {
         <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">${iconStar}</button>
       </span>
     </div>
-    <div class="td-title-text">${esc(show.title)}</div>
+    <div class="td-title-text">${escapeHtml(show.title)}</div>
     <div class="td-dates">${fmtRange(show)}</div>
     ${progressBar}
-    <div class="td-company" title="${esc(show.company)}">${esc(show.company)}</div>
+    <div class="td-company" title="${escapeHtml(show.company)}">${escapeHtml(show.company)}</div>
     ${people ? `<div class="td-people">${people}</div>` : ''}
     ${links.length ? `<div class="td-links">${links.join('')}</div>` : ''}
     <button class="td-blakeai"
