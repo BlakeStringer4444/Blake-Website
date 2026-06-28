@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VDLdex — Blake Stringer</title>
   <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://www.blakestringer.com/tools/vdldex">
+  <meta property="og:title" content="VDLdex | Blake Stringer">
+  <meta property="og:description" content="The Victorian Drama League entrants archive, 1997–2026. Search and filter productions by company, year, genre, director, and playwright.">
   <link rel="icon" type="image/png" href="/Images/favicon.png">
   <meta property="og:image" content="https://www.blakestringer.com/Images/meta-og.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -303,6 +306,17 @@
 
     mark { background: rgba(212,255,26,0.3); color: inherit; border-radius: 1px; }
 
+    /* Visually-hidden (for table caption / screen-reader-only text) */
+    .vd-sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* ── FOCUS-VISIBLE ── */
+    :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+    [data-theme="dark"]     :focus-visible,
+    [data-theme="terminal"] :focus-visible { outline-color: var(--lime); }
+
     /* ── STATES ── */
     .vd-message {
       padding: 60px 20px; text-align: center;
@@ -500,6 +514,16 @@
       .vd-quiz-opt { font-size: 13px; padding: 12px 14px; }
     }
 
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -509,8 +533,8 @@
   <div class="vd-header-top">
     <a class="vd-back" href="/">← blakestringer.com</a>
     <div class="vd-header-actions">
-      <button class="vd-font-btn" id="vd-font-btn" title="Adjust text size">Aa</button>
-      <button class="vd-theme-btn" id="vd-theme-btn" title="Toggle theme"></button>
+      <button class="vd-font-btn" id="vd-font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
+      <button class="vd-theme-btn" id="vd-theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
     </div>
   </div>
   <h1 class="vd-title">VDLdex</h1>
@@ -523,7 +547,7 @@
 <!-- CONTROLS -->
 <div class="vd-controls">
   <div class="vd-search-wrap">
-    <input id="vd-search" class="vd-search" type="search" placeholder="Search production, company, director, playwright…" autocomplete="off" spellcheck="false">
+    <input id="vd-search" class="vd-search" type="search" aria-label="Search productions, companies, directors, and playwrights" placeholder="Search production, company, director, playwright…" autocomplete="off" spellcheck="false">
     <button id="vd-search-clear" class="vd-search-clear" aria-label="Clear">✕</button>
   </div>
   <div class="vd-filter-row">
@@ -563,14 +587,15 @@
 <!-- TABLE -->
 <div class="vd-table-wrap">
   <table class="vd-table">
+    <caption class="vd-sr-only">Victorian Drama League entrants archive. Use the column headers to sort; press Enter or Space on a header to sort by that column.</caption>
     <thead>
       <tr>
-        <th data-col="YEAR" class="vd-sorted">Year <span class="vd-sort-arrow">↓</span></th>
-        <th data-col="PRODUCTION">Production <span class="vd-sort-arrow">↕</span></th>
-        <th data-col="COMPANY">Company <span class="vd-sort-arrow">↕</span></th>
-        <th data-col="GENRE">Genre <span class="vd-sort-arrow">↕</span></th>
-        <th data-col="DIRECTOR">Director <span class="vd-sort-arrow">↕</span></th>
-        <th data-col="PLAYWRIGHT">Playwright <span class="vd-sort-arrow">↕</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="descending" data-col="YEAR" class="vd-sorted">Year <span class="vd-sort-arrow">↓</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="none" data-col="PRODUCTION">Production <span class="vd-sort-arrow">↕</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="none" data-col="COMPANY">Company <span class="vd-sort-arrow">↕</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="none" data-col="GENRE">Genre <span class="vd-sort-arrow">↕</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="none" data-col="DIRECTOR">Director <span class="vd-sort-arrow">↕</span></th>
+        <th scope="col" tabindex="0" role="button" aria-sort="none" data-col="PLAYWRIGHT">Playwright <span class="vd-sort-arrow">↕</span></th>
       </tr>
     </thead>
     <tbody id="vd-tbody">
@@ -645,6 +670,9 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
 /* ── Core ── */
 (function () {
   const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQhjOV8zhbwgLAtaeJyXc_MfI7cQ0DAkIwwSQgvstW2XKF6LuizptizLPrs9GPWP4BEn32RXv5k7yy/pub?gid=61495691&single=true&output=csv';
+
+  /* Escape CSV-derived values before injecting into innerHTML */
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   let allRows = [];
   let sortCol = 'YEAR', sortAsc = false;
@@ -789,7 +817,7 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       return entries.map(([name, n]) => `
         <div class="vd-ins-row">
           <div class="vd-ins-row-top">
-            <span class="vd-ins-name" title="${name}">${name}</span>
+            <span class="vd-ins-name" title="${esc(name)}">${esc(name)}</span>
             <span class="vd-ins-count">${n}×</span>
           </div>
           <div class="vd-ins-bar-track"><div class="vd-ins-bar-fill" style="width:${Math.round(n / max * 100)}%"></div></div>
@@ -832,10 +860,18 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
       document.querySelectorAll('.vd-table thead th').forEach(h => {
         const isSorted = h.dataset.col === sortCol;
         h.classList.toggle('vd-sorted', isSorted);
+        h.setAttribute('aria-sort', isSorted ? (sortAsc ? 'ascending' : 'descending') : 'none');
         const arr = h.querySelector('.vd-sort-arrow');
         if (arr) arr.textContent = isSorted ? (sortAsc ? '↑' : '↓') : '↕';
       });
       render();
+    });
+    /* Keyboard operability: Enter/Space trigger the same sort handler */
+    th.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        e.target.click();
+      }
     });
   });
 
@@ -869,9 +905,12 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
 
   /* Highlight */
   function hl(text) {
-    if (!query || !text) return text || '';
-    const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return text.replace(new RegExp(`(${esc})`, 'gi'), '<mark>$1</mark>');
+    const safe = esc(text || '');
+    if (!query || !safe) return safe;
+    /* Escape regex metacharacters in the query, then match against the
+       already-HTML-escaped text so we never wrap our own <mark> tags. */
+    const rx = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return safe.replace(new RegExp(`(${rx})`, 'gi'), '<mark>$1</mark>');
   }
 
   /* Genre badge class */
@@ -915,10 +954,10 @@ const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
 
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td class="vd-year">${r.YEAR}</td>
+        <td class="vd-year">${esc(r.YEAR)}</td>
         <td class="vd-production">${hl(r.PRODUCTION)}</td>
         <td class="vd-company">${hl(r.COMPANY)}</td>
-        <td class="vd-genre"><span class="${genreCls(r.GENRE)}">${r.GENRE || '—'}</span></td>
+        <td class="vd-genre"><span class="${genreCls(r.GENRE)}">${r.GENRE ? esc(r.GENRE) : '—'}</span></td>
         <td class="vd-director">${hl(r.DIRECTOR)}</td>
         <td class="vd-playwright">${hl(r.PLAYWRIGHT)}</td>
       </tr>`).join('');

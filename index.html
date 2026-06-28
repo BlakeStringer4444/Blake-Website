@@ -2877,6 +2877,35 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 }
 .pi-go-btn:hover { border-color: #d4ff1a; color: #d4ff1a; }
 .music-track-name { cursor: pointer; }
+
+/* ── A11Y ADDITIONS ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+body[data-theme="dark"] :focus-visible,
+body[data-theme="terminal"] :focus-visible {
+  outline-color: var(--lime);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -2919,10 +2948,12 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
   <!-- CONTENT -->
   <main class="main-content" id="main-content">
 
+    <h1 class="sr-only">Blake Stringer</h1>
+
     <!-- ABOUT & CONTACT -->
     <div class="panel active" id="panel-about">
 
-      <div class="section-label">About</div>
+      <h2 class="section-label">About</h2>
 
       <div class="about-top">
         <div class="about-photo-col">
@@ -2937,7 +2968,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
         </div>
       </div>
 
-      <div class="section-label" style="margin-top:40px;">Contact</div>
+      <h2 class="section-label" style="margin-top:40px;">Contact</h2>
 
       <div class="cfield">
         <span class="ck">Email</span>
@@ -2962,7 +2993,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
     <!-- ACTING CV -->
     <div class="panel" id="panel-acting">
-      <div class="section-label">Acting CV</div>
+      <h2 class="section-label">Acting CV</h2>
       <div class="jump-nav">
         <a class="jump-btn" href="#act-theatre">Theatre</a>
         <a class="jump-btn" href="#act-attributes">Attributes</a>
@@ -3073,19 +3104,19 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
       <div class="section-sublabel" id="act-reel">Video Reel</div>
       <div class="video-grid">
         <a href="https://www.youtube.com/watch?v=ckq8P67JgDc" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb"><img src="https://img.youtube.com/vi/ckq8P67JgDc/hqdefault.jpg" alt="The Raven"></div>
+          <div class="video-thumb"><img loading="lazy" decoding="async" src="https://img.youtube.com/vi/ckq8P67JgDc/hqdefault.jpg" alt="The Raven"></div>
           <div class="video-info"><div class="video-title">The Raven</div><div class="video-meta">Monologue</div></div>
         </a>
         <a href="https://www.youtube.com/watch?v=GFkI2HiQW7o" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb"><img src="https://img.youtube.com/vi/GFkI2HiQW7o/hqdefault.jpg" alt="Halogen"></div>
+          <div class="video-thumb"><img loading="lazy" decoding="async" src="https://img.youtube.com/vi/GFkI2HiQW7o/hqdefault.jpg" alt="Halogen"></div>
           <div class="video-info"><div class="video-title">Halogen</div><div class="video-meta">Short Film</div></div>
         </a>
         <a href="https://www.youtube.com/watch?v=1SLXbZOAosU" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb"><img src="https://img.youtube.com/vi/1SLXbZOAosU/hqdefault.jpg" alt="Epicene Neurasthenia"></div>
+          <div class="video-thumb"><img loading="lazy" decoding="async" src="https://img.youtube.com/vi/1SLXbZOAosU/hqdefault.jpg" alt="Epicene Neurasthenia"></div>
           <div class="video-info"><div class="video-title">Epicene Neurasthenia</div><div class="video-meta">Short Film</div></div>
         </a>
         <a href="https://www.youtube.com/watch?v=NTbam91beUY" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb"><img src="https://img.youtube.com/vi/NTbam91beUY/hqdefault.jpg" alt="Penta"></div>
+          <div class="video-thumb"><img loading="lazy" decoding="async" src="https://img.youtube.com/vi/NTbam91beUY/hqdefault.jpg" alt="Penta"></div>
           <div class="video-info"><div class="video-title">Penta</div><div class="video-meta">Short Film</div></div>
         </a>
       </div>
@@ -3094,7 +3125,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
     <!-- MUSIC CV -->
     <div class="panel" id="panel-music">
-      <div class="section-label">Music</div>
+      <h2 class="section-label">Music</h2>
       <div class="jump-nav">
         <a class="jump-btn" href="#mus-releases">Releases</a>
         <a class="jump-btn" href="#mus-software">Software</a>
@@ -3123,7 +3154,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <div class="album-card">
           <a href="https://hyperfollow.com/BlakeStringer/Organic" target="_blank" rel="noopener noreferrer" class="album-art">
-            <img src="Images/OrganicAlbum.PNG" alt="ORGANIC">
+            <img loading="lazy" decoding="async" src="Images/OrganicAlbum.PNG" alt="ORGANIC">
           </a>
           <div class="album-info">
             <div class="album-title">ORGANIC</div>
@@ -3147,7 +3178,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <div class="album-card">
           <a href="https://distrokid.com/hyperfollow/blakestringerandaaela/art-of-somethingness" target="_blank" rel="noopener noreferrer" class="album-art">
-            <img src="Images/ArtOfSomethingnessAlbum.jpeg" alt="Art of Somethingness">
+            <img loading="lazy" decoding="async" src="Images/ArtOfSomethingnessAlbum.jpeg" alt="Art of Somethingness">
           </a>
           <div class="album-info">
             <div class="album-title">Art of Somethingness</div>
@@ -3171,7 +3202,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <div class="album-card">
           <a href="https://distrokid.com/hyperfollow/blakestringer/3030-v-i-s-i-o-n" target="_blank" rel="noopener noreferrer" class="album-art">
-            <img src="Images/3030VISIONAlbum.jpg" alt="30/30 V I S I O N">
+            <img loading="lazy" decoding="async" src="Images/3030VISIONAlbum.jpg" alt="30/30 V I S I O N">
           </a>
           <div class="album-info">
             <div class="album-title">30/30 V I S I O N</div>
@@ -3195,7 +3226,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <div class="album-card">
           <a href="https://distrokid.com/hyperfollow/ab112/stargazers" target="_blank" rel="noopener noreferrer" class="album-art">
-            <img src="Images/StargazersAlbum.jpeg" alt="Stargazers">
+            <img loading="lazy" decoding="async" src="Images/StargazersAlbum.jpeg" alt="Stargazers">
           </a>
           <div class="album-info">
             <div class="album-title">Stargazers</div>
@@ -3236,7 +3267,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
     <!-- SOUND DESIGN CV -->
     <div class="panel" id="panel-sound">
-      <div class="section-label">Sound Design CV</div>
+      <h2 class="section-label">Sound Design CV</h2>
       <div class="jump-nav">
         <a class="jump-btn" href="#snd-theatre">Theatre</a>
         <a class="jump-btn" href="#snd-software">Software</a>
@@ -3317,23 +3348,23 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
       <div class="section-sublabel" id="snd-reel">Music Design Reel</div>
       <div class="video-grid">
         <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-TheGift.png" alt="The Gift"></div>
+          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TheGift.png" alt="The Gift"></div>
           <div class="video-info"><div class="video-title">The Gift</div><div class="video-meta">Torquay Theatre Troupe · 2026</div></div>
         </a>
         <a href="https://www.instagram.com/blakestringer4444/reel/DIx6nzUT7wd/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-TIKTBT.png" alt="Things I Know To Be True"></div>
+          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TIKTBT.png" alt="Things I Know To Be True"></div>
           <div class="video-info"><div class="video-title">Things I Know To Be True</div><div class="video-meta">Williamstown Little Theatre · 2025</div></div>
         </a>
         <a href="https://www.instagram.com/blakestringer4444/reel/DJTZzhFzm9J/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-KnifeEdge.png" alt="Knife Edge"></div>
+          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-KnifeEdge.png" alt="Knife Edge"></div>
           <div class="video-info"><div class="video-title">Knife Edge</div><div class="video-meta">Beaumaris Theatre Company · 2025</div></div>
         </a>
         <a href="https://www.instagram.com/blakestringer4444/reel/C8QJjMVvrxN/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-Lovesong.png" alt="Lovesong"></div>
+          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Lovesong.png" alt="Lovesong"></div>
           <div class="video-info"><div class="video-title">Lovesong</div><div class="video-meta">Malvern Theatre Company · 2024</div></div>
         </a>
         <a href="https://www.instagram.com/blakestringer4444/reel/C6DD3vrS3-4/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img src="Images/Reel-Berlin.png" alt="Berlin"></div>
+          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Berlin.png" alt="Berlin"></div>
           <div class="video-info"><div class="video-title">Berlin</div><div class="video-meta">Heidelberg Theatre Company · 2024</div></div>
         </a>
       </div>
@@ -3342,7 +3373,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
     <!-- DIRECTING CV -->
     <div class="panel" id="panel-directing">
-      <div class="section-label">Directing CV</div>
+      <h2 class="section-label">Directing CV</h2>
       <div class="jump-nav">
         <a class="jump-btn" href="#dir-theatre">Theatre</a>
         <a class="jump-btn" href="#dir-films">Short Films &amp; Trailers</a>
@@ -3373,7 +3404,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=ChhSwebkyNQ" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/ChhSwebkyNQ/hqdefault.jpg" alt="The Shoe-Horn Sonata">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/ChhSwebkyNQ/hqdefault.jpg" alt="The Shoe-Horn Sonata">
           </div>
           <div class="video-info">
             <div class="video-title">The Shoe-Horn Sonata</div>
@@ -3383,7 +3414,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=6ExVRiEj-SI" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/6ExVRiEj-SI/hqdefault.jpg" alt="The History Boys">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/6ExVRiEj-SI/hqdefault.jpg" alt="The History Boys">
           </div>
           <div class="video-info">
             <div class="video-title">The History Boys</div>
@@ -3393,7 +3424,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=hrqEOe8zHAQ" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/hrqEOe8zHAQ/hqdefault.jpg" alt="Dracula – The Bloody Truth">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/hrqEOe8zHAQ/hqdefault.jpg" alt="Dracula – The Bloody Truth">
           </div>
           <div class="video-info">
             <div class="video-title">Dracula – The Bloody Truth</div>
@@ -3403,7 +3434,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=SKt8pq-7V2w" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/SKt8pq-7V2w/hqdefault.jpg" alt="What is the Matter with Mary Jane">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/SKt8pq-7V2w/hqdefault.jpg" alt="What is the Matter with Mary Jane">
           </div>
           <div class="video-info">
             <div class="video-title">What is the Matter with Mary Jane</div>
@@ -3413,7 +3444,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=v-eSJwVkVXE" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/v-eSJwVkVXE/hqdefault.jpg" alt="Slut">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/v-eSJwVkVXE/hqdefault.jpg" alt="Slut">
           </div>
           <div class="video-info">
             <div class="video-title">Slut</div>
@@ -3423,7 +3454,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=6kX7bOIomFE" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/6kX7bOIomFE/hqdefault.jpg" alt="Ghosts">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/6kX7bOIomFE/hqdefault.jpg" alt="Ghosts">
           </div>
           <div class="video-info">
             <div class="video-title">Ghosts</div>
@@ -3433,7 +3464,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=JMNMXwAFqPk" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/JMNMXwAFqPk/hqdefault.jpg" alt="Gulls">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/JMNMXwAFqPk/hqdefault.jpg" alt="Gulls">
           </div>
           <div class="video-info">
             <div class="video-title">Gulls</div>
@@ -3443,7 +3474,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=AMlFezPDaCc" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/AMlFezPDaCc/hqdefault.jpg" alt="Never The Sinner">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/AMlFezPDaCc/hqdefault.jpg" alt="Never The Sinner">
           </div>
           <div class="video-info">
             <div class="video-title">Never The Sinner</div>
@@ -3453,7 +3484,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=w9PvgRCoJx8" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/w9PvgRCoJx8/hqdefault.jpg" alt="The Crucible">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/w9PvgRCoJx8/hqdefault.jpg" alt="The Crucible">
           </div>
           <div class="video-info">
             <div class="video-title">The Crucible</div>
@@ -3463,7 +3494,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
         <a href="https://www.youtube.com/watch?v=YmZl_LOp9Lk" target="_blank" rel="noopener noreferrer" class="video-card">
           <div class="video-thumb">
-            <img src="https://img.youtube.com/vi/YmZl_LOp9Lk/hqdefault.jpg" alt="Patient 12">
+            <img loading="lazy" decoding="async" src="https://img.youtube.com/vi/YmZl_LOp9Lk/hqdefault.jpg" alt="Patient 12">
           </div>
           <div class="video-info">
             <div class="video-title">Patient 12</div>
@@ -3480,7 +3511,7 @@ body[data-theme="terminal"] .lost-hint { color: rgba(255,255,255,0.14); }
 
     <!-- TOOLS -->
     <div class="panel" id="panel-tools">
-      <div class="section-label">Tools</div>
+      <h2 class="section-label">Tools</h2>
       <p class="tools-desc">A growing collection of projects I've been working on.</p>
       <div class="tools-group">
         <div class="tools-category">Theatre</div>
@@ -3862,7 +3893,15 @@ function buildTabs() {
     t.className = 'tab-btn' + (i === 0 ? ' active' : '');
     t.id = 'tab-' + s.id;
     t.innerHTML = `<span class="tab-text">${s.label}</span>`;
+    t.setAttribute('role', 'tab');
+    t.setAttribute('tabindex', '0');
     t.addEventListener('click', () => select(i));
+    t.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        e.currentTarget.click();
+      }
+    });
     sidebar.appendChild(t);
 
     // Mobile tab
@@ -4510,13 +4549,13 @@ backToTop.addEventListener('click', () => {
       <canvas id="snake-canvas" width="${COLS * CELL}" height="${ROWS * CELL}"></canvas>
       <div class="snake-controls-hint">Arrow keys / WASD · Swipe · D-pad &nbsp;·&nbsp; <span style="color:rgba(255,80,110,0.7);">Pink cherry = +30 pts</span></div>
       <div class="b2048-dpad" style="margin-top:10px;">
-        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up">▲</button></div>
+        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-up" aria-label="Move up">▲</button></div>
         <div class="b2048-dpad-row">
-          <button class="b2048-arrow" id="snake-btn-left">◀</button>
+          <button class="b2048-arrow" id="snake-btn-left" aria-label="Move left">◀</button>
           <div class="b2048-dpad-center"></div>
-          <button class="b2048-arrow" id="snake-btn-right">▶</button>
+          <button class="b2048-arrow" id="snake-btn-right" aria-label="Move right">▶</button>
         </div>
-        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-down">▼</button></div>
+        <div class="b2048-dpad-row"><button class="b2048-arrow" id="snake-btn-down" aria-label="Move down">▼</button></div>
       </div>
       <div class="snake-gameover-panel" id="snake-gameover-panel">
         <div class="snake-go-score">Final score: <span id="snake-final-score">0</span></div>
@@ -5004,8 +5043,8 @@ if (siteName) {
           style="width:100%;max-width:500px;display:block;margin:0 auto;border:1px solid rgba(153,51,255,0.3);background:#0a0a0a;touch-action:none;">
         </canvas>
         <div style="display:flex;gap:8px;margin-top:10px;width:100%;">
-          <button id="pong-btn-up" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▲</button>
-          <button id="pong-btn-down" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▼</button>
+          <button id="pong-btn-up" aria-label="Move up" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▲</button>
+          <button id="pong-btn-down" aria-label="Move down" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▼</button>
         </div>
         <div id="pong-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:8px;min-height:20px;"></div>
         <div class="game-lb-section">
@@ -5399,13 +5438,13 @@ if (siteName) {
         </div>
         <div id="b2048-grid" class="b2048-grid"></div>
         <div class="b2048-dpad">
-          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-up">▲</button></div>
+          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-up" aria-label="Move up">▲</button></div>
           <div class="b2048-dpad-row">
-            <button class="b2048-arrow" id="b2048-left">◀</button>
+            <button class="b2048-arrow" id="b2048-left" aria-label="Move left">◀</button>
             <div class="b2048-dpad-center"></div>
-            <button class="b2048-arrow" id="b2048-right">▶</button>
+            <button class="b2048-arrow" id="b2048-right" aria-label="Move right">▶</button>
           </div>
-          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-down">▼</button></div>
+          <div class="b2048-dpad-row"><button class="b2048-arrow" id="b2048-down" aria-label="Move down">▼</button></div>
         </div>
         <div id="b2048-msg" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:2px;text-align:center;margin-top:10px;min-height:20px;"></div>
         <div class="game-lb-section">
@@ -5829,8 +5868,10 @@ if (siteName) {
     } else {
       orbs.forEach(o => { o.x += o.dx; o.y += o.dy; });
     }
+    if (prefersReducedMotion) return;
     requestAnimationFrame(draw);
   }
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   draw();
 })();
 
@@ -5878,8 +5919,8 @@ if (siteName) {
         <canvas id="bb-canvas" width="440" height="500"
           style="width:100%;display:block;margin:0 auto;background:#000;border:1px solid rgba(255,255,255,0.15);touch-action:none;"></canvas>
         <div style="display:flex;gap:8px;margin-top:10px;width:100%;">
-          <button id="bb-btn-left" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">◀</button>
-          <button id="bb-btn-right" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▶</button>
+          <button id="bb-btn-left" aria-label="Move left" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">◀</button>
+          <button id="bb-btn-right" aria-label="Move right" style="flex:1;height:68px;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'DM Mono',monospace;font-size:22px;cursor:pointer;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:background 0.1s,color 0.1s;" onmousedown="this.style.background='var(--purple)';this.style.color='var(--lime)'" onmouseup="this.style.background='transparent';this.style.color='var(--purple)'" ontouchstart="this.style.background='var(--purple)';this.style.color='var(--lime)'" ontouchend="this.style.background='transparent';this.style.color='var(--purple)'">▶</button>
         </div>
         <div id="bb-msg" style="font-family:'DM Mono',monospace;font-size:11px;color:#FFF;letter-spacing:2px;text-align:center;margin-top:10px;min-height:18px;"></div>
         <div class="game-lb-section">
