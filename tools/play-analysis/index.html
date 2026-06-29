@@ -924,6 +924,7 @@ async function paWorker(payload) {
   var raw = await res.text();
   var data;
   try { data = JSON.parse(raw); } catch (e) { data = { text: raw }; }
+  if (res.status === 429 || data.error === 'daily-limit') throw new Error('daily-limit');
   if (!res.ok) throw new Error(data.error || raw || ('HTTP ' + res.status));
   return data.text != null ? data.text : raw;
 }
@@ -1803,6 +1804,12 @@ async function handleFile(file) {
     generateAndShowSummary();   /* background — fills in profiles + scenes, re-saves */
     return;
   } catch (err) {
+    if (String(err && err.message).indexOf('daily-limit') >= 0) {
+      scanInProgress = false; progressHide();
+      showError('Daily limit reached',
+        'To keep this free tool sustainable, it has a daily usage cap and that’s been reached for today. Please try again tomorrow.');
+      return;
+    }
     console.warn('Smart analysis unavailable — falling back to offline parser:', err);
   }
 
