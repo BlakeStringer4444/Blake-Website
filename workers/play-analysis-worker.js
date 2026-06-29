@@ -49,11 +49,22 @@
  * Secrets required:
  *   ANTHROPIC_API_KEY  — from console.anthropic.com
  *
- * KV namespace required (for the shared library — modes 5 & 6):
+ * KV namespace required (for the shared library — modes 5 & 6 — AND the daily
+ * spend cap below):
  *   PLAY_LIBRARY  — a Workers KV namespace bound to this Worker.
  *                   If it is NOT bound, the library modes degrade gracefully
- *                   (every check is a miss, every save is a no-op) and the tool
- *                   still works exactly as before — just without cross-user dedup.
+ *                   (every check is a miss, every save is a no-op) and the daily
+ *                   cap simply doesn't meter — the tool still works.
+ *
+ * Abuse protection (see ALLOWED_ORIGINS + the limit consts below):
+ *   - Server-side origin check: only requests from the site are served (a bare
+ *     curl/script with no matching Origin gets 403). CORS headers alone do NOT
+ *     do this — they're browser-only.
+ *   - DAILY_BUDGET_CENTS: a hard, all-users daily ceiling on estimated spend;
+ *     once crossed the Worker returns 429 until UTC midnight.
+ *   - MAX_OCR_IMAGES / MAX_BODY_BYTES: reject oversized / crammed requests.
+ *   These complement (not replace) your Anthropic monthly spend limit, which is
+ *   the precise backstop. For burst protection add a per-IP rate limit (see #3).
  *
  * Deploy steps (done once):
  *   1. workers.cloudflare.com → Create Worker → paste this file
@@ -68,56 +79,93 @@
  * maximise accuracy, switch MODEL to 'claude-opus-4-8'.
  */
 
-const ALLOWED_ORIGIN = 'https://www.blakestringer.com';
-const MODEL          = 'claude-sonnet-4-6';
+/* Browser origins allowed to use this endpoint (www + apex). */
+const ALLOWED_ORIGINS = [
+  'https://www.blakestringer.com',
+  'https://blakestringer.com',
+];
+const MODEL = 'claude-sonnet-4-6';
 
-const CORS = {
-  'Access-Control-Allow-Origin':  ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+/* ── Abuse limits (tune these freely) ──────────────────────────────────────
+   DAILY_BUDGET_CENTS — a HARD daily ceiling on estimated Anthropic spend across
+     ALL users combined. Once the day's estimate crosses it, the Worker stops
+     calling Claude and returns a friendly 429 until UTC midnight. This bounds
+     your worst-case daily cost even with auto top-up on. The estimate is rough
+     (deliberately on the high side); your Anthropic monthly spend limit is the
+     precise backstop.
+   MAX_OCR_IMAGES — images accepted in a single OCR request (the client only
+     ever sends 3, so this only blocks someone cramming a request).
+   MAX_BODY_BYTES — reject oversized request bodies outright.                   */
+const DAILY_BUDGET_CENTS = 1500;            /* ≈ US$15/day. Change to taste. */
+const MAX_OCR_IMAGES     = 150;
+const MAX_BODY_BYTES     = 25 * 1024 * 1024;
 
 export default {
   async fetch(request, env) {
+    const origin  = request.headers.get('Origin') || '';
+    const allowed = ALLOWED_ORIGINS.includes(origin);
+    const acao    = allowed ? origin : ALLOWED_ORIGINS[0];
 
-    /* ── CORS preflight ── */
+    let resp;
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS });
-    }
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405, headers: CORS });
+      resp = new Response(null, { status: 204 });
+    } else if (request.method !== 'POST') {
+      resp = json({ error: 'Method not allowed' }, 405);
+    } else if (!allowed) {
+      /* #4 — only our own site may call this endpoint. CORS headers alone don't
+         stop a direct curl/script; this server-side check does. */
+      resp = json({ error: 'Forbidden' }, 403);
+    } else {
+      const clen = parseInt(request.headers.get('content-length') || '0', 10);
+      if (clen && clen > MAX_BODY_BYTES) {
+        resp = json({ error: 'Payload too large' }, 413);          /* #5 */
+      } else {
+        let body = null;
+        try { body = await request.json(); }
+        catch { resp = json({ error: 'Invalid JSON' }, 400); }
+        if (body) {
+          try {
+            resp = await route(body, env);
+          } catch (e) {
+            if (e && e.message === 'DAILY_LIMIT') {
+              resp = json({ error: 'daily-limit',
+                message: 'This tool has reached its daily limit. Please try again tomorrow.' }, 429);
+            } else {
+              resp = json({ error: e.message || String(e) }, 502);
+            }
+          }
+        }
+      }
     }
 
-    /* ── Parse body ── */
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return json({ error: 'Invalid JSON' }, 400);
-    }
-
-    const mode = body.mode;
-
-    try {
-      if (mode === 'ocr')           return await handleOcr(body, env);
-      if (mode === 'structure')     return await handleStructure(body, env);
-      if (mode === 'normalize')     return await handleNormalize(body, env);
-      if (mode === 'overview')      return await handleOverview(body, env);
-      if (mode === 'scenebatch')    return await handleSceneBatch(body, env);
-      if (mode === 'summary')       return await handleSummary(body, env);
-      if (mode === 'library-check') return await handleLibraryCheck(body, env);
-      if (mode === 'library-save')  return await handleLibrarySave(body, env);
-      return json({ error: 'Unknown mode: ' + mode }, 400);
-    } catch (e) {
-      return json({ error: e.message || String(e) }, 502);
-    }
+    /* Central CORS — reflect the allow-listed origin onto every response. */
+    const out = new Response(resp.body, resp);
+    out.headers.set('Access-Control-Allow-Origin',  acao);
+    out.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    out.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    out.headers.set('Vary', 'Origin');
+    return out;
   },
 };
+
+async function route(body, env) {
+  const mode = body.mode;
+  if (mode === 'ocr')           return await handleOcr(body, env);
+  if (mode === 'structure')     return await handleStructure(body, env);
+  if (mode === 'normalize')     return await handleNormalize(body, env);
+  if (mode === 'overview')      return await handleOverview(body, env);
+  if (mode === 'scenebatch')    return await handleSceneBatch(body, env);
+  if (mode === 'summary')       return await handleSummary(body, env);
+  if (mode === 'library-check') return await handleLibraryCheck(body, env);
+  if (mode === 'library-save')  return await handleLibrarySave(body, env);
+  return json({ error: 'Unknown mode: ' + mode }, 400);
+}
 
 /* ───────────────────────── MODE: OCR ───────────────────────── */
 async function handleOcr(body, env) {
   const images = Array.isArray(body.images) ? body.images : [];
   if (!images.length) return json({ error: 'No images provided' }, 400);
+  if (images.length > MAX_OCR_IMAGES) return json({ error: 'Too many images in one request' }, 400);  /* #5 */
 
   const content = [];
   for (const img of images) {
@@ -142,7 +190,7 @@ async function handleOcr(body, env) {
     'translate, reorder or add any commentary. If a word is illegible, transcribe your best ' +
     'guess. Output ONLY the raw transcribed text. Separate consecutive pages with one blank line.';
 
-  const text = await callClaude(env, { system, max_tokens: 8192, content });
+  const text = await callClaude(env, { system, max_tokens: 8192, content, costCents: 1.5 * images.length });
   return json({ text });
 }
 
@@ -181,6 +229,7 @@ async function handleStructure(body, env) {
     system,
     max_tokens: 8192,
     content: [{ type: 'text', text: numbered }],
+    costCents: 2,
   });
   return json({ text });
 }
@@ -211,6 +260,7 @@ async function handleNormalize(body, env) {
     system,
     max_tokens: 4096,
     content: [{ type: 'text', text: JSON.stringify(labels) }],
+    costCents: 1,
   });
   return json({ text });
 }
@@ -260,6 +310,7 @@ async function handleOverview(body, env) {
     system,
     max_tokens: 8000,
     content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
+    costCents: 4,
   });
   return json({ text: out });
 }
@@ -297,6 +348,7 @@ async function handleSceneBatch(body, env) {
       'TITLE: ' + title + '\n\n' +
       'SCENES TO SUMMARISE (in order):\n' + JSON.stringify(labels) + '\n\n' +
       'FULL SCRIPT:\n' + script }],
+    costCents: 4,
   });
   return json({ text: out });
 }
@@ -350,6 +402,7 @@ async function handleSummary(body, env) {
     system,
     max_tokens: 16000,
     content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
+    costCents: 6,
   });
   return json({ text: out });
 }
@@ -400,8 +453,29 @@ async function handleLibrarySave(body, env) {
 }
 
 /* ───────────────────────── HELPERS ─────────────────────────── */
-async function callClaude(env, { system, max_tokens, content }) {
+
+/* #2 — daily spend circuit breaker. Accumulates a rough estimated cost (in cents)
+   per UTC day in KV and refuses once it crosses DAILY_BUDGET_CENTS. Reuses the
+   PLAY_LIBRARY namespace, so no extra binding is needed. If KV isn't bound it
+   simply doesn't meter (your Anthropic monthly limit remains the backstop).
+   Note: KV is eventually consistent, so under a heavy burst the count can lag
+   slightly — fine for a ceiling; pair with per-IP limiting (#3) for bursts. */
+function utcDay() { return new Date().toISOString().slice(0, 10); }
+
+async function budgetOk(env, cents) {
+  if (!env.PLAY_LIBRARY) return true;
+  const key = 'budget:' + utcDay();
+  const cur = parseInt((await env.PLAY_LIBRARY.get(key)) || '0', 10) || 0;
+  if (cur >= DAILY_BUDGET_CENTS) return false;
+  await env.PLAY_LIBRARY.put(key, String(cur + Math.ceil(cents)), { expirationTtl: 172800 });
+  return true;
+}
+
+async function callClaude(env, { system, max_tokens, content, costCents }) {
   if (!env.ANTHROPIC_API_KEY) throw new Error('Server missing ANTHROPIC_API_KEY');
+
+  /* Charge the daily budget BEFORE spending, and bail if the day is exhausted. */
+  if (costCents != null && !(await budgetOk(env, costCents))) throw new Error('DAILY_LIMIT');
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -430,6 +504,6 @@ async function callClaude(env, { system, max_tokens, content }) {
 function json(obj, status) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
