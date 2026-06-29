@@ -268,6 +268,17 @@
       padding: 30px 4px; text-align: center; font-size: 10px;
       color: var(--muted); letter-spacing: 1px; line-height: 1.8;
     }
+    .summary-loading::before {
+      content: ''; display: inline-block; width: 22px; height: 22px; margin-bottom: 12px;
+      border-radius: 50%; border: 2px solid rgba(153,51,255,0.2); border-top-color: var(--purple);
+      animation: pa-spin 0.8s linear infinite; vertical-align: middle;
+    }
+    [data-theme="dark"]     .summary-loading::before,
+    [data-theme="terminal"] .summary-loading::before { border-color: rgba(212,255,26,0.2); border-top-color: var(--lime); }
+    .summary-prog { color: var(--purple); font-size: 11px; letter-spacing: 0.5px; }
+    [data-theme="dark"]     .summary-prog,
+    [data-theme="terminal"] .summary-prog { color: var(--lime); }
+    .summary-prog-note { display: inline-block; margin-top: 8px; font-size: 9px; opacity: 0.7; }
     .summary-retry {
       margin-top: 14px; background: none; border: 1px solid var(--purple);
       color: var(--purple); font-family: var(--font); font-size: 9px;
@@ -577,7 +588,6 @@
       <div class="progress-step" data-step="ocr"><span class="ps-ico"></span><span class="ps-label">Reading scanned pages with AI</span></div>
       <div class="progress-step" data-step="structure"><span class="ps-ico"></span><span class="ps-label">Working out scenes &amp; dialogue</span></div>
       <div class="progress-step" data-step="characters"><span class="ps-ico"></span><span class="ps-label">Identifying characters</span></div>
-      <div class="progress-step" data-step="summary"><span class="ps-ico"></span><span class="ps-label">Summarising the play</span></div>
     </div>
     <div class="progress-detail" id="progress-detail" aria-live="polite"></div>
     <div class="progress-note">Please keep this tab open — long or scanned scripts can take a couple of minutes.</div>
@@ -925,6 +935,59 @@ function safeJson(s) {
   var a = t.indexOf('{'), b = t.lastIndexOf('}');
   if (a >= 0 && b >= a) t = t.slice(a, b + 1);
   return JSON.parse(t);
+}
+
+/* Given a (possibly truncated) JSON object string, return the closing brackets
+   needed to terminate it — or null if it was cut off mid-string. */
+function unclosedBrackets(s) {
+  var inStr = false, esc = false, stack = [];
+  for (var i = 0; i < s.length; i++) {
+    var ch = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === '\\') esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === '}' || ch === ']') stack.pop();
+  }
+  if (inStr) return null;
+  return stack.reverse().join('');
+}
+
+/* Lenient parse: safeJson first, then salvage a TRUNCATED object by cutting back
+   to the last complete "}" and closing any still-open arrays/objects — so a
+   chopped-off response still yields all of its complete scenes/profiles. */
+function tolerantParse(raw) {
+  try { return safeJson(raw); } catch (e) { /* fall through to repair */ }
+  var t = String(raw).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  var a = t.indexOf('{');
+  if (a < 0) return null;
+  t = t.slice(a);
+  for (var i = t.length - 1; i > 0; i--) {
+    if (t[i] !== '}') continue;
+    var head  = t.slice(0, i + 1);
+    var close = unclosedBrackets(head);
+    if (close == null) continue;
+    try { return JSON.parse(head + close); } catch (e) { /* try an earlier "}" */ }
+  }
+  return null;
+}
+
+/* POST to the Worker, parse the JSON it returns (tolerating truncation), and
+   retry once on a hard failure. Returns the object, or null. */
+async function paWorkerJson(payload, retries) {
+  retries = (retries == null) ? 1 : retries;
+  for (var attempt = 0; attempt <= retries; attempt++) {
+    try {
+      var obj = tolerantParse(await paWorker(payload));
+      if (obj) return obj;
+    } catch (e) { if (attempt === retries) console.warn('paWorkerJson failed:', e); }
+  }
+  return null;
 }
 
 /* ── SHARED LIBRARY (private cross-user cache; see the Worker) ──
@@ -1290,7 +1353,7 @@ var progressBar     = document.getElementById('progress-bar-fill');
 var progressPercent = document.getElementById('progress-percent');
 var progressDetail  = document.getElementById('progress-detail');
 var progressSteps   = document.getElementById('progress-steps');
-var PA_STEPS = ['read', 'ocr', 'structure', 'characters', 'summary'];
+var PA_STEPS = ['read', 'ocr', 'structure', 'characters'];
 
 function progStepEl(s) { return progressSteps.querySelector('[data-step="' + s + '"]'); }
 
@@ -1366,13 +1429,46 @@ var summaryBody = document.getElementById('summary-body');
    results loaded from the recent list. */
 var paSource = null;
 
-async function generateSummary(text, scenes, title) {
-  try {
-    var raw  = await paWorker({ mode: 'summary', text: text, scenes: scenes || [], title: title || '' });
-    var data = safeJson(raw);
-    if (!data || !Array.isArray(data.scenes)) return null;
-    return data;
-  } catch (e) { console.warn('Summary generation failed:', e); return null; }
+/* Build the scene-by-scene summary in small, reliable pieces:
+   1) one fast "overview" call → synopsis, character profiles, themes, scene list
+   2) the scenes summarised in batches (so no single response can truncate or
+      time out, even for plays with dozens of short scenes).
+   onProg(done, total) reports scene-batch progress. Returns the assembled
+   summary object, or null only if even the overview couldn't be obtained. */
+async function generateSummary(text, scenes, title, onProg) {
+  var ov = await paWorkerJson({ mode: 'overview', text: text, scenes: scenes || [], title: title || '' });
+  if (!ov) return null;
+
+  var sceneList = (Array.isArray(ov.sceneList) && ov.sceneList.length)
+    ? ov.sceneList
+    : ((scenes && scenes.length) ? scenes.slice() : []);
+  sceneList = sceneList.filter(function (s) { return s && String(s).trim(); }).slice(0, 80);
+
+  var summary = {
+    synopsis: ov.synopsis || '',
+    profiles: Array.isArray(ov.profiles) ? ov.profiles : [],
+    themes:   Array.isArray(ov.themes)   ? ov.themes   : [],
+    scenes:   [],
+  };
+
+  if (sceneList.length) {
+    var BATCH = 12, batches = [];
+    for (var i = 0; i < sceneList.length; i += BATCH) batches.push(sceneList.slice(i, i + BATCH));
+    if (onProg) onProg(0, batches.length);
+    var results = await pool(batches, 2, async function (batch) {
+      var r = await paWorkerJson({ mode: 'scenebatch', text: text, title: title || '', sceneLabels: batch });
+      return (r && Array.isArray(r.scenes)) ? r.scenes : [];
+    }, function (done, total) { if (onProg) onProg(done, total); });
+    for (var k = 0; k < results.length; k++) summary.scenes = summary.scenes.concat(results[k]);
+  } else {
+    /* No scene divisions detected at all — fall back to the single-shot summary. */
+    var s = await paWorkerJson({ mode: 'summary', text: text, scenes: [], title: title || '' });
+    if (s && Array.isArray(s.scenes)) summary.scenes = s.scenes;
+    if (s && !summary.synopsis) summary.synopsis = s.synopsis || '';
+  }
+
+  if (!summary.scenes.length && !summary.synopsis) return null;
+  return summary;
 }
 
 /* Obtain the full script text for summarising — from memory, or by
@@ -1452,29 +1548,74 @@ function renderSummaryState() {
       : 'No summary was saved for this script. Re-upload it to generate one.') +
     '</div>';
   var b = document.getElementById('summary-gen-btn');
-  if (b) b.addEventListener('click', regenerateSummary);
+  if (b) b.addEventListener('click', generateAndShowSummary);
 }
 
-async function regenerateSummary() {
+/* Loading state shown in the summary panel while it generates in the background.
+   Shows real scene-batch progress so the user can see it's working. */
+function setSummaryLoading(done, total) {
+  var prog = (total && total > 0)
+    ? '<br><span class="summary-prog">Summarising scenes — group ' + Math.min(done + 1, total) + ' of ' + total + '…</span>'
+    : '<br><span class="summary-prog">Reading the whole play…</span>';
+  var sa = document.getElementById('summary-actions');
+  if (sa) sa.style.display = 'none';
   summaryBody.innerHTML =
-    '<div class="summary-loading">Summarising the play &amp; profiling characters…<br>This can take a couple of minutes for a full script.</div>';
+    '<div class="summary-loading">Summarising the play &amp; profiling characters' + prog +
+    '<br><span class="summary-prog-note">You can read and download your lines above while this finishes.</span></div>';
+}
+
+function showSummaryRetry() {
+  var sa = document.getElementById('summary-actions');
+  if (sa) sa.style.display = 'none';
+  summaryBody.innerHTML =
+    '<div class="summary-failed">Couldn’t generate the summary right now.<br>' +
+    '<button class="summary-retry" id="summary-gen-btn">Try again</button></div>';
+  var b = document.getElementById('summary-gen-btn');
+  if (b) b.addEventListener('click', generateAndShowSummary);
+}
+
+/* Persist a result to the local cache + recent list + shared library, but only
+   if it passes the completeness check. Safe to call repeatedly (e.g. once for
+   the line analysis, then again once the summary lands). */
+function persistResult(hash, fp, script) {
+  if (!looksComplete(script)) return;
+  if (hash) {
+    cacheSave(hash, script);
+    addRecent({ hash: hash, title: script.title,
+                chars: Object.keys(script.characters || {}).length,
+                when: Date.now(), cached: true });
+    renderRecents();
+  }
+  librarySave({ fileHash: hash || undefined, fingerprint: fp || undefined, script: script });
+}
+
+/* Generate the summary for the script on screen and render it. Used both as the
+   automatic background step after a fresh scan and by the "Generate / Try again"
+   button. Runs detached from the progress overlay so results are already visible. */
+var summaryGenerating = false;
+async function generateAndShowSummary() {
+  if (summaryGenerating) return;
+  summaryGenerating = true;
+  setSummaryLoading(0, 0);
   try {
     var text = await getSummarySourceText();
     if (!text) throw new Error('no-source');
-    var sum = await generateSummary(text, (paSource && paSource.scenes) || [],
-                                    (paSource && paSource.title) || parsedScript.title);
+    var sum = await generateSummary(
+      text,
+      (paSource && paSource.scenes) || [],
+      (paSource && paSource.title) || parsedScript.title,
+      function (done, total) { setSummaryLoading(done, total); }
+    );
     if (!sum) throw new Error('failed');
     parsedScript.summary = sum;
-    if (paSource && paSource.hash && looksComplete(parsedScript)) cacheSave(paSource.hash, parsedScript);
     renderProfiles(sum.profiles);
     renderSummary(sum);
+    persistResult(paSource && paSource.hash, paSource && paSource.fp, parsedScript);
   } catch (e) {
-    console.warn('Summary regenerate failed:', e);
-    summaryBody.innerHTML =
-      '<div class="summary-failed">Couldn’t generate the summary right now.<br>' +
-      '<button class="summary-retry" id="summary-gen-btn">Try again</button></div>';
-    var b = document.getElementById('summary-gen-btn');
-    if (b) b.addEventListener('click', regenerateSummary);
+    console.warn('Summary generation failed:', e);
+    showSummaryRetry();
+  } finally {
+    summaryGenerating = false;
   }
 }
 
@@ -1644,32 +1785,22 @@ async function handleFile(file) {
     parsedScript = buildSmartScript(lines, struct, norm, title);
     if (!Object.keys(parsedScript.characters).length) throw new Error('no-characters');
 
-    /* Part 2: character profiles + scene-by-scene summary (best-effort — the line
-       analysis is kept even if this fails). The summary call has no sub-progress,
-       so creep the bar toward 99% while we wait. */
+    /* The line/character analysis is done — show it NOW. The scene-by-scene
+       summary + character profiles are generated afterwards in the background
+       (see generateAndShowSummary), so the user isn't held on the progress bar
+       while a long summary runs, and can already read/download their lines. */
     var sceneHeadings = struct.scenes.map(function (s) { return s.heading; });
-    paSource = { hash: hash, title: title, text: lines.join('\n'), scenes: sceneHeadings };
-    progressStep('summary', 88, 'Summarising the play & profiling characters…');
-    startCreep(99);
-    parsedScript.summary = await generateSummary(paSource.text, sceneHeadings, title);
-    stopCreep();
+    parsedScript.summary = null;
+    paSource = { hash: hash, title: title, text: lines.join('\n'), scenes: sceneHeadings, fp: fp };
 
     progressDone();
-    /* Only persist a result that passes the completeness check, so a damaged or
-       partial scan can never be served back on re-upload. */
-    if (looksComplete(parsedScript)) {
-      if (hash) {
-        cacheSave(hash, parsedScript);
-        addRecent({ hash: hash, title: parsedScript.title,
-                    chars: Object.keys(parsedScript.characters).length,
-                    when: Date.now(), cached: true });
-        renderRecents();
-      }
-      /* Add to the shared library so nobody (incl. other users) re-scans this play. */
-      librarySave({ fileHash: hash || undefined, fingerprint: fp || undefined, script: parsedScript });
-    }
-    await new Promise(function (r) { setTimeout(r, 350); }); /* let the bar finish */
+    /* Persist the line analysis right away (so a re-upload is instant even if the
+       user leaves before the summary finishes). It's re-saved with the summary
+       once that lands. Only complete results are stored. */
+    persistResult(hash, fp, parsedScript);
+    await new Promise(function (r) { setTimeout(r, 300); }); /* let the bar finish */
     finishAnalysis();
+    generateAndShowSummary();   /* background — fills in profiles + scenes, re-saves */
     return;
   } catch (err) {
     console.warn('Smart analysis unavailable — falling back to offline parser:', err);

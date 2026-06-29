@@ -20,9 +20,18 @@
  *                     Claude merges speaker-label variants into canonical characters.
  *                     → { text: "<JSON>" }
  *
- *   4. "summary"    — { mode:"summary", text:"<full script>", scenes:[…], title:"…" }
- *                     Claude produces character profiles (name, approx age, personality)
- *                     and a scene-by-scene breakdown of the play.
+ *   4. "overview"   — { mode:"overview", text:"<full script>", scenes:[…], title:"…" }
+ *                     Fast first half of the summary: synopsis, character profiles
+ *                     (name, approx age, personality), themes, and the LIST of scene
+ *                     divisions (labels only).
+ *                     → { text: "<JSON: synopsis, profiles[], themes[], sceneList[]>" }
+ *
+ *   4b. "scenebatch" — { mode:"scenebatch", text:"<full script>", title:"…", sceneLabels:[…] }
+ *                     Summarises ONLY the requested slice of scenes. Bounded output, so
+ *                     long/many-scene plays can't truncate or time out.
+ *                     → { text: "<JSON: scenes[]>" }
+ *
+ *   4c. "summary"   — legacy single-shot summary; kept as a fallback.
  *                     → { text: "<JSON: synopsis, profiles[], scenes[], themes[]>" }
  *
  *   5. "library-check" — { mode:"library-check", fileHash?:"…", fingerprint?:"…" }
@@ -93,6 +102,8 @@ export default {
       if (mode === 'ocr')           return await handleOcr(body, env);
       if (mode === 'structure')     return await handleStructure(body, env);
       if (mode === 'normalize')     return await handleNormalize(body, env);
+      if (mode === 'overview')      return await handleOverview(body, env);
+      if (mode === 'scenebatch')    return await handleSceneBatch(body, env);
       if (mode === 'summary')       return await handleSummary(body, env);
       if (mode === 'library-check') return await handleLibraryCheck(body, env);
       if (mode === 'library-save')  return await handleLibrarySave(body, env);
@@ -204,7 +215,95 @@ async function handleNormalize(body, env) {
   return json({ text });
 }
 
+/* ───────────────────────── MODE: OVERVIEW ──────────────────── */
+/* First half of the (now split) summary: a small, fast, hard-to-truncate call
+   that returns the synopsis, character profiles, themes, and the LIST of scene
+   divisions (labels only — no per-scene prose). The scenes themselves are then
+   summarised in small batches via 'scenebatch', so no single response ever has
+   to emit the whole play at once. */
+async function handleOverview(body, env) {
+  const text   = typeof body.text === 'string' ? body.text : '';
+  const scenes = Array.isArray(body.scenes) ? body.scenes : [];
+  const title  = typeof body.title === 'string' && body.title ? body.title : 'this play';
+  if (!text.trim()) return json({ error: 'No text provided' }, 400);
+
+  const MAX = 600000;
+  const script = text.length > MAX ? text.slice(0, MAX) : text;
+
+  const sceneHint = scenes.length
+    ? 'These scene/act headings were detected in the script — return them in "sceneList" ' +
+      'UNCHANGED and in order (you may trim obvious duplicates): ' + JSON.stringify(scenes.slice(0, 80)) + '.'
+    : 'No scene headings were detected. Divide the play into sensible scenes yourself and put ' +
+      'each scene-division label (e.g. "Scene 1 — the kitchen, morning") in "sceneList" in order.';
+
+  const system =
+    'You are a dramaturg preparing study notes for actors and directors. You receive the full ' +
+    'text of a stage or screen play. Return a concise OVERVIEW only — do NOT summarise individual ' +
+    'scenes here. Base everything strictly on the script; never invent characters or events.\n' +
+    sceneHint + '\n\n' +
+    'Return ONLY valid JSON, no markdown, in exactly this shape:\n' +
+    '{"synopsis":"<2-4 sentence overview of the whole play>",' +
+    '"profiles":[{"name":"<character name as printed>","age":"<approx age or range>",' +
+    '"summary":"<at most two short paragraphs: personality, what they want, key relationships and how they change>"}],' +
+    '"themes":["<short theme phrase>"],' +
+    '"sceneList":["<scene-division label>"]}\n\n' +
+    'Rules:\n' +
+    '- PROFILES: only the SIGNIFICANT characters, ordered by importance; omit one-line/ensemble roles. ' +
+    'Each summary is AT MOST two short paragraphs, specific to THIS play, never generic.\n' +
+    '- AGE: exact age if stated; otherwise a realistic estimate/range (e.g. "late 30s", "teenager"); ' +
+    'use "unspecified" only if there is genuinely no basis.\n' +
+    '- sceneList: labels ONLY, in performance order, at most 60 entries. No scene summaries here.\n' +
+    '- Use 3-8 themes maximum.\n' +
+    'Output JSON only.';
+
+  const out = await callClaude(env, {
+    system,
+    max_tokens: 8000,
+    content: [{ type: 'text', text: 'TITLE: ' + title + '\n\n' + script }],
+  });
+  return json({ text: out });
+}
+
+/* ──────────────────────── MODE: SCENEBATCH ─────────────────── */
+/* Second half: summarise ONLY the requested slice of scenes. Bounded output, so
+   it can't truncate or time out even for plays with dozens of scenes. */
+async function handleSceneBatch(body, env) {
+  const text   = typeof body.text === 'string' ? body.text : '';
+  const title  = typeof body.title === 'string' && body.title ? body.title : 'this play';
+  const labels = Array.isArray(body.sceneLabels) ? body.sceneLabels : [];
+  if (!text.trim()) return json({ error: 'No text provided' }, 400);
+  if (!labels.length) return json({ error: 'No scene labels provided' }, 400);
+
+  const MAX = 600000;
+  const script = text.length > MAX ? text.slice(0, MAX) : text;
+
+  const system =
+    'You are a dramaturg. You receive the FULL text of a play and a list of scene labels to ' +
+    'summarise. Summarise ONLY those scenes, in the given order, basing everything strictly on ' +
+    'the script — never invent characters or events.\n\n' +
+    'Return ONLY valid JSON, no markdown, in exactly this shape:\n' +
+    '{"scenes":[{"heading":"<the scene label>","characters":["<NAMES present in the scene>"],' +
+    '"summary":"<2-5 sentences: what happens, the key beats, and how relationships shift>"}]}\n\n' +
+    'Rules:\n' +
+    '- Return EXACTLY one entry per requested label, in the same order, with "heading" set to that label.\n' +
+    '- Keep every summary concrete and specific to THIS script — not generic.\n' +
+    '- Names in "characters" should match how they appear in the script.\n' +
+    'Output JSON only.';
+
+  const out = await callClaude(env, {
+    system,
+    max_tokens: 8000,
+    content: [{ type: 'text', text:
+      'TITLE: ' + title + '\n\n' +
+      'SCENES TO SUMMARISE (in order):\n' + JSON.stringify(labels) + '\n\n' +
+      'FULL SCRIPT:\n' + script }],
+  });
+  return json({ text: out });
+}
+
 /* ──────────────────────── MODE: SUMMARY ────────────────────── */
+/* Legacy single-shot summary — kept as a fallback. The client now prefers the
+   split overview + scenebatch flow above. */
 async function handleSummary(body, env) {
   const text   = typeof body.text === 'string' ? body.text : '';
   const scenes = Array.isArray(body.scenes) ? body.scenes : [];
