@@ -96,7 +96,7 @@ const MODEL = 'claude-sonnet-4-6';
    MAX_OCR_IMAGES — images accepted in a single OCR request (the client only
      ever sends 3, so this only blocks someone cramming a request).
    MAX_BODY_BYTES — reject oversized request bodies outright.                   */
-const DAILY_BUDGET_CENTS = 1500;            /* ≈ US$15/day. Change to taste. */
+const DAILY_BUDGET_CENTS = 1000;            /* ≈ US$10/day. Change to taste. */
 const MAX_OCR_IMAGES     = 150;
 const MAX_BODY_BYTES     = 25 * 1024 * 1024;
 
