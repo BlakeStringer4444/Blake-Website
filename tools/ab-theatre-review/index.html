@@ -170,6 +170,8 @@
     .sc-row { display: grid; grid-template-columns: 78px 1fr 34px; align-items: center; gap: 12px; padding: 6px 0; }
     .sc-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
     .sc-range { width: 100%; accent-color: var(--me); cursor: pointer; touch-action: none; }
+    .sc-range:disabled { cursor: default; opacity: 0.65; }
+    .play-card.scored-locked { border-style: solid; }
     .sc-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: right; color: var(--fg); }
     .sc-val small { font-size: 10px; color: var(--muted); }
     .pc-note {
@@ -187,6 +189,14 @@
     [data-theme="dark"] .pc-status.saved, [data-theme="terminal"] .pc-status.saved { color: #4ade80; }
     .pc-clear { background: none; border: none; color: var(--muted); font-family: var(--font); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; text-decoration: underline; }
     .pc-clear:hover { color: #ef4444; }
+    .pc-foot-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .pc-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 14px; cursor: pointer; border-radius: 2px; transition: all 0.15s;
+    }
+    .pc-btn:hover, .pc-btn.primary { border-color: var(--me); color: var(--me); }
+    .pc-btn.primary { background: color-mix(in srgb, var(--me) 12%, transparent); }
 
     /* ── COMPARE ── */
     .cmp-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 26px; }
@@ -198,6 +208,9 @@
     .cmp-h2h .a { color: var(--alayne); } .cmp-h2h .b { color: var(--blake); } .cmp-h2h .sep { font-size: 20px; color: var(--muted); }
 
     .cmp-section-h { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; margin: 30px 0 14px; }
+    .cmp-collapser { cursor: pointer; user-select: none; }
+    .cmp-collapser:hover { color: var(--muted); }
+    .cmp-chev { display: inline-block; font-size: 16px; width: 16px; }
     .cmp-legend { display: flex; gap: 18px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
     .cmp-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .cmp-radar-wrap { display: flex; justify-content: center; }
@@ -218,6 +231,7 @@
     .cmp-table th.cmp-sort { cursor: pointer; user-select: none; white-space: nowrap; }
     .cmp-table th.cmp-sort:hover { color: var(--fg); }
     .cmp-table th.cmp-sort.active { color: var(--fg); }
+    .cmp-table .num .rk { font-family: var(--font); font-size: 9px; letter-spacing: 0; color: var(--muted); }
     .cmp-hint { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin: -6px 0 8px; }
 
     .ab-empty { padding: 50px 20px; text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
@@ -324,6 +338,9 @@ var state = {
   search: '',
   compareYear: 'all',
   cmpSort: { key: 'combined', dir: -1 },   /* combined table sort: default highest total first */
+  ready: false,                            /* true once the CSV + scores have loaded */
+  screen: 'landing',
+  collapse: { agree: false, disagree: false },
 };
 
 /* ═══════════════ TEXT SIZE (Aa) — mirrors the other tools ═══════════════ */
@@ -420,7 +437,12 @@ function loadAll() {
   return Promise.all([csvP, revP]).then(function (res) {
     parsePlays(res[0]);
     if (res[1] && res[1].reviews) state.reviews = { alayne: res[1].reviews.alayne || {}, blake: res[1].reviews.blake || {} };
+    state.ready = true;
     updateCounts();
+    /* If the user already clicked into a screen before the data landed, re-render
+       it now (fixes the "No plays match" flash that needed a Blake→Alayne toggle). */
+    if (state.screen === 'scorer' && state.me) renderScorer();
+    else if (state.screen === 'compare') renderCompare();
   });
 }
 
@@ -451,17 +473,19 @@ function parsePlays(csv) {
 
 function updateCounts() {
   ['alayne', 'blake'].forEach(function (who) {
+    var el = document.getElementById('count-' + who);
+    if (!state.ready) { el.textContent = 'Loading…'; return; }
     /* Outstanding = scorable (2026+), already seen (unlocked), not yet scored by them. */
     var out = state.plays.filter(function (p) {
       return isScorable(p) && p.seen && !state.reviews[who][p.id];
     }).length;
-    document.getElementById('count-' + who).textContent =
-      out ? (out + ' play' + (out === 1 ? '' : 's') + ' to score') : 'All caught up ✓';
+    el.textContent = out ? (out + ' play' + (out === 1 ? '' : 's') + ' to score') : 'All caught up ✓';
   });
 }
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 function showScreen(id) {
+  state.screen = id;
   document.getElementById('landing').style.display = (id === 'landing') ? 'flex' : 'none';
   ['scorer', 'compare'].forEach(function (s) { document.getElementById(s).classList.toggle('active', s === id); });
   window.scrollTo(0, 0);
@@ -493,6 +517,7 @@ function byDateAsc(a, b)  { var ta = a.date ? a.date.getTime() : Infinity, tb = 
 
 function renderScorer() {
   var body = document.getElementById('scorer-body');
+  if (!state.ready) { body.innerHTML = '<div class="ab-empty">Loading plays…</div>'; return; }
   var base = filteredPlays();
   var scorable = base.filter(isScorable);
   var archive  = base.filter(function (p) { return !isScorable(p); });
@@ -552,15 +577,21 @@ function lockedHTML(p) {
     '<div class="pc-locked-msg">🔒 Not seen yet — unlocks ' + (p.date ? fmtDate(p.date) : 'once seen') + '</div></div>';
 }
 
-function cardHTML(p) {
+/* mode: 'auto'  — not yet scored, editable, saves as you drag
+ *       'locked'— already scored (default for a scored play), read-only + Edit button
+ *       'edit'  — unlocked for changes, requires explicit Save                       */
+function cardHTML(p, mode) {
   var s = state.reviews[state.me][p.id];
   var scored = !!s;
+  mode = mode || (scored ? 'locked' : 'auto');
+  var disabled = (mode === 'locked');
   var total = scoreTotal(s);
+
   function rowHTML(c) {
     var v = s ? (+s[c.key] || 0) : 0;
     return '<div class="sc-row"><span class="sc-label">' + c.label + '</span>' +
-      '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="0.5" value="' + v + '" ' +
-        'data-cat="' + c.key + '" aria-label="' + c.label + ' out of ' + c.max + '">' +
+      '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="0.5" value="' + v + '"' +
+        (disabled ? ' disabled' : '') + ' data-cat="' + c.key + '" aria-label="' + c.label + ' out of ' + c.max + '">' +
       '<span class="sc-val" data-val="' + c.key + '">' + (scored ? v : '–') + '<small>/' + c.max + '</small></span></div>';
   }
   var rows = GROUPS.map(function (g) {
@@ -570,19 +601,27 @@ function cardHTML(p) {
       inGroup.map(rowHTML).join('') + '</div>';
   }).join('');
 
-  return '<div class="play-card" data-id="' + esc(p.id) + '">' +
+  var controls;
+  if (mode === 'locked') {
+    controls = '<button class="pc-btn" data-action="edit">✎ Edit</button>';
+  } else if (mode === 'edit') {
+    controls = '<button class="pc-btn primary" data-action="save">Save</button>' +
+               '<button class="pc-btn" data-action="cancel">Cancel</button>' +
+               '<button class="pc-clear" data-action="clear">Clear</button>' +
+               '<span class="pc-status" data-status></span>';
+  } else {
+    controls = '<span class="pc-status" data-status></span>';
+  }
+
+  return '<div class="play-card' + (mode === 'locked' ? ' scored-locked' : '') + '" data-id="' + esc(p.id) + '" data-mode="' + mode + '">' +
     '<div class="pc-head"><div><div class="pc-title">' + esc(p.title) + '</div>' +
       '<div class="pc-meta">' + esc(p.company) + (p.date ? ' · ' + fmtDate(p.date) : '') + '</div></div>' +
       '<div class="pc-total' + (scored ? '' : ' unset') + '" data-total>' + (scored ? total : '–') + '<small>/' + MAX_TOTAL + '</small></div>' +
     '</div>' +
     '<div class="pc-body">' + rows +
-      '<textarea class="pc-note" data-note placeholder="A note or one-line verdict (optional)…">' + esc(s ? s.note : '') + '</textarea>' +
-      '<div class="pc-foot">' +
-        partnerHTML(p.id) +
-        '<div style="display:flex;gap:14px;align-items:center">' +
-          (scored ? '<button class="pc-clear" data-clear>Clear</button>' : '') +
-          '<span class="pc-status" data-status></span>' +
-        '</div>' +
+      '<textarea class="pc-note" data-note' + (disabled ? ' readonly' : '') + ' placeholder="A note or one-line verdict (optional)…">' + esc(s ? s.note : '') + '</textarea>' +
+      '<div class="pc-foot">' + partnerHTML(p.id) +
+        '<div class="pc-foot-controls">' + controls + '</div>' +
       '</div>' +
     '</div></div>';
 }
@@ -598,16 +637,22 @@ function partnerHTML(id) {
 
 var saveTimers = {};
 function bindCards() {
-  var cards = document.querySelectorAll('#scorer-body .play-card:not(.locked):not(.archive)');
-  cards.forEach(function (card) {
-    var id = card.getAttribute('data-id');
-    card.querySelectorAll('.sc-range').forEach(function (rng) {
-      rng.addEventListener('input', function () { onCardChange(card, id); });
-    });
-    var note = card.querySelector('[data-note]');
-    if (note) note.addEventListener('input', function () { onCardChange(card, id); });
-    var clr = card.querySelector('[data-clear]');
-    if (clr) clr.addEventListener('click', function () { clearScore(id); });
+  document.querySelectorAll('#scorer-body .play-card:not(.locked):not(.archive)').forEach(bindCard);
+}
+function bindCard(card) {
+  var id = card.getAttribute('data-id');
+  card.querySelectorAll('.sc-range').forEach(function (rng) {
+    rng.addEventListener('input', function () { onSliderInput(card, id); });
+  });
+  var note = card.querySelector('[data-note]');
+  if (note) note.addEventListener('input', function () { onSliderInput(card, id); });
+  card.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]'); if (!btn) return;
+    var act = btn.getAttribute('data-action');
+    if (act === 'edit')        setCardMode(card, id, 'edit');
+    else if (act === 'save')   saveCard(card, id);
+    else if (act === 'cancel') setCardMode(card, id, 'locked');
+    else if (act === 'clear')  clearScore(id);
   });
 }
 
@@ -619,26 +664,30 @@ function readCard(card) {
   return s;
 }
 
-function onCardChange(card, id) {
-  var s = readCard(card);
-  state.reviews[state.me][id] = s;
-  var total = scoreTotal(s);
-  /* live-update the readouts */
-  card.querySelectorAll('.sc-val').forEach(function (v) {
-    var k = v.getAttribute('data-val'); var cat = CATS.filter(function (c) { return c.key === k; })[0];
-    v.innerHTML = (+s[k] || 0) + '<small>/' + cat.max + '</small>';
+/* Update the on-screen totals from the current sliders (no state write). */
+function refreshCardTotals(card) {
+  var sum = 0;
+  card.querySelectorAll('.sc-range').forEach(function (rng) {
+    var k = rng.getAttribute('data-cat'), v = +rng.value; sum += v;
+    var cat = CATS.filter(function (c) { return c.key === k; })[0];
+    var el = card.querySelector('.sc-val[data-val="' + k + '"]');
+    if (el) el.innerHTML = v + '<small>/' + cat.max + '</small>';
   });
   var tot = card.querySelector('[data-total]');
-  tot.classList.remove('unset'); tot.innerHTML = total + '<small>/' + MAX_TOTAL + '</small>';
-  /* reveal the partner now that we've scored, if applicable */
-  var pf = card.querySelector('.pc-partner');
-  if (pf) pf.outerHTML = partnerHTML(id);
-  if (!card.querySelector('[data-clear]')) {
-    var box = card.querySelector('.pc-foot > div');
-    if (box) box.insertAdjacentHTML('afterbegin', '<button class="pc-clear" data-clear>Clear</button>');
-    var clr = card.querySelector('[data-clear]');
-    if (clr) clr.addEventListener('click', function () { clearScore(id); });
-  }
+  if (tot) { tot.classList.remove('unset'); tot.innerHTML = sum + '<small>/' + MAX_TOTAL + '</small>'; }
+}
+
+function onSliderInput(card, id) {
+  refreshCardTotals(card);
+  if (card.getAttribute('data-mode') === 'auto') autoCommit(card, id);
+  /* in 'edit' mode we only preview; changes commit on Save */
+}
+
+/* Auto-save path for a play being scored for the first time. */
+function autoCommit(card, id) {
+  var s = readCard(card);
+  state.reviews[state.me][id] = s;
+  var pf = card.querySelector('.pc-partner'); if (pf) pf.outerHTML = partnerHTML(id);   /* reveal partner */
   var st = card.querySelector('[data-status]'); if (st) { st.textContent = 'saving…'; st.classList.remove('saved'); }
   clearTimeout(saveTimers[id]);
   saveTimers[id] = setTimeout(function () { pushSave(id, s, card); }, 650);
@@ -654,6 +703,30 @@ function pushSave(id, score, card) {
     var st = card && card.querySelector('[data-status]');
     if (st) st.textContent = 'save failed'; showToast('Couldn’t save — check your connection.');
   });
+}
+
+/* Re-render one card in a new mode in place, and re-bind it. */
+function setCardMode(card, id, mode) {
+  var p = playById(id); if (!p) return;
+  var tmp = document.createElement('div');
+  tmp.innerHTML = cardHTML(p, mode);
+  var fresh = tmp.firstChild;
+  card.parentNode.replaceChild(fresh, card);
+  bindCard(fresh);
+}
+
+/* Explicit Save from edit mode: commit the edited values, persist, then re-lock. */
+function saveCard(card, id) {
+  var s = readCard(card);
+  var st = card.querySelector('[data-status]'); if (st) { st.textContent = 'saving…'; st.classList.remove('saved'); }
+  abFetch({ mode: 'save', reviewer: state.me, id: id, score: s }).then(function (res) {
+    if (res && res.ok) {
+      state.reviews[state.me][id] = s;
+      updateCounts();
+      setCardMode(card, id, 'locked');
+      showToast('Saved ✓');
+    } else { if (st) st.textContent = 'save failed'; showToast('Couldn’t save — check your connection.'); }
+  }).catch(function () { if (st) st.textContent = 'save failed'; showToast('Couldn’t save — check your connection.'); });
 }
 
 function clearScore(id) {
@@ -687,7 +760,21 @@ function disCard(r) {
     '<div class="cmp-dis-scores"><span class="a">' + r.a + '</span><span class="b">' + r.b + '</span>' +
     '<span class="gap">' + r.gap + ' apart</span></div></div>';
 }
+/* Each person's rank of a play within the shown set (1 = their favourite).
+   Ties share a rank and are flagged with ~ (e.g. two joint-9ths → "~9"). */
+function computeRanks(rows, key) {
+  var map = {};
+  rows.forEach(function (r) {
+    var higher = 0, equal = 0;
+    rows.forEach(function (o) { if (o[key] > r[key]) higher++; else if (o[key] === r[key]) equal++; });
+    map[r.id] = { rank: higher + 1, tie: equal > 1 };
+  });
+  return map;
+}
+function rankTag(rk) { return '<span class="rk">(' + (rk.tie ? '~' : '') + rk.rank + ')</span>'; }
+
 function combinedTable(list) {
+  var rankA = computeRanks(list, 'a'), rankB = computeRanks(list, 'b');
   var sk = state.cmpSort.key, dir = state.cmpSort.dir;
   var sorted = list.slice().sort(function (x, y) {
     var d = (x[sk] - y[sk]) * dir;
@@ -702,7 +789,8 @@ function combinedTable(list) {
     '</tr></thead><tbody>' +
     sorted.map(function (r) {
       return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></td>' +
-        '<td class="num a">' + r.a + '</td><td class="num b">' + r.b + '</td>' +
+        '<td class="num a">' + r.a + ' ' + rankTag(rankA[r.id]) + '</td>' +
+        '<td class="num b">' + r.b + ' ' + rankTag(rankB[r.id]) + '</td>' +
         '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/' + (MAX_TOTAL * 2) + '</small></td></tr>';
     }).join('') + '</tbody></table>';
 }
@@ -768,11 +856,8 @@ function renderCompare() {
   html += '<div class="cmp-section-h">Taste profile</div>';
   html += '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>';
 
-  html += '<div class="cmp-section-h">Biggest agreements</div>';
-  html += agreements.map(disCard).join('');
-
-  html += '<div class="cmp-section-h">Biggest disagreements</div>';
-  html += disagreements.map(disCard).join('');
+  html += collapsible('Biggest agreements', 'agree', agreements.map(disCard).join(''));
+  html += collapsible('Biggest disagreements', 'disagree', disagreements.map(disCard).join(''));
 
   html += '<div class="cmp-section-h">Combined scores</div>';
   html += '<div class="cmp-hint">Tap a column heading to sort.</div>';
@@ -783,6 +868,14 @@ function renderCompare() {
 
 function stat(num, label) {
   return '<div class="cmp-stat"><div class="cmp-stat-num">' + num + '</div><div class="cmp-stat-label">' + label + '</div></div>';
+}
+
+function collapsible(title, key, inner) {
+  var col = state.collapse[key];
+  return '<div class="cmp-section-h cmp-collapser' + (col ? ' collapsed' : '') + '" data-collapse="' + key + '">' +
+      '<span class="cmp-chev">' + (col ? '▸' : '▾') + '</span> ' + title +
+    '</div>' +
+    '<div class="cmp-collapse-body"' + (col ? ' style="display:none"' : '') + '>' + inner + '</div>';
 }
 
 /* Hexagonal radar overlaying two reviewers' category averages. */
@@ -827,6 +920,8 @@ document.getElementById('compare-years').addEventListener('click', function (e) 
   state.compareYear = b.getAttribute('data-cyear'); renderCompare();
 });
 document.getElementById('compare-body').addEventListener('click', function (e) {
+  var col = e.target.closest('[data-collapse]');
+  if (col) { var ck = col.getAttribute('data-collapse'); state.collapse[ck] = !state.collapse[ck]; renderCompare(); return; }
   var th = e.target.closest('[data-sort]'); if (!th) return;
   var k = th.getAttribute('data-sort');
   if (state.cmpSort.key === k) state.cmpSort.dir *= -1;
@@ -842,6 +937,7 @@ document.getElementById('sort-btn').addEventListener('click', function () {
 });
 
 /* ═══════════════ INIT ═══════════════ */
+updateCounts();   /* paint "Loading…" until the data lands */
 loadAll().then(function () {
   updateCounts();
 }).catch(function (e) {
