@@ -131,6 +131,9 @@
     /* ── PLAY CARD ── */
     .play-card { border: 1px solid var(--border); background: var(--card-bg); margin-bottom: 12px; }
     .play-card.locked { opacity: 0.6; }
+    .play-card.archive { opacity: 0.7; margin-bottom: 6px; }
+    .play-card.archive .pc-head { padding: 10px 16px; align-items: center; }
+    .arch-year { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--muted); }
     .pc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; flex-wrap: wrap; }
     .pc-title { font-size: 14px; color: var(--fg); }
     .pc-meta { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
@@ -250,7 +253,6 @@
       <button class="ab-btn" id="scorer-back">← Home</button>
       <span class="ab-crumb" id="scorer-name"></span>
       <input class="ab-search" id="scorer-search" type="text" placeholder="Search play or company…">
-      <span id="year-filters"></span>
       <button class="ab-btn" id="sort-btn" title="Sort by your score">Sort ↓</button>
     </div>
     <div class="ab-body" id="scorer-body"></div>
@@ -290,6 +292,8 @@ var GROUPS = [
   { id: 'bonus',  cap: '✦ Bonus — optional' },
 ];
 var MAX_TOTAL = 45;   /* Story 10 + Acting 10 + Sound/Lighting/Set/Costume 5 each + X-Factor bonus 5 */
+var SCORE_YEARS = ['2026'];   /* only these years are scorable; earlier years are a read-only archive */
+function isScorable(p) { return SCORE_YEARS.indexOf(String(p.year)) >= 0; }
 var NAMES = { alayne: 'Alayne', blake: 'Blake' };
 var OTHER = { alayne: 'blake', blake: 'alayne' };
 
@@ -450,27 +454,16 @@ function enterScorer(who) {
   var crumb = document.getElementById('scorer-name');
   crumb.textContent = NAMES[who] + "'s scores";
   crumb.className = 'ab-crumb ' + who;
-  renderYearFilters();
   renderScorer();
   showScreen('scorer');
 }
 
 /* ═══════════════ SCORER ═══════════════ */
-function renderYearFilters() {
-  var years = [];
-  state.plays.forEach(function (p) { if (p.year && years.indexOf(p.year) < 0) years.push(p.year); });
-  years.sort(function (a, b) { return b.localeCompare(a); });
-  var wrap = document.getElementById('year-filters');
-  wrap.innerHTML = '<button class="ab-btn' + (state.yearFilter === 'all' ? ' on' : '') + '" data-year="all">All</button>' +
-    years.map(function (y) { return '<button class="ab-btn' + (state.yearFilter === y ? ' on' : '') + '" data-year="' + esc(y) + '">' + esc(y) + '</button>'; }).join('');
-}
-
 function filteredPlays() {
   var q = state.search.trim().toLowerCase();
+  if (!q) return state.plays.slice();
   return state.plays.filter(function (p) {
-    if (state.yearFilter !== 'all' && p.year !== state.yearFilter) return false;
-    if (q && (p.title + ' ' + p.company).toLowerCase().indexOf(q) < 0) return false;
-    return true;
+    return (p.title + ' ' + p.company).toLowerCase().indexOf(q) >= 0;
   });
 }
 
@@ -482,38 +475,55 @@ function nextnessSort(a, b, nowMs) {
   return fa ? (ta - tb) : (tb - ta);
 }
 
+function byDateDesc(a, b) { var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0; return tb - ta; }
+
 function renderScorer() {
   var body = document.getElementById('scorer-body');
   var base = filteredPlays();
-  if (!base.length) { body.innerHTML = '<div class="ab-empty">No plays match.</div>'; return; }
+  var scorable = base.filter(isScorable);
+  var archive  = base.filter(function (p) { return !isScorable(p); });
+
+  if (!scorable.length && !archive.length) { body.innerHTML = '<div class="ab-empty">No plays match.</div>'; return; }
 
   var cell = function (p) { return p.seen ? cardHTML(p) : lockedHTML(p); };
   var html = '';
 
+  /* ── Scorable (2026) ── */
   if (state.sortByScore) {
-    /* Flat: my highest score first (unscored sink to the bottom). */
-    base.slice().sort(function (a, b) {
+    scorable.slice().sort(function (a, b) {
       return scoreTotal(state.reviews[state.me][b.id]) - scoreTotal(state.reviews[state.me][a.id]);
     }).forEach(function (p) { html += cell(p); });
   } else {
-    /* Default: everything you HAVEN'T scored first (by what's next), then your
-       already-scored plays at the bottom. A play only moves down on the next
-       full render, not the instant you score it. */
+    /* Everything you HAVEN'T scored first (by what's next), then your already-
+       scored plays. A play only moves down on the next full render. */
     var nowMs = new Date().setHours(0, 0, 0, 0);
-    var unscored = base.filter(function (p) { return !hasScore(state.me, p.id); });
-    var scored   = base.filter(function (p) { return hasScore(state.me, p.id); });
+    var unscored = scorable.filter(function (p) { return !hasScore(state.me, p.id); });
+    var scored   = scorable.filter(function (p) { return hasScore(state.me, p.id); });
     unscored.sort(function (a, b) { return nextnessSort(a, b, nowMs); });
-    scored.sort(function (a, b) { var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0; return tb - ta; });
-
+    scored.sort(byDateDesc);
     unscored.forEach(function (p) { html += cell(p); });
     if (scored.length) {
       html += '<div class="ab-divider">Already scored</div>';
       scored.forEach(function (p) { html += cell(p); });
     }
   }
+  if (!scorable.length) html += '<div class="ab-empty" style="padding:20px">No 2026 plays match.</div>';
+
+  /* ── Archive (earlier years, read-only, just for the record) ── */
+  if (archive.length) {
+    html += '<div class="ab-divider">Previously seen · not scored</div>';
+    archive.slice().sort(byDateDesc).forEach(function (p) { html += archiveHTML(p); });
+  }
 
   body.innerHTML = html;
   bindCards();
+}
+
+function archiveHTML(p) {
+  return '<div class="play-card archive">' +
+    '<div class="pc-head"><div><div class="pc-title">' + esc(p.title) + '</div>' +
+    '<div class="pc-meta">' + esc(p.company) + (p.date ? ' · ' + fmtDate(p.date) : '') + '</div></div>' +
+    '<div class="arch-year">' + esc(p.year) + '</div></div></div>';
 }
 
 function lockedHTML(p) {
@@ -569,7 +579,7 @@ function partnerHTML(id) {
 
 var saveTimers = {};
 function bindCards() {
-  var cards = document.querySelectorAll('#scorer-body .play-card:not(.locked)');
+  var cards = document.querySelectorAll('#scorer-body .play-card:not(.locked):not(.archive)');
   cards.forEach(function (card) {
     var id = card.getAttribute('data-id');
     card.querySelectorAll('.sc-range').forEach(function (rng) {
@@ -680,6 +690,7 @@ function combinedTable(list) {
 
 function renderCompareYears(years) {
   var wrap = document.getElementById('compare-years');
+  if (years.length < 2) { wrap.innerHTML = ''; return; }   /* nothing to filter when it's one season */
   wrap.innerHTML = '<button class="ab-btn' + (state.compareYear === 'all' ? ' on' : '') + '" data-cyear="all">All</button>' +
     years.map(function (y) { return '<button class="ab-btn' + (state.compareYear === y ? ' on' : '') + '" data-cyear="' + esc(y) + '">' + esc(y) + '</button>'; }).join('');
 }
@@ -800,10 +811,6 @@ document.getElementById('compare-body').addEventListener('click', function (e) {
   renderCompare();
 });
 document.getElementById('scorer-search').addEventListener('input', function (e) { state.search = e.target.value; renderScorer(); });
-document.getElementById('year-filters').addEventListener('click', function (e) {
-  var b = e.target.closest('[data-year]'); if (!b) return;
-  state.yearFilter = b.getAttribute('data-year'); renderYearFilters(); renderScorer();
-});
 document.getElementById('sort-btn').addEventListener('click', function () {
   state.sortByScore = !state.sortByScore;
   this.classList.toggle('on', state.sortByScore);
