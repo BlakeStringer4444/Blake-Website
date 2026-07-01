@@ -23,9 +23,13 @@
       --alayne: #c2f000; --blake: #b388ff;
     }
     [data-theme="terminal"] {
-      --bg: #000000; --fg: #ffffff; --muted: rgba(255,255,255,0.5);
-      --border: rgba(255,255,255,0.18); --card-bg: #0a0a0a;
+      --bg: #000000; --fg: #ffffff; --muted: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.22); --card-bg: #000000;
       --alayne: #c2f000; --blake: #b388ff;
+      /* Terminal = stark black & white: the generic accent (--lime) becomes white,
+         which flows through every dark/terminal chrome rule below. The only colour
+         left is the two reviewers' identity (chartreuse / purple). */
+      --lime: #ffffff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     /* touch-action: manipulation keeps pinch-zoom + scrolling but kills the
@@ -58,7 +62,7 @@
     .ab-title .b { color: var(--blake); }
     .sc-range { touch-action: none; }  /* reliable half-step dragging on touch */
     .ab-subtitle { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
-    @media (max-width: 639px) { .ab-header { padding: 18px 18px 14px; } }
+    @media (max-width: 639px) { .ab-header { padding: 18px 18px 14px; } .ab-header-top { margin-bottom: 18px; } }
 
     /* ── LANDING (pick a reviewer) ── */
     #landing { flex: 1; display: flex; flex-direction: column; }
@@ -105,6 +109,9 @@
     }
     .ab-btn:hover { border-color: var(--purple); color: var(--purple); }
     .ab-btn.on { border-color: var(--purple); color: var(--purple); background: color-mix(in srgb, var(--purple) 10%, transparent); }
+    [data-theme="terminal"] .ab-btn:hover,
+    [data-theme="terminal"] .ab-btn.on { border-color: #fff; color: #fff; background: rgba(255,255,255,0.08); }
+    [data-theme="terminal"] .ab-search:focus { border-color: #fff; }
     .ab-search {
       flex: 1; min-width: 130px; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
       font-family: var(--font); font-size: 11px; padding: 8px 12px; border-radius: 2px;
@@ -241,6 +248,7 @@
     <div class="ab-subbar">
       <button class="ab-btn" id="compare-back">← Home</button>
       <span class="ab-crumb">Compare</span>
+      <span id="compare-years"></span>
     </div>
     <div class="ab-body" id="compare-body"></div>
   </div>
@@ -274,6 +282,7 @@ var state = {
   yearFilter: 'all',
   sortByScore: false,
   search: '',
+  compareYear: 'all',
 };
 
 /* ═══════════════ TEXT SIZE (Aa) — mirrors the other tools ═══════════════ */
@@ -583,51 +592,90 @@ function clearScore(id) {
 /* ═══════════════ COMPARE ═══════════════ */
 function playById(id) { for (var i = 0; i < state.plays.length; i++) if (state.plays[i].id === id) return state.plays[i]; return null; }
 
+function cmpRow(A, B, id) {
+  var a = scoreTotal(A[id]), b = scoreTotal(B[id]), p = playById(id);
+  return {
+    id: id, title: p ? p.title : id, company: p ? p.company : '', year: p ? p.year : '',
+    a: a, b: b, gap: Math.abs(a - b), combined: a + b, avg: (a + b) / 2,
+  };
+}
+function catAvgsForIds(rev, ids) {
+  var out = {};
+  CATS.forEach(function (c) {
+    var sum = 0, cnt = 0;
+    ids.forEach(function (id) { if (rev[id]) { sum += (+rev[id][c.key] || 0); cnt++; } });
+    out[c.key] = cnt ? sum / cnt : 0;
+  });
+  return out;
+}
+function disCard(r) {
+  return '<div class="cmp-dis"><div><div class="cmp-dis-title">' + esc(r.title) + '</div>' +
+    '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></div>' +
+    '<div class="cmp-dis-scores"><span class="a">' + r.a + '</span><span class="b">' + r.b + '</span>' +
+    '<span class="gap">' + r.gap + ' apart</span></div></div>';
+}
+function combinedTable(list) {
+  return '<table class="cmp-table"><thead><tr><th>Play</th>' +
+      '<th style="text-align:center">Alayne</th><th style="text-align:center">Blake</th>' +
+      '<th style="text-align:center">Total</th></tr></thead><tbody>' +
+    list.map(function (r) {
+      return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></td>' +
+        '<td class="num a">' + r.a + '</td><td class="num b">' + r.b + '</td>' +
+        '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/80</small></td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+function renderCompareYears(years) {
+  var wrap = document.getElementById('compare-years');
+  wrap.innerHTML = '<button class="ab-btn' + (state.compareYear === 'all' ? ' on' : '') + '" data-cyear="all">All</button>' +
+    years.map(function (y) { return '<button class="ab-btn' + (state.compareYear === y ? ' on' : '') + '" data-cyear="' + esc(y) + '">' + esc(y) + '</button>'; }).join('');
+}
+
 function renderCompare() {
   var A = state.reviews.alayne, B = state.reviews.blake;
-  var shared = [];
-  Object.keys(A).forEach(function (id) { if (B[id]) shared.push(id); });
   var body = document.getElementById('compare-body');
 
-  if (!shared.length) {
+  var sharedIds = [];
+  Object.keys(A).forEach(function (id) { if (B[id]) sharedIds.push(id); });
+  var allRows = sharedIds.map(function (id) { return cmpRow(A, B, id); });
+
+  var years = [];
+  allRows.forEach(function (r) { if (r.year && years.indexOf(r.year) < 0) years.push(r.year); });
+  years.sort(function (x, y) { return y.localeCompare(x); });
+  if (state.compareYear !== 'all' && years.indexOf(state.compareYear) < 0) state.compareYear = 'all';
+  renderCompareYears(years);
+
+  if (!allRows.length) {
     body.innerHTML = '<div class="ab-empty">No plays scored by <em>both</em> of you yet.<br>' +
       'Once you\'ve each scored the same play, the comparison unlocks here.</div>';
     return;
   }
 
-  var rows = shared.map(function (id) {
-    var a = scoreTotal(A[id]), b = scoreTotal(B[id]), p = playById(id);
-    return { id: id, title: p ? p.title : id, company: p ? p.company : '', a: a, b: b, gap: Math.abs(a - b), avg: (a + b) / 2 };
-  });
+  var rows = state.compareYear === 'all' ? allRows : allRows.filter(function (r) { return r.year === state.compareYear; });
+  if (!rows.length) {
+    body.innerHTML = '<div class="ab-empty">Nothing you\'ve <em>both</em> scored in ' + esc(state.compareYear) + ' yet.</div>';
+    return;
+  }
 
+  var ids = rows.map(function (r) { return r.id; });
   var n = rows.length;
-  var totalGap = rows.reduce(function (s, r) { return s + r.gap; }, 0);
-  var avgGap = totalGap / n;
+  var avgGap = rows.reduce(function (s, r) { return s + r.gap; }, 0) / n;
   var agreement = Math.round(100 * (1 - avgGap / MAX_TOTAL));
   var aWins = rows.filter(function (r) { return r.a > r.b; }).length;
   var bWins = rows.filter(function (r) { return r.b > r.a; }).length;
+  var avA = catAvgsForIds(A, ids), avB = catAvgsForIds(B, ids);
 
-  /* category averages (each reviewer, over all their own scored plays) */
-  function catAvgs(rev) {
-    var ids = Object.keys(rev), out = {};
-    CATS.forEach(function (c) {
-      var sum = 0, cnt = 0;
-      ids.forEach(function (id) { sum += (+rev[id][c.key] || 0); cnt++; });
-      out[c.key] = cnt ? sum / cnt : 0;
-    });
-    return out;
-  }
-  var avA = catAvgs(A), avB = catAvgs(B);
-
+  var agreements   = rows.slice().sort(function (x, y) { return x.gap - y.gap || y.avg - x.avg; }).slice(0, 5);
   var disagreements = rows.slice().sort(function (x, y) { return y.gap - x.gap; }).slice(0, 5);
-  var byGap = rows.slice().sort(function (x, y) { return y.avg - x.avg || y.gap - x.gap; });
+  var highest = rows.slice().sort(function (x, y) { return y.combined - x.combined || y.avg - x.avg; });
+  var lowest  = rows.slice().sort(function (x, y) { return x.combined - y.combined || x.avg - y.avg; });
 
   var html = '';
   html += '<div class="cmp-hero">' +
     stat(agreement + '%', 'Taste agreement') +
     stat(n, 'Plays you\'ve both scored') +
-    '<div class="cmp-stat"><div class="cmp-h2h"><span class="a">' + aWins + '</span><span class="sep">–</span><span class="b">' + bWins + '</span></div><div class="cmp-stat-label">Head-to-head (Alayne–Blake)</div></div>' +
     stat(avgGap.toFixed(1), 'Avg points apart') +
+    '<div class="cmp-stat"><div class="cmp-h2h"><span class="a">' + aWins + '</span><span class="sep">–</span><span class="b">' + bWins + '</span></div><div class="cmp-stat-label">Head-to-head (Alayne–Blake)</div></div>' +
   '</div>';
 
   html += '<div class="cmp-legend"><span><span class="dot" style="background:var(--alayne)"></span>Alayne</span><span><span class="dot" style="background:var(--blake)"></span>Blake</span></div>';
@@ -635,21 +683,17 @@ function renderCompare() {
   html += '<div class="cmp-section-h">Taste profile</div>';
   html += '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>';
 
-  html += '<div class="cmp-section-h">Biggest disagreements</div>';
-  html += disagreements.map(function (r) {
-    return '<div class="cmp-dis"><div><div class="cmp-dis-title">' + esc(r.title) + '</div>' +
-      '<div class="cmp-dis-meta">' + esc(r.company) + '</div></div>' +
-      '<div class="cmp-dis-scores"><span class="a">' + r.a + '</span><span class="b">' + r.b + '</span>' +
-      '<span class="gap">' + r.gap + ' apart</span></div></div>';
-  }).join('');
+  html += '<div class="cmp-section-h">Biggest agreements</div>';
+  html += agreements.map(disCard).join('');
 
-  html += '<div class="cmp-section-h">Every co-rated play</div>';
-  html += '<table class="cmp-table"><thead><tr><th>Play</th><th style="text-align:center">Alayne</th><th style="text-align:center">Blake</th><th style="text-align:center">Gap</th></tr></thead><tbody>' +
-    byGap.map(function (r) {
-      return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + '</div></td>' +
-        '<td class="num a">' + r.a + '</td><td class="num b">' + r.b + '</td>' +
-        '<td class="num" style="color:var(--muted)">' + r.gap + '</td></tr>';
-    }).join('') + '</tbody></table>';
+  html += '<div class="cmp-section-h">Biggest disagreements</div>';
+  html += disagreements.map(disCard).join('');
+
+  html += '<div class="cmp-section-h">Highest combined score</div>';
+  html += combinedTable(highest);
+
+  html += '<div class="cmp-section-h">Lowest combined score</div>';
+  html += combinedTable(lowest);
 
   body.innerHTML = html;
 }
@@ -695,6 +739,10 @@ document.querySelectorAll('.ab-half').forEach(function (h) {
 document.getElementById('go-compare').addEventListener('click', function () { renderCompare(); showScreen('compare'); });
 document.getElementById('scorer-back').addEventListener('click', goHome);
 document.getElementById('compare-back').addEventListener('click', goHome);
+document.getElementById('compare-years').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-cyear]'); if (!b) return;
+  state.compareYear = b.getAttribute('data-cyear'); renderCompare();
+});
 document.getElementById('scorer-search').addEventListener('input', function (e) { state.search = e.target.value; renderScorer(); });
 document.getElementById('year-filters').addEventListener('click', function (e) {
   var b = e.target.closest('[data-year]'); if (!b) return;
