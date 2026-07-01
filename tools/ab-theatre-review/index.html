@@ -13,41 +13,50 @@
       --bg: #f4f4ef; --fg: #1a1a1a; --muted: #86867f;
       --border: rgba(0,0,0,0.12); --card-bg: #ffffff;
       --purple: #9933ff; --lime: #D4FF1A;
-      --alayne: #0e9bb0; --blake: #9933ff;
+      /* Alayne = chartreuse, Blake = purple — deepened here for contrast on the light bg */
+      --alayne: #6f9e00; --blake: #9933ff;
       --font: 'DM Mono', monospace;
     }
     [data-theme="dark"] {
       --bg: #0f0f0f; --fg: #f0f0eb; --muted: #85857f;
       --border: rgba(255,255,255,0.13); --card-bg: #171717;
-      --alayne: #22d3ee; --blake: #b388ff;
+      --alayne: #c2f000; --blake: #b388ff;
     }
     [data-theme="terminal"] {
       --bg: #000000; --fg: #ffffff; --muted: rgba(255,255,255,0.5);
       --border: rgba(255,255,255,0.18); --card-bg: #0a0a0a;
-      --alayne: #22d3ee; --blake: var(--lime);
+      --alayne: #c2f000; --blake: #b388ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); }
+    /* touch-action: manipulation keeps pinch-zoom + scrolling but kills the
+       double-tap-to-zoom gesture on mobile. */
+    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); touch-action: manipulation; }
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
     [data-theme="dark"] :focus-visible, [data-theme="terminal"] :focus-visible { outline-color: var(--lime); }
     #app { min-height: 100%; display: flex; flex-direction: column; }
 
     /* ── HEADER ── */
     .ab-header { padding: 26px 40px 20px; background: var(--bg); }
-    .ab-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .ab-back { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-decoration: none; }
-    .ab-back:hover { color: var(--fg); }
+    .ab-header-top { display: flex; align-items: flex-start; justify-content: flex-end; gap: 12px; }
     .ab-actions { display: flex; gap: 10px; }
     .ab-icon-btn {
       background: none; border: 1px solid var(--border); color: var(--muted);
-      width: 40px; height: 40px; border-radius: 2px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1;
-      transition: all 0.2s;
+      width: 44px; height: 44px; border-radius: 2px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+      transition: all 0.2s; flex-shrink: 0; font-family: var(--font);
+      touch-action: manipulation;
     }
+    #ab-theme-btn { font-size: 16px; }
+    #ab-font-btn  { font-size: 13px; letter-spacing: -0.5px; }
     .ab-icon-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .ab-icon-btn.active { border-color: var(--purple); color: var(--purple); background: color-mix(in srgb, var(--purple) 12%, transparent); }
+    [data-theme="dark"] .ab-icon-btn:hover, [data-theme="terminal"] .ab-icon-btn:hover,
+    [data-theme="dark"] .ab-icon-btn.active, [data-theme="terminal"] .ab-icon-btn.active { border-color: var(--lime); color: var(--lime); }
+    [data-theme="dark"] .ab-icon-btn.active, [data-theme="terminal"] .ab-icon-btn.active { background: color-mix(in srgb, var(--lime) 12%, transparent); }
     .ab-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 8vw, 88px); letter-spacing: 5px; line-height: 1; color: var(--fg); }
-    .ab-title .amp { color: var(--alayne); }
+    .ab-title .a { color: var(--alayne); }
     .ab-title .b { color: var(--blake); }
+    .sc-range { touch-action: none; }  /* reliable half-step dragging on touch */
     .ab-subtitle { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
     @media (max-width: 639px) { .ab-header { padding: 18px 18px 14px; } }
 
@@ -187,12 +196,12 @@
 <div id="app">
   <header class="ab-header">
     <div class="ab-header-top">
-      <a class="ab-back" href="/">← blakestringer.com</a>
       <div class="ab-actions">
-        <button class="ab-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
+        <button class="ab-icon-btn" id="ab-font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
+        <button class="ab-icon-btn" id="ab-theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
       </div>
     </div>
-    <h1 class="ab-title">A<span class="amp">B</span> Theatre Review</h1>
+    <h1 class="ab-title"><span class="a">A</span><span class="b">B</span> Theatre Review</h1>
     <p class="ab-subtitle">Alayne &amp; Blake · scoring every play we see</p>
   </header>
 
@@ -201,12 +210,12 @@
     <div class="ab-split">
       <button class="ab-half alayne" data-who="alayne">
         <span class="ab-half-name">ALAYNE</span>
-        <span class="ab-half-sub">Enter my scorer</span>
+        <span class="ab-half-sub">Enter my score</span>
         <span class="ab-half-count" id="count-alayne"></span>
       </button>
       <button class="ab-half blake" data-who="blake">
         <span class="ab-half-name">BLAKE</span>
-        <span class="ab-half-sub">Enter my scorer</span>
+        <span class="ab-half-sub">Enter my score</span>
         <span class="ab-half-count" id="count-blake"></span>
       </button>
     </div>
@@ -267,9 +276,25 @@ var state = {
   search: '',
 };
 
+/* ═══════════════ TEXT SIZE (Aa) — mirrors the other tools ═══════════════ */
+(function () {
+  var btn = document.getElementById('ab-font-btn');
+  var isDesktop = window.innerWidth >= 640;
+  var zoomed = localStorage.getItem('font-zoom') === '1';
+  function apply() {
+    /* Desktop base 125%; Aa boosts to 150%. Mobile base 100%; Aa boosts to 125%. */
+    document.documentElement.style.zoom = zoomed ? (isDesktop ? '1.5' : '1.25') : (isDesktop ? '1.25' : '');
+    btn.classList.toggle('active', zoomed);
+  }
+  apply();
+  btn.addEventListener('click', function () {
+    zoomed = !zoomed; localStorage.setItem('font-zoom', zoomed ? '1' : '0'); apply();
+  });
+})();
+
 /* ═══════════════ THEME ═══════════════ */
 (function () {
-  var btn = document.getElementById('theme-btn');
+  var btn = document.getElementById('ab-theme-btn');
   var CYCLE = ['light', 'dark', 'terminal'];
   var moonSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   var sunSVG  = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>';
@@ -458,7 +483,7 @@ function cardHTML(p) {
   var rows = CATS.map(function (c) {
     var v = s ? (+s[c.key] || 0) : 0;
     return '<div class="sc-row"><span class="sc-label">' + c.label + '</span>' +
-      '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="1" value="' + v + '" ' +
+      '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="0.5" value="' + v + '" ' +
         'data-cat="' + c.key + '" aria-label="' + c.label + ' out of ' + c.max + '">' +
       '<span class="sc-val" data-val="' + c.key + '">' + (scored ? v : '–') + '<small>/' + c.max + '</small></span></div>';
   }).join('');
