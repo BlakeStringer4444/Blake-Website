@@ -112,8 +112,9 @@ async function handleSave(body, env) {
 function sanitize(s) {
   if (!s || typeof s !== 'object') return null;
   const clamp = (v, max) => {
-    v = Math.round(Number(v));
+    v = Number(v);
     if (!Number.isFinite(v)) v = 0;
+    v = Math.round(v * 2) / 2;           /* snap to the nearest 0.5 */
     return Math.max(0, Math.min(max, v));
   };
   return {
