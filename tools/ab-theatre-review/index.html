@@ -434,8 +434,12 @@ function parsePlays(csv) {
 
 function updateCounts() {
   ['alayne', 'blake'].forEach(function (who) {
-    var n = Object.keys(state.reviews[who]).length;
-    document.getElementById('count-' + who).textContent = n ? (n + ' play' + (n === 1 ? '' : 's') + ' scored') : 'No scores yet';
+    /* Outstanding = scorable (2026+), already seen (unlocked), not yet scored by them. */
+    var out = state.plays.filter(function (p) {
+      return isScorable(p) && p.seen && !state.reviews[who][p.id];
+    }).length;
+    document.getElementById('count-' + who).textContent =
+      out ? (out + ' play' + (out === 1 ? '' : 's') + ' to score') : 'All caught up ✓';
   });
 }
 
@@ -467,15 +471,8 @@ function filteredPlays() {
   });
 }
 
-/* "What's next" ordering: upcoming plays soonest-first, then past plays most-recent-first. */
-function nextnessSort(a, b, nowMs) {
-  var ta = a.date ? a.date.getTime() : Infinity, tb = b.date ? b.date.getTime() : Infinity;
-  var fa = ta >= nowMs, fb = tb >= nowMs;
-  if (fa !== fb) return fa ? -1 : 1;
-  return fa ? (ta - tb) : (tb - ta);
-}
-
 function byDateDesc(a, b) { var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0; return tb - ta; }
+function byDateAsc(a, b)  { var ta = a.date ? a.date.getTime() : Infinity, tb = b.date ? b.date.getTime() : Infinity; return ta - tb; }
 
 function renderScorer() {
   var body = document.getElementById('scorer-body');
@@ -494,14 +491,19 @@ function renderScorer() {
       return scoreTotal(state.reviews[state.me][b.id]) - scoreTotal(state.reviews[state.me][a.id]);
     }).forEach(function (p) { html += cell(p); });
   } else {
-    /* Everything you HAVEN'T scored first (by what's next), then your already-
-       scored plays. A play only moves down on the next full render. */
-    var nowMs = new Date().setHours(0, 0, 0, 0);
-    var unscored = scorable.filter(function (p) { return !hasScore(state.me, p.id); });
-    var scored   = scorable.filter(function (p) { return hasScore(state.me, p.id); });
-    unscored.sort(function (a, b) { return nextnessSort(a, b, nowMs); });
+    /* Order: outstanding (seen but not yet scored) at the very top, then the
+       upcoming locked plays soonest-first (so once you're all caught up, the
+       next play coming up leads), then your already-scored plays at the bottom.
+       A play only moves down on the next full render, not the instant you score. */
+    var outstanding = scorable.filter(function (p) { return p.seen && !hasScore(state.me, p.id); });
+    var upcoming    = scorable.filter(function (p) { return !p.seen; });
+    var scored      = scorable.filter(function (p) { return p.seen && hasScore(state.me, p.id); });
+    outstanding.sort(byDateDesc);   /* most recently seen first */
+    upcoming.sort(byDateAsc);       /* next one coming up first */
     scored.sort(byDateDesc);
-    unscored.forEach(function (p) { html += cell(p); });
+
+    outstanding.forEach(function (p) { html += cell(p); });
+    upcoming.forEach(function (p) { html += cell(p); });
     if (scored.length) {
       html += '<div class="ab-divider">Already scored</div>';
       scored.forEach(function (p) { html += cell(p); });
@@ -700,7 +702,11 @@ function renderCompare() {
   var body = document.getElementById('compare-body');
 
   var sharedIds = [];
-  Object.keys(A).forEach(function (id) { if (B[id]) sharedIds.push(id); });
+  Object.keys(A).forEach(function (id) {
+    if (!B[id]) return;
+    var p = playById(id);
+    if (p && isScorable(p)) sharedIds.push(id);   /* 2026+ only — ignore any legacy 2024/25 scores */
+  });
   var allRows = sharedIds.map(function (id) { return cmpRow(A, B, id); });
 
   var years = [];
