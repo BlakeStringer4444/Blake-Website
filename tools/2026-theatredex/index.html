@@ -1203,6 +1203,8 @@ button.td-link { background: none; cursor: pointer; }
   transition: background 0.15s;
 }
 .td-cal-nav-btn:hover { background: rgba(212,255,26,0.1); }
+.td-cal-today-btn { border-color: rgba(229,57,53,0.45); color: #e53935; margin-left: 4px; }
+.td-cal-today-btn:hover { background: rgba(229,57,53,0.12); }
 .td-cal-month-label {
   font-family: 'DM Mono', monospace; font-size: 12px;
   letter-spacing: 2px; text-transform: uppercase; color: #fff;
@@ -1442,6 +1444,16 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace; font-size: 12px;
   color: var(--muted); letter-spacing: 1px;
 }
+@media (min-width: 640px) {
+  /* Restore the site's usual ~125% look inside the calendar modal. Zoom is
+     applied to the modal's CHILDREN (topbar/info/body), not the modal itself
+     — the modal's own box uses height:92vh, and zooming an element that also
+     carries a viewport-unit height causes it to overflow the real screen
+     (see openCalendar/closeCalendar, which already strip page zoom for this
+     exact reason). Zooming only the children scales every font, padding, bar
+     and JS-set inline pixel width uniformly, with no such conflict. */
+  .td-cal-topbar, .td-cal-info, .td-cal-body { zoom: 1.25; }
+}
 @media (max-width: 639px) {
   .td-cal-overlay { padding: 0; }
   .td-cal-modal { max-height: 100dvh; height: 100%; border-left: none; border-right: none; }
@@ -1449,6 +1461,7 @@ button.td-link { background: none; cursor: pointer; }
   .td-cal-modal-title { display: none; }
   .td-cal-month-label { font-size: 10px; min-width: 110px; letter-spacing: 1px; }
   .td-cal-nav-btn { font-size: 9px; padding: 5px 8px; }
+  .td-cal-today-btn { display: none; }
   .td-cal-head-label { width: 140px; font-size: 8px; }
   .td-cal-row-label { width: 140px; }
 }
@@ -1539,6 +1552,7 @@ button.td-link { background: none; cursor: pointer; }
         <button class="td-cal-nav-btn" id="td-cal-prev">← PREV</button>
         <span class="td-cal-month-label" id="td-cal-month-label"></span>
         <button class="td-cal-nav-btn" id="td-cal-next">NEXT →</button>
+        <button class="td-cal-nav-btn td-cal-today-btn" id="td-cal-today" title="Jump to the current month">TODAY</button>
       </div>
       <button class="td-cal-close" id="td-cal-close">ESC<br>CLOSE</button>
     </div>
@@ -3883,6 +3897,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   var calClose      = document.getElementById('td-cal-close');
   var calPrev       = document.getElementById('td-cal-prev');
   var calNext       = document.getElementById('td-cal-next');
+  var calToday      = document.getElementById('td-cal-today');
   var calLabel      = document.getElementById('td-cal-month-label');
   var calBody       = document.getElementById('td-cal-body');
   var calBack       = document.getElementById('td-cal-back');
@@ -4279,6 +4294,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   calBack.addEventListener('click', function() { closeCalendar(); openPicker(); });
   calPrev.addEventListener('click', function() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
   calNext.addEventListener('click', function() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
+  calToday.addEventListener('click', function() {
+    var now = new Date();
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+    renderCalendar();
+  });
 
   clashBtn.addEventListener('click', openPicker);
   clashClose.addEventListener('click', closePicker);
