@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>AB Theatre Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f4ef; --fg: #1a1a1a; --muted: #86867f;
+      --border: rgba(0,0,0,0.12); --card-bg: #ffffff;
+      --purple: #9933ff; --lime: #D4FF1A;
+      --alayne: #0e9bb0; --blake: #9933ff;
+      --font: 'DM Mono', monospace;
+    }
+    [data-theme="dark"] {
+      --bg: #0f0f0f; --fg: #f0f0eb; --muted: #85857f;
+      --border: rgba(255,255,255,0.13); --card-bg: #171717;
+      --alayne: #22d3ee; --blake: #b388ff;
+    }
+    [data-theme="terminal"] {
+      --bg: #000000; --fg: #ffffff; --muted: rgba(255,255,255,0.5);
+      --border: rgba(255,255,255,0.18); --card-bg: #0a0a0a;
+      --alayne: #22d3ee; --blake: var(--lime);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); }
+    :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+    [data-theme="dark"] :focus-visible, [data-theme="terminal"] :focus-visible { outline-color: var(--lime); }
+    #app { min-height: 100%; display: flex; flex-direction: column; }
+
+    /* ── HEADER ── */
+    .ab-header { padding: 26px 40px 20px; background: var(--bg); }
+    .ab-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .ab-back { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+    .ab-back:hover { color: var(--fg); }
+    .ab-actions { display: flex; gap: 10px; }
+    .ab-icon-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      width: 40px; height: 40px; border-radius: 2px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1;
+      transition: all 0.2s;
+    }
+    .ab-icon-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .ab-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 8vw, 88px); letter-spacing: 5px; line-height: 1; color: var(--fg); }
+    .ab-title .amp { color: var(--alayne); }
+    .ab-title .b { color: var(--blake); }
+    .ab-subtitle { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+    @media (max-width: 639px) { .ab-header { padding: 18px 18px 14px; } }
+
+    /* ── LANDING (pick a reviewer) ── */
+    #landing { flex: 1; display: flex; flex-direction: column; }
+    .ab-split { flex: 1; display: flex; min-height: 340px; }
+    .ab-half {
+      flex: 1; border: none; cursor: pointer; background: none;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+      font-family: var(--font); color: var(--fg); transition: background 0.2s; position: relative;
+      padding: 40px 20px;
+    }
+    .ab-half.alayne { border-right: 1px solid var(--border); }
+    .ab-half.alayne:hover { background: color-mix(in srgb, var(--alayne) 10%, transparent); }
+    .ab-half.blake:hover  { background: color-mix(in srgb, var(--blake) 10%, transparent); }
+    .ab-half-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(46px, 9vw, 96px); letter-spacing: 4px; line-height: 0.9; }
+    .ab-half.alayne .ab-half-name { color: var(--alayne); }
+    .ab-half.blake  .ab-half-name { color: var(--blake); }
+    .ab-half-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .ab-half-count { font-size: 11px; letter-spacing: 1px; color: var(--fg); }
+    .ab-compare-bar { display: flex; justify-content: center; padding: 22px; border-top: 1px solid var(--border); }
+    .ab-compare-btn {
+      background: none; border: 1px solid var(--purple); color: var(--purple);
+      font-family: var(--font); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 13px 40px; cursor: pointer; transition: all 0.15s;
+    }
+    .ab-compare-btn:hover { background: var(--purple); color: #fff; }
+    [data-theme="dark"] .ab-compare-btn, [data-theme="terminal"] .ab-compare-btn { border-color: var(--lime); color: var(--lime); }
+    [data-theme="dark"] .ab-compare-btn:hover, [data-theme="terminal"] .ab-compare-btn:hover { background: var(--lime); color: #000; }
+    @media (max-width: 639px) { .ab-split { flex-direction: column; } .ab-half.alayne { border-right: none; border-bottom: 1px solid var(--border); } }
+
+    /* ── SCREENS ── */
+    .screen { display: none; flex: 1; flex-direction: column; }
+    .screen.active { display: flex; }
+    .ab-subbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 12px 40px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: var(--card-bg); position: sticky; top: 0; z-index: 5;
+    }
+    .ab-crumb { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
+    .ab-crumb.alayne { color: var(--alayne); } .ab-crumb.blake { color: var(--blake); }
+    .ab-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 7px 12px; cursor: pointer; border-radius: 2px; transition: all 0.15s;
+    }
+    .ab-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .ab-btn.on { border-color: var(--purple); color: var(--purple); background: color-mix(in srgb, var(--purple) 10%, transparent); }
+    .ab-search {
+      flex: 1; min-width: 130px; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; padding: 8px 12px; border-radius: 2px;
+    }
+    .ab-search:focus { outline: none; border-color: var(--purple); }
+    .ab-body { flex: 1; overflow-y: auto; padding: 20px 40px 60px; }
+    @media (max-width: 639px) { .ab-subbar { padding: 10px 16px; } .ab-body { padding: 16px 14px 50px; } }
+
+    .ab-year-head { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--muted); margin: 22px 0 10px; }
+    .ab-year-head:first-child { margin-top: 4px; }
+
+    /* ── PLAY CARD ── */
+    .play-card { border: 1px solid var(--border); background: var(--card-bg); margin-bottom: 12px; }
+    .play-card.locked { opacity: 0.6; }
+    .pc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; flex-wrap: wrap; }
+    .pc-title { font-size: 14px; color: var(--fg); }
+    .pc-meta { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+    .pc-total {
+      font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; line-height: 1;
+      color: var(--me); white-space: nowrap;
+    }
+    .pc-total small { font-size: 13px; color: var(--muted); }
+    .pc-total.unset { color: var(--muted); opacity: 0.5; }
+    .pc-body { padding: 4px 16px 16px; }
+    .pc-locked-msg { padding: 8px 16px 16px; font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+
+    .sc-row { display: grid; grid-template-columns: 78px 1fr 34px; align-items: center; gap: 12px; padding: 6px 0; }
+    .sc-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .sc-range { width: 100%; accent-color: var(--me); cursor: pointer; }
+    .sc-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: right; color: var(--fg); }
+    .sc-val small { font-size: 10px; color: var(--muted); }
+    .pc-note {
+      width: 100%; margin-top: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; line-height: 1.6; padding: 9px 11px; resize: vertical; min-height: 38px;
+    }
+    .pc-note:focus { outline: none; border-color: var(--me); }
+    .pc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .pc-partner { font-size: 10px; letter-spacing: 0.5px; }
+    .pc-partner .who { text-transform: uppercase; letter-spacing: 1px; font-size: 9px; }
+    .pc-partner.alayne .who { color: var(--alayne); } .pc-partner.blake .who { color: var(--blake); }
+    .pc-partner .hidden-tag { color: var(--muted); font-style: italic; }
+    .pc-status { font-size: 9px; letter-spacing: 1px; color: var(--muted); min-width: 60px; text-align: right; }
+    .pc-status.saved { color: #16a34a; }
+    [data-theme="dark"] .pc-status.saved, [data-theme="terminal"] .pc-status.saved { color: #4ade80; }
+    .pc-clear { background: none; border: none; color: var(--muted); font-family: var(--font); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; text-decoration: underline; }
+    .pc-clear:hover { color: #ef4444; }
+
+    /* ── COMPARE ── */
+    .cmp-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 26px; }
+    .cmp-stat { border: 1px solid var(--border); background: var(--card-bg); padding: 16px; text-align: center; }
+    .cmp-stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 44px; line-height: 1; color: var(--purple); }
+    [data-theme="dark"] .cmp-stat-num, [data-theme="terminal"] .cmp-stat-num { color: var(--lime); }
+    .cmp-stat-label { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+    .cmp-h2h { display: flex; justify-content: center; gap: 6px; align-items: baseline; font-family: 'Bebas Neue', sans-serif; font-size: 38px; }
+    .cmp-h2h .a { color: var(--alayne); } .cmp-h2h .b { color: var(--blake); } .cmp-h2h .sep { font-size: 20px; color: var(--muted); }
+
+    .cmp-section-h { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; margin: 30px 0 14px; }
+    .cmp-legend { display: flex; gap: 18px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+    .cmp-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .cmp-radar-wrap { display: flex; justify-content: center; }
+    .cmp-radar { max-width: 420px; width: 100%; }
+
+    .cmp-dis { border: 1px solid var(--border); background: var(--card-bg); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .cmp-dis-title { font-size: 12px; }
+    .cmp-dis-meta { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+    .cmp-dis-scores { display: flex; gap: 10px; align-items: baseline; font-family: 'Bebas Neue', sans-serif; font-size: 24px; white-space: nowrap; }
+    .cmp-dis-scores .a { color: var(--alayne); } .cmp-dis-scores .b { color: var(--blake); }
+    .cmp-dis-scores .gap { font-family: var(--font); font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+    .cmp-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    .cmp-table th { text-align: left; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .cmp-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 11px; }
+    .cmp-table .num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: center; }
+    .cmp-table .num.a { color: var(--alayne); } .cmp-table .num.b { color: var(--blake); }
+
+    .ab-empty { padding: 50px 20px; text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      background: var(--card-bg); border: 1px solid var(--border); color: var(--fg);
+      font-size: 10px; letter-spacing: 1px; padding: 10px 20px; opacity: 0;
+      transition: opacity 0.3s; pointer-events: none; z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="ab-header">
+    <div class="ab-header-top">
+      <a class="ab-back" href="/">← blakestringer.com</a>
+      <div class="ab-actions">
+        <button class="ab-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+    <h1 class="ab-title">A<span class="amp">B</span> Theatre Review</h1>
+    <p class="ab-subtitle">Alayne &amp; Blake · scoring every play we see</p>
+  </header>
+
+  <!-- LANDING -->
+  <div id="landing">
+    <div class="ab-split">
+      <button class="ab-half alayne" data-who="alayne">
+        <span class="ab-half-name">ALAYNE</span>
+        <span class="ab-half-sub">Enter my scorer</span>
+        <span class="ab-half-count" id="count-alayne"></span>
+      </button>
+      <button class="ab-half blake" data-who="blake">
+        <span class="ab-half-name">BLAKE</span>
+        <span class="ab-half-sub">Enter my scorer</span>
+        <span class="ab-half-count" id="count-blake"></span>
+      </button>
+    </div>
+    <div class="ab-compare-bar">
+      <button class="ab-compare-btn" id="go-compare">⚖  Compare our scores</button>
+    </div>
+  </div>
+
+  <!-- SCORER -->
+  <div class="screen" id="scorer">
+    <div class="ab-subbar">
+      <button class="ab-btn" id="scorer-back">← Home</button>
+      <span class="ab-crumb" id="scorer-name"></span>
+      <input class="ab-search" id="scorer-search" type="text" placeholder="Search play or company…">
+      <span id="year-filters"></span>
+      <button class="ab-btn" id="sort-btn" title="Sort by your score">Sort ↓</button>
+    </div>
+    <div class="ab-body" id="scorer-body"></div>
+  </div>
+
+  <!-- COMPARE -->
+  <div class="screen" id="compare">
+    <div class="ab-subbar">
+      <button class="ab-btn" id="compare-back">← Home</button>
+      <span class="ab-crumb">Compare</span>
+    </div>
+    <div class="ab-body" id="compare-body"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════ CONFIG ═══════════════ */
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEiGQmBcZgAiFv2Fuj40Yp9SC8zhyTn6BJ3aqFDcKaDOfPC8NAO9dFqjhlYVX46cdrgH1gc5NiiV7G/pub?gid=1888245759&single=true&output=csv';
+var AB_WORKER_URL = 'https://ab-theatre-review.blakestringer.workers.dev';
+
+var CATS = [
+  { key: 'story',    label: 'Story',    max: 10 },
+  { key: 'acting',   label: 'Acting',   max: 10 },
+  { key: 'sound',    label: 'Sound',    max: 5 },
+  { key: 'lighting', label: 'Lighting', max: 5 },
+  { key: 'set',      label: 'Set',      max: 5 },
+  { key: 'costume',  label: 'Costume',  max: 5 },
+];
+var MAX_TOTAL = 40;
+var NAMES = { alayne: 'Alayne', blake: 'Blake' };
+var OTHER = { alayne: 'blake', blake: 'alayne' };
+
+/* ═══════════════ STATE ═══════════════ */
+var state = {
+  plays: [],
+  reviews: { alayne: {}, blake: {} },
+  me: null,
+  yearFilter: 'all',
+  sortByScore: false,
+  search: '',
+};
+
+/* ═══════════════ THEME ═══════════════ */
+(function () {
+  var btn = document.getElementById('theme-btn');
+  var CYCLE = ['light', 'dark', 'terminal'];
+  var moonSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  var sunSVG  = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>';
+  var lockSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+  function icon(t) { return t === 'terminal' ? lockSVG : t === 'dark' ? sunSVG : moonSVG; }
+  var t = localStorage.getItem('theme') || 'light';
+  function apply(v) {
+    t = v;
+    if (v === 'light') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', v);
+    btn.innerHTML = icon(v);
+    localStorage.setItem('theme', v);
+  }
+  apply(t);
+  btn.addEventListener('click', function () { apply(CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]); });
+})();
+
+/* ═══════════════ HELPERS ═══════════════ */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
+}
+
+/* Quote-aware CSV parser (handles commas + newlines inside quoted fields). */
+function parseCSV(text) {
+  var rows = [], row = [], field = '', i = 0, inQ = false, c;
+  text = text.replace(/\r\n?/g, '\n');
+  for (; i < text.length; i++) {
+    c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function parseDMY(s) {
+  var m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/.exec(String(s || ''));
+  if (!m) return null;
+  return new Date(+m[3], +m[2] - 1, +m[1]);
+}
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d) { return d ? (d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear()) : ''; }
+
+function scoreTotal(s) {
+  if (!s) return 0;
+  var t = 0; for (var i = 0; i < CATS.length; i++) t += (+s[CATS[i].key] || 0); return t;
+}
+function hasScore(reviewer, id) { return !!state.reviews[reviewer][id]; }
+
+/* ═══════════════ DATA LOAD ═══════════════ */
+function abFetch(payload) {
+  return fetch(AB_WORKER_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  }).then(function (r) { return r.json(); });
+}
+
+function loadAll() {
+  var csvP = fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); });
+  var revP = abFetch({ mode: 'get' }).catch(function () { return { reviews: { alayne: {}, blake: {} } }; });
+
+  return Promise.all([csvP, revP]).then(function (res) {
+    parsePlays(res[0]);
+    if (res[1] && res[1].reviews) state.reviews = { alayne: res[1].reviews.alayne || {}, blake: res[1].reviews.blake || {} };
+    updateCounts();
+  });
+}
+
+function parsePlays(csv) {
+  var rows = parseCSV(csv).filter(function (r) { return r.some(function (c) { return String(c).trim(); }); });
+  if (!rows.length) { state.plays = []; return; }
+  var head = rows[0].map(function (h) { return String(h).trim().toUpperCase(); });
+  function col(name) { return head.indexOf(name); }
+  var iId = col('ID'), iYear = col('YEAR'), iDate = col('DATE'), iTitle = col('PLAY TITLE'), iCompany = col('COMPANY');
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var out = [];
+  for (var r = 1; r < rows.length; r++) {
+    var row = rows[r];
+    var id = iId >= 0 ? String(row[iId] || '').trim() : String(r);
+    var title = iTitle >= 0 ? String(row[iTitle] || '').trim() : '';
+    if (!id || !title) continue;
+    var date = iDate >= 0 ? parseDMY(row[iDate]) : null;
+    var year = iYear >= 0 ? String(row[iYear] || '').trim() : (date ? String(date.getFullYear()) : '');
+    out.push({
+      id: id, title: title,
+      company: iCompany >= 0 ? String(row[iCompany] || '').trim() : '',
+      date: date, year: year,
+      seen: date ? (date <= today) : true,
+    });
+  }
+  state.plays = out;
+}
+
+function updateCounts() {
+  ['alayne', 'blake'].forEach(function (who) {
+    var n = Object.keys(state.reviews[who]).length;
+    document.getElementById('count-' + who).textContent = n ? (n + ' play' + (n === 1 ? '' : 's') + ' scored') : 'No scores yet';
+  });
+}
+
+/* ═══════════════ NAVIGATION ═══════════════ */
+function showScreen(id) {
+  document.getElementById('landing').style.display = (id === 'landing') ? 'flex' : 'none';
+  ['scorer', 'compare'].forEach(function (s) { document.getElementById(s).classList.toggle('active', s === id); });
+  window.scrollTo(0, 0);
+}
+function goHome() { updateCounts(); showScreen('landing'); }
+
+function enterScorer(who) {
+  state.me = who;
+  document.getElementById('scorer').className = 'screen active as-' + who;
+  document.documentElement.style.setProperty('--me', who === 'alayne' ? 'var(--alayne)' : 'var(--blake)');
+  var crumb = document.getElementById('scorer-name');
+  crumb.textContent = NAMES[who] + "'s scores";
+  crumb.className = 'ab-crumb ' + who;
+  renderYearFilters();
+  renderScorer();
+  showScreen('scorer');
+}
+
+/* ═══════════════ SCORER ═══════════════ */
+function renderYearFilters() {
+  var years = [];
+  state.plays.forEach(function (p) { if (p.year && years.indexOf(p.year) < 0) years.push(p.year); });
+  years.sort(function (a, b) { return b.localeCompare(a); });
+  var wrap = document.getElementById('year-filters');
+  wrap.innerHTML = '<button class="ab-btn' + (state.yearFilter === 'all' ? ' on' : '') + '" data-year="all">All</button>' +
+    years.map(function (y) { return '<button class="ab-btn' + (state.yearFilter === y ? ' on' : '') + '" data-year="' + esc(y) + '">' + esc(y) + '</button>'; }).join('');
+}
+
+function currentPlays() {
+  var q = state.search.trim().toLowerCase();
+  var list = state.plays.filter(function (p) {
+    if (state.yearFilter !== 'all' && p.year !== state.yearFilter) return false;
+    if (q && (p.title + ' ' + p.company).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  if (state.sortByScore) {
+    list.sort(function (a, b) { return scoreTotal(state.reviews[state.me][b.id]) - scoreTotal(state.reviews[state.me][a.id]); });
+  } else {
+    list.sort(function (a, b) {
+      if (a.year !== b.year) return (b.year || '').localeCompare(a.year || '');
+      var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0;
+      return tb - ta;
+    });
+  }
+  return list;
+}
+
+function renderScorer() {
+  var body = document.getElementById('scorer-body');
+  var list = currentPlays();
+  if (!list.length) { body.innerHTML = '<div class="ab-empty">No plays match.</div>'; return; }
+  var html = '', lastYear = null;
+  for (var i = 0; i < list.length; i++) {
+    var p = list[i];
+    if (!state.sortByScore && p.year !== lastYear) { html += '<div class="ab-year-head">' + esc(p.year) + '</div>'; lastYear = p.year; }
+    html += p.seen ? cardHTML(p) : lockedHTML(p);
+  }
+  body.innerHTML = html;
+  bindCards();
+}
+
+function lockedHTML(p) {
+  return '<div class="play-card locked" data-id="' + esc(p.id) + '">' +
+    '<div class="pc-head"><div><div class="pc-title">' + esc(p.title) + '</div>' +
+    '<div class="pc-meta">' + esc(p.company) + (p.date ? ' · ' + fmtDate(p.date) : '') + '</div></div></div>' +
+    '<div class="pc-locked-msg">🔒 Not seen yet — unlocks ' + (p.date ? fmtDate(p.date) : 'once seen') + '</div></div>';
+}
+
+function cardHTML(p) {
+  var s = state.reviews[state.me][p.id];
+  var scored = !!s;
+  var total = scoreTotal(s);
+  var rows = CATS.map(function (c) {
+    var v = s ? (+s[c.key] || 0) : 0;
+    return '<div class="sc-row"><span class="sc-label">' + c.label + '</span>' +
+      '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="1" value="' + v + '" ' +
+        'data-cat="' + c.key + '" aria-label="' + c.label + ' out of ' + c.max + '">' +
+      '<span class="sc-val" data-val="' + c.key + '">' + (scored ? v : '–') + '<small>/' + c.max + '</small></span></div>';
+  }).join('');
+
+  return '<div class="play-card" data-id="' + esc(p.id) + '">' +
+    '<div class="pc-head"><div><div class="pc-title">' + esc(p.title) + '</div>' +
+      '<div class="pc-meta">' + esc(p.company) + (p.date ? ' · ' + fmtDate(p.date) : '') + '</div></div>' +
+      '<div class="pc-total' + (scored ? '' : ' unset') + '" data-total>' + (scored ? total : '–') + '<small>/' + MAX_TOTAL + '</small></div>' +
+    '</div>' +
+    '<div class="pc-body">' + rows +
+      '<textarea class="pc-note" data-note placeholder="A note or one-line verdict (optional)…">' + esc(s ? s.note : '') + '</textarea>' +
+      '<div class="pc-foot">' +
+        partnerHTML(p.id) +
+        '<div style="display:flex;gap:14px;align-items:center">' +
+          (scored ? '<button class="pc-clear" data-clear>Clear</button>' : '') +
+          '<span class="pc-status" data-status></span>' +
+        '</div>' +
+      '</div>' +
+    '</div></div>';
+}
+
+function partnerHTML(id) {
+  var other = OTHER[state.me];
+  var theirs = state.reviews[other][id];
+  var cls = 'pc-partner ' + other;
+  if (!theirs) return '<span class="' + cls + '"><span class="who">' + NAMES[other] + '</span> <span class="hidden-tag">hasn\'t scored yet</span></span>';
+  if (!hasScore(state.me, id)) return '<span class="' + cls + '"><span class="who">' + NAMES[other] + '</span> <span class="hidden-tag">hidden until you score ✦</span></span>';
+  return '<span class="' + cls + '"><span class="who">' + NAMES[other] + '</span> ' + scoreTotal(theirs) + '/' + MAX_TOTAL + '</span>';
+}
+
+var saveTimers = {};
+function bindCards() {
+  var cards = document.querySelectorAll('#scorer-body .play-card:not(.locked)');
+  cards.forEach(function (card) {
+    var id = card.getAttribute('data-id');
+    card.querySelectorAll('.sc-range').forEach(function (rng) {
+      rng.addEventListener('input', function () { onCardChange(card, id); });
+    });
+    var note = card.querySelector('[data-note]');
+    if (note) note.addEventListener('input', function () { onCardChange(card, id); });
+    var clr = card.querySelector('[data-clear]');
+    if (clr) clr.addEventListener('click', function () { clearScore(id); });
+  });
+}
+
+function readCard(card) {
+  var s = { note: '' };
+  card.querySelectorAll('.sc-range').forEach(function (rng) { s[rng.getAttribute('data-cat')] = +rng.value; });
+  var note = card.querySelector('[data-note]');
+  s.note = note ? note.value : '';
+  return s;
+}
+
+function onCardChange(card, id) {
+  var s = readCard(card);
+  state.reviews[state.me][id] = s;
+  var total = scoreTotal(s);
+  /* live-update the readouts */
+  card.querySelectorAll('.sc-val').forEach(function (v) {
+    var k = v.getAttribute('data-val'); var cat = CATS.filter(function (c) { return c.key === k; })[0];
+    v.innerHTML = (+s[k] || 0) + '<small>/' + cat.max + '</small>';
+  });
+  var tot = card.querySelector('[data-total]');
+  tot.classList.remove('unset'); tot.innerHTML = total + '<small>/' + MAX_TOTAL + '</small>';
+  /* reveal the partner now that we've scored, if applicable */
+  var pf = card.querySelector('.pc-partner');
+  if (pf) pf.outerHTML = partnerHTML(id);
+  if (!card.querySelector('[data-clear]')) {
+    var box = card.querySelector('.pc-foot > div');
+    if (box) box.insertAdjacentHTML('afterbegin', '<button class="pc-clear" data-clear>Clear</button>');
+    var clr = card.querySelector('[data-clear]');
+    if (clr) clr.addEventListener('click', function () { clearScore(id); });
+  }
+  var st = card.querySelector('[data-status]'); if (st) { st.textContent = 'saving…'; st.classList.remove('saved'); }
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(function () { pushSave(id, s, card); }, 650);
+}
+
+function pushSave(id, score, card) {
+  abFetch({ mode: 'save', reviewer: state.me, id: id, score: score }).then(function (res) {
+    var st = card && card.querySelector('[data-status]');
+    if (res && res.ok) { if (st) { st.textContent = 'saved ✓'; st.classList.add('saved'); } }
+    else { if (st) st.textContent = 'save failed'; showToast('Couldn’t save — check your connection.'); }
+    updateCounts();
+  }).catch(function () {
+    var st = card && card.querySelector('[data-status]');
+    if (st) st.textContent = 'save failed'; showToast('Couldn’t save — check your connection.');
+  });
+}
+
+function clearScore(id) {
+  delete state.reviews[state.me][id];
+  abFetch({ mode: 'save', reviewer: state.me, id: id, score: null }).then(updateCounts).catch(function () {});
+  renderScorer();
+}
+
+/* ═══════════════ COMPARE ═══════════════ */
+function playById(id) { for (var i = 0; i < state.plays.length; i++) if (state.plays[i].id === id) return state.plays[i]; return null; }
+
+function renderCompare() {
+  var A = state.reviews.alayne, B = state.reviews.blake;
+  var shared = [];
+  Object.keys(A).forEach(function (id) { if (B[id]) shared.push(id); });
+  var body = document.getElementById('compare-body');
+
+  if (!shared.length) {
+    body.innerHTML = '<div class="ab-empty">No plays scored by <em>both</em> of you yet.<br>' +
+      'Once you\'ve each scored the same play, the comparison unlocks here.</div>';
+    return;
+  }
+
+  var rows = shared.map(function (id) {
+    var a = scoreTotal(A[id]), b = scoreTotal(B[id]), p = playById(id);
+    return { id: id, title: p ? p.title : id, company: p ? p.company : '', a: a, b: b, gap: Math.abs(a - b), avg: (a + b) / 2 };
+  });
+
+  var n = rows.length;
+  var totalGap = rows.reduce(function (s, r) { return s + r.gap; }, 0);
+  var avgGap = totalGap / n;
+  var agreement = Math.round(100 * (1 - avgGap / MAX_TOTAL));
+  var aWins = rows.filter(function (r) { return r.a > r.b; }).length;
+  var bWins = rows.filter(function (r) { return r.b > r.a; }).length;
+
+  /* category averages (each reviewer, over all their own scored plays) */
+  function catAvgs(rev) {
+    var ids = Object.keys(rev), out = {};
+    CATS.forEach(function (c) {
+      var sum = 0, cnt = 0;
+      ids.forEach(function (id) { sum += (+rev[id][c.key] || 0); cnt++; });
+      out[c.key] = cnt ? sum / cnt : 0;
+    });
+    return out;
+  }
+  var avA = catAvgs(A), avB = catAvgs(B);
+
+  var disagreements = rows.slice().sort(function (x, y) { return y.gap - x.gap; }).slice(0, 5);
+  var byGap = rows.slice().sort(function (x, y) { return y.avg - x.avg || y.gap - x.gap; });
+
+  var html = '';
+  html += '<div class="cmp-hero">' +
+    stat(agreement + '%', 'Taste agreement') +
+    stat(n, 'Plays you\'ve both scored') +
+    '<div class="cmp-stat"><div class="cmp-h2h"><span class="a">' + aWins + '</span><span class="sep">–</span><span class="b">' + bWins + '</span></div><div class="cmp-stat-label">Head-to-head (Alayne–Blake)</div></div>' +
+    stat(avgGap.toFixed(1), 'Avg points apart') +
+  '</div>';
+
+  html += '<div class="cmp-legend"><span><span class="dot" style="background:var(--alayne)"></span>Alayne</span><span><span class="dot" style="background:var(--blake)"></span>Blake</span></div>';
+
+  html += '<div class="cmp-section-h">Taste profile</div>';
+  html += '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>';
+
+  html += '<div class="cmp-section-h">Biggest disagreements</div>';
+  html += disagreements.map(function (r) {
+    return '<div class="cmp-dis"><div><div class="cmp-dis-title">' + esc(r.title) + '</div>' +
+      '<div class="cmp-dis-meta">' + esc(r.company) + '</div></div>' +
+      '<div class="cmp-dis-scores"><span class="a">' + r.a + '</span><span class="b">' + r.b + '</span>' +
+      '<span class="gap">' + r.gap + ' apart</span></div></div>';
+  }).join('');
+
+  html += '<div class="cmp-section-h">Every co-rated play</div>';
+  html += '<table class="cmp-table"><thead><tr><th>Play</th><th style="text-align:center">Alayne</th><th style="text-align:center">Blake</th><th style="text-align:center">Gap</th></tr></thead><tbody>' +
+    byGap.map(function (r) {
+      return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + '</div></td>' +
+        '<td class="num a">' + r.a + '</td><td class="num b">' + r.b + '</td>' +
+        '<td class="num" style="color:var(--muted)">' + r.gap + '</td></tr>';
+    }).join('') + '</tbody></table>';
+
+  body.innerHTML = html;
+}
+
+function stat(num, label) {
+  return '<div class="cmp-stat"><div class="cmp-stat-num">' + num + '</div><div class="cmp-stat-label">' + label + '</div></div>';
+}
+
+/* Hexagonal radar overlaying two reviewers' category averages. */
+function radarSVG(a, b) {
+  var size = 320, cx = size / 2, cy = size / 2, R = 110, N = CATS.length;
+  function pt(i, frac) {
+    var ang = (Math.PI * 2 * i / N) - Math.PI / 2;
+    return [cx + Math.cos(ang) * R * frac, cy + Math.sin(ang) * R * frac];
+  }
+  var svg = '<svg class="cmp-radar" viewBox="0 0 ' + size + ' ' + size + '" xmlns="http://www.w3.org/2000/svg">';
+  /* grid rings */
+  [0.25, 0.5, 0.75, 1].forEach(function (f) {
+    var pts = CATS.map(function (_, i) { return pt(i, f).join(','); }).join(' ');
+    svg += '<polygon points="' + pts + '" fill="none" stroke="currentColor" stroke-opacity="0.12"/>';
+  });
+  /* spokes + labels */
+  CATS.forEach(function (c, i) {
+    var e = pt(i, 1), l = pt(i, 1.18);
+    svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + e[0] + '" y2="' + e[1] + '" stroke="currentColor" stroke-opacity="0.12"/>';
+    svg += '<text x="' + l[0] + '" y="' + l[1] + '" font-size="9" font-family="DM Mono, monospace" fill="currentColor" fill-opacity="0.6" text-anchor="middle" dominant-baseline="middle">' + c.label + '</text>';
+  });
+  function poly(vals, color) {
+    var pts = CATS.map(function (c, i) { return pt(i, Math.max(0, Math.min(1, (vals[c.key] || 0) / c.max))).join(','); }).join(' ');
+    /* var() must go through style, not a presentation attribute, to resolve. */
+    return '<polygon points="' + pts + '" style="fill:' + color + ';fill-opacity:0.18;stroke:' + color + ';stroke-width:2"/>';
+  }
+  svg += poly(a, 'var(--alayne)');
+  svg += poly(b, 'var(--blake)');
+  svg += '</svg>';
+  return svg;
+}
+
+/* ═══════════════ EVENTS ═══════════════ */
+document.querySelectorAll('.ab-half').forEach(function (h) {
+  h.addEventListener('click', function () { enterScorer(h.getAttribute('data-who')); });
+});
+document.getElementById('go-compare').addEventListener('click', function () { renderCompare(); showScreen('compare'); });
+document.getElementById('scorer-back').addEventListener('click', goHome);
+document.getElementById('compare-back').addEventListener('click', goHome);
+document.getElementById('scorer-search').addEventListener('input', function (e) { state.search = e.target.value; renderScorer(); });
+document.getElementById('year-filters').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-year]'); if (!b) return;
+  state.yearFilter = b.getAttribute('data-year'); renderYearFilters(); renderScorer();
+});
+document.getElementById('sort-btn').addEventListener('click', function () {
+  state.sortByScore = !state.sortByScore;
+  this.classList.toggle('on', state.sortByScore);
+  this.textContent = state.sortByScore ? 'By score ↓' : 'Sort ↓';
+  renderScorer();
+});
+
+/* ═══════════════ INIT ═══════════════ */
+loadAll().then(function () {
+  updateCounts();
+}).catch(function (e) {
+  console.error(e);
+  showToast('Couldn’t load the play list. Refresh to try again.');
+});
+</script>
+</body>
+</html>

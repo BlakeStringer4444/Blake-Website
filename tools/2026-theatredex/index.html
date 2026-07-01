@@ -1203,6 +1203,8 @@ button.td-link { background: none; cursor: pointer; }
   transition: background 0.15s;
 }
 .td-cal-nav-btn:hover { background: rgba(212,255,26,0.1); }
+.td-cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.td-cal-nav-btn:disabled:hover { background: none; }
 .td-cal-today-btn { border-color: rgba(229,57,53,0.45); color: #e53935; margin-left: 4px; }
 .td-cal-today-btn:hover { background: rgba(229,57,53,0.12); }
 .td-cal-month-label {
@@ -3890,6 +3892,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   var CAL_MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN',
                           'JUL','AUG','SEP','OCT','NOV','DEC'];
   var REHEARSAL_MS = 56 * 86400000; // 8 weeks
+  var CAL_YEAR_LOCK = 2026;   /* Calendar View only covers this year — Jan–Dec, no prev/next past it. */
+  function clampToLockYear(y, m) {
+    if (y < CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 0];
+    if (y > CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 11];
+    return [y, m];
+  }
 
   /* ── DOM refs ── */
   var calBtn        = document.getElementById('td-cal-btn');
@@ -3979,6 +3987,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     });
 
     calLabel.textContent = CAL_MONTHS[m] + ' ' + y;
+    calPrev.disabled = (y === CAL_YEAR_LOCK && m === 0);
+    calNext.disabled = (y === CAL_YEAR_LOCK && m === 11);
 
     var dayHead = '';
     for (var d = 1; d <= numDays; d++) {
@@ -4168,7 +4178,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
      larger than the real screen and push the topbar off-screen. Same fix as
      the map modal above (openMap/closeMap). */
   function openCalendar() {
-    if (!calYear) { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
+    if (!calYear) {
+      var now = new Date();
+      var c = clampToLockYear(now.getFullYear(), now.getMonth());
+      calYear = c[0]; calMonth = c[1];
+    }
     _calSavedZoom = document.documentElement.style.zoom || '';
     document.documentElement.style.zoom = '';
     setMonthlyMode();
@@ -4292,11 +4306,21 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   calClose.addEventListener('click', closeCalendar);
   calOverlay.addEventListener('click', function(e) { if (e.target === calOverlay) closeCalendar(); });
   calBack.addEventListener('click', function() { closeCalendar(); openPicker(); });
-  calPrev.addEventListener('click', function() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
-  calNext.addEventListener('click', function() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
+  /* Calendar View is locked to CAL_YEAR_LOCK — PREV/NEXT can't step outside Jan–Dec of that year. */
+  calPrev.addEventListener('click', function() {
+    if (calYear === CAL_YEAR_LOCK && calMonth === 0) return;
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  calNext.addEventListener('click', function() {
+    if (calYear === CAL_YEAR_LOCK && calMonth === 11) return;
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
   calToday.addEventListener('click', function() {
     var now = new Date();
-    calYear = now.getFullYear(); calMonth = now.getMonth();
+    var c = clampToLockYear(now.getFullYear(), now.getMonth());
+    calYear = c[0]; calMonth = c[1];
     renderCalendar();
   });
 
