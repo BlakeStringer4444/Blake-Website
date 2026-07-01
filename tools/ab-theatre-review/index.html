@@ -240,9 +240,20 @@
     .co-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 10px; }
     .co-count { font-family: var(--font); font-size: 9px; color: var(--muted); letter-spacing: 1px; }
     .co-block .gen-row { margin-top: 6px; }
-    .co-cmp-bar { background: var(--fg) !important; opacity: 0.5; }
-    .gen-name.co-win { color: var(--fg); font-weight: 500; }
-    .gen-name.co-win::after { content: ' ★'; }
+    .co-avg {
+      font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1;
+      color: var(--fg); margin: 2px 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    }
+    .co-avg small { font-family: var(--font); font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+    .co-avg-top { color: var(--purple); }
+    [data-theme="dark"] .co-avg-top, [data-theme="terminal"] .co-avg-top { color: var(--lime); }
+    .co-block-top { border-color: var(--purple); }
+    [data-theme="dark"] .co-block-top, [data-theme="terminal"] .co-block-top { border-color: var(--lime); }
+    .co-top-tag {
+      font-family: var(--font); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--purple); border: 1px solid var(--purple); padding: 2px 6px; border-radius: 2px; align-self: center;
+    }
+    [data-theme="dark"] .co-top-tag, [data-theme="terminal"] .co-top-tag { color: var(--lime); border-color: var(--lime); }
 
     .cmp-dis { border: 1px solid var(--border); background: var(--card-bg); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .cmp-dis-title { font-size: 12px; }
@@ -1058,30 +1069,27 @@ function companyCardHTML(rows) {
                        .filter(function (d) { return d.cr.length; });
   if (!present.length) return '';
 
+  /* Combined average (both of you) per company — the head-to-head metric. */
+  present.forEach(function (d) { d.combined = (avgOf(d.cr, 'a') + avgOf(d.cr, 'b')) / 2; });
+  var topName = null;
+  if (present.length >= 2) {
+    var best = Math.max.apply(null, present.map(function (d) { return d.combined; }));
+    var winners = present.filter(function (d) { return d.combined === best; });
+    if (winners.length === 1) topName = winners[0].name;   /* no crown on a tie */
+  }
+
   var blocks = present.map(function (d) {
-    return '<div class="co-block"><div class="co-name">' + esc(d.name) +
-        ' <span class="co-count">' + d.cr.length + ' play' + (d.cr.length === 1 ? '' : 's') + '</span></div>' +
+    var top = (d.name === topName);
+    return '<div class="co-block' + (top ? ' co-block-top' : '') + '">' +
+      '<div class="co-name">' + esc(d.name) + ' <span class="co-count">' + d.cr.length + ' play' + (d.cr.length === 1 ? '' : 's') + '</span></div>' +
+      '<div class="co-avg' + (top ? ' co-avg-top' : '') + '">' + d.combined.toFixed(1) +
+        '<small>/' + MAX_TOTAL + ' avg</small>' + (top ? '<span class="co-top-tag">Top rated</span>' : '') + '</div>' +
       avgBarRow('Alayne', avgOf(d.cr, 'a'), 'var(--alayne)') +
       avgBarRow('Blake', avgOf(d.cr, 'b'), 'var(--blake)') + '</div>';
   }).join('');
 
-  var html = '<div class="co-wrap">' + blocks + '</div>';
-
-  /* Head-to-head: your COMBINED average (both of you) per company. */
-  if (present.length >= 2) {
-    var best = Math.max.apply(null, present.map(function (d) { return (avgOf(d.cr, 'a') + avgOf(d.cr, 'b')) / 2; }));
-    var vsRows = present.map(function (d) {
-      var avg = (avgOf(d.cr, 'a') + avgOf(d.cr, 'b')) / 2;
-      var pct = Math.max(0, Math.min(100, avg / MAX_TOTAL * 100));
-      var win = (avg === best);
-      return '<div class="gen-row"><span class="gen-name' + (win ? ' co-win' : '') + '">' + esc(d.name) + '</span>' +
-        '<div class="gen-track"><div class="gen-bar co-cmp-bar" style="width:' + pct.toFixed(1) + '%"></div></div>' +
-        '<span class="gen-val">' + avg.toFixed(1) + '</span></div>';
-    }).join('');
-    html += '<div class="cmp-hint" style="margin-top:16px">Your combined average (both of you) — which company wins?</div>' +
-      '<div class="gen">' + vsRows + '</div>';
-  }
-  return html;
+  return '<div class="cmp-hint">Each company\'s combined average (both of you), out of ' + MAX_TOTAL + '.</div>' +
+    '<div class="co-wrap">' + blocks + '</div>';
 }
 
 /* Hexagonal radar overlaying two reviewers' category averages. */
