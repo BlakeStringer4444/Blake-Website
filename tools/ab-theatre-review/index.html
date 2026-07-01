@@ -240,6 +240,9 @@
     .co-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 10px; }
     .co-count { font-family: var(--font); font-size: 9px; color: var(--muted); letter-spacing: 1px; }
     .co-block .gen-row { margin-top: 6px; }
+    .co-cmp-bar { background: var(--fg) !important; opacity: 0.5; }
+    .gen-name.co-win { color: var(--fg); font-weight: 500; }
+    .gen-name.co-win::after { content: ' ★'; }
 
     .cmp-dis { border: 1px solid var(--border); background: var(--card-bg); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .cmp-dis-title { font-size: 12px; }
@@ -269,6 +272,16 @@
       transition: opacity 0.3s; pointer-events: none; z-index: 100;
     }
     #toast.show { opacity: 1; }
+    #jump-top {
+      position: fixed; bottom: 20px; right: 20px; z-index: 90;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--purple); color: #fff; border: none; cursor: pointer;
+      font-size: 20px; line-height: 1; display: none; align-items: center; justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.28); transition: transform 0.15s;
+    }
+    #jump-top.show { display: flex; }
+    #jump-top:hover { transform: translateY(-2px); }
+    [data-theme="dark"] #jump-top, [data-theme="terminal"] #jump-top { background: var(--lime); color: #000; }
   </style>
 </head>
 <body>
@@ -324,6 +337,7 @@
     <div class="ab-body" id="compare-body"></div>
   </div>
 </div>
+<button id="jump-top" type="button" aria-label="Jump to top" title="Jump to top">↑</button>
 <div id="toast"></div>
 
 <script>
@@ -365,7 +379,7 @@ var state = {
   cmpSort: { key: 'combined', dir: -1 },   /* combined table sort: default highest total first */
   ready: false,                            /* true once the CSV + scores have loaded */
   screen: 'landing',
-  collapse: { agree: false, disagree: false },
+  collapse: { scatter: false, gen: false, catdelta: false, radar: false, timeline: false, company: false, agree: false, disagree: false, combined: false },
 };
 
 /* ═══════════════ TEXT SIZE (Aa) — mirrors the other tools ═══════════════ */
@@ -490,7 +504,8 @@ function parsePlays(csv) {
       id: id, title: title,
       company: iCompany >= 0 ? String(row[iCompany] || '').trim() : '',
       date: date, year: year,
-      seen: date ? (date <= today) : true,
+      /* Unlocks the DAY AFTER the show — no rating on the same day. */
+      seen: date ? (date < today) : true,
     });
   }
   state.plays = out;
@@ -595,11 +610,13 @@ function archiveHTML(p) {
     '<div class="arch-year">' + esc(p.year) + '</div></div></div>';
 }
 
+function unlockDate(d) { var u = new Date(d.getTime()); u.setDate(u.getDate() + 1); return u; }
+
 function lockedHTML(p) {
   return '<div class="play-card locked" data-id="' + esc(p.id) + '">' +
     '<div class="pc-head"><div><div class="pc-title">' + esc(p.title) + '</div>' +
     '<div class="pc-meta">' + esc(p.company) + (p.date ? ' · ' + fmtDate(p.date) : '') + '</div></div></div>' +
-    '<div class="pc-locked-msg">🔒 Not seen yet — unlocks ' + (p.date ? fmtDate(p.date) : 'once seen') + '</div></div>';
+    '<div class="pc-locked-msg">🔒 Scoring unlocks ' + (p.date ? fmtDate(unlockDate(p.date)) : 'once seen') + '</div></div>';
 }
 
 /* mode: 'auto'  — not yet scored, editable, saves as you drag
@@ -868,12 +885,17 @@ function renderCompare() {
 
   var agreements   = rows.slice().sort(function (x, y) { return x.gap - y.gap || y.avg - x.avg; }).slice(0, 5);
   var disagreements = rows.slice().sort(function (x, y) { return y.gap - x.gap; }).slice(0, 5);
+
+  /* Merged agreement: blends raw closeness with rank correlation (how alike you
+     ORDER plays, ignoring baseline). Falls back to raw until there are enough
+     plays for a meaningful rank correlation. */
   var spear = spearman(rows);
+  var rankPct = (spear == null || n < 3) ? null : Math.round(spear * 100);
+  var mergedAgree = (rankPct == null) ? agreement : Math.round((agreement + rankPct) / 2);
 
   var html = '';
   html += '<div class="cmp-hero">' +
-    stat(agreement + '%', 'Taste agreement (raw)') +
-    stat((spear == null || n < 3) ? '—' : Math.round(spear * 100) + '%', 'Rank agreement') +
+    stat(mergedAgree + '%', 'Taste agreement') +
     stat(n, 'Plays you\'ve both scored') +
     stat(avgGap.toFixed(1), 'Avg points apart') +
     '<div class="cmp-stat"><div class="cmp-h2h"><span class="a">' + aWins + '</span><span class="sep">–</span><span class="b">' + bWins + '</span></div><div class="cmp-stat-label">Head-to-head (Alayne–Blake)</div></div>' +
@@ -881,42 +903,37 @@ function renderCompare() {
 
   html += '<div class="cmp-legend"><span><span class="dot" style="background:var(--alayne)"></span>Alayne</span><span><span class="dot" style="background:var(--blake)"></span>Blake</span></div>';
 
-  /* Scatter — how your scores line up */
+  /* Every section below is collapsible (click its heading). */
   if (n >= 2) {
-    html += '<div class="cmp-section-h">How your scores line up</div>';
-    html += '<div class="cmp-hint">Each dot is a play — Alayne across, Blake up. On the dashed line = you agreed; below it = Alayne scored higher; above = Blake did. A tight diagonal means you rank plays alike even if one of you scores lower overall.</div>';
-    html += '<div class="cmp-chart-wrap">' + scatterSVG(rows) + '</div>';
+    html += collapsible('How your scores line up', 'scatter',
+      '<div class="cmp-hint">Each dot is a play — Alayne across, Blake up. On the dashed line = you agreed; below it = Alayne scored higher; above = Blake did. A tight diagonal means you rank plays alike even if one of you scores lower overall.</div>' +
+      '<div class="cmp-chart-wrap">' + scatterSVG(rows) + '</div>');
   }
 
-  /* Generosity — average total each */
-  html += '<div class="cmp-section-h">Generosity</div>';
-  html += '<div class="cmp-hint">Average score out of ' + MAX_TOTAL + '.</div>';
-  html += '<div class="gen">' + avgBarRow('Alayne', avgOf(rows, 'a'), 'var(--alayne)') + avgBarRow('Blake', avgOf(rows, 'b'), 'var(--blake)') + '</div>';
+  html += collapsible('Generosity', 'gen',
+    '<div class="cmp-hint">Average score out of ' + MAX_TOTAL + '.</div>' +
+    '<div class="gen">' + avgBarRow('Alayne', avgOf(rows, 'a'), 'var(--alayne)') + avgBarRow('Blake', avgOf(rows, 'b'), 'var(--blake)') + '</div>');
 
-  /* Category deltas — where you differ */
-  html += '<div class="cmp-section-h">Where you differ, by category</div>';
-  html += '<div class="cmp-hint">Average gap per category · → Alayne scores higher · ← Blake scores higher.</div>';
-  html += categoryDeltaHTML(A, B, ids);
+  html += collapsible('Where you differ, by category', 'catdelta',
+    '<div class="cmp-hint">Average gap per category · → Alayne scores higher · ← Blake scores higher.</div>' +
+    categoryDeltaHTML(A, B, ids));
 
-  html += '<div class="cmp-section-h">Taste profile</div>';
-  html += '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>';
+  html += collapsible('Taste profile', 'radar', '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>');
 
-  /* Timeline — over the season */
   if (rows.filter(function (r) { return r.date; }).length >= 2) {
-    html += '<div class="cmp-section-h">Over the season</div>';
-    html += '<div class="cmp-hint">Your totals in the order you saw the plays.</div>';
-    html += '<div class="cmp-chart-wrap">' + timelineSVG(rows) + '</div>';
+    html += collapsible('Over the season', 'timeline',
+      '<div class="cmp-hint">Your totals in the order you saw the plays.</div>' +
+      '<div class="cmp-chart-wrap">' + timelineSVG(rows) + '</div>');
   }
 
-  /* Company report card — Melbourne vs Malthouse */
-  html += companyCardHTML(rows);
+  var companyInner = companyCardHTML(rows);
+  if (companyInner) html += collapsible('Company report card · Melbourne vs Malthouse', 'company', companyInner);
 
   html += collapsible('Biggest agreements', 'agree', agreements.map(disCard).join(''));
   html += collapsible('Biggest disagreements', 'disagree', disagreements.map(disCard).join(''));
 
-  html += '<div class="cmp-section-h">Combined scores</div>';
-  html += '<div class="cmp-hint">Tap a column heading to sort.</div>';
-  html += combinedTable(rows);
+  html += collapsible('Combined scores', 'combined',
+    '<div class="cmp-hint">Tap a column heading to sort.</div>' + combinedTable(rows));
 
   body.innerHTML = html;
 }
@@ -1032,19 +1049,39 @@ function timelineSVG(rows) {
 }
 
 /* ── Company report card — Melbourne vs Malthouse only ── */
+function companyRows(rows, name) {
+  return rows.filter(function (r) { return r.company.toLowerCase() === name.toLowerCase(); });
+}
 function companyCardHTML(rows) {
   var TARGETS = ['Melbourne', 'Malthouse'];
-  var blocks = TARGETS.map(function (name) {
-    var cr = rows.filter(function (r) { return r.company.toLowerCase() === name.toLowerCase(); });
-    if (!cr.length) return '';
-    return '<div class="co-block"><div class="co-name">' + esc(name) +
-        ' <span class="co-count">' + cr.length + ' play' + (cr.length === 1 ? '' : 's') + '</span></div>' +
-      avgBarRow('Alayne', avgOf(cr, 'a'), 'var(--alayne)') +
-      avgBarRow('Blake', avgOf(cr, 'b'), 'var(--blake)') + '</div>';
-  }).filter(Boolean);
-  if (!blocks.length) return '';
-  return '<div class="cmp-section-h">Company report card · Melbourne vs Malthouse</div>' +
-    '<div class="co-wrap">' + blocks.join('') + '</div>';
+  var present = TARGETS.map(function (name) { return { name: name, cr: companyRows(rows, name) }; })
+                       .filter(function (d) { return d.cr.length; });
+  if (!present.length) return '';
+
+  var blocks = present.map(function (d) {
+    return '<div class="co-block"><div class="co-name">' + esc(d.name) +
+        ' <span class="co-count">' + d.cr.length + ' play' + (d.cr.length === 1 ? '' : 's') + '</span></div>' +
+      avgBarRow('Alayne', avgOf(d.cr, 'a'), 'var(--alayne)') +
+      avgBarRow('Blake', avgOf(d.cr, 'b'), 'var(--blake)') + '</div>';
+  }).join('');
+
+  var html = '<div class="co-wrap">' + blocks + '</div>';
+
+  /* Head-to-head: your COMBINED average (both of you) per company. */
+  if (present.length >= 2) {
+    var best = Math.max.apply(null, present.map(function (d) { return (avgOf(d.cr, 'a') + avgOf(d.cr, 'b')) / 2; }));
+    var vsRows = present.map(function (d) {
+      var avg = (avgOf(d.cr, 'a') + avgOf(d.cr, 'b')) / 2;
+      var pct = Math.max(0, Math.min(100, avg / MAX_TOTAL * 100));
+      var win = (avg === best);
+      return '<div class="gen-row"><span class="gen-name' + (win ? ' co-win' : '') + '">' + esc(d.name) + '</span>' +
+        '<div class="gen-track"><div class="gen-bar co-cmp-bar" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<span class="gen-val">' + avg.toFixed(1) + '</span></div>';
+    }).join('');
+    html += '<div class="cmp-hint" style="margin-top:16px">Your combined average (both of you) — which company wins?</div>' +
+      '<div class="gen">' + vsRows + '</div>';
+  }
+  return html;
 }
 
 /* Hexagonal radar overlaying two reviewers' category averages. */
@@ -1104,6 +1141,26 @@ document.getElementById('sort-btn').addEventListener('click', function () {
   this.textContent = state.sortByScore ? 'By score ↓' : 'Sort ↓';
   renderScorer();
 });
+
+/* ── Jump to top (works whether the window or a screen body is the scroller) ── */
+(function () {
+  var btn = document.getElementById('jump-top');
+  function activeBody() { return document.querySelector('.screen.active .ab-body'); }
+  function scrolled() {
+    var b = activeBody();
+    return Math.max(window.pageYOffset || 0, document.documentElement.scrollTop || 0, b ? b.scrollTop : 0);
+  }
+  function check() { btn.classList.toggle('show', scrolled() > 300); }
+  window.addEventListener('scroll', check, { passive: true });
+  ['scorer-body', 'compare-body'].forEach(function (id) {
+    var el = document.getElementById(id); if (el) el.addEventListener('scroll', check, { passive: true });
+  });
+  btn.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    var b = activeBody(); if (b) b.scrollTo({ top: 0, behavior: 'smooth' });
+    btn.classList.remove('show');
+  });
+})();
 
 /* ═══════════════ INIT ═══════════════ */
 updateCounts();   /* paint "Loading…" until the data lands */
