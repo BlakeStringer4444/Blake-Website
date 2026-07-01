@@ -151,12 +151,14 @@
     .play-card.archive { opacity: 0.7; margin-bottom: 6px; }
     .play-card.archive .pc-head { padding: 10px 16px; align-items: center; }
     .arch-year { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--muted); }
-    .pc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; flex-wrap: wrap; }
-    .pc-title { font-size: 14px; color: var(--fg); }
+    /* Title column shrinks/wraps; the total stays pinned top-right regardless of title length. */
+    .pc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; }
+    .pc-head > div:first-child { min-width: 0; }
+    .pc-title { font-size: 14px; color: var(--fg); overflow-wrap: anywhere; }
     .pc-meta { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
     .pc-total {
       font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; line-height: 1;
-      color: var(--me); white-space: nowrap;
+      color: var(--me); white-space: nowrap; flex-shrink: 0;
     }
     .pc-total small { font-size: 13px; color: var(--muted); }
     .pc-total.unset { color: var(--muted); opacity: 0.5; }
