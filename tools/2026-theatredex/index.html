@@ -1180,7 +1180,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-overlay.open { opacity: 1; pointer-events: auto; }
 .td-cal-modal {
   background: var(--bg); border: 1px solid var(--lime);
-  width: 100%; max-width: 1440px; max-height: 92vh;
+  width: 100%; max-width: 1440px; height: 92vh; max-height: 92vh;
   display: flex; flex-direction: column; overflow: hidden;
 }
 .td-cal-topbar {
@@ -4266,9 +4266,21 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   });
 
   document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape') return;
-    if (clashOverlay.classList.contains('open')) { closePicker(); return; }
-    if (calOverlay.classList.contains('open')) closeCalendar();
+    if (e.key === 'Escape') {
+      if (clashOverlay.classList.contains('open')) { closePicker(); return; }
+      if (calOverlay.classList.contains('open')) closeCalendar();
+      return;
+    }
+    /* ← / → step through months while the monthly Calendar View is open
+       (not the yearly clash view, which has no PREV/NEXT). Skip while
+       typing in a field so normal text-editing arrow keys still work. */
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') &&
+        calOverlay.classList.contains('open') && !_yearlyMode) {
+      var tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      if (e.key === 'ArrowLeft') calPrev.click(); else calNext.click();
+    }
   });
 })();
 
