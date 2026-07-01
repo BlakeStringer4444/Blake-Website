@@ -4133,8 +4133,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   /* ── OPEN / CLOSE ── */
+  /* Strip any Aa-button / default-desktop zoom before opening — the modal's
+     height is a fixed vh value, and Chromium's `zoom` CSS property shrinks the
+     effective layout viewport, which makes a vh-sized fixed overlay render
+     larger than the real screen and push the topbar off-screen. Same fix as
+     the map modal above (openMap/closeMap). */
   function openCalendar() {
     if (!calYear) { var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
+    _calSavedZoom = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
     setMonthlyMode();
     renderCalendar();
     calOverlay.classList.add('open');
@@ -4142,6 +4149,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   function openCalendarYearly(showA, showB) {
+    _calSavedZoom = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
     setYearlyMode();
     renderYearly(showA, showB);
     calOverlay.classList.add('open');
@@ -4151,6 +4160,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     calOverlay.classList.remove('open');
     calBtn.classList.remove('td-header-btn--active');
     if (_yearlyMode) setMonthlyMode();
+    document.documentElement.style.zoom = _calSavedZoom;
   }
 
   /* ── PICKER AUTOCOMPLETE ── */
