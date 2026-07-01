@@ -773,10 +773,10 @@ function computeRanks(rows, key) {
   });
   return map;
 }
-function rankTag(rk) { return '<span class="rk">(' + (rk.tie ? '~' : '') + rk.rank + ')</span>'; }
+function rankTag(rk) { return '<div class="rk">(' + (rk.tie ? '~' : '') + rk.rank + ')</div>'; }
 
 function combinedTable(list) {
-  var rankA = computeRanks(list, 'a'), rankB = computeRanks(list, 'b');
+  var rankA = computeRanks(list, 'a'), rankB = computeRanks(list, 'b'), rankT = computeRanks(list, 'combined');
   var sk = state.cmpSort.key, dir = state.cmpSort.dir;
   var sorted = list.slice().sort(function (x, y) {
     var d = (x[sk] - y[sk]) * dir;
@@ -793,7 +793,7 @@ function combinedTable(list) {
       return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></td>' +
         '<td class="num a">' + r.a + rankTag(rankA[r.id]) + '</td>' +
         '<td class="num b">' + r.b + rankTag(rankB[r.id]) + '</td>' +
-        '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/' + (MAX_TOTAL * 2) + '</small></td></tr>';
+        '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/' + (MAX_TOTAL * 2) + '</small>' + rankTag(rankT[r.id]) + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
