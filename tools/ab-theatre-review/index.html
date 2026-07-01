@@ -151,12 +151,14 @@
     .play-card.archive { opacity: 0.7; margin-bottom: 6px; }
     .play-card.archive .pc-head { padding: 10px 16px; align-items: center; }
     .arch-year { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--muted); }
-    .pc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; flex-wrap: wrap; }
-    .pc-title { font-size: 14px; color: var(--fg); }
+    /* Title column shrinks/wraps; the total stays pinned top-right regardless of title length. */
+    .pc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; }
+    .pc-head > div:first-child { min-width: 0; }
+    .pc-title { font-size: 14px; color: var(--fg); overflow-wrap: anywhere; }
     .pc-meta { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
     .pc-total {
       font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; line-height: 1;
-      color: var(--me); white-space: nowrap;
+      color: var(--me); white-space: nowrap; flex-shrink: 0;
     }
     .pc-total small { font-size: 13px; color: var(--muted); }
     .pc-total.unset { color: var(--muted); opacity: 0.5; }
@@ -231,7 +233,7 @@
     .cmp-table th.cmp-sort { cursor: pointer; user-select: none; white-space: nowrap; }
     .cmp-table th.cmp-sort:hover { color: var(--fg); }
     .cmp-table th.cmp-sort.active { color: var(--fg); }
-    .cmp-table .num .rk { font-family: var(--font); font-size: 9px; letter-spacing: 0; color: var(--muted); }
+    .cmp-table .num .rk { display: block; font-family: var(--font); font-size: 9px; letter-spacing: 0; color: var(--muted); line-height: 1.3; margin-top: 1px; }
     .cmp-hint { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin: -6px 0 8px; }
 
     .ab-empty { padding: 50px 20px; text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
@@ -789,8 +791,8 @@ function combinedTable(list) {
     '</tr></thead><tbody>' +
     sorted.map(function (r) {
       return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></td>' +
-        '<td class="num a">' + r.a + ' ' + rankTag(rankA[r.id]) + '</td>' +
-        '<td class="num b">' + r.b + ' ' + rankTag(rankB[r.id]) + '</td>' +
+        '<td class="num a">' + r.a + rankTag(rankA[r.id]) + '</td>' +
+        '<td class="num b">' + r.b + rankTag(rankB[r.id]) + '</td>' +
         '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/' + (MAX_TOTAL * 2) + '</small></td></tr>';
     }).join('') + '</tbody></table>';
 }
