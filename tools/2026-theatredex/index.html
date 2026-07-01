@@ -1416,6 +1416,20 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
   letter-spacing: 0.3px; text-align: center; margin: 0;
 }
+@media (min-width: 640px) {
+  /* Give the picker more breathing room on desktop/tablet — the mobile
+     layout (below) is already full-width and untouched by this. */
+  .td-clash-modal { max-width: 620px; }
+  .td-clash-topbar { padding: 14px 22px; }
+  .td-clash-topbar-title { font-size: 13px; }
+  .td-clash-body { padding: 34px 30px; gap: 22px; }
+  .td-clash-desc { font-size: 12px; }
+  .td-clash-label { font-size: 10px; }
+  .td-clash-input { padding: 12px 15px; font-size: 13px; }
+  .td-clash-suggestion { padding: 10px 15px; }
+  .td-clash-suggestion-title { font-size: 12px; }
+  .td-clash-compare { padding: 12px 40px; font-size: 12px; }
+}
 @media (max-width: 639px) {
   .td-clash-overlay { padding: 0; }
   .td-clash-modal { max-height: 100dvh; border-left: none; border-right: none; }
