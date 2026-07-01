@@ -217,6 +217,29 @@
     .cmp-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .cmp-radar-wrap { display: flex; justify-content: center; }
     .cmp-radar { max-width: 420px; width: 100%; }
+    .cmp-chart-wrap { display: flex; justify-content: center; }
+    .cmp-chart { max-width: 380px; width: 100%; color: var(--fg); }
+    /* Generosity + company bars */
+    .gen { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+    .gen-row { display: grid; grid-template-columns: 58px 1fr 42px; align-items: center; gap: 10px; }
+    .gen-name { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    .gen-track { height: 12px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .gen-bar { height: 100%; border-radius: 2px; }
+    .gen-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: right; color: var(--fg); }
+    /* Category deltas (diverging) */
+    .cd { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
+    .cd-row { display: grid; grid-template-columns: 68px 1fr 46px; align-items: center; gap: 10px; }
+    .cd-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .cd-track { position: relative; height: 14px; background: var(--border); border-radius: 2px; }
+    .cd-center { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--fg); opacity: 0.35; }
+    .cd-bar { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+    .cd-val { font-family: 'Bebas Neue', sans-serif; font-size: 16px; text-align: right; color: var(--fg); }
+    /* Company report card */
+    .co-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .co-block { border: 1px solid var(--border); background: var(--card-bg); padding: 14px; }
+    .co-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 10px; }
+    .co-count { font-family: var(--font); font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+    .co-block .gen-row { margin-top: 6px; }
 
     .cmp-dis { border: 1px solid var(--border); background: var(--card-bg); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .cmp-dis-title { font-size: 12px; }
@@ -744,6 +767,7 @@ function cmpRow(A, B, id) {
   var a = scoreTotal(A[id]), b = scoreTotal(B[id]), p = playById(id);
   return {
     id: id, title: p ? p.title : id, company: p ? p.company : '', year: p ? p.year : '',
+    date: p ? p.date : null,
     a: a, b: b, gap: Math.abs(a - b), combined: a + b, avg: (a + b) / 2,
   };
 }
@@ -844,10 +868,12 @@ function renderCompare() {
 
   var agreements   = rows.slice().sort(function (x, y) { return x.gap - y.gap || y.avg - x.avg; }).slice(0, 5);
   var disagreements = rows.slice().sort(function (x, y) { return y.gap - x.gap; }).slice(0, 5);
+  var spear = spearman(rows);
 
   var html = '';
   html += '<div class="cmp-hero">' +
-    stat(agreement + '%', 'Taste agreement') +
+    stat(agreement + '%', 'Taste agreement (raw)') +
+    stat((spear == null || n < 3) ? '—' : Math.round(spear * 100) + '%', 'Rank agreement') +
     stat(n, 'Plays you\'ve both scored') +
     stat(avgGap.toFixed(1), 'Avg points apart') +
     '<div class="cmp-stat"><div class="cmp-h2h"><span class="a">' + aWins + '</span><span class="sep">–</span><span class="b">' + bWins + '</span></div><div class="cmp-stat-label">Head-to-head (Alayne–Blake)</div></div>' +
@@ -855,8 +881,35 @@ function renderCompare() {
 
   html += '<div class="cmp-legend"><span><span class="dot" style="background:var(--alayne)"></span>Alayne</span><span><span class="dot" style="background:var(--blake)"></span>Blake</span></div>';
 
+  /* Scatter — how your scores line up */
+  if (n >= 2) {
+    html += '<div class="cmp-section-h">How your scores line up</div>';
+    html += '<div class="cmp-hint">Each dot is a play — Alayne across, Blake up. On the dashed line = you agreed; below it = Alayne scored higher; above = Blake did. A tight diagonal means you rank plays alike even if one of you scores lower overall.</div>';
+    html += '<div class="cmp-chart-wrap">' + scatterSVG(rows) + '</div>';
+  }
+
+  /* Generosity — average total each */
+  html += '<div class="cmp-section-h">Generosity</div>';
+  html += '<div class="cmp-hint">Average score out of ' + MAX_TOTAL + '.</div>';
+  html += '<div class="gen">' + avgBarRow('Alayne', avgOf(rows, 'a'), 'var(--alayne)') + avgBarRow('Blake', avgOf(rows, 'b'), 'var(--blake)') + '</div>';
+
+  /* Category deltas — where you differ */
+  html += '<div class="cmp-section-h">Where you differ, by category</div>';
+  html += '<div class="cmp-hint">Average gap per category · → Alayne scores higher · ← Blake scores higher.</div>';
+  html += categoryDeltaHTML(A, B, ids);
+
   html += '<div class="cmp-section-h">Taste profile</div>';
   html += '<div class="cmp-radar-wrap">' + radarSVG(avA, avB) + '</div>';
+
+  /* Timeline — over the season */
+  if (rows.filter(function (r) { return r.date; }).length >= 2) {
+    html += '<div class="cmp-section-h">Over the season</div>';
+    html += '<div class="cmp-hint">Your totals in the order you saw the plays.</div>';
+    html += '<div class="cmp-chart-wrap">' + timelineSVG(rows) + '</div>';
+  }
+
+  /* Company report card — Melbourne vs Malthouse */
+  html += companyCardHTML(rows);
 
   html += collapsible('Biggest agreements', 'agree', agreements.map(disCard).join(''));
   html += collapsible('Biggest disagreements', 'disagree', disagreements.map(disCard).join(''));
@@ -878,6 +931,120 @@ function collapsible(title, key, inner) {
       '<span class="cmp-chev">' + (col ? '▸' : '▾') + '</span> ' + title +
     '</div>' +
     '<div class="cmp-collapse-body"' + (col ? ' style="display:none"' : '') + '>' + inner + '</div>';
+}
+
+/* ── shared little helpers ── */
+function avgOf(rows, key) { return rows.length ? rows.reduce(function (s, r) { return s + r[key]; }, 0) / rows.length : 0; }
+function fmtShort(d) { return d.getDate() + ' ' + MON[d.getMonth()]; }
+function avgBarRow(name, val, color) {
+  var pct = Math.max(0, Math.min(100, val / MAX_TOTAL * 100));
+  return '<div class="gen-row"><span class="gen-name" style="color:' + color + '">' + name + '</span>' +
+    '<div class="gen-track"><div class="gen-bar" style="width:' + pct.toFixed(1) + '%;background:' + color + '"></div></div>' +
+    '<span class="gen-val">' + val.toFixed(1) + '</span></div>';
+}
+
+/* ── Spearman rank agreement (how similarly you ORDER plays, ignoring baseline) ── */
+function avgRanks(rows, key) {
+  var sorted = rows.slice().sort(function (x, y) { return y[key] - x[key]; });   /* rank 1 = highest */
+  var map = {}, i = 0;
+  while (i < sorted.length) {
+    var j = i;
+    while (j + 1 < sorted.length && sorted[j + 1][key] === sorted[i][key]) j++;
+    var avg = ((i + 1) + (j + 1)) / 2;
+    for (var k = i; k <= j; k++) map[sorted[k].id] = avg;
+    i = j + 1;
+  }
+  return map;
+}
+function pearson(xs, ys) {
+  var n = xs.length, sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0;
+  for (var i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxy += xs[i] * ys[i]; sx2 += xs[i] * xs[i]; sy2 += ys[i] * ys[i]; }
+  var den = Math.sqrt((n * sx2 - sx * sx) * (n * sy2 - sy * sy));
+  return den === 0 ? null : (n * sxy - sx * sy) / den;
+}
+function spearman(rows) {
+  if (rows.length < 2) return null;
+  var ra = avgRanks(rows, 'a'), rb = avgRanks(rows, 'b');
+  return pearson(rows.map(function (r) { return ra[r.id]; }), rows.map(function (r) { return rb[r.id]; }));
+}
+
+/* ── Scatter: Alayne (x) vs Blake (y), dots coloured by who scored higher ── */
+function scatterSVG(rows) {
+  var W = 320, H = 320, pad = 32, plot = W - pad * 2, M = MAX_TOTAL;
+  function X(s) { return pad + (s / M) * plot; }
+  function Y(s) { return pad + plot - (s / M) * plot; }
+  var svg = '<svg class="cmp-chart" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<rect x="' + pad + '" y="' + pad + '" width="' + plot + '" height="' + plot + '" fill="none" stroke="currentColor" stroke-opacity="0.15"/>';
+  svg += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(M) + '" y2="' + Y(M) + '" stroke="currentColor" stroke-opacity="0.28" stroke-dasharray="4 4"/>';
+  rows.forEach(function (r) {
+    var col = r.a > r.b ? 'var(--alayne)' : (r.b > r.a ? 'var(--blake)' : 'currentColor');
+    svg += '<circle cx="' + X(r.a).toFixed(1) + '" cy="' + Y(r.b).toFixed(1) + '" r="4.5" style="fill:' + col + ';fill-opacity:0.85"/>';
+  });
+  svg += '<text x="' + (pad + plot / 2) + '" y="' + (H - 6) + '" font-size="9" font-family="DM Mono,monospace" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Alayne →</text>';
+  svg += '<text x="11" y="' + (pad + plot / 2) + '" font-size="9" font-family="DM Mono,monospace" fill="currentColor" fill-opacity="0.6" text-anchor="middle" transform="rotate(-90 11 ' + (pad + plot / 2) + ')">Blake →</text>';
+  svg += '<text x="' + pad + '" y="' + (pad - 6) + '" font-size="8" fill="currentColor" fill-opacity="0.4">' + M + '</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+/* ── Category deltas: Alayne-avg minus Blake-avg per category ── */
+function categoryDeltaHTML(A, B, ids) {
+  var avA = catAvgsForIds(A, ids), avB = catAvgsForIds(B, ids);
+  var deltas = CATS.map(function (c) { return { label: c.label, d: (avA[c.key] || 0) - (avB[c.key] || 0) }; });
+  var maxAbs = Math.max.apply(null, deltas.map(function (x) { return Math.abs(x.d); }).concat([0.5]));
+  return '<div class="cd">' + deltas.map(function (x) {
+    var pct = Math.abs(x.d) / maxAbs * 50;
+    var pos = x.d >= 0;
+    var style = pos ? ('left:50%;width:' + pct.toFixed(1) + '%;background:var(--alayne)')
+                    : ('left:' + (50 - pct).toFixed(1) + '%;width:' + pct.toFixed(1) + '%;background:var(--blake)');
+    var sign = x.d > 0 ? '+' : (x.d < 0 ? '−' : '±');
+    return '<div class="cd-row"><span class="cd-label">' + x.label + '</span>' +
+      '<div class="cd-track"><div class="cd-center"></div><div class="cd-bar" style="' + style + '"></div></div>' +
+      '<span class="cd-val">' + sign + Math.abs(x.d).toFixed(1) + '</span></div>';
+  }).join('') + '</div>';
+}
+
+/* ── Timeline: both totals over the season, in date order ── */
+function timelineSVG(rows) {
+  var pts = rows.filter(function (r) { return r.date; }).slice().sort(function (x, y) { return x.date - y.date; });
+  if (pts.length < 2) return '';
+  var W = 340, H = 176, padL = 26, padR = 12, padT = 12, padB = 24;
+  var plotW = W - padL - padR, plotH = H - padT - padB, M = MAX_TOTAL;
+  function X(i) { return padL + i / (pts.length - 1) * plotW; }
+  function Y(v) { return padT + plotH - (v / M) * plotH; }
+  var svg = '<svg class="cmp-chart" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  [0, M / 2, M].forEach(function (v) {
+    var y = Y(v);
+    svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="currentColor" stroke-opacity="0.1"/>';
+    svg += '<text x="' + (padL - 4) + '" y="' + (y + 3) + '" font-size="7" fill="currentColor" fill-opacity="0.4" text-anchor="end">' + v + '</text>';
+  });
+  function series(key, color) {
+    var d = pts.map(function (r, i) { return (i === 0 ? 'M' : 'L') + X(i).toFixed(1) + ' ' + Y(r[key]).toFixed(1); }).join(' ');
+    var s = '<path d="' + d + '" fill="none" style="stroke:' + color + '" stroke-width="2"/>';
+    pts.forEach(function (r, i) { s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(r[key]).toFixed(1) + '" r="3" style="fill:' + color + '"/>'; });
+    return s;
+  }
+  svg += series('a', 'var(--alayne)') + series('b', 'var(--blake)');
+  svg += '<text x="' + padL + '" y="' + (H - 7) + '" font-size="7" fill="currentColor" fill-opacity="0.5">' + fmtShort(pts[0].date) + '</text>';
+  svg += '<text x="' + (W - padR) + '" y="' + (H - 7) + '" font-size="7" fill="currentColor" fill-opacity="0.5" text-anchor="end">' + fmtShort(pts[pts.length - 1].date) + '</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+/* ── Company report card — Melbourne vs Malthouse only ── */
+function companyCardHTML(rows) {
+  var TARGETS = ['Melbourne', 'Malthouse'];
+  var blocks = TARGETS.map(function (name) {
+    var cr = rows.filter(function (r) { return r.company.toLowerCase() === name.toLowerCase(); });
+    if (!cr.length) return '';
+    return '<div class="co-block"><div class="co-name">' + esc(name) +
+        ' <span class="co-count">' + cr.length + ' play' + (cr.length === 1 ? '' : 's') + '</span></div>' +
+      avgBarRow('Alayne', avgOf(cr, 'a'), 'var(--alayne)') +
+      avgBarRow('Blake', avgOf(cr, 'b'), 'var(--blake)') + '</div>';
+  }).filter(Boolean);
+  if (!blocks.length) return '';
+  return '<div class="cmp-section-h">Company report card · Melbourne vs Malthouse</div>' +
+    '<div class="co-wrap">' + blocks.join('') + '</div>';
 }
 
 /* Hexagonal radar overlaying two reviewers' category averages. */
