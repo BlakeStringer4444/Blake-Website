@@ -124,6 +124,7 @@ function sanitize(s) {
     lighting: clamp(s.lighting, 5),
     set:      clamp(s.set, 5),
     costume:  clamp(s.costume, 5),
+    xfactor:  clamp(s.xfactor, 5),        /* optional bonus */
     note:     typeof s.note === 'string' ? s.note.slice(0, 600) : '',
     updatedAt: new Date().toISOString(),
   };
