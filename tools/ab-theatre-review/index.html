@@ -122,6 +122,11 @@
 
     .ab-year-head { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--muted); margin: 22px 0 10px; }
     .ab-year-head:first-child { margin-top: 4px; }
+    .ab-divider {
+      display: flex; align-items: center; gap: 12px; margin: 26px 0 12px;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+    }
+    .ab-divider::before, .ab-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
     /* ── PLAY CARD ── */
     .play-card { border: 1px solid var(--border); background: var(--card-bg); margin-bottom: 12px; }
@@ -138,9 +143,13 @@
     .pc-body { padding: 4px 16px 16px; }
     .pc-locked-msg { padding: 8px 16px 16px; font-size: 10px; letter-spacing: 1px; color: var(--muted); }
 
+    .sc-group { padding: 4px 0 8px; }
+    .sc-group + .sc-group { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; }
+    .sc-group-cap { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .sc-group-bonus .sc-group-cap { color: var(--me); }
     .sc-row { display: grid; grid-template-columns: 78px 1fr 34px; align-items: center; gap: 12px; padding: 6px 0; }
     .sc-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
-    .sc-range { width: 100%; accent-color: var(--me); cursor: pointer; }
+    .sc-range { width: 100%; accent-color: var(--me); cursor: pointer; touch-action: none; }
     .sc-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: right; color: var(--fg); }
     .sc-val small { font-size: 10px; color: var(--muted); }
     .pc-note {
@@ -186,6 +195,10 @@
     .cmp-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 11px; }
     .cmp-table .num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; text-align: center; }
     .cmp-table .num.a { color: var(--alayne); } .cmp-table .num.b { color: var(--blake); }
+    .cmp-table th.cmp-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+    .cmp-table th.cmp-sort:hover { color: var(--fg); }
+    .cmp-table th.cmp-sort.active { color: var(--fg); }
+    .cmp-hint { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin: -6px 0 8px; }
 
     .ab-empty { padding: 50px 20px; text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
 
@@ -263,14 +276,20 @@ var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEiGQmBcZgAiFv2F
 var AB_WORKER_URL = 'https://ab-theatre-review.blakestringer.workers.dev';
 
 var CATS = [
-  { key: 'story',    label: 'Story',    max: 10 },
-  { key: 'acting',   label: 'Acting',   max: 10 },
-  { key: 'sound',    label: 'Sound',    max: 5 },
-  { key: 'lighting', label: 'Lighting', max: 5 },
-  { key: 'set',      label: 'Set',      max: 5 },
-  { key: 'costume',  label: 'Costume',  max: 5 },
+  { key: 'story',    label: 'Story',    max: 10, group: 'core10' },
+  { key: 'acting',   label: 'Acting',   max: 10, group: 'core10' },
+  { key: 'sound',    label: 'Sound',    max: 5,  group: 'core5' },
+  { key: 'lighting', label: 'Lighting', max: 5,  group: 'core5' },
+  { key: 'set',      label: 'Set',      max: 5,  group: 'core5' },
+  { key: 'costume',  label: 'Costume',  max: 5,  group: 'core5' },
+  { key: 'xfactor',  label: 'X-Factor', max: 5,  group: 'bonus' },
 ];
-var MAX_TOTAL = 40;
+var GROUPS = [
+  { id: 'core10', cap: 'Out of 10' },
+  { id: 'core5',  cap: 'Out of 5' },
+  { id: 'bonus',  cap: '✦ Bonus — optional' },
+];
+var MAX_TOTAL = 45;   /* Story 10 + Acting 10 + Sound/Lighting/Set/Costume 5 each + X-Factor bonus 5 */
 var NAMES = { alayne: 'Alayne', blake: 'Blake' };
 var OTHER = { alayne: 'blake', blake: 'alayne' };
 
@@ -283,6 +302,7 @@ var state = {
   sortByScore: false,
   search: '',
   compareYear: 'all',
+  cmpSort: { key: 'combined', dir: -1 },   /* combined table sort: default highest total first */
 };
 
 /* ═══════════════ TEXT SIZE (Aa) — mirrors the other tools ═══════════════ */
@@ -445,35 +465,53 @@ function renderYearFilters() {
     years.map(function (y) { return '<button class="ab-btn' + (state.yearFilter === y ? ' on' : '') + '" data-year="' + esc(y) + '">' + esc(y) + '</button>'; }).join('');
 }
 
-function currentPlays() {
+function filteredPlays() {
   var q = state.search.trim().toLowerCase();
-  var list = state.plays.filter(function (p) {
+  return state.plays.filter(function (p) {
     if (state.yearFilter !== 'all' && p.year !== state.yearFilter) return false;
     if (q && (p.title + ' ' + p.company).toLowerCase().indexOf(q) < 0) return false;
     return true;
   });
-  if (state.sortByScore) {
-    list.sort(function (a, b) { return scoreTotal(state.reviews[state.me][b.id]) - scoreTotal(state.reviews[state.me][a.id]); });
-  } else {
-    list.sort(function (a, b) {
-      if (a.year !== b.year) return (b.year || '').localeCompare(a.year || '');
-      var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0;
-      return tb - ta;
-    });
-  }
-  return list;
+}
+
+/* "What's next" ordering: upcoming plays soonest-first, then past plays most-recent-first. */
+function nextnessSort(a, b, nowMs) {
+  var ta = a.date ? a.date.getTime() : Infinity, tb = b.date ? b.date.getTime() : Infinity;
+  var fa = ta >= nowMs, fb = tb >= nowMs;
+  if (fa !== fb) return fa ? -1 : 1;
+  return fa ? (ta - tb) : (tb - ta);
 }
 
 function renderScorer() {
   var body = document.getElementById('scorer-body');
-  var list = currentPlays();
-  if (!list.length) { body.innerHTML = '<div class="ab-empty">No plays match.</div>'; return; }
-  var html = '', lastYear = null;
-  for (var i = 0; i < list.length; i++) {
-    var p = list[i];
-    if (!state.sortByScore && p.year !== lastYear) { html += '<div class="ab-year-head">' + esc(p.year) + '</div>'; lastYear = p.year; }
-    html += p.seen ? cardHTML(p) : lockedHTML(p);
+  var base = filteredPlays();
+  if (!base.length) { body.innerHTML = '<div class="ab-empty">No plays match.</div>'; return; }
+
+  var cell = function (p) { return p.seen ? cardHTML(p) : lockedHTML(p); };
+  var html = '';
+
+  if (state.sortByScore) {
+    /* Flat: my highest score first (unscored sink to the bottom). */
+    base.slice().sort(function (a, b) {
+      return scoreTotal(state.reviews[state.me][b.id]) - scoreTotal(state.reviews[state.me][a.id]);
+    }).forEach(function (p) { html += cell(p); });
+  } else {
+    /* Default: everything you HAVEN'T scored first (by what's next), then your
+       already-scored plays at the bottom. A play only moves down on the next
+       full render, not the instant you score it. */
+    var nowMs = new Date().setHours(0, 0, 0, 0);
+    var unscored = base.filter(function (p) { return !hasScore(state.me, p.id); });
+    var scored   = base.filter(function (p) { return hasScore(state.me, p.id); });
+    unscored.sort(function (a, b) { return nextnessSort(a, b, nowMs); });
+    scored.sort(function (a, b) { var ta = a.date ? a.date.getTime() : 0, tb = b.date ? b.date.getTime() : 0; return tb - ta; });
+
+    unscored.forEach(function (p) { html += cell(p); });
+    if (scored.length) {
+      html += '<div class="ab-divider">Already scored</div>';
+      scored.forEach(function (p) { html += cell(p); });
+    }
   }
+
   body.innerHTML = html;
   bindCards();
 }
@@ -489,12 +527,18 @@ function cardHTML(p) {
   var s = state.reviews[state.me][p.id];
   var scored = !!s;
   var total = scoreTotal(s);
-  var rows = CATS.map(function (c) {
+  function rowHTML(c) {
     var v = s ? (+s[c.key] || 0) : 0;
     return '<div class="sc-row"><span class="sc-label">' + c.label + '</span>' +
       '<input class="sc-range" type="range" min="0" max="' + c.max + '" step="0.5" value="' + v + '" ' +
         'data-cat="' + c.key + '" aria-label="' + c.label + ' out of ' + c.max + '">' +
       '<span class="sc-val" data-val="' + c.key + '">' + (scored ? v : '–') + '<small>/' + c.max + '</small></span></div>';
+  }
+  var rows = GROUPS.map(function (g) {
+    var inGroup = CATS.filter(function (c) { return c.group === g.id; });
+    if (!inGroup.length) return '';
+    return '<div class="sc-group sc-group-' + g.id + '"><div class="sc-group-cap">' + g.cap + '</div>' +
+      inGroup.map(rowHTML).join('') + '</div>';
   }).join('');
 
   return '<div class="play-card" data-id="' + esc(p.id) + '">' +
@@ -615,13 +659,22 @@ function disCard(r) {
     '<span class="gap">' + r.gap + ' apart</span></div></div>';
 }
 function combinedTable(list) {
+  var sk = state.cmpSort.key, dir = state.cmpSort.dir;
+  var sorted = list.slice().sort(function (x, y) {
+    var d = (x[sk] - y[sk]) * dir;
+    return d || (y.combined - x.combined);   /* stable-ish tiebreak on total */
+  });
+  function th(key, label) {
+    var arrow = (sk === key) ? (dir < 0 ? ' ▾' : ' ▴') : '';
+    return '<th class="cmp-sort' + (sk === key ? ' active' : '') + '" style="text-align:center" data-sort="' + key + '">' + label + arrow + '</th>';
+  }
   return '<table class="cmp-table"><thead><tr><th>Play</th>' +
-      '<th style="text-align:center">Alayne</th><th style="text-align:center">Blake</th>' +
-      '<th style="text-align:center">Total</th></tr></thead><tbody>' +
-    list.map(function (r) {
+      th('a', 'Alayne') + th('b', 'Blake') + th('combined', 'Total') +
+    '</tr></thead><tbody>' +
+    sorted.map(function (r) {
       return '<tr><td>' + esc(r.title) + '<div class="cmp-dis-meta">' + esc(r.company) + (r.year ? ' · ' + esc(r.year) : '') + '</div></td>' +
         '<td class="num a">' + r.a + '</td><td class="num b">' + r.b + '</td>' +
-        '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/80</small></td></tr>';
+        '<td class="num">' + r.combined + '<small style="font-size:9px;color:var(--muted)">/' + (MAX_TOTAL * 2) + '</small></td></tr>';
     }).join('') + '</tbody></table>';
 }
 
@@ -667,8 +720,6 @@ function renderCompare() {
 
   var agreements   = rows.slice().sort(function (x, y) { return x.gap - y.gap || y.avg - x.avg; }).slice(0, 5);
   var disagreements = rows.slice().sort(function (x, y) { return y.gap - x.gap; }).slice(0, 5);
-  var highest = rows.slice().sort(function (x, y) { return y.combined - x.combined || y.avg - x.avg; });
-  var lowest  = rows.slice().sort(function (x, y) { return x.combined - y.combined || x.avg - y.avg; });
 
   var html = '';
   html += '<div class="cmp-hero">' +
@@ -689,11 +740,9 @@ function renderCompare() {
   html += '<div class="cmp-section-h">Biggest disagreements</div>';
   html += disagreements.map(disCard).join('');
 
-  html += '<div class="cmp-section-h">Highest combined score</div>';
-  html += combinedTable(highest);
-
-  html += '<div class="cmp-section-h">Lowest combined score</div>';
-  html += combinedTable(lowest);
+  html += '<div class="cmp-section-h">Combined scores</div>';
+  html += '<div class="cmp-hint">Tap a column heading to sort.</div>';
+  html += combinedTable(rows);
 
   body.innerHTML = html;
 }
@@ -742,6 +791,13 @@ document.getElementById('compare-back').addEventListener('click', goHome);
 document.getElementById('compare-years').addEventListener('click', function (e) {
   var b = e.target.closest('[data-cyear]'); if (!b) return;
   state.compareYear = b.getAttribute('data-cyear'); renderCompare();
+});
+document.getElementById('compare-body').addEventListener('click', function (e) {
+  var th = e.target.closest('[data-sort]'); if (!th) return;
+  var k = th.getAttribute('data-sort');
+  if (state.cmpSort.key === k) state.cmpSort.dir *= -1;
+  else state.cmpSort = { key: k, dir: -1 };
+  renderCompare();
 });
 document.getElementById('scorer-search').addEventListener('input', function (e) { state.search = e.target.value; renderScorer(); });
 document.getElementById('year-filters').addEventListener('click', function (e) {
