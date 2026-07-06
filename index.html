@@ -1562,21 +1562,25 @@ body[data-theme="dark"] .card-grid-value { color: #f0f0eb; }
 .theatre-collapsed-hidden { display: none !important; }
 .theatre-expand-row { margin-top: 14px; }
 .theatre-expand-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   font-family: 'DM Mono', monospace;
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--purple);
   border: 1px solid var(--purple);
-  padding: 6px 14px;
+  padding: 14px 16px;
   cursor: pointer;
-  background: transparent;
+  background: rgba(153,51,255,0.06);
   transition: background 0.15s, color 0.15s;
 }
 .theatre-expand-btn:hover { background: var(--purple); color: var(--lime); }
-body[data-theme="dark"] .theatre-expand-btn { color: var(--purple); border-color: var(--purple); }
+body[data-theme="dark"] .theatre-expand-btn { color: var(--purple); border-color: var(--purple); background: rgba(153,51,255,0.12); }
 body[data-theme="dark"] .theatre-expand-btn:hover { background: var(--purple); color: var(--lime); }
-body[data-theme="terminal"] .theatre-expand-btn { color: #FFFFFF; border-color: rgba(255,255,255,0.2); }
+body[data-theme="terminal"] .theatre-expand-btn { color: #FFFFFF; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
 body[data-theme="terminal"] .theatre-expand-btn:hover { background: #FFFFFF; color: #000000; border-color: #FFFFFF; }
 
 /* ── SCROLL PROGRESS BAR ── */
