@@ -1558,6 +1558,27 @@ body[data-theme="dark"] .card-grid-value { color: #f0f0eb; }
 @media (min-width: 640px) { .cv-table-wrap[data-card-hidden] { display: none !important; } }
 @media (max-width: 639px) { .card-grid-container { display: none !important; } }
 
+/* ── THEATRE COLLAPSE (show recent years, expand for older) ── */
+.theatre-collapsed-hidden { display: none !important; }
+.theatre-expand-row { margin-top: 14px; }
+.theatre-expand-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  border: 1px solid var(--purple);
+  padding: 6px 14px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.theatre-expand-btn:hover { background: var(--purple); color: var(--lime); }
+body[data-theme="dark"] .theatre-expand-btn { color: var(--purple); border-color: var(--purple); }
+body[data-theme="dark"] .theatre-expand-btn:hover { background: var(--purple); color: var(--lime); }
+body[data-theme="terminal"] .theatre-expand-btn { color: #FFFFFF; border-color: rgba(255,255,255,0.2); }
+body[data-theme="terminal"] .theatre-expand-btn:hover { background: #FFFFFF; color: #000000; border-color: #FFFFFF; }
+
 /* ── SCROLL PROGRESS BAR ── */
 #scroll-progress {
   position: fixed;
@@ -5767,6 +5788,95 @@ if (siteName) {
     });
     wrap.parentNode.insertBefore(container, wrap);
     wrap.setAttribute('data-card-hidden', '1');
+  });
+})();
+
+/* ── THEATRE COLLAPSE: show most recent 3 years, expand for older ── */
+(function () {
+  const RECENT_YEARS = 3;
+  const sectionIds = ['act-theatre', 'snd-theatre'];
+
+  sectionIds.forEach(function (id) {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const wrap = section.nextElementSibling && section.nextElementSibling.classList.contains('cv-table-wrap')
+      ? section.nextElementSibling
+      : section.parentNode.querySelector('.cv-table-wrap');
+    if (!wrap) return;
+    const table = wrap.querySelector('.cv-table');
+    if (!table) return;
+    // Card grid was inserted immediately before the table wrap by the transform above.
+    const container = wrap.previousElementSibling && wrap.previousElementSibling.classList.contains('card-grid-container')
+      ? wrap.previousElementSibling
+      : null;
+
+    const rows = [...table.querySelectorAll('tbody tr')];
+
+    // Determine the most recent N distinct years present (rows are in descending order).
+    const visibleYears = [];
+    rows.forEach(function (row) {
+      const yr = row.querySelector('td') ? row.querySelector('td').textContent.trim() : '';
+      if (yr && visibleYears.indexOf(yr) === -1 && visibleYears.length < RECENT_YEARS) {
+        visibleYears.push(yr);
+      }
+    });
+    if (!visibleYears.length) return;
+
+    const hidden = [];        // elements to collapse
+    let hiddenCount = 0;      // number of older productions being hidden
+
+    // 1) Mobile table: mark rows whose year is not in the recent set.
+    let currentYear = '';
+    rows.forEach(function (row) {
+      const yr = row.querySelector('td') ? row.querySelector('td').textContent.trim() : '';
+      if (yr) currentYear = yr;
+      if (visibleYears.indexOf(currentYear) === -1) {
+        hidden.push(row);
+        hiddenCount++;
+      }
+    });
+
+    // 2) Desktop card grid: hide the year banner + card row for older years.
+    if (container) {
+      let hideBlock = false;
+      [...container.children].forEach(function (child) {
+        if (child.classList.contains('card-grid-year')) {
+          hideBlock = visibleYears.indexOf(child.textContent.trim()) === -1;
+          if (hideBlock) hidden.push(child);
+        } else if (hideBlock) {
+          hidden.push(child);
+        }
+      });
+    }
+
+    if (!hidden.length) return;
+
+    // Build the expand / collapse toggle (visible in both layouts).
+    const btnRow = document.createElement('div');
+    btnRow.className = 'theatre-expand-row';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'theatre-expand-btn';
+    btn.setAttribute('aria-expanded', 'false');
+    const labelClosed = 'Show ' + hiddenCount + ' earlier production' + (hiddenCount === 1 ? '' : 's') + ' ⌄';
+    const labelOpen = 'Show fewer productions ⌃';
+    btn.textContent = labelClosed;
+    btnRow.appendChild(btn);
+    wrap.parentNode.insertBefore(btnRow, wrap.nextSibling);
+
+    function setCollapsed(collapsed) {
+      hidden.forEach(function (el) {
+        el.classList.toggle('theatre-collapsed-hidden', collapsed);
+      });
+      btn.textContent = collapsed ? labelClosed : labelOpen;
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    setCollapsed(true);
+    btn.addEventListener('click', function () {
+      const collapsed = btn.getAttribute('aria-expanded') === 'true';
+      setCollapsed(collapsed);
+    });
   });
 })();
 
