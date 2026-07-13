@@ -100,6 +100,16 @@ const DAILY_BUDGET_CENTS = 1000;            /* ≈ US$10/day. Change to taste. *
 const MAX_OCR_IMAGES     = 150;
 const MAX_BODY_BYTES     = 25 * 1024 * 1024;
 
+/* Content-advisory taxonomy — shared by the overview + scenebatch prompts. The
+   client maps these exact keys to display labels/icons, so keep them in sync. */
+const ADVISORY_CATS =
+  'Allowed keys: intimacy (kissing, simulated sex, nudity, sexual references), ' +
+  'sexual-violence (rape, sexual assault or coercion), suicide (suicide, suicidal ideation, self-harm), ' +
+  'violence (physical violence, murder, gore), death (death, dying, grief, terminal illness), ' +
+  'substance (drug or alcohol abuse, addiction), abuse (domestic, child or sustained emotional abuse), ' +
+  'mental-illness (depression, breakdown, serious mental illness), language (frequent coarse language, ' +
+  'profanity, slurs), discrimination (racism, homophobia or other hate).';
+
 export default {
   async fetch(request, env) {
     const origin  = request.headers.get('Origin') || '';
@@ -296,12 +306,17 @@ async function handleOverview(body, env) {
     '"profiles":[{"name":"<character name as printed>","age":"<approx age or range>",' +
     '"summary":"<at most two short paragraphs: personality, what they want, key relationships and how they change>"}],' +
     '"themes":["<short theme phrase>"],' +
+    '"contentWarnings":[{"category":"<one of the allowed keys>","severity":"central"|"referenced"}],' +
     '"sceneList":["<scene-division label>"]}\n\n' +
     'Rules:\n' +
     '- PROFILES: only the SIGNIFICANT characters, ordered by importance; omit one-line/ensemble roles. ' +
     'Each summary is AT MOST two short paragraphs, specific to THIS play, never generic.\n' +
     '- AGE: exact age if stated; otherwise a realistic estimate/range (e.g. "late 30s", "teenager"); ' +
     'use "unspecified" only if there is genuinely no basis.\n' +
+    '- CONTENT WARNINGS: flag mature/sensitive content an actor deciding whether to audition would want to ' +
+    'know about. ' + ADVISORY_CATS + ' Use ONLY these exact category keys, and include a key ONLY if it is ' +
+    'genuinely present in the script. severity="central" for a major or recurring element, "referenced" for ' +
+    'a brief or minor one. Return an EMPTY array if the play has none. Do not invent or over-flag.\n' +
     '- sceneList: labels ONLY, in performance order, at most 60 entries. No scene summaries here.\n' +
     '- Use 3-8 themes maximum.\n' +
     'Output JSON only.';
@@ -334,11 +349,14 @@ async function handleSceneBatch(body, env) {
     'the script — never invent characters or events.\n\n' +
     'Return ONLY valid JSON, no markdown, in exactly this shape:\n' +
     '{"scenes":[{"heading":"<the scene label>","characters":["<NAMES present in the scene>"],' +
-    '"summary":"<2-5 sentences: what happens, the key beats, and how relationships shift>"}]}\n\n' +
+    '"summary":"<2-5 sentences: what happens, the key beats, and how relationships shift>",' +
+    '"warnings":["<content-warning keys present in THIS scene>"]}]}\n\n' +
     'Rules:\n' +
     '- Return EXACTLY one entry per requested label, in the same order, with "heading" set to that label.\n' +
     '- Keep every summary concrete and specific to THIS script — not generic.\n' +
     '- Names in "characters" should match how they appear in the script.\n' +
+    '- warnings: for EACH scene, list which of these keys apply to what happens in that scene (empty array if ' +
+    'none). ' + ADVISORY_CATS + ' Use ONLY these exact keys; flag only what genuinely occurs in the scene.\n' +
     'Output JSON only.';
 
   const out = await callClaude(env, {
