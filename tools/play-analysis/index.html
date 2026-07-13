@@ -199,6 +199,44 @@
     #jump-top-btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 
     /* ── CHARACTER PROFILES ── */
+    /* ── CONTENT ADVISORY ── */
+    .advisory-panel { flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--card-bg); }
+    .adv-head {
+      padding: 14px 16px 10px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .adv-warn { font-size: 13px; }
+    #advisory-body { padding: 0 16px 16px; max-width: 820px; }
+    .adv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .adv-chip {
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      font-family: var(--font); font-size: 11px; letter-spacing: 0.3px; color: var(--fg);
+      background: none; border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .adv-chip:hover { border-color: var(--purple); }
+    [data-theme="dark"] .adv-chip:hover, [data-theme="terminal"] .adv-chip:hover { border-color: var(--lime); }
+    .adv-ico { font-size: 12px; line-height: 1; }
+    .adv-sev {
+      font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+      border-left: 1px solid var(--border); padding-left: 7px; margin-left: 1px;
+    }
+    /* Central themes: filled accent so the heavy plays read at a glance. */
+    .adv-chip.central { border-color: var(--purple); background: rgba(153,51,255,0.10); }
+    .adv-chip.central .adv-sev { color: var(--purple); border-left-color: rgba(153,51,255,0.35); }
+    [data-theme="dark"] .adv-chip.central, [data-theme="terminal"] .adv-chip.central { border-color: var(--lime); background: rgba(212,255,26,0.10); }
+    [data-theme="dark"] .adv-chip.central .adv-sev, [data-theme="terminal"] .adv-chip.central .adv-sev { color: var(--lime); border-left-color: rgba(212,255,26,0.35); }
+    .adv-none { font-size: 11px; color: var(--muted); letter-spacing: 0.3px; line-height: 1.7; }
+    .adv-foot { font-size: 8px; letter-spacing: 0.5px; color: var(--muted); opacity: 0.75; margin-top: 10px; }
+    /* Per-scene tags inside the scene-by-scene summary */
+    .ss-warns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .ss-warn-tag {
+      font-size: 8px; letter-spacing: 0.5px; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px;
+    }
+    .summary-scene.ss-flash { background: rgba(153,51,255,0.09); transition: background 0.3s; }
+    [data-theme="dark"] .summary-scene.ss-flash, [data-theme="terminal"] .summary-scene.ss-flash { background: rgba(212,255,26,0.09); }
+
     .profiles-panel { border-top: 6px solid var(--border); flex-shrink: 0; }
     #profiles-body { padding: 6px 16px 28px; max-width: 760px; }
     .profile-card { padding: 16px 0; border-bottom: 1px solid var(--border); }
@@ -518,10 +556,18 @@
   <!-- ANALYSIS SCREEN -->
   <div id="analysis-screen">
     <nav class="analysis-nav" id="analysis-nav" aria-label="Jump to section">
+      <button class="anav-btn" type="button" data-jump="advisory-panel" id="anav-advisory" style="display:none">Advisory</button>
       <button class="anav-btn" type="button" data-jump="char-panel">Line Count</button>
       <button class="anav-btn" type="button" data-jump="profiles-panel" id="anav-profiles">Character Summary</button>
       <button class="anav-btn" type="button" data-jump="summary-panel">Scene-by-Scene</button>
     </nav>
+
+    <!-- CONTENT ADVISORY -->
+    <div class="advisory-panel" id="advisory-panel" style="display:none">
+      <div class="adv-head"><span class="adv-warn">⚠</span> Content Advisory</div>
+      <div id="advisory-body"></div>
+    </div>
+
     <div class="char-panel" id="char-panel">
       <div class="panel-header">sorted by word count</div>
       <div class="char-table-wrap">
@@ -1449,7 +1495,8 @@ async function generateSummary(text, scenes, title, onProg) {
     synopsis: ov.synopsis || '',
     profiles: Array.isArray(ov.profiles) ? ov.profiles : [],
     themes:   Array.isArray(ov.themes)   ? ov.themes   : [],
-    scenes:   [],
+    contentWarnings: Array.isArray(ov.contentWarnings) ? ov.contentWarnings : [],
+    scenes:   [],   /* each scene may carry a .warnings array from scenebatch */
   };
 
   if (sceneList.length) {
@@ -1494,12 +1541,19 @@ function renderSummary(sum) {
   if (sum.synopsis) html += '<div class="summary-synopsis">' + esc(sum.synopsis) + '</div>';
   for (var i = 0; i < sum.scenes.length; i++) {
     var sc = sum.scenes[i] || {};
-    html += '<div class="summary-scene">';
+    var warns = Array.isArray(sc.warnings) ? sc.warnings.filter(function (w) { return w; }) : [];
+    html += '<div class="summary-scene" data-warn="' + esc(warns.join(' ')) + '">';
     html += '<div class="ss-heading">' + esc(sc.heading || ('Scene ' + (i + 1))) + '</div>';
     if (Array.isArray(sc.characters) && sc.characters.length) {
       html += '<div class="ss-chars">' + sc.characters.map(esc).join(' · ') + '</div>';
     }
     html += '<div class="ss-text">' + esc(sc.summary || '') + '</div>';
+    if (warns.length) {
+      html += '<div class="ss-warns">' + warns.map(function (w) {
+        var a = ADVISORY[w] || { label: w, icon: '•' };
+        return '<span class="ss-warn-tag">' + a.icon + ' ' + esc(a.label) + '</span>';
+      }).join('') + '</div>';
+    }
     html += '</div>';
   }
   if (Array.isArray(sum.themes) && sum.themes.length) {
@@ -1509,6 +1563,69 @@ function renderSummary(sum) {
   }
   summaryBody.innerHTML = html;
 }
+
+/* ── CONTENT ADVISORY ──
+   Keys must match the Worker's ADVISORY_CATS taxonomy. */
+var ADVISORY = {
+  'intimacy':        { label: 'Intimacy',            icon: '💋' },
+  'sexual-violence': { label: 'Sexual assault',      icon: '⚠️' },
+  'suicide':         { label: 'Suicide / self-harm', icon: '🕯️' },
+  'violence':        { label: 'Violence',            icon: '💥' },
+  'death':           { label: 'Death / grief',       icon: '🖤' },
+  'substance':       { label: 'Substance abuse',     icon: '🍸' },
+  'abuse':           { label: 'Abuse',               icon: '🚫' },
+  'mental-illness':  { label: 'Mental illness',      icon: '🧠' },
+  'language':        { label: 'Strong language',     icon: '🗣️' },
+  'discrimination':  { label: 'Discrimination',      icon: '⚖️' },
+};
+var advisoryPanel = document.getElementById('advisory-panel');
+var advisoryBody  = document.getElementById('advisory-body');
+var anavAdvisory  = document.getElementById('anav-advisory');
+
+function renderAdvisory(sum) {
+  /* Only show once the play has actually been checked (summary generated with a
+     contentWarnings array). Old cached summaries without the field stay hidden. */
+  var checked = sum && Array.isArray(sum.contentWarnings);
+  advisoryPanel.style.display = checked ? '' : 'none';
+  if (anavAdvisory) anavAdvisory.style.display = checked ? '' : 'none';
+  if (!checked) { advisoryBody.innerHTML = ''; return; }
+
+  var cw = sum.contentWarnings;
+  if (!cw.length) {
+    advisoryBody.innerHTML = '<div class="adv-none">No significant mature content flagged. Always read the full script.</div>';
+    return;
+  }
+  /* Central first, then referenced. */
+  var order = { central: 0, referenced: 1 };
+  cw = cw.slice().sort(function (x, y) { return (order[x.severity] || 0) - (order[y.severity] || 0); });
+
+  advisoryBody.innerHTML =
+    '<div class="adv-chips">' + cw.map(function (w) {
+      var a = ADVISORY[w.category] || { label: w.category, icon: '•' };
+      var central = w.severity === 'central';
+      return '<button class="adv-chip' + (central ? ' central' : '') + '" type="button" data-cat="' + esc(w.category) + '" title="Jump to where this appears">' +
+        '<span class="adv-ico">' + a.icon + '</span> ' + esc(a.label) +
+        '<span class="adv-sev">' + (central ? 'central' : 'referenced') + '</span></button>';
+    }).join('') + '</div>' +
+    '<div class="adv-foot">Tap a theme to jump to the scenes it appears in · always read the full script.</div>';
+}
+
+/* Scroll the analysis screen to an element (robust to offsetParent quirks). */
+function scrollToEl(el) {
+  var navH = analysisNav ? analysisNav.offsetHeight : 0;
+  var top = analysisScreen.scrollTop + el.getBoundingClientRect().top - analysisScreen.getBoundingClientRect().top - navH - 6;
+  analysisScreen.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+
+/* Tap an advisory chip → jump to (and briefly flash) the scenes it appears in. */
+advisoryBody.addEventListener('click', function (e) {
+  var chip = e.target.closest('.adv-chip'); if (!chip) return;
+  var cat = chip.getAttribute('data-cat');
+  var matches = summaryBody.querySelectorAll('.summary-scene[data-warn~="' + cat + '"]');
+  if (!matches.length) { showToast('That theme isn’t tagged to a specific scene.'); return; }
+  matches.forEach(function (m) { m.classList.add('ss-flash'); setTimeout(function () { m.classList.remove('ss-flash'); }, 1600); });
+  scrollToEl(matches[0]);
+});
 
 /* Character profiles panel (sits between the line table and the scene summary). */
 var profilesPanel = document.getElementById('profiles-panel');
@@ -1538,6 +1655,7 @@ function renderProfiles(profiles) {
 
 function renderSummaryState() {
   var sum = parsedScript && parsedScript.summary;
+  renderAdvisory(sum);
   renderProfiles(sum && sum.profiles);
   if (sum && Array.isArray(sum.scenes) && sum.scenes.length) { renderSummary(sum); return; }
   var sa = document.getElementById('summary-actions');
@@ -1598,6 +1716,10 @@ async function generateAndShowSummary() {
   if (summaryGenerating) return;
   summaryGenerating = true;
   setSummaryLoading(0, 0);
+  /* Reserve the advisory band with a placeholder so it doesn't pop in later. */
+  advisoryPanel.style.display = '';
+  if (anavAdvisory) anavAdvisory.style.display = '';
+  advisoryBody.innerHTML = '<div class="adv-none">Checking the script for content notes…</div>';
   try {
     var text = await getSummarySourceText();
     if (!text) throw new Error('no-source');
@@ -1609,6 +1731,7 @@ async function generateAndShowSummary() {
     );
     if (!sum) throw new Error('failed');
     parsedScript.summary = sum;
+    renderAdvisory(sum);
     renderProfiles(sum.profiles);
     renderSummary(sum);
     persistResult(paSource && paSource.hash, paSource && paSource.fp, parsedScript);
