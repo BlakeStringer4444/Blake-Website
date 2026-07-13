@@ -291,10 +291,15 @@ async function handleOverview(body, env) {
   const script = text.length > MAX ? text.slice(0, MAX) : text;
 
   const sceneHint = scenes.length
-    ? 'These scene/act headings were detected in the script — return them in "sceneList" ' +
-      'UNCHANGED and in order (you may trim obvious duplicates): ' + JSON.stringify(scenes.slice(0, 80)) + '.'
-    : 'No scene headings were detected. Divide the play into sensible scenes yourself and put ' +
-      'each scene-division label (e.g. "Scene 1 — the kitchen, morning") in "sceneList" in order.';
+    ? 'A script parser detected these scene/act headings, but the list is often INCOMPLETE or ' +
+      'mis-numbered — treat it only as a rough guide: ' + JSON.stringify(scenes.slice(0, 80)) + '. ' +
+      'In "sceneList" return a COMPLETE list of the play\'s scenes in performance order, covering the ' +
+      'ENTIRE play from the first scene to the last. Read the whole script and divide it yourself: prefer ' +
+      'the script\'s own scene labels where they exist, ADD every scene missing from the detected list, and ' +
+      'FIX any wrong, duplicated or out-of-sequence numbering (a 12-scene play must list all 12, numbered 1–12).'
+    : 'No scene headings were detected. Read the whole script and divide the play into its scenes yourself, ' +
+      'putting each scene-division label (e.g. "Scene 1 — the kitchen, morning") in "sceneList" in order, ' +
+      'covering the ENTIRE play from first scene to last.';
 
   const system =
     'You are a dramaturg preparing study notes for actors and directors. You receive the full ' +
@@ -317,7 +322,8 @@ async function handleOverview(body, env) {
     'know about. ' + ADVISORY_CATS + ' Use ONLY these exact category keys, and include a key ONLY if it is ' +
     'genuinely present in the script. severity="central" for a major or recurring element, "referenced" for ' +
     'a brief or minor one. Return an EMPTY array if the play has none. Do not invent or over-flag.\n' +
-    '- sceneList: labels ONLY, in performance order, at most 60 entries. No scene summaries here.\n' +
+    '- sceneList: labels ONLY, in performance order, covering the WHOLE play from start to finish (do not ' +
+    'stop early or list only a couple of scenes), at most 60 entries. No scene summaries here.\n' +
     '- Use 3-8 themes maximum.\n' +
     'Output JSON only.';
 
