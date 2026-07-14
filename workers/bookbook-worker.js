@@ -22,7 +22,7 @@
  *   3. Worker → Settings → Bindings → Add → KV namespace:
  *        Variable name: BOOKBOOK   →   the namespace from step 2
  *   4. Copy the worker URL (e.g. https://bookbook.YOUR-NAME.workers.dev)
- *   5. Paste that URL into BB_WORKER_URL in bookbook/index.html
+ *   5. Paste that URL into BB_WORKER_URL in tools/bookbook/index.html
  */
 
 const ALLOWED_ORIGINS = [
