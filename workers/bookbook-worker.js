@@ -98,8 +98,9 @@ async function handleSave(body, env) {
 
 function sanitize(s) {
   if (!s || typeof s !== 'object') return null;
-  let rating = Math.round(Number(s.rating));
+  let rating = Number(s.rating);
   if (!Number.isFinite(rating)) rating = 0;
+  rating = Math.round(rating * 2) / 2;   /* snap to the nearest 0.5 */
   rating = Math.max(0, Math.min(5, rating));
   return {
     read:   !!s.read,
