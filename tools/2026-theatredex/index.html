@@ -1666,26 +1666,23 @@ async function loadTdInlineLB(col, containerId) {
 /* ── THEME ── */
 const themeBtn = document.getElementById('td-theme-btn');
 const sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
-const lockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
 
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  themeBtn.innerHTML = theme === 'terminal' ? lockSVG : theme === 'dark' ? sunSVG : '☾';
-  if (theme === 'terminal') {
-    sessionStorage.setItem('theme', 'terminal');
-  } else {
-    localStorage.setItem('theme', theme);
-    sessionStorage.removeItem('theme');
-  }
+  themeBtn.innerHTML = theme === 'dark' ? sunSVG : '☾';
+  localStorage.setItem('theme', theme);
 }
 
 (function () {
-  const saved = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'light';
+  /* Terminal mode has been removed; fold any leftover terminal preference into dark. */
+  let saved = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'light';
+  if (saved === 'terminal') saved = 'dark';
+  sessionStorage.removeItem('theme');
   setTheme(saved);
 })();
 
 themeBtn.addEventListener('click', () => {
-  const themes = ['light', 'dark', 'terminal'];
+  const themes = ['light', 'dark'];
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
   setTheme(themes[(themes.indexOf(cur) + 1) % themes.length]);
 });
@@ -3720,7 +3717,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   function tileUrl() {
     const t = document.documentElement.dataset.theme || '';
-    return (t === 'dark' || t === 'terminal')
+    return (t === 'dark')
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
   }
