@@ -130,8 +130,9 @@
     .bb-read-btn:hover { border-color: var(--accent); color: var(--accent); }
     .bb-card.read .bb-read-btn { border-color: var(--gold); color: var(--gold); }
     .bb-stars { display: inline-flex; gap: 2px; }
-    .bb-star { cursor: pointer; font-size: 17px; line-height: 1; color: var(--line); transition: color 0.1s; user-select: none; }
-    .bb-star.lit { color: var(--gold); }
+    .bb-star { position: relative; display: inline-block; width: 17px; height: 17px; cursor: pointer; user-select: none; touch-action: manipulation; }
+    .bb-star-bg { position: absolute; inset: 0; font-size: 17px; line-height: 1; color: var(--line); }
+    .bb-star-fill { position: absolute; inset: 0; font-size: 17px; line-height: 1; color: var(--gold); overflow: hidden; white-space: nowrap; }
     .bb-note {
       width: 100%; margin-top: 11px; background: var(--panel2); border: 1px solid var(--line); color: var(--ink);
       font-family: var(--ui); font-size: 11px; line-height: 1.6; padding: 8px 10px; border-radius: 3px; resize: vertical; min-height: 34px;
@@ -167,7 +168,7 @@
     <div class="bb-top">
       <div>
         <h1 class="bb-title">Book<span class="bk">Book</span></h1>
-        <div class="bb-sub">Alayne's library · 200 great books</div>
+        <div class="bb-sub">Alayne's Library</div>
       </div>
       <div class="bb-actions">
         <button class="bb-icon-btn" id="bb-font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
@@ -364,14 +365,28 @@ function filtered() {
   return list;
 }
 
+/* Half-star capable rating widget: each star is a background (empty) glyph with
+   a gold glyph laid over it, clipped to 0/50/100% width for empty/half/full. */
+function starsHTML(rating) {
+  var out = '';
+  for (var i = 1; i <= 5; i++) {
+    var frac = Math.max(0, Math.min(1, rating - (i - 1)));
+    var pct = frac >= 1 ? 100 : (frac >= 0.5 ? 50 : 0);
+    out += '<span class="bb-star" data-v="' + i + '">' +
+      '<span class="bb-star-bg">★</span>' +
+      (pct ? '<span class="bb-star-fill" style="width:' + pct + '%">★</span>' : '') +
+    '</span>';
+  }
+  return out;
+}
+
 function cardHTML(b) {
   var st = bState(b.no);
   var badges = '';
   if (b.critics) badges += '<span class="bb-badge">Critics #' + b.critics + '</span>';
   if (b.readers) badges += '<span class="bb-badge">Readers #' + b.readers + '</span>';
   if (b.both) badges += '<span class="bb-badge both">★ Both lists</span>';
-  var stars = '';
-  for (var i = 1; i <= 5; i++) stars += '<span class="bb-star' + (i <= st.rating ? ' lit' : '') + '" data-v="' + i + '">★</span>';
+  var stars = starsHTML(st.rating);
   return '<article class="bb-card' + (st.read ? ' read' : '') + '" data-no="' + esc(b.no) + '" style="--spine:' + spineColor(b) + '">' +
     '<div class="bb-book-title">' + esc(b.title) + '</div>' +
     '<div class="bb-book-meta">' + esc(b.author || 'Unknown') + (b.year ? ' · ' + b.year : '') + '</div>' +
@@ -414,8 +429,12 @@ grid.addEventListener('click', function (e) {
     if (!st.read && !st.rating && !st.note) delete state.data[no];
     saveBook(no); refreshCard(card, no); renderHero();
   } else if (e.target.closest('.bb-star')) {
-    var v = +e.target.closest('.bb-star').getAttribute('data-v');
-    var s2 = ensure(no); s2.rating = (s2.rating === v ? 0 : v);
+    var starEl = e.target.closest('.bb-star');
+    var v = +starEl.getAttribute('data-v');
+    var rect = starEl.getBoundingClientRect();
+    var half = (e.clientX - rect.left) < rect.width / 2;
+    var newVal = half ? v - 0.5 : v;
+    var s2 = ensure(no); s2.rating = (s2.rating === newVal ? 0 : newVal);
     saveBook(no); refreshCard(card, no); renderHero();
   }
 });
