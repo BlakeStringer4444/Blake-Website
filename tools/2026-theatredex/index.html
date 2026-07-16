@@ -169,6 +169,15 @@ body {
   color: rgba(212,255,26,0.5);
   margin-top: 6px;
 }
+/* Static, always-visible intro copy (not dependent on the CSV load) — real
+   crawlable content for search engines even before the show grid populates. */
+.td-intro {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; line-height: 1.65;
+  color: var(--muted);
+  max-width: 620px;
+  margin-top: 14px;
+}
 
 /* ── SCREEN-READER ONLY UTILITY ── */
 .td-sr-only {
@@ -1487,6 +1496,7 @@ button.td-link { background: none; cursor: pointer; }
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
   <p class="td-subtitle">Blake's nerdy attempt to capture all <span style="background:linear-gradient(currentColor,currentColor) no-repeat 0 100% / calc(100% - 3px) 1px">plays</span> in community theatre in Victoria lol</p>
+  <p class="td-intro">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
   <div class="td-header-btns">
     <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
@@ -1521,7 +1531,7 @@ button.td-link { background: none; cursor: pointer; }
 
 <main class="td-main">
   <div class="td-grid" id="td-grid">
-    <div class="td-loading">Loading shows…</div>
+    <div class="td-loading">Loading 2026 Victorian community theatre productions…</div>
   </div>
 </main>
 
@@ -3743,11 +3753,41 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return { ...p, marker };
     });
 
+    /* ── Fan out venue-mates so shared-venue dots never sit on top of each other.
+       Markers at (near-)identical coords are pushed onto a small circle around
+       their true point. The offset is applied in PIXEL space and recomputed on
+       every zoom, so the dots stay a constant, readable distance apart at any
+       zoom level. p.lat/p.lng stay the true coords (used for the list + distance);
+       only the marker's drawn position is nudged. ── */
+    const spider = [];
+    const groups = new Map();
+    mapPinsData.forEach(p => {
+      const key = p.lat.toFixed(4) + ',' + p.lng.toFixed(4);   /* ~11 m = same building */
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(p);
+    });
+    groups.forEach(list => {
+      if (list.length < 2) return;
+      const n = list.length, R = Math.max(16, n * 4);
+      list.forEach((p, i) => {
+        const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+        spider.push({ m: p.marker, anchor: L.latLng(p.lat, p.lng), dx: Math.cos(a) * R, dy: Math.sin(a) * R });
+      });
+    });
+    function relayoutSpider() {
+      spider.forEach(s => {
+        const pt = leafletMap.latLngToLayerPoint(s.anchor);
+        s.m.setLatLng(leafletMap.layerPointToLatLng(L.point(pt.x + s.dx, pt.y + s.dy)));
+      });
+    }
+    if (spider.length) leafletMap.on('zoomend', relayoutSpider);
+
     if (mapPinsData.length) {
       leafletMap.fitBounds(
         L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1)
       );
     }
+    relayoutSpider();
     renderList(mapPinsData, false);
   }
 
