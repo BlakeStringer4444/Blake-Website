@@ -1416,6 +1416,35 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   to   { transform: scale(1);    opacity: 1; }
 }
 
+/* ── DIRECTING BANNER + LIGHTBOX ── */
+.dir-banner {
+  display: block; width: 100%; margin: 26px 0 6px;
+  border-radius: 6px; overflow: hidden; cursor: zoom-in;
+  border: 1px solid rgba(0,0,0,0.12); line-height: 0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.dir-banner:hover { box-shadow: 0 8px 26px rgba(0,0,0,0.18); }
+.dir-banner img { display: block; width: 100%; height: auto; }
+body[data-theme="dark"] .dir-banner,
+body[data-theme="terminal"] .dir-banner { border-color: rgba(255,255,255,0.14); }
+.dir-lightbox {
+  display: none; position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 20px;
+}
+.dir-lightbox.open { display: flex; animation: act-lb-fade 0.18s ease; }
+.dir-lightbox img {
+  max-width: min(96vw, 1400px); max-height: 90vh; width: auto; height: auto;
+  object-fit: contain; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  cursor: default; animation: act-lb-zoom 0.2s ease;
+}
+.dir-lightbox-close {
+  position: absolute; top: 16px; right: 20px; background: none;
+  border: 1px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.8);
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+  cursor: pointer; padding: 7px 11px; line-height: 1; border-radius: 2px;
+}
+.dir-lightbox-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
 .back-to-top {
   position: fixed;
@@ -3404,6 +3433,10 @@ body[data-theme="terminal"] :focus-visible {
         <a class="jump-btn" href="#dir-films">Short Films &amp; Trailers</a>
         <a class="jump-btn" href="#dir-software">Software</a>
       </div>
+
+      <a class="dir-banner" id="dir-banner" href="Images/directing-asak-banner.jpg" aria-label="Expand poster: A Simple Act of Kindness">
+        <img loading="lazy" decoding="async" src="Images/directing-asak-banner.jpg" alt="A Simple Act of Kindness by Ross Mueller, directed by Blake Stringer — Brighton Theatre Company, 6–21 November 2026">
+      </a>
 
       <div class="section-sublabel" id="dir-theatre">Theatre</div>
       <div class="cv-table-wrap">
@@ -5882,6 +5915,37 @@ if (siteName) {
       setCollapsed(collapsed);
     });
   });
+})();
+
+/* ── DIRECTING BANNER LIGHTBOX ── */
+(function () {
+  const banner = document.getElementById('dir-banner');
+  if (!banner) return;
+  /* If the banner image isn't there yet, hide the block rather than show a
+     broken-image icon (safe to ship before the file is added). */
+  const bimg = banner.querySelector('img');
+  function hideIfBroken() { if (bimg.complete && bimg.naturalWidth === 0) banner.style.display = 'none'; }
+  bimg.addEventListener('error', function () { banner.style.display = 'none'; });
+  hideIfBroken();
+  const src = banner.getAttribute('href');
+  const lb = document.createElement('div');
+  lb.className = 'dir-lightbox';
+  const img = document.createElement('img');
+  img.alt = banner.querySelector('img') ? banner.querySelector('img').alt : '';
+  const close = document.createElement('button');
+  close.className = 'dir-lightbox-close';
+  close.type = 'button';
+  close.textContent = '✕ CLOSE';
+  close.setAttribute('aria-label', 'Close');
+  lb.appendChild(img);
+  lb.appendChild(close);
+  document.body.appendChild(lb);
+
+  function open() { if (!img.src) img.src = src; lb.classList.add('open'); }
+  function shut() { lb.classList.remove('open'); }
+  banner.addEventListener('click', function (e) { e.preventDefault(); open(); });
+  lb.addEventListener('click', function (e) { if (e.target !== img) shut(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lb.classList.contains('open')) shut(); });
 })();
 
 /* ── SCROLL PROGRESS BAR ── */
