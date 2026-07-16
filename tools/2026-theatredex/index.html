@@ -3753,11 +3753,41 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return { ...p, marker };
     });
 
+    /* ── Fan out venue-mates so shared-venue dots never sit on top of each other.
+       Markers at (near-)identical coords are pushed onto a small circle around
+       their true point. The offset is applied in PIXEL space and recomputed on
+       every zoom, so the dots stay a constant, readable distance apart at any
+       zoom level. p.lat/p.lng stay the true coords (used for the list + distance);
+       only the marker's drawn position is nudged. ── */
+    const spider = [];
+    const groups = new Map();
+    mapPinsData.forEach(p => {
+      const key = p.lat.toFixed(4) + ',' + p.lng.toFixed(4);   /* ~11 m = same building */
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(p);
+    });
+    groups.forEach(list => {
+      if (list.length < 2) return;
+      const n = list.length, R = Math.max(16, n * 4);
+      list.forEach((p, i) => {
+        const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+        spider.push({ m: p.marker, anchor: L.latLng(p.lat, p.lng), dx: Math.cos(a) * R, dy: Math.sin(a) * R });
+      });
+    });
+    function relayoutSpider() {
+      spider.forEach(s => {
+        const pt = leafletMap.latLngToLayerPoint(s.anchor);
+        s.m.setLatLng(leafletMap.layerPointToLatLng(L.point(pt.x + s.dx, pt.y + s.dy)));
+      });
+    }
+    if (spider.length) leafletMap.on('zoomend', relayoutSpider);
+
     if (mapPinsData.length) {
       leafletMap.fitBounds(
         L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1)
       );
     }
+    relayoutSpider();
     renderList(mapPinsData, false);
   }
 
