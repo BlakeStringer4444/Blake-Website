@@ -3753,41 +3753,57 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return { ...p, marker };
     });
 
-    /* ── Fan out venue-mates so shared-venue dots never sit on top of each other.
-       Markers at (near-)identical coords are pushed onto a small circle around
-       their true point. The offset is applied in PIXEL space and recomputed on
-       every zoom, so the dots stay a constant, readable distance apart at any
-       zoom level. p.lat/p.lng stay the true coords (used for the list + distance);
-       only the marker's drawn position is nudged. ── */
-    const spider = [];
-    const groups = new Map();
-    mapPinsData.forEach(p => {
-      const key = p.lat.toFixed(4) + ',' + p.lng.toFixed(4);   /* ~11 m = same building */
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(p);
-    });
-    groups.forEach(list => {
-      if (list.length < 2) return;
-      const n = list.length, R = Math.max(16, n * 4);
-      list.forEach((p, i) => {
-        const a = (i / n) * 2 * Math.PI - Math.PI / 2;
-        spider.push({ m: p.marker, anchor: L.latLng(p.lat, p.lng), dx: Math.cos(a) * R, dy: Math.sin(a) * R });
-      });
-    });
-    function relayoutSpider() {
-      spider.forEach(s => {
-        const pt = leafletMap.latLngToLayerPoint(s.anchor);
-        s.m.setLatLng(leafletMap.layerPointToLatLng(L.point(pt.x + s.dx, pt.y + s.dy)));
+    /* ── Declutter: recomputed on every zoom from each dot's TRUE position.
+       Any dots whose markers would visually overlap at the current zoom are
+       pushed apart onto a small circle just far enough to separate them; dots
+       that don't overlap sit exactly on their real coordinates. So zoomed out,
+       touching dots fan apart; as you zoom in and real gaps appear, they settle
+       back onto their accurate spots. p.lat/p.lng stay the true coords (list +
+       distance use them); only the marker's drawn position moves. ── */
+    mapPinsData.forEach(p => { p._anchor = L.latLng(p.lat, p.lng); });
+
+    function declutter() {
+      if (!mapPinsData.length) return;
+      const MIN = 18;                     /* min px between dot centres */
+      const nodes = mapPinsData.map(p => ({ p, pt: leafletMap.latLngToLayerPoint(p._anchor), comp: -1 }));
+      /* group markers into connected clusters of overlapping dots */
+      let comp = 0;
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].comp !== -1) continue;
+        const stack = [i]; nodes[i].comp = comp;
+        while (stack.length) {
+          const a = stack.pop();
+          for (let j = 0; j < nodes.length; j++) {
+            if (nodes[j].comp !== -1) continue;
+            const dx = nodes[a].pt.x - nodes[j].pt.x, dy = nodes[a].pt.y - nodes[j].pt.y;
+            if (dx * dx + dy * dy < MIN * MIN) { nodes[j].comp = comp; stack.push(j); }
+          }
+        }
+        comp++;
+      }
+      const groups = {};
+      nodes.forEach(n => { (groups[n.comp] = groups[n.comp] || []).push(n); });
+      Object.keys(groups).forEach(key => {
+        const list = groups[key];
+        if (list.length === 1) { list[0].p.marker.setLatLng(list[0].p._anchor); return; }
+        const k = list.length;
+        const cx = list.reduce((s, n) => s + n.pt.x, 0) / k;
+        const cy = list.reduce((s, n) => s + n.pt.y, 0) / k;
+        const R = Math.max(MIN * 0.62, MIN / (2 * Math.sin(Math.PI / k)));   /* keep spacing >= MIN */
+        list.forEach((n, i) => {
+          const a = (i / k) * 2 * Math.PI - Math.PI / 2;
+          n.p.marker.setLatLng(leafletMap.layerPointToLatLng(L.point(cx + Math.cos(a) * R, cy + Math.sin(a) * R)));
+        });
       });
     }
-    if (spider.length) leafletMap.on('zoomend', relayoutSpider);
+    leafletMap.on('zoomend', declutter);
 
     if (mapPinsData.length) {
       leafletMap.fitBounds(
         L.featureGroup(mapPinsData.map(p => p.marker)).getBounds().pad(0.1)
       );
     }
-    relayoutSpider();
+    declutter();
     renderList(mapPinsData, false);
   }
 
