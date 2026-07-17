@@ -1174,14 +1174,6 @@ button.td-link { background: none; cursor: pointer; }
   background: var(--purple); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 [data-theme="terminal"] .td-map-pin-dot { background: var(--lime); }
-.td-map-cluster {
-  border-radius: 50%; background: var(--purple); border: 2.5px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Mono', monospace; font-weight: 500; line-height: 1;
-  cursor: pointer;
-}
-[data-theme="terminal"] .td-map-cluster { background: var(--lime); color: #000; }
 .td-map-user-dot {
   width: 16px; height: 16px; border-radius: 50%;
   background: #e03030; border: 2.5px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.5);
@@ -3779,19 +3771,23 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     const markersLayer = L.layerGroup().addTo(leafletMap);
 
     /* ── Marker rendering, recomputed on every zoom ──
-       Below CLUSTER_MAX_ZOOM: grid-bin clustering. Pins are binned into fixed
-       CLUSTER_CELL-px cells (in stable per-zoom "world pixel" space via
-       map.project, so bins don't shift while panning). A cell with one pin
-       gets a normal dot; a cell with several gets a single numbered cluster
-       badge you tap to zoom in. Because a bin is capped at CLUSTER_CELL px,
-       a cluster can NEVER span more than that small area — unlike nearest-
-       neighbour chaining, which could (and did) merge pins across an entire
-       region into one fake ring if every pin had SOME close neighbour.
-       At/above CLUSTER_MAX_ZOOM: real pins at their true coordinates, with
-       only genuinely near-identical points (e.g. a shared venue) nudged
-       apart on a small fixed circle so they stay individually tappable. ── */
-    const CLUSTER_MAX_ZOOM = 13;
-    const CLUSTER_CELL     = 60;
+       Two independent conditions must BOTH hold for two pins to be treated as
+       "the same spot" and nudged apart:
+         1. Real-world distance ≤ SAME_VENUE_KM — so companies that only LOOK
+            close because we're zoomed way out (but are actually suburbs or
+            towns apart) are never linked, no matter how few pixels apart they
+            render. This is what stops the old bug where the whole map could
+            chain together into one fake shape.
+         2. Current on-screen pixel distance < MIN — so once you're zoomed in
+            enough that even two genuinely-close (≤1km) companies naturally
+            render further apart than that, they stop being nudged and settle
+            onto their true positions ("as we get really close, they separate").
+       On top of that, no nudging happens at all until the visible map is
+       zoomed to roughly GROUP_RADIUS_KM or tighter — zoomed out to see all of
+       Victoria, every company just renders at its true coordinate. ── */
+    const SAME_VENUE_KM  = 1;     /* companies further apart than this are never grouped */
+    const GROUP_RADIUS_KM = 5;    /* no grouping at all until the visible map is about this tight */
+    const MIN_PX = 18;            /* px apart before two "close" companies get nudged */
 
     function addDot(p) {
       const marker = L.marker(p._anchor, { icon: pinIcon }).addTo(markersLayer);
@@ -3799,68 +3795,52 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       marker.on('click', () => { renderCompanyDetail(p.name); });
     }
 
-    function addClusterBadge(list) {
-      const n = list.length;
-      const lat = list.reduce((s, p) => s + p.lat, 0) / n;
-      const lng = list.reduce((s, p) => s + p.lng, 0) / n;
-      const size = Math.round(26 + Math.min(20, Math.sqrt(n) * 6));
-      const icon = L.divIcon({
-        className: '', html: `<div class="td-map-cluster" style="width:${size}px;height:${size}px">${n}</div>`,
-        iconSize: [size, size], iconAnchor: [size / 2, size / 2]
-      });
-      const marker = L.marker([lat, lng], { icon }).addTo(markersLayer);
-      marker.on('click', () => {
-        leafletMap.fitBounds(L.latLngBounds(list.map(p => p._anchor)).pad(0.5));
-      });
+    function visibleRadiusKm() {
+      const b = leafletMap.getBounds();
+      return leafletMap.distance(b.getCenter(), b.getNorthEast()) / 1000;
     }
 
     function renderMarkers() {
       markersLayer.clearLayers();
       if (!mapPinsData.length) return;
-      const zoom = leafletMap.getZoom();
 
-      if (zoom < CLUSTER_MAX_ZOOM) {
-        const cells = new Map();
-        mapPinsData.forEach(p => {
-          const pt = leafletMap.project(p._anchor, zoom);
-          const key = Math.floor(pt.x / CLUSTER_CELL) + ':' + Math.floor(pt.y / CLUSTER_CELL);
-          if (!cells.has(key)) cells.set(key, []);
-          cells.get(key).push(p);
-        });
-        cells.forEach(list => { list.length === 1 ? addDot(list[0]) : addClusterBadge(list); });
-      } else {
-        const MIN = 18;   /* min px between dot centres before they're nudged apart */
-        const nodes = mapPinsData.map(p => ({ p, pt: leafletMap.latLngToLayerPoint(p._anchor), comp: -1 }));
-        let comp = 0;
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].comp !== -1) continue;
-          const stack = [i]; nodes[i].comp = comp;
-          while (stack.length) {
-            const a = stack.pop();
-            for (let j = 0; j < nodes.length; j++) {
-              if (nodes[j].comp !== -1) continue;
-              const dx = nodes[a].pt.x - nodes[j].pt.x, dy = nodes[a].pt.y - nodes[j].pt.y;
-              if (dx * dx + dy * dy < MIN * MIN) { nodes[j].comp = comp; stack.push(j); }
-            }
-          }
-          comp++;
-        }
-        const groups = {};
-        nodes.forEach(n => { (groups[n.comp] = groups[n.comp] || []).push(n); });
-        Object.keys(groups).forEach(key => {
-          const list = groups[key];
-          if (list.length === 1) { addDot(list[0].p); return; }
-          const k = list.length;
-          const cx = list.reduce((s, n) => s + n.pt.x, 0) / k;
-          const cy = list.reduce((s, n) => s + n.pt.y, 0) / k;
-          const R = Math.max(MIN * 0.62, MIN / (2 * Math.sin(Math.PI / k)));
-          list.forEach((n, i) => {
-            const a = (i / k) * 2 * Math.PI - Math.PI / 2;
-            const pos = leafletMap.layerPointToLatLng(L.point(cx + Math.cos(a) * R, cy + Math.sin(a) * R));
-            addDot({ ...n.p, _anchor: pos });
-          });
-        });
+      if (visibleRadiusKm() > GROUP_RADIUS_KM) {
+        mapPinsData.forEach(addDot);
+        return;
       }
+
+      const nodes = mapPinsData.map(p => ({ p, pt: leafletMap.latLngToLayerPoint(p._anchor), comp: -1 }));
+      let comp = 0;
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].comp !== -1) continue;
+        const stack = [i]; nodes[i].comp = comp;
+        while (stack.length) {
+          const a = stack.pop();
+          for (let j = 0; j < nodes.length; j++) {
+            if (nodes[j].comp !== -1) continue;
+            const dx = nodes[a].pt.x - nodes[j].pt.x, dy = nodes[a].pt.y - nodes[j].pt.y;
+            const pxClose = (dx * dx + dy * dy) < MIN_PX * MIN_PX;
+            const kmClose = haversine(nodes[a].p.lat, nodes[a].p.lng, nodes[j].p.lat, nodes[j].p.lng) <= SAME_VENUE_KM;
+            if (pxClose && kmClose) { nodes[j].comp = comp; stack.push(j); }
+          }
+        }
+        comp++;
+      }
+      const groups = {};
+      nodes.forEach(n => { (groups[n.comp] = groups[n.comp] || []).push(n); });
+      Object.keys(groups).forEach(key => {
+        const list = groups[key];
+        if (list.length === 1) { addDot(list[0].p); return; }
+        const k = list.length;
+        const cx = list.reduce((s, n) => s + n.pt.x, 0) / k;
+        const cy = list.reduce((s, n) => s + n.pt.y, 0) / k;
+        const R = Math.max(MIN_PX * 0.62, MIN_PX / (2 * Math.sin(Math.PI / k)));
+        list.forEach((n, i) => {
+          const a = (i / k) * 2 * Math.PI - Math.PI / 2;
+          const pos = leafletMap.layerPointToLatLng(L.point(cx + Math.cos(a) * R, cy + Math.sin(a) * R));
+          addDot({ ...n.p, _anchor: pos });
+        });
+      });
     }
     leafletMap.on('zoomend', renderMarkers);
 
