@@ -14,7 +14,7 @@
  *   2. Settings → Variables → Add secret: ANTHROPIC_API_KEY = <your key>
  *   3. Settings → Variables → Add secret: SERPER_API_KEY = <your key>
  *   4. Copy the worker URL (e.g. https://blakeai.YOUR-NAME.workers.dev)
- *   5. Paste that URL into WORKER_URL in tools/2026-theatredex/index.html
+ *   5. Paste that URL into WORKER_URL in tools/theatredex/index.html
  */
 
 const ALLOWED_ORIGIN = 'https://www.blakestringer.com';
