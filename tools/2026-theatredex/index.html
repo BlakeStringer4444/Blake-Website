@@ -1998,7 +1998,13 @@ async function init() {
     const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
-    allShows = parseCSV(text).sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
+    /* Musical Theatre Company data is still being filled in — hide anything
+       flagged Musical_Theatre_Company=1 everywhere (grid, filters, map,
+       calendar, clash tool) until told otherwise. Single gate here so every
+       downstream feature is covered automatically. */
+    allShows = parseCSV(text)
+      .filter(s => s.Musical_Theatre_Company !== '1')
+      .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
     buildFilters(allShows);
     readUrlState();
     syncSelectActive();
