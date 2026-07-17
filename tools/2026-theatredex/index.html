@@ -169,15 +169,6 @@ body {
   color: rgba(212,255,26,0.5);
   margin-top: 6px;
 }
-/* Static, always-visible intro copy (not dependent on the CSV load) — real
-   crawlable content for search engines even before the show grid populates. */
-.td-intro {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px; line-height: 1.65;
-  color: var(--muted);
-  max-width: 620px;
-  margin-top: 14px;
-}
 
 /* ── SCREEN-READER ONLY UTILITY ── */
 .td-sr-only {
@@ -1507,7 +1498,11 @@ button.td-link { background: none; cursor: pointer; }
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
   <p class="td-subtitle">Blake's nerdy attempt to capture all <span style="background:linear-gradient(currentColor,currentColor) no-repeat 0 100% / calc(100% - 3px) 1px">plays</span> in community theatre in Victoria lol</p>
-  <p class="td-intro">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
+  <!-- Visually hidden — kept in the DOM as real static text so search engines don't
+       see a near-empty page before the show grid finishes loading via JS (this is
+       what fixed the earlier Google "soft 404" issue on this URL). Not shown to
+       visitors, per request. -->
+  <p class="td-intro td-sr-only">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
   <div class="td-header-btns">
     <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
