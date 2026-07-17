@@ -3723,9 +3723,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   function extractCoords(url) {
     if (!url) return null;
-    let m = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+    /* Only formats that embed the coordinates directly in the URL text can be
+       read here — short links (maps.app.goo.gl, goo.gl/maps/...) only resolve
+       to real coordinates via a server-side redirect, which client-side JS
+       can't follow cross-origin. Those need the long-form URL instead. */
+    let m = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);        // "place" share link
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
-    m = url.match(/\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    m = url.match(/\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);              // address-bar @lat,lng
+    if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+    m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);           // ?q=lat,lng
+    if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+    m = url.match(/destination=(-?\d+\.?\d*),(-?\d+\.?\d*)/);     // directions ?destination=lat,lng
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
     return null;
   }
@@ -3739,10 +3747,16 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   function buildPins() {
     const seen = new Map();
+    const unresolved = [];
     for (const show of allShows) {
       if (!show.company || seen.has(show.company)) continue;
       const c = extractCoords(show.url_map);
       if (c) seen.set(show.company, { lat: c[0], lng: c[1] });
+      else if (show.url_map) unresolved.push(show.company);   /* has a link, just couldn't be parsed */
+    }
+    if (unresolved.length) {
+      console.warn('[Theatredex Map] Could not read coordinates from url_map for: ' + unresolved.join(', ') +
+        ' — likely a short link (maps.app.goo.gl/goo.gl); use the long-form Google Maps URL instead.');
     }
     return Array.from(seen.entries()).map(([name, pos]) => ({ name, ...pos }));
   }
