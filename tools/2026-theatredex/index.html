@@ -1131,6 +1131,17 @@ button.td-link { background: none; cursor: pointer; }
   width: 280px; flex-shrink: 0;
   border-left: 1px solid rgba(212,255,26,0.15); overflow-y: auto; background: var(--bg);
 }
+.td-map-loading {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+}
+.td-map-spinner {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 3px solid rgba(153,51,255,0.2); border-top-color: var(--purple);
+  animation: td-map-spin 0.8s linear infinite;
+}
+[data-theme="terminal"] .td-map-spinner { border-color: rgba(212,255,26,0.2); border-top-color: var(--lime); }
+@keyframes td-map-spin { to { transform: rotate(360deg); } }
 .td-map-list-header {
   font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
   color: var(--muted); padding: 12px 16px 8px; border-bottom: 1px solid var(--card-border);
@@ -1814,6 +1825,14 @@ function isNowShowing(row) {
 /* ── STATE ── */
 let allShows = [], activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
 
+/* ── DATA READINESS ── shared gate so anything opened before the CSV finishes
+   loading (e.g. Map View clicked instantly on first visit) can wait for it
+   instead of locking in on zero results. */
+let dataReady = false;
+const dataReadyCallbacks = [];
+function onDataReady(cb) { dataReady ? cb() : dataReadyCallbacks.push(cb); }
+function markDataReady() { dataReady = true; dataReadyCallbacks.splice(0).forEach(cb => cb()); }
+
 /* ── WATCHLIST ── */
 const WL_KEY  = 'theatredex-watchlist-2026';
 let watchlist = new Set(JSON.parse(localStorage.getItem(WL_KEY) || '[]'));
@@ -1997,10 +2016,12 @@ async function init() {
     readUrlState();
     syncSelectActive();
     render();
+    markDataReady();
   } catch (e) {
     document.getElementById('td-grid').innerHTML =
       '<div class="td-empty">Unable to load show data — please try again shortly.</div>';
     countEl.textContent = '';
+    markDataReady();   /* unblock anything waiting (e.g. Map View) rather than leave it loading forever */
   }
 }
 
@@ -3951,12 +3972,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   let _savedZoom = '';
 
-  function openMap() {
-    /* Strip any Aa-button zoom so the fixed modal always fits the screen */
-    _savedZoom = document.documentElement.style.zoom || '';
-    document.documentElement.style.zoom = '';
-    overlay.classList.add('open');
-    mapBtn.classList.add('td-header-btn--active');
+  function startMap() {
     /* Defer init one frame so the modal has painted and the map element has real dimensions */
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -3964,6 +3980,33 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         if (leafletMap) leafletMap.invalidateSize();
       });
     });
+  }
+
+  function openMap() {
+    /* Strip any Aa-button zoom so the fixed modal always fits the screen */
+    _savedZoom = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '';
+    overlay.classList.add('open');
+    mapBtn.classList.add('td-header-btn--active');
+
+    if (!dataReady) {
+      /* First-visit race: the show/company data (and its coordinates) may
+         still be loading from the sheet. Show a loading state instead of
+         locking the map in on "0 companies", and start it the moment the
+         data lands. */
+      document.getElementById('td-map-el').innerHTML =
+        '<div class="td-map-loading"><div class="td-map-spinner"></div>Loading map data…</div>';
+      document.getElementById('td-map-list').innerHTML =
+        '<div class="td-map-list-header">Loading…</div>';
+      onDataReady(() => {
+        if (!overlay.classList.contains('open')) return;   /* modal was closed before data arrived */
+        document.getElementById('td-map-el').innerHTML = '';
+        startMap();
+      });
+      return;
+    }
+
+    startMap();
   }
 
   function closeMap() {
