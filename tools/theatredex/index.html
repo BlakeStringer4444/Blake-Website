@@ -1683,7 +1683,7 @@ button.td-link { background: none; cursor: pointer; }
     </div>
     <div class="blakeai-messages" id="blakeai-messages"></div>
     <div class="blakeai-input-row">
-      <input class="blakeai-input" id="blakeai-input" type="text" placeholder="Ask about this play…" autocomplete="off">
+      <input class="blakeai-input" id="blakeai-input" type="text" placeholder="Ask about this show…" autocomplete="off">
       <button class="blakeai-send" id="blakeai-send" aria-label="Send">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -1973,7 +1973,7 @@ function card(show) {
       data-suburb="${(show.suburb||'').replace(/"/g,'&quot;')}"
       data-dates="${fmtRange(show).replace(/"/g,'&quot;')}"
       data-url-web="${safeUrl(show.url_web)}"
-      data-url-fb="${safeUrl(show.url_facebook)}">✦ Ask BlakeAI about this play</button>
+      data-url-fb="${safeUrl(show.url_facebook)}">✦ Ask BlakeAI about this show</button>
   </div>`;
 }
 
@@ -2184,7 +2184,7 @@ document.getElementById('td-mode-musicals').addEventListener('click', () => swit
 
 /* ── BLAKEAI ── */
 const CHIPS = [
-  "What is the play about?",
+  "What is this show about?",
   "Tell me about the characters",
   "How old is each character?",
 ];
