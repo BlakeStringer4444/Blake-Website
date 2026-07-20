@@ -30,7 +30,7 @@
 :root {
   --lime:   #D4FF1A;
   --purple: #9933FF;
-  --musical:#FFB627;
+  --musical:#10B981;
   --black:  #0a0a0a;
   --offwhite: #f5f5f0;
   --bg:         var(--offwhite);
@@ -61,7 +61,7 @@
 }
 /* ── MUSICAL MODE ── every show/data accent flows from --purple (text,
    buttons, map dots, bar charts, clash bars), so repointing that one
-   variable recolours the whole active-mode view to gold in a single stroke.
+   variable recolours the whole active-mode view to emerald in a single stroke.
    Site chrome (title/subtitle) uses --lime and is intentionally untouched. */
 [data-mode="musical"] { --purple: var(--musical); }
 
@@ -178,7 +178,7 @@ body {
 
 /* ── PLAYS / MUSICALS MODE TOGGLE ── sits under the sub-header, above the
    feature buttons it governs. A rounded pill; the active segment fills with
-   the accent (--purple, which becomes gold when data-mode="musical") plus a
+   the accent (--purple, which becomes emerald when data-mode="musical") plus a
    soft same-colour glow, so the lit side always matches — and pops. */
 .td-mode-toggle {
   display: inline-flex;
