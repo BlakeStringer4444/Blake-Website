@@ -177,28 +177,49 @@ body {
 }
 
 /* ── PLAYS / MUSICALS MODE TOGGLE ── sits under the sub-header, above the
-   feature buttons it governs. Active segment uses --purple, which is gold
-   when data-mode="musical" — so the lit segment always matches the mode. */
+   feature buttons it governs. A rounded pill; the active segment fills with
+   the accent (--purple, which becomes gold when data-mode="musical") plus a
+   soft same-colour glow, so the lit side always matches — and pops. */
 .td-mode-toggle {
   display: inline-flex;
-  margin-top: 16px;
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 3px;
-  overflow: hidden;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 .td-mode-btn {
+  display: inline-flex; align-items: center; gap: 8px;
   font-family: 'DM Mono', monospace;
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: rgba(245,245,240,0.45);
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500;
+  color: rgba(245,245,240,0.5);
   background: none; border: none; cursor: pointer;
-  padding: 9px 20px;
-  transition: background 0.2s, color 0.2s;
+  padding: 9px 20px; border-radius: 999px;
+  transition: color 0.25s, background 0.25s, box-shadow 0.3s, transform 0.15s;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.td-mode-btn + .td-mode-btn { border-left: 1px solid rgba(255,255,255,0.16); }
-.td-mode-btn:not(.active):hover { color: rgba(245,245,240,0.8); }
-.td-mode-btn.active { background: var(--purple); color: #fff; }
+.td-mode-emoji { font-size: 15px; line-height: 1; transition: transform 0.3s ease; }
+.td-mode-btn:not(.active):hover { color: rgba(245,245,240,0.85); }
+.td-mode-btn:not(.active):hover .td-mode-emoji { transform: scale(1.18); }
+.td-mode-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--purple) 82%, #fff), var(--purple));
+  box-shadow: 0 0 0 1px var(--purple),
+              0 4px 20px color-mix(in srgb, var(--purple) 55%, transparent);
+  transform: translateY(-1px);
+}
+.td-mode-btn.active .td-mode-emoji { transform: scale(1.2); animation: td-mode-pop 0.4s ease; }
+@keyframes td-mode-pop {
+  0%   { transform: scale(0.7) rotate(-12deg); }
+  60%  { transform: scale(1.35) rotate(6deg); }
+  100% { transform: scale(1.2)  rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .td-mode-btn, .td-mode-emoji { transition: none; }
+  .td-mode-btn.active .td-mode-emoji { animation: none; }
+}
 
 /* ── SCREEN-READER ONLY UTILITY ── */
 .td-sr-only {
@@ -345,6 +366,7 @@ body {
 }
 .td-badge-play,
 .td-badge-musical,
+.td-badge-variety,
 .td-badge-pantomime { background: rgba(153,51,255,0.1); color: var(--purple); }
 .td-badge-vdl       { background: rgba(220,96,0,0.13);  color: #e06000; }
 .td-badge-lyrebird  { background: rgba(0,0,0,0.07);   color: #3a3a3a; }
@@ -352,6 +374,7 @@ body {
 [data-theme="dark"] .td-badge-lyrebird  { color: #e8e8e8; background: rgba(255,255,255,0.12); }
 [data-theme="terminal"] .td-badge-play,
 [data-theme="terminal"] .td-badge-musical,
+[data-theme="terminal"] .td-badge-variety,
 [data-theme="terminal"] .td-badge-pantomime { color: #fff; background: rgba(255,255,255,0.08); }
 [data-theme="terminal"] .td-badge-vdl       { color: #ff8000; background: rgba(255,128,0,0.14); }
 [data-theme="terminal"] .td-badge-lyrebird  { color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.09); }
@@ -1527,15 +1550,15 @@ button.td-link { background: none; cursor: pointer; }
     </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
-  <p class="td-subtitle">Blake's nerdy attempt to capture all <span style="background:linear-gradient(currentColor,currentColor) no-repeat 0 100% / calc(100% - 3px) 1px">plays &amp; musicals</span> in community theatre in Victoria lol</p>
+  <p class="td-subtitle">Blake's nerdy attempt to capture all plays &amp; musicals in community theatre in Victoria lol</p>
   <!-- Visually hidden — kept in the DOM as real static text so search engines don't
        see a near-empty page before the show grid finishes loading via JS (this is
        what fixed the earlier Google "soft 404" issue on this URL). Not shown to
        visitors, per request. -->
   <p class="td-intro td-sr-only">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
   <div class="td-mode-toggle" role="group" aria-label="Switch between plays and musicals">
-    <button type="button" id="td-mode-plays"    class="td-mode-btn active" aria-pressed="true">Plays</button>
-    <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false">Musicals</button>
+    <button type="button" id="td-mode-plays"    class="td-mode-btn active" aria-pressed="true"><span class="td-mode-emoji" aria-hidden="true">🎭</span>Plays</button>
+    <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false"><span class="td-mode-emoji" aria-hidden="true">🎵</span>Musicals</button>
   </div>
   <div class="td-header-btns">
     <a id="td-spreadsheet-btn" class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
@@ -1636,7 +1659,7 @@ button.td-link { background: none; cursor: pointer; }
         </div>
       </div>
       <button class="td-clash-compare" id="td-clash-compare" disabled>Compare ◈</button>
-      <p class="td-clash-note">Rehearsal windows are estimated at 8 weeks before opening night.</p>
+      <p class="td-clash-note" id="td-clash-note">Rehearsal windows are estimated at 8 weeks before opening night.</p>
     </div>
   </div>
 </div>
@@ -2108,6 +2131,15 @@ function updateModeUI() {
   /* Auditions + Spreadsheet don't apply to musicals yet — hide them there. */
   document.getElementById('td-spreadsheet-btn').style.display = musical ? 'none' : '';
   document.getElementById('td-auditions-btn').style.display   = musical ? 'none' : '';
+  /* VDL (Victorian Drama League) is a plays body — no musical is a VDL entrant,
+     so drop that filter in musical mode. If it was the active filter, fall back
+     to Upcoming so the grid isn't left showing an empty VDL set. */
+  document.getElementById('td-vdl').style.display = musical ? 'none' : '';
+  if (musical && activeFilter === 'vdl') { activeFilter = 'upcoming'; setFilterButtons(activeFilter); }
+  /* Will It Clash rehearsal estimate differs by mode (see rehearsalMs). */
+  const clashNote = document.getElementById('td-clash-note');
+  if (clashNote) clashNote.textContent =
+    'Rehearsal windows are estimated at ' + (musical ? '12' : '8') + ' weeks before opening night.';
 }
 function switchMode(m) {
   if (m === mode) return;
@@ -4125,7 +4157,10 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
                           'July','August','September','October','November','December'];
   var CAL_MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN',
                           'JUL','AUG','SEP','OCT','NOV','DEC'];
-  var REHEARSAL_MS = 56 * 86400000; // 8 weeks
+  /* Rehearsal lead-in added ahead of opening night when working out clashes:
+     musicals need longer to stage (music, choreography, band), so estimate
+     12 weeks in musical mode vs 8 weeks for plays. */
+  function rehearsalMs() { return (mode === 'musical' ? 84 : 56) * 86400000; }
   var CAL_YEAR_LOCK = 2026;   /* Calendar View only covers this year — Jan–Dec, no prev/next past it. */
   function clampToLockYear(y, m) {
     if (y < CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 0];
@@ -4285,7 +4320,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     function activeInMonth(show, mi) {
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return false;
-      var rs = new Date(s.getTime() - REHEARSAL_MS);
+      var rs = new Date(s.getTime() - rehearsalMs());
       var mS = new Date(YEAR, mi, 1), mE = new Date(YEAR, mi + 1, 0);
       return rs <= mE && e >= mS;
     }
@@ -4300,8 +4335,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var eB = parseDate(showB.date_end) || sB;
       if (eA < sA) eA = sA;               // guard against blank/reversed end dates
       if (eB < sB) eB = sB;
-      var startA = sA.getTime() - REHEARSAL_MS;   // includes the 8-week rehearsal window
-      var startB = sB.getTime() - REHEARSAL_MS;
+      var startA = sA.getTime() - rehearsalMs();   // includes the rehearsal lead-in (8wk plays / 12wk musicals)
+      var startB = sB.getTime() - rehearsalMs();
       var oStart = Math.max(startA, startB);
       var oEnd   = Math.min(eA.getTime(), eB.getTime());
       if (oStart > oEnd) return 0;
@@ -4322,7 +4357,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       '<div class="td-cal-legend-shows">' +
         '<div><span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) + '</div>' +
         '<div><span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) + '</div>' +
-        '<div style="opacity:0.5;font-size:10px">Solid = performance · Dashed = rehearsal (est. 8 wk)</div>' +
+        '<div style="opacity:0.5;font-size:10px">Solid = performance · Dashed = rehearsal (est. ' + (mode === 'musical' ? '12' : '8') + ' wk)</div>' +
       '</div>' +
       '<div class="td-cal-clash-result">' + clashText + '</div>';
     calInfo.classList.add('visible');
@@ -4373,7 +4408,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return '';
       if (e < s) e = s;
-      var rs     = new Date(s.getTime() - REHEARSAL_MS);
+      var rs     = new Date(s.getTime() - rehearsalMs());
       var rehEnd = new Date(s.getTime() - 86400000);  // day before perf starts
 
       var rehH  = (rs < s)
