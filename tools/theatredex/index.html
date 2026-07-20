@@ -2110,12 +2110,24 @@ document.getElementById('td-nowshowing').addEventListener('click', () => setActi
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
 
-/* ── PLAYS / MUSICALS MODE ── */
+/* ── PLAYS / MUSICALS MODE ──
+   Two independent signals in the data:
+     • type                   — per SHOW (Play / Musical / Variety / Pantomime)
+     • Musical_Theatre_Company — per COMPANY (1 = a musicals-only company)
+   Musicals mode lists actual musicals, keyed off the show's own type, so a
+   plays company's one-off musical (e.g. Malvern Theatre's "Dirty Rotten
+   Scoundrels") still appears; the company flag is OR'd in as a safety net so a
+   musicals-only company's whole slate shows even if a row's type is blank.
+   Plays mode shows everything EXCEPT musicals-only companies, so a mixed
+   company's full season (its plays AND its musicals) still appears there. */
+function isMusicalShow(s) {
+  return (s.type || '').trim().toLowerCase() === 'musical' || s.Musical_Theatre_Company === '1';
+}
 function setModeData(m) {
   mode = (m === 'musical') ? 'musical' : 'play';
   document.documentElement.setAttribute('data-mode', mode);
   allShows = allData.filter(s => mode === 'musical'
-    ? s.Musical_Theatre_Company === '1'
+    ? isMusicalShow(s)
     : s.Musical_Theatre_Company !== '1');
   buildFilters(allShows);
   updateModeUI();
