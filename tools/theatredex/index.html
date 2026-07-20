@@ -30,6 +30,7 @@
 :root {
   --lime:   #D4FF1A;
   --purple: #9933FF;
+  --musical:#FFB627;
   --black:  #0a0a0a;
   --offwhite: #f5f5f0;
   --bg:         var(--offwhite);
@@ -58,6 +59,11 @@
   --input-bg:   #111111;
   --input-border:rgba(255,255,255,0.12);
 }
+/* ── MUSICAL MODE ── every show/data accent flows from --purple (text,
+   buttons, map dots, bar charts, clash bars), so repointing that one
+   variable recolours the whole active-mode view to gold in a single stroke.
+   Site chrome (title/subtitle) uses --lime and is intentionally untouched. */
+[data-mode="musical"] { --purple: var(--musical); }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
@@ -169,6 +175,30 @@ body {
   color: rgba(212,255,26,0.5);
   margin-top: 6px;
 }
+
+/* ── PLAYS / MUSICALS MODE TOGGLE ── sits under the sub-header, above the
+   feature buttons it governs. Active segment uses --purple, which is gold
+   when data-mode="musical" — so the lit segment always matches the mode. */
+.td-mode-toggle {
+  display: inline-flex;
+  margin-top: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.td-mode-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(245,245,240,0.45);
+  background: none; border: none; cursor: pointer;
+  padding: 9px 20px;
+  transition: background 0.2s, color 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.td-mode-btn + .td-mode-btn { border-left: 1px solid rgba(255,255,255,0.16); }
+.td-mode-btn:not(.active):hover { color: rgba(245,245,240,0.8); }
+.td-mode-btn.active { background: var(--purple); color: #fff; }
 
 /* ── SCREEN-READER ONLY UTILITY ── */
 .td-sr-only {
@@ -1497,18 +1527,22 @@ button.td-link { background: none; cursor: pointer; }
     </div>
   </div>
   <h1 class="td-title">Theatredex 2026</h1>
-  <p class="td-subtitle">Blake's nerdy attempt to capture all <span style="background:linear-gradient(currentColor,currentColor) no-repeat 0 100% / calc(100% - 3px) 1px">plays</span> in community theatre in Victoria lol</p>
+  <p class="td-subtitle">Blake's nerdy attempt to capture all <span style="background:linear-gradient(currentColor,currentColor) no-repeat 0 100% / calc(100% - 3px) 1px">plays &amp; musicals</span> in community theatre in Victoria lol</p>
   <!-- Visually hidden — kept in the DOM as real static text so search engines don't
        see a near-empty page before the show grid finishes loading via JS (this is
        what fixed the earlier Google "soft 404" issue on this URL). Not shown to
        visitors, per request. -->
   <p class="td-intro td-sr-only">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
+  <div class="td-mode-toggle" role="group" aria-label="Switch between plays and musicals">
+    <button type="button" id="td-mode-plays"    class="td-mode-btn active" aria-pressed="true">Plays</button>
+    <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false">Musicals</button>
+  </div>
   <div class="td-header-btns">
-    <a class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
+    <a id="td-spreadsheet-btn" class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
     <button id="td-cal-btn" class="td-header-btn">Calendar View ◈</button>
     <button id="td-clash-btn" class="td-header-btn">Will it Clash? ◈</button>
-    <a class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Current Auditions ↗</a>
+    <a id="td-auditions-btn" class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer">Current Auditions ↗</a>
   </div>
 </header>
 
@@ -1810,7 +1844,14 @@ function isNowShowing(row) {
 }
 
 /* ── STATE ── */
-let allShows = [], activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
+let allData = [], allShows = [], mode = 'play', activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
+
+/* ── MODE (Plays / Musicals) ── `allData` holds the full sheet; `allShows` is
+   the mode-scoped working set every feature reads from (grid, map, calendar,
+   clash). Panels that cache built state (currently just the Leaflet map)
+   register a teardown here so they rebuild for the newly-active mode. */
+const modeChangeCallbacks = [];
+function onModeChange(cb) { modeChangeCallbacks.push(cb); }
 
 /* ── DATA READINESS ── shared gate so anything opened before the CSV finishes
    loading (e.g. Map View clicked instantly on first visit) can wait for it
@@ -1829,6 +1870,7 @@ function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watch
 /* ── URL STATE ── */
 function pushUrlState() {
   const p = new URLSearchParams();
+  if (mode === 'musical')           p.set('mode',    'musical');
   if (searchQ)                      p.set('q',       searchQ);
   if (activeCompany)                p.set('company', activeCompany);
   if (activeMonth)                  p.set('month',   activeMonth);
@@ -1941,8 +1983,11 @@ function render() {
         <span class="tw-secret-desc">You can visit his website at <a href="https://timothyrobotics.com/" target="_blank" rel="noopener noreferrer" style="color:var(--purple)">timothyrobotics.com</a></span>
         <button class="tw-secret-btn" id="tw-launch-btn">▶ Play Blake-Tris</button>
       </div>` : '';
-  grid.innerHTML    = twCard + (results.length ? results.map(card).join('') : '<div class="td-empty">No shows match — try adjusting your filters</div>');
-  count.textContent = `Showing ${results.length} of ${allShows.length} productions`;
+  const emptyMsg = (mode === 'musical' && allShows.length === 0)
+    ? 'No musicals listed yet — check back soon'
+    : 'No shows match — try adjusting your filters';
+  grid.innerHTML    = twCard + (results.length ? results.map(card).join('') : `<div class="td-empty">${emptyMsg}</div>`);
+  count.textContent = `Showing ${results.length} of ${allShows.length} ${mode === 'musical' ? 'musicals' : 'productions'}`;
   if (twCard) {
     const launchBtn = document.getElementById('tw-launch-btn');
     if (launchBtn) launchBtn.addEventListener('click', () => { if (!document.getElementById('tw-overlay') && window.launchTetris) window.launchTetris(); });
@@ -1975,6 +2020,11 @@ function buildFilters(shows) {
   const companySel = document.getElementById('td-company');
   const monthSel   = document.getElementById('td-month');
 
+  /* Keep the default "All …" option (index 0) and drop any previously built
+     ones so switching modes repopulates with just this mode's companies/months. */
+  companySel.length = 1;
+  monthSel.length   = 1;
+
   [...new Set(shows.map(s => s.company).filter(Boolean))].sort().forEach(co => {
     const o = document.createElement('option');
     o.value = co; o.textContent = co;
@@ -1998,14 +2048,14 @@ async function init() {
     const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
-    /* Musical Theatre Company data is still being filled in — hide anything
-       flagged Musical_Theatre_Company=1 everywhere (grid, filters, map,
-       calendar, clash tool) until told otherwise. Single gate here so every
-       downstream feature is covered automatically. */
-    allShows = parseCSV(text)
-      .filter(s => s.Musical_Theatre_Company !== '1')
+    /* Full sheet kept in memory; `setModeData` derives the mode-scoped working
+       set (Musical_Theatre_Company==='1' for musicals, everything else for
+       plays). A ?mode=musical deep-link lands directly in musical mode; the
+       bare URL always opens on plays. */
+    allData = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-    buildFilters(allShows);
+    const p0 = new URLSearchParams(location.search);
+    setModeData(p0.get('mode') === 'musical' ? 'musical' : 'play');
     readUrlState();
     syncSelectActive();
     render();
@@ -2036,6 +2086,44 @@ document.getElementById('td-upcoming').addEventListener('click',   () => setActi
 document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
+
+/* ── PLAYS / MUSICALS MODE ── */
+function setModeData(m) {
+  mode = (m === 'musical') ? 'musical' : 'play';
+  document.documentElement.setAttribute('data-mode', mode);
+  allShows = allData.filter(s => mode === 'musical'
+    ? s.Musical_Theatre_Company === '1'
+    : s.Musical_Theatre_Company !== '1');
+  buildFilters(allShows);
+  updateModeUI();
+}
+function updateModeUI() {
+  const musical  = mode === 'musical';
+  const playsBtn = document.getElementById('td-mode-plays');
+  const musBtn   = document.getElementById('td-mode-musicals');
+  playsBtn.classList.toggle('active', !musical);
+  playsBtn.setAttribute('aria-pressed', String(!musical));
+  musBtn.classList.toggle('active', musical);
+  musBtn.setAttribute('aria-pressed', String(musical));
+  /* Auditions + Spreadsheet don't apply to musicals yet — hide them there. */
+  document.getElementById('td-spreadsheet-btn').style.display = musical ? 'none' : '';
+  document.getElementById('td-auditions-btn').style.display   = musical ? 'none' : '';
+}
+function switchMode(m) {
+  if (m === mode) return;
+  setModeData(m);
+  /* Company/month/search may point at things that don't exist in the other
+     mode — reset the scoped filters (keep the generic upcoming/watchlist). */
+  activeCompany = ''; activeMonth = ''; searchQ = '';
+  document.getElementById('td-search').value  = '';
+  document.getElementById('td-company').value = '';
+  document.getElementById('td-month').value   = '';
+  syncSelectActive();
+  render();
+  modeChangeCallbacks.forEach(cb => cb());   /* rebuild cached panels (map) */
+}
+document.getElementById('td-mode-plays').addEventListener('click',    () => switchMode('play'));
+document.getElementById('td-mode-musicals').addEventListener('click', () => switchMode('musical'));
 
 /* ── VDL secret refresh: 10 clicks force-reloads data ── */
 (function () {
@@ -4019,6 +4107,16 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
   addrInput.addEventListener('input', () => { if (!addrInput.value) addrClear.classList.remove('visible'); });
   addrClear.addEventListener('click', clearAddr);
+
+  /* The map caches its Leaflet instance (mapReady guard), so a mode switch
+     must tear it down — otherwise reopening shows the previous mode's pins.
+     Calendar and Clash rebuild from allShows on each open, so they self-heal. */
+  onModeChange(() => {
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+    mapReady = false; mapPinsData = []; userMarker = null;
+    const el = document.getElementById('td-map-el');
+    if (el) el.innerHTML = '';
+  });
 })();
 
 /* ── CALENDAR VIEW + WILL IT CLASH? ── */
