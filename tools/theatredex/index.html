@@ -1536,7 +1536,10 @@ button.td-link { background: none; cursor: pointer; }
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .td-aud-link:hover { background: var(--purple); color: #fff; }
+.td-aud-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.td-aud-fb { display: inline-flex; align-items: center; color: var(--purple); flex-shrink: 0; transition: color 0.15s; }
 .td-aud-arrow { color: var(--purple); flex-shrink: 0; transition: color 0.15s; }
+.td-aud-link:hover .td-aud-fb,
 .td-aud-link:hover .td-aud-arrow { color: #fff; }
 @media (max-width: 639px) {
   .td-aud-overlay { padding: 16px; }
@@ -1735,10 +1738,10 @@ button.td-link { background: none; cursor: pointer; }
       <button class="td-clash-close" id="td-aud-close" aria-label="Close">✕<br>ESC</button>
     </div>
     <div class="td-aud-body">
-      <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted:</p>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/1BVRQU2mLE" target="_blank" rel="noopener noreferrer">Melbourne Auditions <span class="td-aud-arrow">↗</span></a>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/1F4A8i6eBN" target="_blank" rel="noopener noreferrer">Positive Theatre Vibes <span class="td-aud-arrow">↗</span></a>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/14iJbaSMHvP" target="_blank" rel="noopener noreferrer">Melbourne Musical Theatre <span class="td-aud-arrow">↗</span></a>
+      <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted, as currently there is no universal auditions page for musicals</p>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/1BVRQU2mLE" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Auditions</span><span class="td-aud-arrow">↗</span></a>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/1F4A8i6eBN" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Positive Theatre Vibes</span><span class="td-aud-arrow">↗</span></a>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/14iJbaSMHvP" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Musical Theatre</span><span class="td-aud-arrow">↗</span></a>
     </div>
   </div>
 </div>
