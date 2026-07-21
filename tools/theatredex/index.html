@@ -1893,7 +1893,9 @@ function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watch
 /* ── URL STATE ── */
 function pushUrlState() {
   const p = new URLSearchParams();
-  if (mode === 'musical')           p.set('mode',    'musical');
+  /* Mode is deliberately NOT persisted to the URL: Theatredex stays on the one
+     address (/tools/theatredex/), and every fresh load/refresh defaults back to
+     Plays. The Plays/Musicals toggle is purely an in-session switch. */
   if (searchQ)                      p.set('q',       searchQ);
   if (activeCompany)                p.set('company', activeCompany);
   if (activeMonth)                  p.set('month',   activeMonth);
@@ -2072,13 +2074,11 @@ async function init() {
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     /* Full sheet kept in memory; `setModeData` derives the mode-scoped working
-       set (Musical_Theatre_Company==='1' for musicals, everything else for
-       plays). A ?mode=musical deep-link lands directly in musical mode; the
-       bare URL always opens on plays. */
+       set. Every load starts on Plays — mode isn't read from the URL, so a
+       refresh never remembers a Musicals selection. */
     allData = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-    const p0 = new URLSearchParams(location.search);
-    setModeData(p0.get('mode') === 'musical' ? 'musical' : 'play');
+    setModeData('play');
     readUrlState();
     syncSelectActive();
     render();
