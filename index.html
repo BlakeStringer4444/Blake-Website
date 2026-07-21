@@ -1266,13 +1266,13 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   background: none;
   border: 1px solid rgba(0,0,0,0.25);
   cursor: pointer;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 18px;
   color: var(--black);
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   line-height: 1;
@@ -1288,27 +1288,23 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   .dark-toggle {
     top: 20px;
     right: 20px;
-    font-size: 11px;
-    padding: 8px 14px;
   }
 }
 @media (max-width: 390px) {
   .site-name { font-size: clamp(36px, 10vw, 48px); }
-  .dark-toggle { width: 34px; height: 34px; font-size: 16px; padding: 0; }
-  .font-size-toggle { right: 62px; width: 34px; height: 34px; font-size: 13px; padding: 0; }
 }
 
 /* ── TEXT SIZE TOGGLE (desktop only) ── */
 .font-size-toggle {
   position: absolute;
   top: 32px;
-  right: 88px; /* 32px + 44px dark-toggle + 12px gap */
+  right: 78px; /* 32px + 36px dark-toggle + 10px gap */
   z-index: 500;
   background: none;
   border: 1px solid rgba(0,0,0,0.25);
   cursor: pointer;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1316,6 +1312,7 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   font-size: 13px;
   font-family: 'DM Mono', monospace;
   letter-spacing: -0.5px;
+  line-height: 1;
   color: var(--black);
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   touch-action: manipulation;
@@ -1328,7 +1325,7 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   border-color: var(--purple);
 }
 @media (max-width: 639px) {
-  .font-size-toggle { display: flex; top: 20px; right: 72px; }
+  .font-size-toggle { display: flex; top: 20px; right: 66px; } /* 20 + 36 + 10 gap */
 }
 
 /* ── JUMP NAV ACTIVE STATE ── */
