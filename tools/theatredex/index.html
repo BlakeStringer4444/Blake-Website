@@ -1891,16 +1891,13 @@ function showKey(show) { return show.title + '|||' + show.company; }
 function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); }
 
 /* ── URL STATE ── */
+/* Theatredex always stays on its bare URL (/tools/theatredex/). No mode, search,
+   company, month or filter state is ever written to the address bar, so nothing
+   is shareable or deep-linkable — every visit and refresh opens in the default
+   state (Plays · Upcoming · no filters). pushUrlState just strips any query a
+   visitor may have hand-crafted onto the URL. */
 function pushUrlState() {
-  const p = new URLSearchParams();
-  /* Mode is deliberately NOT persisted to the URL: Theatredex stays on the one
-     address (/tools/theatredex/), and every fresh load/refresh defaults back to
-     Plays. The Plays/Musicals toggle is purely an in-session switch. */
-  if (searchQ)                      p.set('q',       searchQ);
-  if (activeCompany)                p.set('company', activeCompany);
-  if (activeMonth)                  p.set('month',   activeMonth);
-  if (activeFilter !== 'upcoming')  p.set('filter',  activeFilter || '');
-  history.replaceState(null, '', p.toString() ? '?' + p : location.pathname);
+  if (location.search) history.replaceState(null, '', location.pathname);
 }
 
 function setFilterButtons(active) {
@@ -1912,14 +1909,12 @@ function setFilterButtons(active) {
 }
 
 function readUrlState() {
-  const p = new URLSearchParams(location.search);
-  searchQ       = p.get('q')       || '';
-  activeCompany = p.get('company') || '';
-  activeMonth   = p.get('month')   || '';
-  activeFilter  = p.get('filter') ?? 'upcoming';
-  document.getElementById('td-search').value  = searchQ;
-  document.getElementById('td-company').value = activeCompany;
-  document.getElementById('td-month').value   = activeMonth;
+  /* Nothing is read from the URL — always open in the default state so a
+     hand-crafted ?q=/?company=/?filter= link can't pre-apply a filter. */
+  searchQ = ''; activeCompany = ''; activeMonth = ''; activeFilter = 'upcoming';
+  document.getElementById('td-search').value  = '';
+  document.getElementById('td-company').value = '';
+  document.getElementById('td-month').value   = '';
   setFilterButtons(activeFilter);
 }
 
