@@ -2200,6 +2200,7 @@ let baShow    = null;
 let baMsgs_   = [];
 let baBusy    = false;
 let baOpener  = null;
+let baSavedZoom = '';
 
 const baOverlay      = document.getElementById('blakeai-overlay');
 const baMsgEl        = document.getElementById('blakeai-messages');
@@ -2240,6 +2241,13 @@ function openBlakeAI(dataset) {
   baSendEl.disabled     = false;
 
   baMsgEl.innerHTML = buildWelcome();
+  /* Strip the Aa/desktop zoom (root gets zoom:1.25 on desktop) before opening.
+     The overlay is position:fixed and bottom-anchored; under a root zoom its
+     dvh-sized modal renders taller than the real screen, pushing the top of the
+     modal — and the close button — off-screen. Same fix as the map/calendar
+     modals. Restored on close. */
+  baSavedZoom = document.documentElement.style.zoom || '';
+  document.documentElement.style.zoom = '';
   baOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => baInputEl.focus(), 320);
@@ -2248,6 +2256,7 @@ function openBlakeAI(dataset) {
 function closeBlakeAI() {
   baOverlay.classList.remove('open');
   document.body.style.overflow = '';
+  document.documentElement.style.zoom = baSavedZoom;
   if (baOpener) { baOpener.focus(); baOpener = null; }
 }
 
