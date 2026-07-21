@@ -1039,6 +1039,16 @@ footer {
   .main-content { padding: 24px 20px 48px; }
   header { padding: 70px 20px 20px; }
   .site-name { font-size: clamp(40px, 12vw, 72px); }
+  /* On narrow phones the tagline (previously nowrap) forced the header wider
+     than the screen, causing horizontal overflow — which lets iOS pan/zoom the
+     page and pushes the last nav tab (Tools) off-screen. Let it wrap, and let
+     the header columns shrink to the viewport. */
+  .site-tagline { white-space: normal; }
+  .header-left  { min-width: 0; max-width: 100%; }
+  .header-right { min-width: 0; }
+  /* Shrink the tab labels so all six fit the row on small phones (down to
+     ~360px) without the last tab (Tools) scrolling off the right edge. */
+  .tab-mobile-btn { padding: 10px 3px; letter-spacing: 0.5px; font-size: 8px; }
   .about-top { flex-direction: column; align-items: center; }
   .about-photo-col { width: 100%; display: flex; flex-direction: column; align-items: center; }
   .photo-frame { width: 100%; height: 460px; margin: 0 auto; }
@@ -2981,7 +2991,7 @@ body[data-theme="terminal"] :focus-visible {
 <header>
   <div class="header-left">
     <div class="site-name">Blake Stringer</div>
-    <div class="site-tagline">Actor &nbsp;·&nbsp; Musician &nbsp;·&nbsp; Sound Designer &nbsp;·&nbsp; Director</div>
+    <div class="site-tagline">Actor · Musician · Sound Designer · Director</div>
   </div>
   <div class="header-right">
     <div class="header-location">Melbourne, VIC, Australia</div>
