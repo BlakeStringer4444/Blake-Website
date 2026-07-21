@@ -1891,14 +1891,13 @@ function showKey(show) { return show.title + '|||' + show.company; }
 function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); }
 
 /* ── URL STATE ── */
+/* Theatredex always stays on its bare URL (/tools/theatredex/). No mode, search,
+   company, month or filter state is ever written to the address bar, so nothing
+   is shareable or deep-linkable — every visit and refresh opens in the default
+   state (Plays · Upcoming · no filters). pushUrlState just strips any query a
+   visitor may have hand-crafted onto the URL. */
 function pushUrlState() {
-  const p = new URLSearchParams();
-  if (mode === 'musical')           p.set('mode',    'musical');
-  if (searchQ)                      p.set('q',       searchQ);
-  if (activeCompany)                p.set('company', activeCompany);
-  if (activeMonth)                  p.set('month',   activeMonth);
-  if (activeFilter !== 'upcoming')  p.set('filter',  activeFilter || '');
-  history.replaceState(null, '', p.toString() ? '?' + p : location.pathname);
+  if (location.search) history.replaceState(null, '', location.pathname);
 }
 
 function setFilterButtons(active) {
@@ -1910,14 +1909,12 @@ function setFilterButtons(active) {
 }
 
 function readUrlState() {
-  const p = new URLSearchParams(location.search);
-  searchQ       = p.get('q')       || '';
-  activeCompany = p.get('company') || '';
-  activeMonth   = p.get('month')   || '';
-  activeFilter  = p.get('filter') ?? 'upcoming';
-  document.getElementById('td-search').value  = searchQ;
-  document.getElementById('td-company').value = activeCompany;
-  document.getElementById('td-month').value   = activeMonth;
+  /* Nothing is read from the URL — always open in the default state so a
+     hand-crafted ?q=/?company=/?filter= link can't pre-apply a filter. */
+  searchQ = ''; activeCompany = ''; activeMonth = ''; activeFilter = 'upcoming';
+  document.getElementById('td-search').value  = '';
+  document.getElementById('td-company').value = '';
+  document.getElementById('td-month').value   = '';
   setFilterButtons(activeFilter);
 }
 
@@ -2072,13 +2069,11 @@ async function init() {
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     /* Full sheet kept in memory; `setModeData` derives the mode-scoped working
-       set (Musical_Theatre_Company==='1' for musicals, everything else for
-       plays). A ?mode=musical deep-link lands directly in musical mode; the
-       bare URL always opens on plays. */
+       set. Every load starts on Plays — mode isn't read from the URL, so a
+       refresh never remembers a Musicals selection. */
     allData = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-    const p0 = new URLSearchParams(location.search);
-    setModeData(p0.get('mode') === 'musical' ? 'musical' : 'play');
+    setModeData('play');
     readUrlState();
     syncSelectActive();
     render();
