@@ -1050,8 +1050,30 @@ footer {
      ~360px) without the last tab (Tools) scrolling off the right edge. */
   .tab-mobile-btn { padding: 10px 3px; letter-spacing: 0.5px; font-size: 8px; }
   .about-top { flex-direction: column; align-items: center; }
-  .about-photo-col { width: 100%; display: flex; flex-direction: column; align-items: center; }
-  .photo-frame { width: 100%; height: 460px; margin: 0 auto; }
+  /* `.about-top` prefix raises specificity above the base `.about-photo-col
+     { width: 336px }` (which appears later in the stylesheet and was otherwise
+     winning), so the photo column is fluid — not a fixed 336px that overflows
+     to the right on phones narrower than ~360px or when the Aa text-zoom is on.
+     Fluid width + a max-width cap keeps the headshot centred and sensibly sized
+     on any phone. */
+  .about-top .about-photo-col {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .photo-frame {
+    width: 100%;
+    max-width: 100%;
+    height: 460px; /* fallback if aspect-ratio unsupported */
+    margin: 0 auto;
+  }
+  /* Where supported, scale height with the (now fluid) width so the headshot
+     keeps its proportions and isn't over-tall on small phones. */
+  @supports (aspect-ratio: 1) {
+    .photo-frame { height: auto; aspect-ratio: 336 / 460; }
+  }
   .skill-name { min-width: 100px; }
 }
 
