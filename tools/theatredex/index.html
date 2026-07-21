@@ -1509,6 +1509,41 @@ button.td-link { background: none; cursor: pointer; }
   /* Prevent iOS Safari auto-zoom on focus (triggers when font-size < 16px) */
   .td-clash-input { font-size: 16px; }
 }
+
+/* ── MUSICAL AUDITIONS MODAL ── opened by the Current Auditions button in
+   musical mode (in plays mode that button still links straight to VDL). The
+   link buttons use --purple, which is the musical accent when data-mode is
+   musical, so they render in the mode colour automatically. */
+.td-aud-overlay {
+  position: fixed; inset: 0; z-index: 1200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.8); padding: 20px; box-sizing: border-box;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.td-aud-overlay.open { opacity: 1; pointer-events: auto; }
+.td-aud-modal {
+  background: var(--bg); border: 1px solid var(--lime);
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column;
+}
+.td-aud-body { padding: 20px; display: flex; flex-direction: column; gap: 11px; }
+.td-aud-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; text-decoration: none; color: var(--fg);
+  border: 1px solid var(--purple); padding: 14px 16px;
+  transition: background 0.15s, color 0.15s;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.td-aud-link:hover { background: var(--purple); color: #fff; }
+.td-aud-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.td-aud-fb { display: inline-flex; align-items: center; color: var(--purple); flex-shrink: 0; transition: color 0.15s; }
+.td-aud-arrow { color: var(--purple); flex-shrink: 0; transition: color 0.15s; }
+.td-aud-link:hover .td-aud-fb,
+.td-aud-link:hover .td-aud-arrow { color: #fff; }
+@media (max-width: 639px) {
+  .td-aud-overlay { padding: 16px; }
+}
 .td-cal-empty {
   padding: 48px 20px; text-align: center;
   font-family: 'DM Mono', monospace; font-size: 12px;
@@ -1691,6 +1726,22 @@ button.td-link { background: none; cursor: pointer; }
       <button class="blakeai-send" id="blakeai-send" aria-label="Send">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Musical auditions modal (opened by Current Auditions in musical mode) -->
+<div class="td-aud-overlay" id="td-aud-overlay">
+  <div class="td-aud-modal">
+    <div class="td-clash-topbar">
+      <span class="td-clash-topbar-title">Musical Auditions</span>
+      <button class="td-clash-close" id="td-aud-close" aria-label="Close">✕<br>ESC</button>
+    </div>
+    <div class="td-aud-body">
+      <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted, as currently there is no universal auditions page for musicals</p>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/1BVRQU2mLE" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Auditions</span><span class="td-aud-arrow">↗</span></a>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/1F4A8i6eBN" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Positive Theatre Vibes</span><span class="td-aud-arrow">↗</span></a>
+      <a class="td-aud-link" href="https://www.facebook.com/share/g/14iJbaSMHvP" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Musical Theatre</span><span class="td-aud-arrow">↗</span></a>
     </div>
   </div>
 </div>
@@ -2139,9 +2190,12 @@ function updateModeUI() {
   playsBtn.setAttribute('aria-pressed', String(!musical));
   musBtn.classList.toggle('active', musical);
   musBtn.setAttribute('aria-pressed', String(musical));
-  /* Auditions + Spreadsheet don't apply to musicals yet — hide them there. */
+  /* Spreadsheet doesn't apply to musicals yet — hide it there. */
   document.getElementById('td-spreadsheet-btn').style.display = musical ? 'none' : '';
-  document.getElementById('td-auditions-btn').style.display   = musical ? 'none' : '';
+  /* Auditions stays in both modes: plays links straight to VDL; musical opens
+     the Facebook-groups modal (see the audition-modal handler). Swap the glyph
+     so it reads as an external link (↗) vs an in-page modal (◈). */
+  document.getElementById('td-auditions-btn').innerHTML = 'Current Auditions ' + (musical ? '◈' : '↗');
   /* VDL (Victorian Drama League) is a plays body — no musical is a VDL entrant,
      so drop that filter in musical mode. If it was the active filter, fall back
      to Upcoming so the grid isn't left showing an empty VDL set. */
@@ -2167,6 +2221,24 @@ function switchMode(m) {
 }
 document.getElementById('td-mode-plays').addEventListener('click',    () => switchMode('play'));
 document.getElementById('td-mode-musicals').addEventListener('click', () => switchMode('musical'));
+
+/* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
+   plays mode and opens this Facebook-groups modal in musical mode. */
+(function () {
+  const audBtn   = document.getElementById('td-auditions-btn');
+  const audOv    = document.getElementById('td-aud-overlay');
+  const audClose = document.getElementById('td-aud-close');
+  function closeAud() { audOv.classList.remove('open'); }
+  audBtn.addEventListener('click', e => {
+    if (mode === 'musical') { e.preventDefault(); audOv.classList.add('open'); }
+    /* plays mode: fall through so the anchor navigates to VDL as normal */
+  });
+  audClose.addEventListener('click', closeAud);
+  audOv.addEventListener('click', e => { if (e.target === audOv) closeAud(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && audOv.classList.contains('open')) closeAud();
+  });
+})();
 
 /* ── VDL secret refresh: 10 clicks force-reloads data ── */
 (function () {
