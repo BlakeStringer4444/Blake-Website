@@ -4316,12 +4316,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       '</div>' +
       '<div class="td-cal-rows">' + todayOverlay + rowsHTML + '</div>';
 
-    /* On phones the day grid is wider than the screen, so a late-month TODAY
-       line starts off-screen to the right. When the current month is showing,
-       horizontally centre the TODAY column so the red line lands mid-screen on
-       load. scrollIntoView({inline:'center'}) does the maths for us and copes
-       with the mobile zoom:1.25 on .td-cal-body. Desktop is left as-is. */
-    if (isNow && shows.length > 0 && window.innerWidth < 640) {
+    /* When the current month is showing, land on TODAY: horizontally centre the
+       current-day column so the red line is in view the moment Calendar View
+       loads (rather than starting at day 1 and needing a scroll). Applies on
+       every width — on a wide desktop where the whole month already fits nothing
+       scrolls; on narrower / mobile widths it scrolls today into the centre.
+       scrollIntoView({inline:'center'}) does the maths and copes with the mobile
+       zoom:1.25 on .td-cal-body. Dimensions are untouched. */
+    if (isNow && shows.length > 0) {
       var todayCol = calBody.querySelector('.td-cal-day-num.td-cal-today-col');
       if (todayCol) {
         requestAnimationFrame(function () {
