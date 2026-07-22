@@ -4183,13 +4183,27 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     el.scrollTop = 0;
   }
 
-  async function geocode(addr) {
+  /* Detect an explicit Australian state/territory in the typed address so we
+     only assume Victoria when the user hasn't named a state themselves. */
+  function hasState(addr) {
+    return /\b(vic|victoria|nsw|new south wales|qld|queensland|tas|tasmania|nt|northern territory|act|australian capital territory|sa|south australia|wa|western australia)\b/i.test(addr);
+  }
+  async function nominatim(q) {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=au`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=au`,
       { headers: { Accept: 'application/json' } }
     );
     const data = await res.json();
     return data[0] ? { lat: +data[0].lat, lng: +data[0].lon } : null;
+  }
+  async function geocode(addr) {
+    /* No state given (e.g. "Burwood") → assume Victoria, so it doesn't land on
+       the NSW namesake. If that finds nothing, fall back to the raw query so a
+       valid interstate/edge address still resolves. */
+    const primary = hasState(addr) ? addr : addr + ', Victoria';
+    let pos = await nominatim(primary);
+    if (!pos && primary !== addr) pos = await nominatim(addr);
+    return pos;
   }
 
   /* Best-route driving time (seconds) from `origin` to each pin, via OSRM's
