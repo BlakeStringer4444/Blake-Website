@@ -3951,7 +3951,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const addrClear = document.getElementById('td-map-addr-clear');
 
   let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
-  let _lastListPins = [], _lastListWithDist = false, _userPos = null;
+  let _lastListPins = [], _lastListWithDist = false, _userPos = null, routeLayer = null;
 
   function extractCoords(url) {
     if (!url) return null;
@@ -4104,11 +4104,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
   }
 
-  function fmtMins(sec) {
-    if (sec == null) return '';
-    const m = Math.round(sec / 60);
-    if (m < 60) return '~' + Math.max(1, m) + ' min';
-    const h = Math.floor(m / 60), r = m % 60;
+  /* Round a raw drive time (seconds) UP to the next 5 minutes, then add a
+     standing 5-minute buffer, so estimates always read in tidy 5-min steps
+     — e.g. a 16-min route shows as "~25 min" (round up to 20, +5). */
+  function padMins(sec) {
+    if (sec == null) return null;
+    return Math.ceil(sec / 60 / 5) * 5 + 5;
+  }
+  function fmtMins(min) {
+    if (min == null) return '';
+    if (min < 60) return '~' + min + ' min';
+    const h = Math.floor(min / 60), r = min % 60;
     return '~' + h + ' h' + (r ? ' ' + r + ' min' : '');
   }
 
@@ -4129,14 +4135,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       display.map((p, i) =>
         `<div class="td-map-list-item" data-idx="${i}">
           <div class="td-map-list-name">${p.name}</div>
-          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)}${p.mins != null ? ' · ' + fmtMins(p.mins) + ' drive' : ' away'}</div>` : ''}
+          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)}${p.mins != null ? ' · ' + fmtMins(padMins(p.mins)) + ' drive' : ' away'}</div>` : ''}
         </div>`
       ).join('');
     el.querySelectorAll('.td-map-list-item').forEach(item => {
       item.addEventListener('click', () => {
         const p = display[+item.dataset.idx];
-        leafletMap.setView([p.lat, p.lng], 14, { animate: true });
         renderCompanyDetail(p.name);
+        if (_userPos) drawRoute(_userPos, p);                              /* draw route + fit view */
+        else leafletMap.setView([p.lat, p.lng], 14, { animate: true });
       });
     });
   }
@@ -4147,7 +4154,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
     const pin = (_lastListPins || []).find(x => x.name === name);
     const travel = (pin && pin.dist != null)
-      ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(pin.mins) + ' drive' : ''} from your location</div>`
+      ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(padMins(pin.mins)) + ' drive' : ''} from your location</div>`
       : '';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
@@ -4166,6 +4173,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>`;
       }).join('');
     el.querySelector('.td-map-detail-back').addEventListener('click', () => {
+      clearRoute();
       renderList(_lastListPins, _lastListWithDist);
     });
     el.scrollTop = 0;
@@ -4206,6 +4214,41 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return out;
   }
 
+  function clearRoute() {
+    if (routeLayer) { routeLayer.remove(); routeLayer = null; }
+  }
+
+  /* Fetch and draw the best driving route (red dot → company) via OSRM, fit the
+     view to it, and refresh the detail time with the route's own duration. */
+  async function drawRoute(origin, dest) {
+    clearRoute();
+    try {
+      const url = 'https://router.project-osrm.org/route/v1/driving/' +
+        origin.lng.toFixed(6) + ',' + origin.lat.toFixed(6) + ';' +
+        dest.lng.toFixed(6) + ',' + dest.lat.toFixed(6) +
+        '?overview=full&geometries=geojson';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.status);
+      const data  = await res.json();
+      const route = data && data.routes && data.routes[0];
+      if (!route || _userPos !== origin) return;   /* a newer action won */
+      const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);  /* lng,lat → lat,lng */
+      const accent  = (getComputedStyle(document.documentElement).getPropertyValue('--purple') || '#9933ff').trim();
+      routeLayer = L.layerGroup([
+        L.polyline(latlngs, { color: '#000', weight: 8, opacity: 0.3 }),      /* casing for contrast */
+        L.polyline(latlngs, { color: accent, weight: 4, opacity: 0.95 })
+      ]).addTo(leafletMap);
+      leafletMap.fitBounds(L.latLngBounds(latlngs).pad(0.18));
+      dest.mins = route.duration;   /* route time is more precise than the matrix estimate */
+      const el = document.querySelector('.td-map-detail-travel');
+      if (el && dest.dist != null) {
+        el.textContent = fmtDist(dest.dist) + ' · ' + fmtMins(padMins(dest.mins)) + ' drive from your location';
+      }
+    } catch (e) {
+      console.warn('[Theatredex Map] route unavailable', e);
+    }
+  }
+
   async function handleSearch() {
     const addr = addrInput.value.trim();
     if (!addr) return;
@@ -4219,6 +4262,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         return;
       }
       if (userMarker) { userMarker.remove(); userMarker = null; }
+      clearRoute();
       userMarker = L.marker([pos.lat, pos.lng], {
         icon: L.divIcon({ className: '', html: '<div class="td-map-user-dot"></div>', iconSize: [16,16], iconAnchor: [8,8] })
       }).addTo(leafletMap);
@@ -4252,6 +4296,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     addrInput.value = '';
     addrClear.classList.remove('visible');
     if (userMarker) { userMarker.remove(); userMarker = null; }
+    clearRoute();
+    _userPos = null;
     renderList(mapPinsData, false);
     if (mapPinsData.length)
       leafletMap.fitBounds(L.latLngBounds(mapPinsData.map(p => p._anchor)).pad(0.1));
@@ -4317,7 +4363,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
      Calendar and Clash rebuild from allShows on each open, so they self-heal. */
   onModeChange(() => {
     if (leafletMap) { leafletMap.remove(); leafletMap = null; }
-    mapReady = false; mapPinsData = []; userMarker = null;
+    mapReady = false; mapPinsData = []; userMarker = null; routeLayer = null; _userPos = null;
     const el = document.getElementById('td-map-el');
     if (el) el.innerHTML = '';
   });
