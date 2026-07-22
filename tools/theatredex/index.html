@@ -1215,18 +1215,17 @@ button.td-link { background: none; cursor: pointer; }
 [data-theme="terminal"] .td-map-list-dist { color: var(--lime); }
 .td-map-detail-back {
   font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--lime); background: rgba(212,255,26,0.1);
-  border: none; border-bottom: 1px solid rgba(212,255,26,0.28);
-  cursor: pointer; padding: 13px 16px; width: 100%; text-align: left;
-  display: flex; align-items: center; gap: 8px;
+  color: #fff; background: var(--purple);
+  border: none; cursor: pointer; padding: 13px 16px; width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 9px;
   position: sticky; top: 0; z-index: 5;
-  transition: background 0.15s, color 0.15s;
+  transition: filter 0.15s;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
-.td-map-detail-back:hover { background: rgba(212,255,26,0.2); color: var(--lime); }
+.td-map-detail-back:hover { filter: brightness(1.12); }
 .td-map-detail-back .td-back-x {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 4px;
+  width: 18px; height: 18px; border: 1px solid rgba(255,255,255,0.7); border-radius: 4px;
   font-size: 11px; flex-shrink: 0;
 }
 .td-map-detail-co-name {
@@ -1320,6 +1319,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-head {
   display: flex; position: sticky; top: 0; z-index: 10;
   background: var(--bg); border-bottom: 1px solid rgba(212,255,26,0.15);
+  min-width: max-content;
 }
 .td-cal-head-label {
   flex-shrink: 0; width: 200px; padding: 7px 10px;
@@ -1335,7 +1335,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(128,128,128,0.08);
 }
 .td-cal-day-num.td-cal-today-col { color: #e53935; }
-.td-cal-rows { position: relative; }
+.td-cal-rows { position: relative; min-width: max-content; }
 .td-cal-row {
   display: flex; border-bottom: 1px solid rgba(128,128,128,0.08);
   min-height: 34px;
