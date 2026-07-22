@@ -1633,7 +1633,7 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-header-btns">
     <button id="td-map-btn" class="td-header-btn"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6 2V6l6-2 6 2 6-2v16l-6 2-6-2z"/><path d="M9 4v16M15 6v16"/></svg><span>Map View</span></button>
     <button id="td-cal-btn" class="td-header-btn"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Calendar View</span></button>
-    <a id="td-spreadsheet-btn" class="td-header-btn" href="/tools/theatredex/spreadsheet.html?mode=play" target="_blank" rel="noopener noreferrer"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Spreadsheet View</span></a>
+    <a id="td-spreadsheet-btn" class="td-header-btn" href="/tools/theatredex/spreadsheet.html?mode=play"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Spreadsheet View</span></a>
     <button id="td-clash-btn" class="td-header-btn"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="11" height="4" rx="1"/><rect x="10" y="15" width="11" height="4" rx="1"/></svg><span>Will it Clash?</span></button>
     <a id="td-auditions-btn" class="td-header-btn" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10v4a1 1 0 001 1h2l5 4V5L6 9H4a1 1 0 00-1 1z"/><path d="M16 8a5 5 0 010 8"/></svg><span>Current Auditions</span></a>
   </div>
@@ -2221,8 +2221,10 @@ function updateModeUI() {
   playsBtn.setAttribute('aria-pressed', String(!musical));
   musBtn.classList.toggle('active', musical);
   musBtn.setAttribute('aria-pressed', String(musical));
-  /* Spreadsheet View is available in both modes now: it opens the standalone
-     generated sheet for the active mode (plays / musicals) in a new tab. */
+  /* Spreadsheet View is available in both modes now: it navigates to the
+     standalone generated sheet for the active mode (plays / musicals) in the
+     same tab, so the browser Back button returns here (standard link
+     behaviour, no target=_blank). */
   const ssBtn = document.getElementById('td-spreadsheet-btn');
   ssBtn.style.display = '';
   ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode;
