@@ -164,12 +164,15 @@ function fmtDates(row) {
   return s.getDate() + ' ' + MONTHS[s.getMonth()] + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()];
 }
 
-/* Tag non-standard types after the title, e.g. "Rumpelstiltskin [Pantomime]".
-   Plain plays and plain musicals aren't tagged. */
+/* Tag the type after the title whenever it differs from the mode's primary
+   type — so in Plays mode a musical or pantomime shows e.g. "Sweeney Todd
+   [Musical]" / "Rumpelstiltskin [Pantomime]", while a plain play is untagged
+   (and in Musicals mode a plain musical is untagged). */
 function typeTag(row) {
   const t = (row.type || '').trim();
-  const low = t.toLowerCase();
-  return (t && low !== 'play' && low !== 'musical') ? ' <span class="type">[' + esc(t) + ']</span>' : '';
+  if (!t) return '';
+  const primary = mode === 'musical' ? 'musical' : 'play';
+  return t.toLowerCase() !== primary ? ' <span class="type">[' + esc(t) + ']</span>' : '';
 }
 
 function linkCell(url, rowspan) {
