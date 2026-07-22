@@ -131,10 +131,13 @@ body {
 .td-header-btn {
   font-family: 'DM Mono', monospace;
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--lime);
+  /* Mode-tinted: dark purple in Plays, dark pink in Musicals (both derive from
+     --purple, which flips to --musical when data-mode="musical"), with white
+     text — so the buttons signal that they show mode-specific data. */
+  color: #fff;
   text-decoration: none;
-  background: rgba(212,255,26,0.1);
-  border: 1px solid rgba(212,255,26,0.14);
+  background: color-mix(in srgb, var(--purple) 24%, #0a0a0a);
+  border: 1px solid color-mix(in srgb, var(--purple) 55%, transparent);
   padding: 11px 16px;
   border-radius: 10px;
   transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s, color 0.18s;
@@ -147,11 +150,11 @@ body {
 }
 .td-header-btn .td-btn-ic { width: 14px; height: 14px; flex-shrink: 0; }
 .td-header-btn:hover {
-  background: rgba(212,255,26,0.2);
-  border-color: rgba(212,255,26,0.28);
+  background: color-mix(in srgb, var(--purple) 34%, #0a0a0a);
+  border-color: color-mix(in srgb, var(--purple) 70%, transparent);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(212,255,26,0.18);
-  color: var(--lime);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--purple) 30%, transparent);
+  color: #fff;
 }
 @media (prefers-reduced-motion: reduce) {
   .td-header-btn { transition: background 0.18s, border-color 0.18s, color 0.18s; }
@@ -1137,7 +1140,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-ilb-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #111; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; }
 
 /* ── MAP VIEW MODAL ── */
-.td-header-btn--active { color: var(--lime) !important; border-color: var(--lime) !important; background: rgba(212,255,26,0.24) !important; }
+.td-header-btn--active { color: #fff !important; border-color: color-mix(in srgb, var(--purple) 85%, transparent) !important; background: color-mix(in srgb, var(--purple) 46%, #0a0a0a) !important; }
 .td-map-overlay {
   display: none; position: fixed; inset: 0; z-index: 9000;
   background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 20px;
