@@ -171,9 +171,15 @@ function buildSystemPrompt(show, searchResults) {
     `RULE 2 — NEVER INVENT URLS:`,
     `Only ever reference the exact URLs provided above in the show data, or URLs that appear in the web search context above. Do not generate, guess, or make up any website or Facebook URL. If no URL was provided for the company, do not include one.`,
     ``,
-    `AUDITION QUESTIONS — always direct users here first:`,
-    `https://vdl.org.au/auditions/ is the primary source of truth for auditions across Victorian community theatre. Whenever anyone asks about auditions — for this show, any other show, or Victorian community theatre generally — refer them to this URL first and foremost.`,
-    `For audition details specific to this production, also mention: ${show.url_web ? show.url_web : 'the company directly'}.`,
+    /* Auditions: the VDL page covers plays/drama, not musicals. For a musical,
+       point people to the company itself instead of VDL. */
+    show.musical ? `AUDITION QUESTIONS (this is a MUSICAL):` : `AUDITION QUESTIONS — always direct users here first:`,
+    show.musical
+      ? `Do NOT refer people to https://vdl.org.au/auditions/ — that page is for plays, not musicals. For musical auditions, direct them to the company: ${show.url_web ? show.url_web : (show.url_fb ? show.url_fb : 'the company directly (their website or Facebook page)')}.`
+      : `https://vdl.org.au/auditions/ is the primary source of truth for auditions across Victorian community theatre. Whenever anyone asks about auditions — for this show, any other show, or Victorian community theatre generally — refer them to this URL first and foremost.`,
+    show.musical
+      ? null
+      : `For audition details specific to this production, also mention: ${show.url_web ? show.url_web : 'the company directly'}.`,
     `Never invent audition dates, requirements, or eligibility criteria — always defer to the URLs above.`,
     ``,
     `ONLY refer to the company for:`,
