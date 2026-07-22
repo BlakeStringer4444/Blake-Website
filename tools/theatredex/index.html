@@ -481,7 +481,7 @@ button.td-link { background: none; cursor: pointer; }
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
   background: none;
-  border: 1px solid rgba(153,51,255,0.35);
+  border: 1px solid color-mix(in srgb, var(--purple) 38%, transparent);
   border-radius: 2px;
   color: var(--purple);
   cursor: pointer;
@@ -1158,14 +1158,14 @@ button.td-link { background: none; cursor: pointer; }
 }
 .td-map-addr-input {
   flex: 1; align-self: stretch; padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
-  border: 1px solid rgba(212,255,26,0.25); background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(212,255,26,0.25); border-radius: 6px; background: rgba(255,255,255,0.05);
   color: #fff; outline: none; transition: border-color 0.2s; min-width: 0;
 }
 .td-map-addr-input:focus { border-color: var(--lime); }
 .td-map-addr-input::placeholder { color: rgba(255,255,255,0.3); }
 .td-map-addr-btn {
   font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-  padding: 10px 22px; background: var(--lime); color: var(--black);
+  padding: 10px 22px; background: var(--lime); color: var(--black); border-radius: 6px;
   border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0;
   align-self: stretch;
 }
@@ -1173,7 +1173,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-map-addr-btn:disabled { opacity: 0.5; cursor: default; }
 .td-map-addr-clear {
   display: none; align-items: center; justify-content: center;
-  background: none; border: 1px solid rgba(212,255,26,0.25); color: rgba(212,255,26,0.6);
+  background: none; border: 1px solid rgba(212,255,26,0.25); border-radius: 6px; color: rgba(212,255,26,0.6);
   padding: 5px 15px; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
   font-size: 18px; align-self: stretch;
 }
@@ -1181,7 +1181,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-map-addr-clear:hover { border-color: var(--lime); color: var(--lime); }
 .td-map-close {
   font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  background: none; border: 1px solid rgba(212,255,26,0.35); color: rgba(212,255,26,0.7);
+  background: none; border: 1px solid rgba(212,255,26,0.35); border-radius: 6px; color: rgba(212,255,26,0.7);
   padding: 7px 14px; text-align: center; line-height: 1.6; cursor: pointer; flex-shrink: 0;
   transition: all 0.2s; touch-action: manipulation;
 }
@@ -1450,19 +1450,21 @@ button.td-link { background: none; cursor: pointer; }
   display: flex; flex-direction: column;
 }
 .td-clash-topbar {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   background: #111; border-bottom: 1px solid rgba(212,255,26,0.2);
-  padding: 10px 16px; flex-shrink: 0;
+  padding: 12px 18px; flex-shrink: 0;
 }
 .td-clash-topbar-title {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
   letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime);
 }
 .td-clash-close {
+  height: 38px; border-radius: 6px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 9px;
-  letter-spacing: 1px; text-transform: uppercase; text-align: center;
-  padding: 4px 10px; cursor: pointer; line-height: 1.4; transition: background 0.15s;
+  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase; text-align: center; line-height: 1.2;
+  padding: 0 14px; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
 }
 .td-clash-close:hover { background: rgba(212,255,26,0.15); }
 .td-clash-body { padding: 24px 20px; display: flex; flex-direction: column; gap: 18px; }
@@ -1592,11 +1594,12 @@ button.td-link { background: none; cursor: pointer; }
 @media (max-width: 639px) {
   .td-cal-overlay { padding: 0; }
   .td-cal-modal { max-height: 100dvh; height: 100%; border-left: none; border-right: none; }
-  .td-cal-topbar { gap: 8px; padding: 9px 12px; flex-wrap: nowrap; }
+  /* Match the Map View banner height (~65px) on mobile. */
+  .td-cal-topbar { gap: 8px; padding: 10px 12px; flex-wrap: nowrap; }
   .td-cal-modal-title { display: none; }
   .td-cal-month-label { font-size: 12px; min-width: 100px; letter-spacing: 1px; }
   .td-cal-nav-btn { font-size: 10px; padding: 0 12px; }
-  .td-cal-nav-btn, .td-cal-close, .td-cal-back { height: 32px; }
+  .td-cal-nav-btn, .td-cal-close, .td-cal-back { height: 45px; }
   .td-cal-today-btn { display: none; }
   .td-cal-head-label { width: 140px; font-size: 8px; }
   .td-cal-row-label { width: 140px; }
@@ -1766,7 +1769,7 @@ button.td-link { background: none; cursor: pointer; }
   <div class="td-aud-modal">
     <div class="td-clash-topbar">
       <span class="td-clash-topbar-title">Musical Auditions</span>
-      <button class="td-clash-close" id="td-aud-close" aria-label="Close">✕<br>ESC</button>
+      <button class="td-clash-close" id="td-aud-close" aria-label="Close">ESC<br>CLOSE</button>
     </div>
     <div class="td-aud-body">
       <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted, as currently there is no universal auditions page for musicals</p>
@@ -2332,6 +2335,7 @@ function openBlakeAI(dataset) {
     director:   dataset.director   || '',
     suburb:     dataset.suburb     || '',
     dates:      dataset.dates      || '',
+    musical:    mode === 'musical',   /* musicals don't use the VDL auditions page */
     url_web:    dataset.urlWeb     || '',
     url_fb:     dataset.urlFb      || '',
   };
@@ -4187,6 +4191,9 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     el.querySelector('.td-map-detail-back').addEventListener('click', () => {
       clearRoute();
       renderList(_lastListPins, _lastListWithDist);
+      /* Reset to the default view (all companies) rather than staying zoomed in. */
+      if (mapPinsData.length)
+        leafletMap.fitBounds(L.latLngBounds(mapPinsData.map(p => p._anchor)).pad(0.1), { animate: true });
     });
     el.scrollTop = 0;
   }
