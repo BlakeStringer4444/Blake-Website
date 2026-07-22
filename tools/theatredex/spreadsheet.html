@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theatredex — Spreadsheet View</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="/Images/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/Images/favicon.png">
+<!--
+  Standalone "Spreadsheet View" for Theatredex. Opened in a new tab from the
+  main tool's Spreadsheet View button (which passes ?mode=play|musical). It
+  fetches the same published Google Sheets CSV the main tool uses and rebuilds
+  the classic spreadsheet layout on the fly, so retiring the separate Google
+  Sheet loses nothing — this regenerates live every visit.
+
+  Deliberately NOT theme/dark-mode aware: it recreates the maroon/gold/grey
+  spreadsheet look on purpose.
+-->
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #e9e9e9;
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    color: #1a1a1a;
+  }
+
+  /* ── BANNER ── */
+  .ss-banner {
+    background: #000; color: #fff; text-align: center;
+    padding: 16px 12px;
+  }
+  .ss-banner h1 {
+    margin: 0; font-weight: 300; font-size: clamp(22px, 4.4vw, 34px);
+    letter-spacing: 0.34em; text-transform: lowercase; padding-left: 0.34em;
+  }
+
+  /* ── TABLE ── */
+  .ss-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.ss { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 15px; }
+
+  .ss thead th {
+    background: #6d6d6d; color: #fff; font-weight: 700;
+    padding: 12px; text-align: left; white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.25);
+    position: sticky; top: 0; z-index: 2;
+  }
+  .ss thead th.co-h    { text-align: center; }
+  .ss thead th.num-h   { width: 34px; padding: 12px 4px; }
+  .ss thead th.dates-h { text-align: center; }
+  .ss thead th.link-h  { background: #4a4a4a; text-align: center; width: 58px; font-size: 13px; }
+
+  .ss td {
+    padding: 9px 12px; border-bottom: 1px solid #d7d7d7; background: #fff;
+    vertical-align: middle;
+  }
+  .ss td.co {
+    background: #4a1530; color: #fff; text-align: center;
+    border-right: 3px solid #caa72c; padding: 10px 12px;
+  }
+  .ss td.co .co-name { font-size: 19px; line-height: 1.2; }
+  .ss td.co .co-sub  { font-size: 12px; opacity: 0.82; margin-top: 4px; }
+  .ss td.num {
+    width: 34px; text-align: center; color: #b58a12; font-weight: 700;
+    background: #fff; border-right: 3px solid #caa72c; padding: 9px 4px;
+  }
+  .ss td.dates { text-align: right; white-space: nowrap; }
+  .ss td .type { font-style: italic; color: #666; }
+  .ss td.link {
+    background: #d9d9d9; text-align: center; border-right: 1px solid #c4c4c4;
+  }
+  .ss td.link a { color: #1a55c0; text-decoration: underline; }
+  .ss td.link.empty { color: #b0b0b0; }
+  /* Gold divider under the last row of each company block */
+  .ss tr.co-end > td { border-bottom: 3px solid #caa72c; }
+
+  /* ── STATES ── */
+  .ss-state {
+    padding: 60px 24px; text-align: center; color: #555; font-size: 15px;
+  }
+
+  @media (max-width: 639px) {
+    .ss { font-size: 13px; }
+    .ss thead th, .ss td { padding: 8px 9px; }
+    .ss td.co .co-name { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="ss-banner"><h1>theatredex <span id="ss-year">2026</span></h1></div>
+  <div class="ss-scroll" id="ss-scroll">
+    <div class="ss-state" id="ss-state">Loading…</div>
+  </div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfBhALi9j_StQcvcxjy7Iyj6xNOejrkT5cLK4NHUiikmuoKoPXZxdOPeQJTpwrjD5tgUNQ0iKV9UIP/pub?gid=1603898813&single=true&output=csv';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const mode = new URLSearchParams(location.search).get('mode') === 'musical' ? 'musical' : 'play';
+document.getElementById('ss-year').textContent = new Date().getFullYear();
+document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + (mode === 'musical' ? 'Musicals' : 'Plays') + ' Spreadsheet';
+
+/* ── CSV (identical parsing to the main tool) ── */
+function splitRow(line) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') q = !q;
+    else if (c === ',' && !q) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+function parseCSV(text) {
+  const lines = text.replace(/\r/g, '').split('\n');
+  const headers = splitRow(lines[0]);
+  return lines.slice(1).reduce((acc, line) => {
+    if (!line.trim()) return acc;
+    const vals = splitRow(line);
+    const row = {};
+    headers.forEach((h, i) => { row[h.trim()] = (vals[i] || '').trim(); });
+    if (row.company && row.title) acc.push(row);
+    return acc;
+  }, []);
+}
+function parseDate(iso) { return iso ? new Date(iso + 'T00:00:00') : null; }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function safeUrl(u) {
+  u = (u || '').trim();
+  return /^https?:\/\//i.test(u) ? u : '';
+}
+
+/* A show belongs to the musicals sheet if its own type is Musical, or its
+   company is flagged as a musical-theatre company (safety net). */
+function isMusicalShow(s) {
+  return (s.type || '').trim().toLowerCase() === 'musical' || s.Musical_Theatre_Company === '1';
+}
+
+/* Date range, collapsing a same-month span to "1 – 24 Oct". */
+function fmtDates(row) {
+  const s = parseDate(row.date_start), e = parseDate(row.date_end) || s;
+  if (!s) return '';
+  const ap = (row.date_approximate || '').toLowerCase();
+  if (ap === 'yes' || ap === '1') return MONTHS[s.getMonth()] + ' ' + s.getFullYear();
+  if (!e || e.getTime() === s.getTime()) return s.getDate() + ' ' + MONTHS[s.getMonth()];
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear())
+    return s.getDate() + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()];
+  return s.getDate() + ' ' + MONTHS[s.getMonth()] + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()];
+}
+
+/* Tag non-standard types after the title, e.g. "Rumpelstiltskin [Pantomime]".
+   Plain plays and plain musicals aren't tagged. */
+function typeTag(row) {
+  const t = (row.type || '').trim();
+  const low = t.toLowerCase();
+  return (t && low !== 'play' && low !== 'musical') ? ' <span class="type">[' + esc(t) + ']</span>' : '';
+}
+
+function linkCell(url, rowspan) {
+  const u = safeUrl(url);
+  return u
+    ? '<td class="link"' + rowspan + '><a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">Link</a></td>'
+    : '<td class="link empty"' + rowspan + '>–</td>';
+}
+
+function render(rows) {
+  const scroll = document.getElementById('ss-scroll');
+
+  if (!rows.length) {
+    scroll.innerHTML = '<div class="ss-state">No ' + (mode === 'musical' ? 'musicals' : 'productions') + ' to show yet.</div>';
+    return;
+  }
+
+  /* Group by company, sort companies A–Z, shows by start date within each. */
+  const byCompany = new Map();
+  rows.forEach(r => {
+    if (!byCompany.has(r.company)) byCompany.set(r.company, []);
+    byCompany.get(r.company).push(r);
+  });
+  const companies = [...byCompany.keys()].sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase()));
+
+  let body = '';
+  companies.forEach(co => {
+    const shows = byCompany.get(co).sort((a, b) =>
+      (a.date_start || '').localeCompare(b.date_start || ''));
+    const n = shows.length;
+    const span = ' rowspan="' + n + '"';
+    const suburb = (shows.find(s => s.suburb) || {}).suburb || '';
+    const first = k => (shows.find(s => s[k]) || {})[k] || '';
+
+    shows.forEach((s, i) => {
+      const last = i === n - 1;
+      body += '<tr' + (last ? ' class="co-end"' : '') + '>';
+      if (i === 0) {
+        body += '<td class="co"' + span + '><div class="co-name">' + esc(co) + '</div>' +
+          (suburb ? '<div class="co-sub">(' + esc(suburb) + ')</div>' : '') + '</td>';
+      }
+      body += '<td class="num">' + (s.production_number ? esc(s.production_number) : '–') + '</td>';
+      body += '<td>' + esc(s.title) + typeTag(s) + '</td>';
+      body += '<td>' + esc(s.director || '') + '</td>';
+      body += '<td>' + esc(s.playwright || '') + '</td>';
+      body += '<td class="dates">' + esc(fmtDates(s)) + '</td>';
+      if (i === 0) {
+        body += linkCell(first('url_map'), span);
+        body += linkCell(first('url_facebook'), span);
+        body += linkCell(first('url_instagram'), span);
+        body += linkCell(first('url_web'), span);
+      }
+      body += '</tr>';
+    });
+  });
+
+  scroll.innerHTML =
+    '<table class="ss"><thead><tr>' +
+      '<th class="co-h">Company (A-Z)</th>' +
+      '<th class="num-h"></th>' +
+      '<th>Play</th>' +
+      '<th>Director(s)</th>' +
+      '<th>Playwright(s)</th>' +
+      '<th class="dates-h">Dates</th>' +
+      '<th class="link-h">Map</th>' +
+      '<th class="link-h">FB</th>' +
+      '<th class="link-h">IG</th>' +
+      '<th class="link-h">Web</th>' +
+    '</tr></thead><tbody>' + body + '</tbody></table>';
+}
+
+async function init() {
+  try {
+    const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    const rows = parseCSV(text).filter(s => mode === 'musical'
+      ? isMusicalShow(s)
+      : s.Musical_Theatre_Company !== '1');
+    render(rows);
+  } catch (e) {
+    document.getElementById('ss-scroll').innerHTML =
+      '<div class="ss-state">Unable to load data — please try again shortly.</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>

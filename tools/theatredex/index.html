@@ -1600,7 +1600,7 @@ button.td-link { background: none; cursor: pointer; }
     <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false"><span class="td-mode-emoji" aria-hidden="true">🎵</span>Musicals</button>
   </div>
   <div class="td-header-btns">
-    <a id="td-spreadsheet-btn" class="td-header-btn" href="https://docs.google.com/spreadsheets/d/1n5MPCEAsES9yMqRmvTC0TBwS51b_Sf4DYZcWJCzZO8Y/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
+    <a id="td-spreadsheet-btn" class="td-header-btn" href="/tools/theatredex/spreadsheet.html?mode=play" target="_blank" rel="noopener noreferrer">Spreadsheet View ↗</a>
     <button id="td-map-btn" class="td-header-btn">Map View ◈</button>
     <button id="td-cal-btn" class="td-header-btn">Calendar View ◈</button>
     <button id="td-clash-btn" class="td-header-btn">Will it Clash? ◈</button>
@@ -2190,8 +2190,11 @@ function updateModeUI() {
   playsBtn.setAttribute('aria-pressed', String(!musical));
   musBtn.classList.toggle('active', musical);
   musBtn.setAttribute('aria-pressed', String(musical));
-  /* Spreadsheet doesn't apply to musicals yet — hide it there. */
-  document.getElementById('td-spreadsheet-btn').style.display = musical ? 'none' : '';
+  /* Spreadsheet View is available in both modes now: it opens the standalone
+     generated sheet for the active mode (plays / musicals) in a new tab. */
+  const ssBtn = document.getElementById('td-spreadsheet-btn');
+  ssBtn.style.display = '';
+  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode;
   /* Auditions stays in both modes: plays links straight to VDL; musical opens
      the Facebook-groups modal (see the audition-modal handler). Swap the glyph
      so it reads as an external link (↗) vs an in-page modal (◈). */
