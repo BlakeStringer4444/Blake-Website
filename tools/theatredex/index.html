@@ -1157,7 +1157,7 @@ button.td-link { background: none; cursor: pointer; }
   color: rgba(212,255,26,0.7); white-space: nowrap; flex-shrink: 0;
 }
 .td-map-addr-input {
-  flex: 1; padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
+  flex: 1; align-self: stretch; padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
   border: 1px solid rgba(212,255,26,0.25); background: rgba(255,255,255,0.05);
   color: #fff; outline: none; transition: border-color 0.2s; min-width: 0;
 }
@@ -1270,40 +1270,41 @@ button.td-link { background: none; cursor: pointer; }
   display: flex; flex-direction: column; overflow: hidden;
 }
 .td-cal-topbar {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   background: #111; border-bottom: 1px solid rgba(212,255,26,0.2);
-  padding: 10px 16px; flex-shrink: 0;
+  padding: 12px 18px; flex-shrink: 0;
 }
 .td-cal-modal-title {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
   letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime);
   flex-shrink: 0; margin-right: 4px;
 }
 .td-cal-nav {
   display: flex; align-items: center; gap: 8px;
 }
-.td-cal-nav-btn {
+/* Nav + close buttons share one height and rounded shape so the whole banner
+   reads as one aligned, modern row (matches the header/map button style). */
+.td-cal-nav-btn, .td-cal-close {
+  height: 38px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
-  letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
-  transition: background 0.15s;
+  color: var(--lime); font-family: 'DM Mono', monospace;
+  letter-spacing: 1px; cursor: pointer; flex-shrink: 0; transition: background 0.15s;
 }
+.td-cal-nav-btn { font-size: 11px; padding: 0 16px; }
 .td-cal-nav-btn:hover { background: rgba(212,255,26,0.1); }
 .td-cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .td-cal-nav-btn:disabled:hover { background: none; }
 .td-cal-today-btn { border-color: rgba(229,57,53,0.45); color: #e53935; margin-left: 4px; }
 .td-cal-today-btn:hover { background: rgba(229,57,53,0.12); }
 .td-cal-month-label {
-  font-family: 'DM Mono', monospace; font-size: 12px;
+  font-family: 'DM Mono', monospace; font-size: 14px;
   letter-spacing: 2px; text-transform: uppercase; color: #fff;
-  min-width: 160px; text-align: center; flex-shrink: 0;
+  min-width: 170px; text-align: center; flex-shrink: 0;
 }
 .td-cal-close {
-  background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 9px;
-  letter-spacing: 1px; text-transform: uppercase; text-align: center;
-  padding: 4px 10px; cursor: pointer; line-height: 1.4; flex-shrink: 0;
-  transition: background 0.15s; margin-left: auto;
+  flex-direction: column; text-transform: uppercase; text-align: center;
+  font-size: 10px; line-height: 1.2; padding: 0 14px; margin-left: auto;
 }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
 .td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
@@ -1374,12 +1375,14 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-row-b .td-cal-rehbar { border-color: rgba(34,211,238,0.45); background: rgba(34,211,238,0.1); }
 /* Back button (yearly mode) */
 .td-cal-back {
+  height: 38px; border-radius: 6px;
+  align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
-  letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
+  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 1px; padding: 0 16px; cursor: pointer; flex-shrink: 0;
   transition: background 0.15s; display: none;
 }
-.td-cal-back.visible { display: block; }
+.td-cal-back.visible { display: inline-flex; }
 .td-cal-back:hover { background: rgba(212,255,26,0.1); }
 /* Yearly legend / info bar */
 .td-cal-info {
@@ -1580,10 +1583,11 @@ button.td-link { background: none; cursor: pointer; }
 @media (max-width: 639px) {
   .td-cal-overlay { padding: 0; }
   .td-cal-modal { max-height: 100dvh; height: 100%; border-left: none; border-right: none; }
-  .td-cal-topbar { gap: 6px; padding: 8px 10px; flex-wrap: nowrap; }
+  .td-cal-topbar { gap: 8px; padding: 9px 12px; flex-wrap: nowrap; }
   .td-cal-modal-title { display: none; }
-  .td-cal-month-label { font-size: 10px; min-width: 110px; letter-spacing: 1px; }
-  .td-cal-nav-btn { font-size: 9px; padding: 5px 8px; }
+  .td-cal-month-label { font-size: 12px; min-width: 100px; letter-spacing: 1px; }
+  .td-cal-nav-btn { font-size: 10px; padding: 0 12px; }
+  .td-cal-nav-btn, .td-cal-close, .td-cal-back { height: 32px; }
   .td-cal-today-btn { display: none; }
   .td-cal-head-label { width: 140px; font-size: 8px; }
   .td-cal-row-label { width: 140px; }
