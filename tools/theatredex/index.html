@@ -63,8 +63,9 @@
   --input-border:rgba(255,255,255,0.12);
 }
 /* ── SECRET SYNTHWAVE MODE ── easter egg: 20 dark-mode clicks within 30s.
-   Neon pink/cyan on a slowly-shifting purple gradient. Ephemeral (not stored),
-   so a reload — or one more click — returns to the normal theme. */
+   Neon pink/cyan on a slowly-shifting purple gradient. Once unlocked it joins
+   the theme cycle (Light → Dark → Synthwave → Light…) permanently, via
+   localStorage — no need to unlock it again on future visits. */
 [data-theme="synthwave"] {
   --bg:         #150a33;
   --fg:         #ece5ff;
@@ -103,9 +104,41 @@
 [data-theme="synthwave"] .td-badge-variety,
 [data-theme="synthwave"] .td-badge-pantomime { background: rgba(255,45,149,0.16); color: #ff8fd8; }
 [data-theme="synthwave"] :focus-visible { outline-color: #43e8ff; }
-@media (prefers-reduced-motion: reduce) {
-  [data-theme="synthwave"] body { animation: none; }
+/* Faint CRT scanlines across the whole page, with an irregular flicker —
+   the neon-sign/old-monitor motion in the background, echoing the scanline
+   texture used by Monochrome Mode on the main site. Purely decorative
+   (pointer-events: none), so it never interferes with the UI underneath. */
+[data-theme="synthwave"] body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px);
+  pointer-events: none;
+  z-index: 99997;
+  animation: td-synth-flicker 5.5s infinite;
 }
+@keyframes td-synth-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="synthwave"] body       { animation: none; }
+  [data-theme="synthwave"] body::after { animation: none; }
+}
+
+/* ── THEME-UNLOCK TOAST ── shown once, when Synthwave is first unlocked. */
+.td-theme-toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: #150a33; color: #ff8fd8;
+  border: 1px solid rgba(255,45,149,0.5); border-radius: 8px;
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  padding: 10px 20px; white-space: nowrap;
+  z-index: 99998;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 8px 30px rgba(255,45,149,0.3);
+}
+.td-theme-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 /* ── MUSICAL MODE ── every show/data accent flows from --purple (text,
    buttons, map dots, bar charts, clash bars), so repointing that one
    variable recolours the whole active-mode view to neon magenta in a single stroke.
@@ -1874,34 +1907,67 @@ async function loadTdInlineLB(col, containerId) {
 
 /* ── THEME ── */
 const themeBtn = document.getElementById('td-theme-btn');
-const sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+const sunSVG    = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+/* Sunset glyph for the secret Synthwave theme (sun dipping below the horizon). */
+const sunsetSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="1" y1="22" x2="23" y2="22"/><polyline points="8 6 12 10 16 6"/></svg>`;
 
-function setTheme(theme, persist) {
+const SYNTH_KEY = 'theatredex-synthwave-unlocked';
+function synthUnlocked() { return localStorage.getItem(SYNTH_KEY) === '1'; }
+
+function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  themeBtn.innerHTML = theme === 'dark' ? sunSVG : '☾';
-  if (persist !== false) localStorage.setItem('theme', theme);
+  themeBtn.innerHTML = theme === 'synthwave' ? sunsetSVG : theme === 'dark' ? sunSVG : '☾';
+  localStorage.setItem('theme', theme);
+}
+
+function showSynthToast() {
+  const toast = document.createElement('div');
+  toast.className = 'td-theme-toast';
+  toast.textContent = '🔓 SYNTHWAVE MODE UNLOCKED';
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  });
 }
 
 (function () {
   /* Terminal mode has been removed; fold any leftover terminal preference into
-     dark. Synthwave is never stored, but guard against a stale value too. */
+     dark. A stored 'synthwave' preference only applies once actually unlocked
+     (guards against a stale/tampered value). */
   let saved = sessionStorage.getItem('theme') || localStorage.getItem('theme') || 'light';
-  if (saved === 'terminal' || saved === 'synthwave') saved = 'dark';
+  if (saved === 'terminal') saved = 'dark';
+  if (saved === 'synthwave' && !synthUnlocked()) saved = 'dark';
   sessionStorage.removeItem('theme');
   setTheme(saved);
 })();
 
-/* Theme toggle + hidden Synthwave easter egg (20 clicks within 30s). */
+/* Theme toggle + hidden Synthwave easter egg (20 clicks within 30s). Once
+   unlocked, Synthwave permanently joins the cycle (Light → Dark → Synthwave →
+   Light…) via localStorage — no need to unlock it again on a future visit. */
 let _eggClicks = 0, _eggTimer = null;
 themeBtn.addEventListener('click', () => {
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  /* One click leaves the secret mode (it also clears on reload — never stored). */
-  if (cur === 'synthwave') { _eggClicks = 0; clearTimeout(_eggTimer); setTheme('light'); return; }
-  /* Normal light/dark toggle. */
+
+  if (synthUnlocked()) {
+    const order = ['light', 'dark', 'synthwave'];
+    setTheme(order[(order.indexOf(cur) + 1) % order.length]);
+    return;
+  }
+
+  /* Still locked: ordinary light/dark toggle, counting clicks toward the
+     hidden unlock within a rolling 30-second window. */
   setTheme(cur === 'dark' ? 'light' : 'dark');
-  /* Count clicks within a rolling 30-second window; 20 unlocks Synthwave. */
   if (++_eggClicks === 1) { clearTimeout(_eggTimer); _eggTimer = setTimeout(() => { _eggClicks = 0; }, 30000); }
-  if (_eggClicks >= 20) { _eggClicks = 0; clearTimeout(_eggTimer); setTheme('synthwave', false); }
+  if (_eggClicks >= 20) {
+    _eggClicks = 0; clearTimeout(_eggTimer);
+    localStorage.setItem(SYNTH_KEY, '1');
+    setTheme('synthwave');
+    showSynthToast();
+  }
 });
 
 /* ── TEXT SIZE TOGGLE ── */
