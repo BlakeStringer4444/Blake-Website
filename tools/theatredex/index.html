@@ -1157,7 +1157,7 @@ button.td-link { background: none; cursor: pointer; }
   color: rgba(212,255,26,0.7); white-space: nowrap; flex-shrink: 0;
 }
 .td-map-addr-input {
-  flex: 1; padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
+  flex: 1; align-self: stretch; padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 16px;
   border: 1px solid rgba(212,255,26,0.25); background: rgba(255,255,255,0.05);
   color: #fff; outline: none; transition: border-color 0.2s; min-width: 0;
 }
@@ -1270,40 +1270,41 @@ button.td-link { background: none; cursor: pointer; }
   display: flex; flex-direction: column; overflow: hidden;
 }
 .td-cal-topbar {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   background: #111; border-bottom: 1px solid rgba(212,255,26,0.2);
-  padding: 10px 16px; flex-shrink: 0;
+  padding: 12px 18px; flex-shrink: 0;
 }
 .td-cal-modal-title {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
   letter-spacing: 1.5px; text-transform: uppercase; color: var(--lime);
   flex-shrink: 0; margin-right: 4px;
 }
 .td-cal-nav {
   display: flex; align-items: center; gap: 8px;
 }
-.td-cal-nav-btn {
+/* Nav + close buttons share one height and rounded shape so the whole banner
+   reads as one aligned, modern row (matches the header/map button style). */
+.td-cal-nav-btn, .td-cal-close {
+  height: 38px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
-  letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
-  transition: background 0.15s;
+  color: var(--lime); font-family: 'DM Mono', monospace;
+  letter-spacing: 1px; cursor: pointer; flex-shrink: 0; transition: background 0.15s;
 }
+.td-cal-nav-btn { font-size: 11px; padding: 0 16px; }
 .td-cal-nav-btn:hover { background: rgba(212,255,26,0.1); }
 .td-cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .td-cal-nav-btn:disabled:hover { background: none; }
 .td-cal-today-btn { border-color: rgba(229,57,53,0.45); color: #e53935; margin-left: 4px; }
 .td-cal-today-btn:hover { background: rgba(229,57,53,0.12); }
 .td-cal-month-label {
-  font-family: 'DM Mono', monospace; font-size: 12px;
+  font-family: 'DM Mono', monospace; font-size: 14px;
   letter-spacing: 2px; text-transform: uppercase; color: #fff;
-  min-width: 160px; text-align: center; flex-shrink: 0;
+  min-width: 170px; text-align: center; flex-shrink: 0;
 }
 .td-cal-close {
-  background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 9px;
-  letter-spacing: 1px; text-transform: uppercase; text-align: center;
-  padding: 4px 10px; cursor: pointer; line-height: 1.4; flex-shrink: 0;
-  transition: background 0.15s; margin-left: auto;
+  flex-direction: column; text-transform: uppercase; text-align: center;
+  font-size: 10px; line-height: 1.2; padding: 0 14px; margin-left: auto;
 }
 .td-cal-close:hover { background: rgba(212,255,26,0.15); }
 .td-cal-body { flex: 1; overflow-y: auto; overflow-x: auto; position: relative; }
@@ -1374,12 +1375,14 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-row-b .td-cal-rehbar { border-color: rgba(34,211,238,0.45); background: rgba(34,211,238,0.1); }
 /* Back button (yearly mode) */
 .td-cal-back {
+  height: 38px; border-radius: 6px;
+  align-items: center; justify-content: center;
   background: none; border: 1px solid rgba(212,255,26,0.35);
-  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 10px;
-  letter-spacing: 1px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
+  color: var(--lime); font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 1px; padding: 0 16px; cursor: pointer; flex-shrink: 0;
   transition: background 0.15s; display: none;
 }
-.td-cal-back.visible { display: block; }
+.td-cal-back.visible { display: inline-flex; }
 .td-cal-back:hover { background: rgba(212,255,26,0.1); }
 /* Yearly legend / info bar */
 .td-cal-info {
@@ -1580,10 +1583,11 @@ button.td-link { background: none; cursor: pointer; }
 @media (max-width: 639px) {
   .td-cal-overlay { padding: 0; }
   .td-cal-modal { max-height: 100dvh; height: 100%; border-left: none; border-right: none; }
-  .td-cal-topbar { gap: 6px; padding: 8px 10px; flex-wrap: nowrap; }
+  .td-cal-topbar { gap: 8px; padding: 9px 12px; flex-wrap: nowrap; }
   .td-cal-modal-title { display: none; }
-  .td-cal-month-label { font-size: 10px; min-width: 110px; letter-spacing: 1px; }
-  .td-cal-nav-btn { font-size: 9px; padding: 5px 8px; }
+  .td-cal-month-label { font-size: 12px; min-width: 100px; letter-spacing: 1px; }
+  .td-cal-nav-btn { font-size: 10px; padding: 0 12px; }
+  .td-cal-nav-btn, .td-cal-close, .td-cal-back { height: 32px; }
   .td-cal-today-btn { display: none; }
   .td-cal-head-label { width: 140px; font-size: 8px; }
   .td-cal-row-label { width: 140px; }
@@ -3951,7 +3955,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const addrClear = document.getElementById('td-map-addr-clear');
 
   let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
-  let _lastListPins = [], _lastListWithDist = false, _userPos = null;
+  let _lastListPins = [], _lastListWithDist = false, _userPos = null, routeLayer = null;
 
   function extractCoords(url) {
     if (!url) return null;
@@ -4104,11 +4108,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
   }
 
-  function fmtMins(sec) {
-    if (sec == null) return '';
-    const m = Math.round(sec / 60);
-    if (m < 60) return '~' + Math.max(1, m) + ' min';
-    const h = Math.floor(m / 60), r = m % 60;
+  /* Round a raw drive time (seconds) UP to the next 5 minutes, then add a
+     standing 5-minute buffer, so estimates always read in tidy 5-min steps
+     — e.g. a 16-min route shows as "~25 min" (round up to 20, +5). */
+  function padMins(sec) {
+    if (sec == null) return null;
+    return Math.ceil(sec / 60 / 5) * 5 + 5;
+  }
+  function fmtMins(min) {
+    if (min == null) return '';
+    if (min < 60) return '~' + min + ' min';
+    const h = Math.floor(min / 60), r = min % 60;
     return '~' + h + ' h' + (r ? ' ' + r + ' min' : '');
   }
 
@@ -4129,14 +4139,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       display.map((p, i) =>
         `<div class="td-map-list-item" data-idx="${i}">
           <div class="td-map-list-name">${p.name}</div>
-          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)}${p.mins != null ? ' · ' + fmtMins(p.mins) + ' drive' : ' away'}</div>` : ''}
+          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)}${p.mins != null ? ' · ' + fmtMins(padMins(p.mins)) + ' drive' : ' away'}</div>` : ''}
         </div>`
       ).join('');
     el.querySelectorAll('.td-map-list-item').forEach(item => {
       item.addEventListener('click', () => {
         const p = display[+item.dataset.idx];
-        leafletMap.setView([p.lat, p.lng], 14, { animate: true });
         renderCompanyDetail(p.name);
+        if (_userPos) drawRoute(_userPos, p);                              /* draw route + fit view */
+        else leafletMap.setView([p.lat, p.lng], 14, { animate: true });
       });
     });
   }
@@ -4147,7 +4158,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
     const pin = (_lastListPins || []).find(x => x.name === name);
     const travel = (pin && pin.dist != null)
-      ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(pin.mins) + ' drive' : ''} from your location</div>`
+      ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(padMins(pin.mins)) + ' drive' : ''} from your location</div>`
       : '';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
@@ -4166,6 +4177,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         </div>`;
       }).join('');
     el.querySelector('.td-map-detail-back').addEventListener('click', () => {
+      clearRoute();
       renderList(_lastListPins, _lastListWithDist);
     });
     el.scrollTop = 0;
@@ -4206,6 +4218,41 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return out;
   }
 
+  function clearRoute() {
+    if (routeLayer) { routeLayer.remove(); routeLayer = null; }
+  }
+
+  /* Fetch and draw the best driving route (red dot → company) via OSRM, fit the
+     view to it, and refresh the detail time with the route's own duration. */
+  async function drawRoute(origin, dest) {
+    clearRoute();
+    try {
+      const url = 'https://router.project-osrm.org/route/v1/driving/' +
+        origin.lng.toFixed(6) + ',' + origin.lat.toFixed(6) + ';' +
+        dest.lng.toFixed(6) + ',' + dest.lat.toFixed(6) +
+        '?overview=full&geometries=geojson';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.status);
+      const data  = await res.json();
+      const route = data && data.routes && data.routes[0];
+      if (!route || _userPos !== origin) return;   /* a newer action won */
+      const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);  /* lng,lat → lat,lng */
+      const accent  = (getComputedStyle(document.documentElement).getPropertyValue('--purple') || '#9933ff').trim();
+      routeLayer = L.layerGroup([
+        L.polyline(latlngs, { color: '#000', weight: 8, opacity: 0.3 }),      /* casing for contrast */
+        L.polyline(latlngs, { color: accent, weight: 4, opacity: 0.95 })
+      ]).addTo(leafletMap);
+      leafletMap.fitBounds(L.latLngBounds(latlngs).pad(0.18));
+      dest.mins = route.duration;   /* route time is more precise than the matrix estimate */
+      const el = document.querySelector('.td-map-detail-travel');
+      if (el && dest.dist != null) {
+        el.textContent = fmtDist(dest.dist) + ' · ' + fmtMins(padMins(dest.mins)) + ' drive from your location';
+      }
+    } catch (e) {
+      console.warn('[Theatredex Map] route unavailable', e);
+    }
+  }
+
   async function handleSearch() {
     const addr = addrInput.value.trim();
     if (!addr) return;
@@ -4219,6 +4266,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         return;
       }
       if (userMarker) { userMarker.remove(); userMarker = null; }
+      clearRoute();
       userMarker = L.marker([pos.lat, pos.lng], {
         icon: L.divIcon({ className: '', html: '<div class="td-map-user-dot"></div>', iconSize: [16,16], iconAnchor: [8,8] })
       }).addTo(leafletMap);
@@ -4252,6 +4300,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     addrInput.value = '';
     addrClear.classList.remove('visible');
     if (userMarker) { userMarker.remove(); userMarker = null; }
+    clearRoute();
+    _userPos = null;
     renderList(mapPinsData, false);
     if (mapPinsData.length)
       leafletMap.fitBounds(L.latLngBounds(mapPinsData.map(p => p._anchor)).pad(0.1));
@@ -4317,7 +4367,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
      Calendar and Clash rebuild from allShows on each open, so they self-heal. */
   onModeChange(() => {
     if (leafletMap) { leafletMap.remove(); leafletMap = null; }
-    mapReady = false; mapPinsData = []; userMarker = null;
+    mapReady = false; mapPinsData = []; userMarker = null; routeLayer = null; _userPos = null;
     const el = document.getElementById('td-map-el');
     if (el) el.innerHTML = '';
   });
