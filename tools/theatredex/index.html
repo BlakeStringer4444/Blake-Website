@@ -1214,12 +1214,21 @@ button.td-link { background: none; cursor: pointer; }
 .td-map-list-dist { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--purple); }
 [data-theme="terminal"] .td-map-list-dist { color: var(--lime); }
 .td-map-detail-back {
-  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); background: none; border: none; cursor: pointer;
-  padding: 12px 16px 6px; display: block; transition: color 0.15s; width: 100%; text-align: left;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--lime); background: rgba(212,255,26,0.1);
+  border: none; border-bottom: 1px solid rgba(212,255,26,0.28);
+  cursor: pointer; padding: 13px 16px; width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 8px;
+  position: sticky; top: 0; z-index: 5;
+  transition: background 0.15s, color 0.15s;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
-.td-map-detail-back:hover { color: var(--purple); }
-[data-theme="terminal"] .td-map-detail-back:hover { color: var(--lime); }
+.td-map-detail-back:hover { background: rgba(212,255,26,0.2); color: var(--lime); }
+.td-map-detail-back .td-back-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 4px;
+  font-size: 11px; flex-shrink: 0;
+}
 .td-map-detail-co-name {
   font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--fg); padding: 4px 16px 10px; border-bottom: 1px solid var(--card-border); line-height: 1.4;
@@ -4043,7 +4052,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     function addDot(p) {
       const marker = L.marker(p._anchor, { icon: pinIcon }).addTo(markersLayer);
       marker.bindPopup(`<div class="td-map-popup"><strong>${p.name}</strong></div>`);
-      marker.on('click', () => { renderCompanyDetail(p.name); });
+      marker.on('click', () => selectCompany(p.name));
     }
 
     function visibleRadiusKm() {
@@ -4144,10 +4153,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       ).join('');
     el.querySelectorAll('.td-map-list-item').forEach(item => {
       item.addEventListener('click', () => {
-        const p = display[+item.dataset.idx];
-        renderCompanyDetail(p.name);
-        if (_userPos) drawRoute(_userPos, p);                              /* draw route + fit view */
-        else leafletMap.setView([p.lat, p.lng], 14, { animate: true });
+        selectCompany(display[+item.dataset.idx].name);
       });
     });
   }
@@ -4162,7 +4168,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       : '';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
-      `<button class="td-map-detail-back">← All companies</button>` +
+      `<button class="td-map-detail-back"><span class="td-back-x">✕</span>Back to all companies</button>` +
       `<div class="td-map-detail-co-name">${name}</div>` +
       travel +
       shows.map(s => {
@@ -4265,6 +4271,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     } catch (e) {
       console.warn('[Theatredex Map] route unavailable', e);
     }
+  }
+
+  /* Open a company's detail + (if an address is set) draw its route. Shared by
+     the sidebar list and the map markers so tapping a company circle behaves
+     the same as tapping its list row. */
+  function selectCompany(name) {
+    renderCompanyDetail(name);
+    const dest = (_lastListPins || []).find(x => x.name === name);
+    if (!dest) return;
+    if (_userPos) drawRoute(_userPos, dest);
+    else leafletMap.setView([dest.lat, dest.lng], 14, { animate: true });
   }
 
   async function handleSearch() {
