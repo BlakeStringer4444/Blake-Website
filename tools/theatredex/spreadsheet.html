@@ -35,6 +35,10 @@
     margin: 0; font-weight: 300; font-size: clamp(22px, 4.4vw, 34px);
     letter-spacing: 0.34em; text-transform: lowercase; padding-left: 0.34em;
   }
+  .ss-banner h1 .ss-mode {
+    color: #caa72c; text-transform: uppercase; letter-spacing: 0.2em;
+    font-weight: 400;
+  }
 
   /* ── TABLE ── */
   .ss-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -57,7 +61,7 @@
   }
   .ss td.co {
     background: #4a1530; color: #fff; text-align: center;
-    border-right: 3px solid #caa72c; padding: 10px 12px;
+    border-right: 3px solid #caa72c; border-bottom: 3px solid #caa72c; padding: 10px 12px;
   }
   .ss td.co .co-name { font-size: 19px; line-height: 1.2; }
   .ss td.co .co-sub  { font-size: 12px; opacity: 0.82; margin-top: 4px; }
@@ -69,10 +73,15 @@
   .ss td .type { font-style: italic; color: #666; }
   .ss td.link {
     background: #d9d9d9; text-align: center; border-right: 1px solid #c4c4c4;
+    border-bottom: 3px solid #caa72c;
   }
   .ss td.link a { color: #1a55c0; text-decoration: underline; }
   .ss td.link.empty { color: #b0b0b0; }
-  /* Gold divider under the last row of each company block */
+  /* Gold divider under each company block. The company and link cells are
+     rowspan-merged (anchored in the first row), so they carry the gold border
+     themselves — their bottom edge is always the company boundary. The other
+     columns get it via the last row's .co-end class. Together they make one
+     continuous full-width divider. */
   .ss tr.co-end > td { border-bottom: 3px solid #caa72c; }
 
   /* ── STATES ── */
@@ -88,7 +97,7 @@
 </style>
 </head>
 <body>
-  <div class="ss-banner"><h1>theatredex <span id="ss-year">2026</span></h1></div>
+  <div class="ss-banner"><h1>theatredex <span id="ss-year">2026</span> <span class="ss-mode" id="ss-mode"></span></h1></div>
   <div class="ss-scroll" id="ss-scroll">
     <div class="ss-state" id="ss-state">Loading…</div>
   </div>
@@ -99,6 +108,7 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 const mode = new URLSearchParams(location.search).get('mode') === 'musical' ? 'musical' : 'play';
 document.getElementById('ss-year').textContent = new Date().getFullYear();
+document.getElementById('ss-mode').textContent = '— ' + (mode === 'musical' ? 'Musicals' : 'Plays');
 document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + (mode === 'musical' ? 'Musicals' : 'Plays') + ' Spreadsheet';
 
 /* ── CSV (identical parsing to the main tool) ── */
@@ -154,12 +164,15 @@ function fmtDates(row) {
   return s.getDate() + ' ' + MONTHS[s.getMonth()] + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()];
 }
 
-/* Tag non-standard types after the title, e.g. "Rumpelstiltskin [Pantomime]".
-   Plain plays and plain musicals aren't tagged. */
+/* Tag the type after the title whenever it differs from the mode's primary
+   type — so in Plays mode a musical or pantomime shows e.g. "Sweeney Todd
+   [Musical]" / "Rumpelstiltskin [Pantomime]", while a plain play is untagged
+   (and in Musicals mode a plain musical is untagged). */
 function typeTag(row) {
   const t = (row.type || '').trim();
-  const low = t.toLowerCase();
-  return (t && low !== 'play' && low !== 'musical') ? ' <span class="type">[' + esc(t) + ']</span>' : '';
+  if (!t) return '';
+  const primary = mode === 'musical' ? 'musical' : 'play';
+  return t.toLowerCase() !== primary ? ' <span class="type">[' + esc(t) + ']</span>' : '';
 }
 
 function linkCell(url, rowspan) {
