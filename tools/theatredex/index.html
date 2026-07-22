@@ -1225,6 +1225,11 @@ button.td-link { background: none; cursor: pointer; }
   color: var(--fg); padding: 4px 16px 10px; border-bottom: 1px solid var(--card-border); line-height: 1.4;
 }
 [data-theme="terminal"] .td-map-detail-co-name { color: var(--lime); }
+.td-map-detail-travel {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  color: var(--purple); padding: 8px 16px; border-bottom: 1px solid var(--card-border);
+}
+[data-theme="terminal"] .td-map-detail-travel { color: var(--lime); }
 .td-map-detail-show { padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
 .td-map-detail-show-title { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.3; margin-bottom: 3px; }
 .td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--purple); }
@@ -3946,7 +3951,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const addrClear = document.getElementById('td-map-addr-clear');
 
   let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
-  let _lastListPins = [], _lastListWithDist = false;
+  let _lastListPins = [], _lastListWithDist = false, _userPos = null;
 
   function extractCoords(url) {
     if (!url) return null;
@@ -4099,17 +4104,32 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
   }
 
-  function renderList(pins, withDist) {
+  function fmtMins(sec) {
+    if (sec == null) return '';
+    const m = Math.round(sec / 60);
+    if (m < 60) return '~' + Math.max(1, m) + ' min';
+    const h = Math.floor(m / 60), r = m % 60;
+    return '~' + h + ' h' + (r ? ' ' + r + ' min' : '');
+  }
+
+  function renderList(pins, withDist, opts) {
+    opts = opts || {};
     _lastListPins = pins;
     _lastListWithDist = withDist;
     const display = withDist ? pins : [...pins].sort((a, b) => a.name.localeCompare(b.name));
+    const hasMins  = withDist && pins.some(p => p.mins != null);
+    const header = !withDist
+      ? display.length + ' companies mapped'
+      : opts.estimating ? 'Sorted by distance · estimating drive times…'
+      : hasMins          ? 'Sorted by drive time (approx.)'
+      :                    'Sorted by distance';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
-      `<div class="td-map-list-header">${withDist ? 'Sorted by distance' : display.length + ' companies mapped'}</div>` +
+      `<div class="td-map-list-header">${header}</div>` +
       display.map((p, i) =>
         `<div class="td-map-list-item" data-idx="${i}">
           <div class="td-map-list-name">${p.name}</div>
-          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)} away</div>` : ''}
+          ${withDist ? `<div class="td-map-list-dist">${fmtDist(p.dist)}${p.mins != null ? ' · ' + fmtMins(p.mins) + ' drive' : ' away'}</div>` : ''}
         </div>`
       ).join('');
     el.querySelectorAll('.td-map-list-item').forEach(item => {
@@ -4125,10 +4145,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     const shows = allShows
       .filter(s => s.company === name)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
+    const pin = (_lastListPins || []).find(x => x.name === name);
+    const travel = (pin && pin.dist != null)
+      ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(pin.mins) + ' drive' : ''} from your location</div>`
+      : '';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
       `<button class="td-map-detail-back">← All companies</button>` +
       `<div class="td-map-detail-co-name">${name}</div>` +
+      travel +
       shows.map(s => {
         const people = [
           s.director   ? 'Dir · ' + s.director   : '',
@@ -4155,6 +4180,32 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return data[0] ? { lat: +data[0].lat, lng: +data[0].lon } : null;
   }
 
+  /* Best-route driving time (seconds) from `origin` to each pin, via OSRM's
+     free table/matrix service — one request per batch, no live traffic. OSRM
+     wants lng,lat order and caps a table at ~100 locations, so batch the
+     destinations. Any failure leaves that pin's time as null (falls back to
+     the straight-line distance), so the map never breaks. */
+  async function driveTimes(origin, pins) {
+    const CHUNK = 90;
+    const out = new Array(pins.length).fill(null);
+    for (let start = 0; start < pins.length; start += CHUNK) {
+      const chunk  = pins.slice(start, start + CHUNK);
+      const coords = [[origin.lng, origin.lat], ...chunk.map(p => [p.lng, p.lat])]
+        .map(c => c[0].toFixed(6) + ',' + c[1].toFixed(6)).join(';');
+      try {
+        const res = await fetch('https://router.project-osrm.org/table/v1/driving/' +
+          coords + '?sources=0&annotations=duration');
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const row  = (data && data.durations && data.durations[0]) || [];
+        chunk.forEach((p, j) => { const v = row[j + 1]; out[start + j] = (typeof v === 'number') ? v : null; });
+      } catch (e) {
+        console.warn('[Theatredex Map] drive-time lookup unavailable', e);
+      }
+    }
+    return out;
+  }
+
   async function handleSearch() {
     const addr = addrInput.value.trim();
     if (!addr) return;
@@ -4174,10 +4225,24 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       userMarker.bindPopup('<div class="td-map-popup"><strong>📍 Your location</strong></div>').openPopup();
       leafletMap.setView([pos.lat, pos.lng], 11, { animate: true });
       addrClear.classList.add('visible');
+      _userPos = pos;
       const sorted = mapPinsData
-        .map(p => ({ ...p, dist: haversine(pos.lat, pos.lng, p.lat, p.lng) }))
+        .map(p => ({ ...p, dist: haversine(pos.lat, pos.lng, p.lat, p.lng), mins: null }))
         .sort((a, b) => a.dist - b.dist);
-      renderList(sorted, true);
+      /* Show distances immediately, then fill in drive-time estimates and
+         re-sort by time when they arrive (routing is a network round-trip). */
+      renderList(sorted, true, { estimating: true });
+      driveTimes(pos, sorted).then(secs => {
+        if (!userMarker || _userPos !== pos) return;   /* a newer search / clear won */
+        let any = false;
+        secs.forEach((s, i) => { sorted[i].mins = s; if (s != null) any = true; });
+        const list = any
+          ? [...sorted].sort((a, b) => (a.mins == null ? Infinity : a.mins) - (b.mins == null ? Infinity : b.mins))
+          : sorted;
+        renderList(list, true, { estimating: false });
+      }).catch(() => {
+        if (userMarker && _userPos === pos) renderList(sorted, true, { estimating: false });
+      });
     } catch (e) { console.error(e); }
     addrBtn.textContent = 'GO';
     addrBtn.disabled = false;
