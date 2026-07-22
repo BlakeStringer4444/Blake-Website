@@ -1319,6 +1319,7 @@ button.td-link { background: none; cursor: pointer; }
 .td-cal-head {
   display: flex; position: sticky; top: 0; z-index: 10;
   background: var(--bg); border-bottom: 1px solid rgba(212,255,26,0.15);
+  min-width: max-content;
 }
 .td-cal-head-label {
   flex-shrink: 0; width: 200px; padding: 7px 10px;
@@ -1334,7 +1335,7 @@ button.td-link { background: none; cursor: pointer; }
   border-right: 1px solid rgba(128,128,128,0.08);
 }
 .td-cal-day-num.td-cal-today-col { color: #e53935; }
-.td-cal-rows { position: relative; }
+.td-cal-rows { position: relative; min-width: max-content; }
 .td-cal-row {
   display: flex; border-bottom: 1px solid rgba(128,128,128,0.08);
   min-height: 34px;
