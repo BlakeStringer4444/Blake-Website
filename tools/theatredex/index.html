@@ -3,12 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Theatredex 2026 | Blake Stringer</title>
+<title>Theatredex — Victorian Community Theatre Guide</title>
+<!-- Name used when saved to a phone home screen / shown as the app name.
+     Kept year-free ("Theatredex") even though the on-page header shows the year. -->
+<meta name="apple-mobile-web-app-title" content="Theatredex">
+<meta name="application-name" content="Theatredex">
 <meta name="description" content="Browse and filter Victorian community theatre productions for 2026. Search by location, month, and type.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://www.blakestringer.com/tools/theatredex">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Theatredex 2026 | Blake Stringer">
+<meta property="og:title" content="Theatredex">
 <meta property="og:description" content="Browse and filter Victorian community theatre productions for 2026. Search by location, month, and type.">
 <meta property="og:url" content="https://www.blakestringer.com/tools/theatredex">
 <meta property="og:site_name" content="Blake Stringer">
@@ -19,7 +23,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Blake Stringer | Actor · Musician">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Theatredex 2026 | Blake Stringer">
+<meta name="twitter:title" content="Theatredex">
 <meta name="twitter:description" content="Browse and filter Victorian community theatre productions for 2026. Search by location, month, and type.">
 <meta name="twitter:image" content="https://www.blakestringer.com/Images/meta-og.jpg">
 <link rel="icon" type="image/png" href="/Images/favicon.png">
@@ -8011,7 +8015,7 @@ button.td-link { background: none; cursor: pointer; }
       <button class="td-theme-btn" id="td-theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
     </div>
   </div>
-  <h1 class="td-title">Theatredex 2026</h1>
+  <h1 class="td-title" id="td-title">Theatredex 2026</h1>
   <p class="td-subtitle">Blake's nerdy attempt to capture all plays &amp; musicals in community theatre in Victoria lol</p>
   <!-- Visually hidden — kept in the DOM as real static text so search engines don't
        see a near-empty page before the show grid finishes loading via JS (this is
@@ -8730,9 +8734,13 @@ button.td-link { background: none; cursor: pointer; }
   <span id="td-copyright">© Blake Stringer // Theatredex // 2026</span>
 </footer>
 <script>
-  /* Keep the copyright year current automatically. */
+  /* Keep the visible year current automatically. The page/app is named just
+     "Theatredex" everywhere else (title, home-screen); only these big visible
+     bits carry the year. */
+  var tdYear = new Date().getFullYear();
+  document.getElementById('td-title').textContent = 'Theatredex ' + tdYear;
   document.getElementById('td-copyright').textContent =
-    '© Blake Stringer // Theatredex // ' + new Date().getFullYear();
+    '© Blake Stringer // Theatredex // ' + tdYear;
 </script>
 
 <div class="blakeai-overlay" id="blakeai-overlay">
