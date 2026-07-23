@@ -2739,6 +2739,14 @@ body[data-theme="terminal"] :focus-visible {
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Cloudflare Web Analytics — privacy-first, cookieless page-view tracking.
+     Same token is used site-wide; Cloudflare breaks traffic down by path,
+     so /tools/theatredex can be viewed separately in the dashboard.
+     Replace CF_ANALYTICS_TOKEN below with the token from your Cloudflare
+     Web Analytics site (Cloudflare dashboard → Analytics & Logs → Web Analytics). -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "CF_ANALYTICS_TOKEN"}'></script>
+<!-- End Cloudflare Web Analytics -->
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
