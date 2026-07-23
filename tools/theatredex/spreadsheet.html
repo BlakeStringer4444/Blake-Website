@@ -103,7 +103,9 @@
   </div>
 
 <script>
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vShrAdd1Wbvx9DPxhtZpcXmsT7k8yDUPUqX-oNBCMjQn6jsDaTKfDWiGPe-v08g_AEEc5VRG_GrLr-z/pub?output=csv';
+/* Data comes via the Worker proxy (hides the Sheet URL), same as the main tool. */
+const WORKER_URL = 'https://blakeai.blakestringer.workers.dev';
+const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const mode = new URLSearchParams(location.search).get('mode') === 'musical' ? 'musical' : 'play';
@@ -247,7 +249,7 @@ function render(rows) {
 
 async function init() {
   try {
-    const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch(DATA_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     const rows = parseCSV(text).filter(s => mode === 'musical'
