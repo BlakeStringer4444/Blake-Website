@@ -97,13 +97,22 @@ export default {
   },
 };
 
+/* Accept either form of a Google "Publish to web" link and always fetch CSV:
+   .../pubhtml (the human web page) -> .../pub?output=csv (the data export). */
+function normalizeCsvUrl(u) {
+  if (!u) return u;
+  if (/[?&]output=csv/i.test(u)) return u;
+  const base = u.replace(/\/pubhtml.*$/i, '/pub').replace(/\/pub(\?.*)?$/i, '/pub');
+  return base + '?output=csv';
+}
+
 /* ── CSV proxy ──
    Fetches the published Google Sheet server-side and returns it to the page.
    The sheet URL is stored as the Cloudflare secret THEATREDEX_CSV_URL so it
    is never exposed to the browser. Cached at the edge for 5 minutes so sheet
    edits appear promptly without hammering Google on every page load. */
 async function serveCsv(env) {
-  const url = env.THEATREDEX_CSV_URL;
+  const url = normalizeCsvUrl(env.THEATREDEX_CSV_URL);
   if (!url) {
     return new Response('CSV source not configured (set THEATREDEX_CSV_URL secret).',
       { status: 503, headers: CORS });

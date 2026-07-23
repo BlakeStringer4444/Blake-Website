@@ -203,6 +203,15 @@ function replaceRegion(html, name, replacement) {
   return html.slice(0, si + start.length) + '\n  ' + replacement + '\n  ' + html.slice(ei);
 }
 
+/* Accept either form of a Google "Publish to web" link and always fetch CSV:
+   .../pubhtml  (the human web page)  ->  .../pub?output=csv  (the data export). */
+function normalizeCsvUrl(u) {
+  if (!u) return u;
+  if (/[?&]output=csv/i.test(u)) return u;
+  const base = u.replace(/\/pubhtml.*$/i, '/pub').replace(/\/pub(\?.*)?$/i, '/pub');
+  return base + '?output=csv';
+}
+
 /* ── data source ── */
 async function loadCsv() {
   const csvArgIdx = process.argv.indexOf('--csv');
@@ -211,7 +220,7 @@ async function loadCsv() {
     console.log(`Reading CSV from local file: ${p}`);
     return readFile(p, 'utf8');
   }
-  const url = process.env.THEATREDEX_CSV_URL || DEFAULT_CSV_URL;
+  const url = normalizeCsvUrl(process.env.THEATREDEX_CSV_URL || DEFAULT_CSV_URL);
   console.log(`Fetching CSV from: ${url.slice(0, 60)}…`);
   const res = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), {
     headers: { 'cache-control': 'no-cache' },
