@@ -1825,8 +1825,13 @@ button.td-link { background: none; cursor: pointer; }
 </div>
 
 <footer class="td-footer">
-  <span>Blake Stringer // 2026</span>
+  <span id="td-copyright">© Blake Stringer // Theatredex // 2026</span>
 </footer>
+<script>
+  /* Keep the copyright year current automatically. */
+  document.getElementById('td-copyright').textContent =
+    '© Blake Stringer // Theatredex // ' + new Date().getFullYear();
+</script>
 
 <div class="blakeai-overlay" id="blakeai-overlay">
   <div class="blakeai-modal" id="blakeai-modal">
