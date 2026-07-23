@@ -1,0 +1,56 @@
+name: Bake Theatredex listings
+
+# Regenerates the static, crawlable Theatredex listings + JSON-LD from the
+# Google Sheet and commits them to the live site. This is what makes "edit the
+# Sheet and the site updates itself" work on a static host: the schedule below
+# re-runs the build periodically, and you can also trigger it by hand from the
+# Actions tab (Run workflow) right after making Sheet edits you want live now.
+
+on:
+  schedule:
+    # Every 6 hours (UTC). GitHub may delay scheduled runs under load, and
+    # disables schedules after 60 days with no repo activity — use the manual
+    # "Run workflow" button any time you want an immediate refresh.
+    - cron: '0 */6 * * *'
+  workflow_dispatch: {}
+
+# Let the job push the regenerated file back to the repo.
+permissions:
+  contents: write
+
+# Never let two bakes run at once (they'd fight over the same file).
+concurrency:
+  group: bake-theatredex
+  cancel-in-progress: false
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bake listings from the Google Sheet
+        env:
+          # Optional: set repo secret THEATREDEX_CSV_URL to keep the Sheet URL
+          # out of the source. If unset, the script falls back to the published
+          # URL baked into scripts/build-theatredex.mjs.
+          THEATREDEX_CSV_URL: ${{ secrets.THEATREDEX_CSV_URL }}
+        run: node scripts/build-theatredex.mjs
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- tools/theatredex/index.html; then
+            echo "No listing changes — nothing to commit."
+            exit 0
+          fi
+          git add tools/theatredex/index.html
+          git commit -m "Auto-bake Theatredex listings from the Google Sheet"
+          git push

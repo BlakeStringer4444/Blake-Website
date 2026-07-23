@@ -323,6 +323,18 @@ body {
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
+/* Readable styling for the baked static listings when shown as a fallback
+   (only added via JS if the live data fetch fails). */
+.td-seo-fallback {
+  display: block; max-width: 900px; margin: 0 auto; padding: 8px 24px 48px;
+  color: var(--text); line-height: 1.5;
+}
+.td-seo-fallback h2 { font-size: 1.3rem; margin: 18px 0 6px; }
+.td-seo-fallback h3 { font-size: 1.05rem; margin: 22px 0 6px; color: var(--purple); }
+.td-seo-fallback ul { margin: 0 0 4px; padding-left: 20px; }
+.td-seo-fallback li { margin: 3px 0; }
+.td-seo-fallback a  { color: var(--purple); }
+
 /* ── CONTROLS ── */
 .td-controls {
   padding: 18px 48px 14px;
@@ -8893,8 +8905,12 @@ themeBtn.addEventListener('click', () => {
 })();
 
 /* ── CONFIG ── */
-const CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vShrAdd1Wbvx9DPxhtZpcXmsT7k8yDUPUqX-oNBCMjQn6jsDaTKfDWiGPe-v08g_AEEc5VRG_GrLr-z/pub?output=csv';
 const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste your Cloudflare Worker URL here once deployed */
+/* Show data is fetched via the Worker (GET), which proxies the Google Sheet
+   server-side. The published-sheet URL therefore never appears in this page's
+   source or the browser Network tab — it lives only in the Worker's
+   THEATREDEX_CSV_URL secret. */
+const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 /* ── URL NORMALISER ── */
@@ -9177,7 +9193,10 @@ function buildFilters(shows) {
 async function init() {
   const countEl = document.getElementById('td-count');
   try {
-    const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    /* Fetched via the Worker proxy (hides the Sheet URL). `cache:'no-store'`
+       stops the browser caching it; the Worker still serves its own 5-minute
+       edge cache, so sheet edits appear promptly without exposing Google. */
+    const res = await fetch(DATA_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     /* Full sheet kept in memory; `setModeData` derives the mode-scoped working
@@ -9185,17 +9204,31 @@ async function init() {
        refresh never remembers a Musicals selection. */
     allData = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
+    if (!allData.length) throw new Error('empty');
     setModeData('play');
     readUrlState();
     syncSelectActive();
     render();
     markDataReady();
   } catch (e) {
+    /* Graceful fallback: if the live data can't load, reveal the baked static
+       listings (normally visually hidden for crawlers) so visitors still get
+       the full directory as plain text instead of just an error. */
+    revealStaticFallback();
     document.getElementById('td-grid').innerHTML =
-      '<div class="td-empty">Unable to load show data — please try again shortly.</div>';
+      '<div class="td-empty">Live search is unavailable right now — the full 2026 directory is shown below.</div>';
     countEl.textContent = '';
     markDataReady();   /* unblock anything waiting (e.g. Map View) rather than leave it loading forever */
   }
+}
+
+/* Un-hide the baked static SEO section as a last-resort fallback view. */
+function revealStaticFallback() {
+  const seo = document.getElementById('td-seo-static');
+  if (!seo) return;
+  seo.classList.remove('td-sr-only');
+  seo.removeAttribute('aria-hidden');
+  seo.classList.add('td-seo-fallback');
 }
 
 /* ── EVENTS ── */

@@ -21,7 +21,7 @@ const ALLOWED_ORIGIN = 'https://www.blakestringer.com';
 
 const CORS = {
   'Access-Control-Allow-Origin':  ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
@@ -31,6 +31,14 @@ export default {
     /* ── CORS preflight ── */
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS });
+    }
+
+    /* ── CSV proxy (GET) ──
+       Theatredex fetches its data here instead of straight from Google, so the
+       published-sheet URL never appears in the page source or the browser's
+       Network tab. The real URL lives only in the THEATREDEX_CSV_URL secret. */
+    if (request.method === 'GET') {
+      return serveCsv(env);
     }
 
     if (request.method !== 'POST') {
@@ -88,6 +96,40 @@ export default {
     });
   },
 };
+
+/* ── CSV proxy ──
+   Fetches the published Google Sheet server-side and returns it to the page.
+   The sheet URL is stored as the Cloudflare secret THEATREDEX_CSV_URL so it
+   is never exposed to the browser. Cached at the edge for 5 minutes so sheet
+   edits appear promptly without hammering Google on every page load. */
+async function serveCsv(env) {
+  const url = env.THEATREDEX_CSV_URL;
+  if (!url) {
+    return new Response('CSV source not configured (set THEATREDEX_CSV_URL secret).',
+      { status: 503, headers: CORS });
+  }
+
+  let res;
+  try {
+    res = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+  } catch (e) {
+    return new Response('Could not reach the data source: ' + e.message,
+      { status: 502, headers: CORS });
+  }
+
+  if (!res.ok) {
+    return new Response('Data source error: ' + res.status, { status: 502, headers: CORS });
+  }
+
+  const text = await res.text();
+  return new Response(text, {
+    headers: {
+      ...CORS,
+      'Content-Type':  'text/csv; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    },
+  });
+}
 
 /* ── Serper (Google Search) — two parallel searches: play + playwright ── */
 async function searchForPlay(show, env) {
