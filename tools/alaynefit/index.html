@@ -207,6 +207,37 @@
   .petal { position:fixed; top:-24px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
   .petal.apricot { border-radius:50%; background:var(--accent); box-shadow:inset -2px -2px 4px rgba(0,0,0,.14); }
 
+  /* ── calendar / history view ── */
+  .cal-overlay { position:fixed; inset:0; z-index:80; display:none; background:var(--bg);
+    overflow-y:auto; padding:calc(env(safe-area-inset-top) + 6px) 0 44px; }
+  .cal-overlay.open { display:block; }
+  .cal-panel { max-width:540px; margin:0 auto; padding:16px 18px; }
+  .cal-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .cal-title { font-weight:700; color:var(--brand); font-size:1.1rem; letter-spacing:-.01em; }
+  .cal-nav { display:flex; align-items:center; justify-content:center; gap:14px; margin:12px 0; }
+  .cal-navbtn { width:40px; height:40px; border-radius:50%; border:1px solid var(--line);
+    background:var(--surface); color:var(--ink); font-size:1.25rem; line-height:1; cursor:pointer;
+    touch-action:manipulation; display:grid; place-items:center; }
+  .cal-navbtn:disabled { opacity:.3; cursor:default; }
+  .cal-month { min-width:172px; text-align:center; font-weight:650; font-size:1.05rem; color:var(--ink); }
+  .cal-dow { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+  .cal-dow span { text-align:center; font-size:.64rem; letter-spacing:.06em; text-transform:uppercase; color:var(--brand-soft); font-weight:700; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-cell { position:relative; aspect-ratio:1; border-radius:10px; background:var(--surface-2);
+    border:1px solid var(--line); padding:6px; }
+  .cal-cell.cal-empty { background:transparent; border:0; }
+  .cal-day { font-size:.8rem; font-weight:600; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .cal-cell.cal-dark .cal-day { color:#F3F1E6; }
+  .cal-cell.cal-today { outline:2px solid var(--accent); outline-offset:1px; }
+  .cal-cell.cal-perfect { box-shadow:0 0 0 2px #6E9A3A, 0 3px 12px -3px rgba(110,154,58,.7); }
+  .cal-dots { position:absolute; bottom:3px; right:4px; font-size:10px; line-height:1; letter-spacing:-1px; }
+  .cal-summary { margin:18px 2px 4px; text-align:center; font-size:.9rem; color:var(--ink); font-weight:650; }
+  .cal-note { text-align:center; font-size:.72rem; color:var(--brand-soft); margin-top:2px; }
+  .cal-legend { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin-top:14px; font-size:.74rem; color:var(--ink-soft); }
+  .cal-legend span { display:inline-flex; align-items:center; gap:5px; }
+  .cal-legend .sw { width:26px; height:13px; border-radius:4px;
+    background:linear-gradient(90deg, color-mix(in srgb,#5E7D33 22%,var(--surface-2)), #5E7D33); }
+
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -215,6 +246,9 @@
   <div class="top">
     <div class="brand">Alayne<b>FIT</b></div>
     <div class="actions">
+      <button class="iconbtn" id="cal-open" title="Your journey" aria-label="Open calendar">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
       <button class="iconbtn" id="edit" aria-pressed="false" title="Edit goals">
         <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         <span id="editlbl">Edit</span>
@@ -242,6 +276,29 @@
   <div id="sections"></div>
 
   <p class="made">Made with love, for Alayne <b>♥</b></p>
+</div>
+
+<div class="cal-overlay" id="cal-overlay">
+  <div class="cal-panel">
+    <div class="cal-top">
+      <div class="cal-title">Your journey 🌿</div>
+      <button class="iconbtn" id="cal-close" aria-label="Close calendar">✕ Close</button>
+    </div>
+    <div class="cal-nav">
+      <button class="cal-navbtn" id="cal-prev" aria-label="Previous month">‹</button>
+      <div class="cal-month" id="cal-month"></div>
+      <button class="cal-navbtn" id="cal-next" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-summary" id="cal-summary"></div>
+    <div class="cal-note" id="cal-note"></div>
+    <div class="cal-legend">
+      <span><i class="sw"></i> daily done</span>
+      <span>🍃 weekly</span>
+      <span>🍑 monthly</span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -362,7 +419,7 @@
     CADENCES.forEach(function (c) {
       goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
     });
-    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } } };
+    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } }, log: {} };
   }
   function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
 
@@ -393,6 +450,7 @@
         if (valid(remote)) {                 /* server is the source of truth */
           state = remote; loadedFromServer = true;
           ensureStreaks();
+          ensureLog();
           renderAll(); updateProgress();
         } else if (state) {                  /* first run: seed the server */
           pushServer();
@@ -537,8 +595,14 @@
   var tsCounter = 1;
   function toggleGoal(goal, cadence, row) {
     var done = isDone(goal, cadence);
-    if (done) { goal.p = null; goal.ts = 0; }
-    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); bumpStreak(cadence); }
+    if (done) {
+      logUncomplete(cadence, goal.pd || ymd(now));   /* undo the day it was logged on */
+      goal.p = null; goal.ts = 0; goal.pd = null;
+    } else {
+      goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++);
+      goal.pd = logComplete(cadence);                /* remember the day for an accurate undo */
+      bumpStreak(cadence);
+    }
     row.classList.toggle("done", !done);
     row.setAttribute("aria-pressed", !done ? "true" : "false");
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
@@ -570,6 +634,26 @@
     if (!state.streaks) state.streaks = { day: state.streak || { count: 0, last: "" } };
     ["day", "week", "month"].forEach(function (k) { if (!state.streaks[k]) state.streaks[k] = { count: 0, last: "" }; });
     if (state.streak) delete state.streak;
+  }
+
+  /* ── history log ── one small record per date: d/dt = daily done/total that
+     day (drives the calendar's green fill), w/m = weekly/monthly completions
+     that day (drive the leaf/apricot dots). Written from now on; there is no
+     data for days before this feature shipped. ── */
+  function ensureLog() { if (!state.log) state.log = {}; }
+  function logComplete(cadence) {
+    var key = ymd(now), e = state.log[key] || (state.log[key] = { d: 0, dt: 0, w: 0, m: 0 });
+    if (cadence === "daily")       { e.d++; e.dt = state.goals.daily.length; }
+    else if (cadence === "weekly")   e.w++;
+    else                             e.m++;
+    return key;
+  }
+  function logUncomplete(cadence, key) {
+    var e = state.log[key]; if (!e) return;
+    if (cadence === "daily")       { e.d = Math.max(0, e.d - 1); e.dt = state.goals.daily.length; }
+    else if (cadence === "weekly")   e.w = Math.max(0, e.w - 1);
+    else                             e.m = Math.max(0, e.m - 1);
+    if (e.d <= 0 && e.w <= 0 && e.m <= 0) delete state.log[key];
   }
   function bumpStreak(cadence) {
     var key = STREAK_MAP[cadence]; if (!key) return;
@@ -710,11 +794,67 @@
     setTimeout(function () { el.classList.remove("show"); setTimeout(function () { el.remove(); }, 400); }, 3600);
   }
 
+  /* ── calendar / history view ── */
+  var calYear, calMonth, calOv = document.getElementById("cal-overlay");
+  function openCalendar() {
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+    renderCalendar();
+    calOv.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeCalendar() {
+    calOv.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function renderCalendar() {
+    document.getElementById("cal-month").textContent = MON[calMonth] + " " + calYear;
+    var grid = document.getElementById("cal-grid"); grid.innerHTML = "";
+    var offset = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;   /* Mon-start */
+    var days = new Date(calYear, calMonth + 1, 0).getDate();
+    var todayKey = ymd(now), i, b;
+    for (i = 0; i < offset; i++) { b = document.createElement("div"); b.className = "cal-cell cal-empty"; grid.appendChild(b); }
+    var perfect = 0, wk = 0, mo = 0;
+    for (var day = 1; day <= days; day++) {
+      var key = calYear + "-" + pad(calMonth + 1) + "-" + pad(day);
+      var e = state.log[key];
+      var cell = document.createElement("div"); cell.className = "cal-cell";
+      var frac = (e && e.dt > 0) ? Math.min(1, e.d / e.dt) : 0;
+      if (frac > 0) {
+        cell.style.background = "color-mix(in srgb, #5E7D33 " + Math.round(22 + frac * 78) + "%, var(--surface-2))";
+        if (frac >= 0.5) cell.classList.add("cal-dark");
+        if (frac >= 1) { cell.classList.add("cal-perfect"); perfect++; }
+      }
+      if (key === todayKey) cell.classList.add("cal-today");
+      var dots = "";
+      if (e && e.w > 0) { dots += "🍃"; wk += e.w; }
+      if (e && e.m > 0) { dots += "🍑"; mo += e.m; }
+      cell.innerHTML = '<span class="cal-day">' + day + '</span>' + (dots ? '<span class="cal-dots">' + dots + '</span>' : '');
+      grid.appendChild(cell);
+    }
+    document.getElementById("cal-summary").textContent =
+      "🌿 " + perfect + " full " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
+    var thisMonth = (calYear === now.getFullYear() && calMonth === now.getMonth());
+    document.getElementById("cal-note").textContent = thisMonth ? "History records from the day you started using this view." : "";
+    document.getElementById("cal-next").disabled =
+      (calYear > now.getFullYear() || (calYear === now.getFullYear() && calMonth >= now.getMonth()));
+  }
+  document.getElementById("cal-open").addEventListener("click", openCalendar);
+  document.getElementById("cal-close").addEventListener("click", closeCalendar);
+  document.getElementById("cal-prev").addEventListener("click", function () {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar();
+  });
+  document.getElementById("cal-next").addEventListener("click", function () {
+    if (this.disabled) return;
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar();
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && calOv.classList.contains("open")) closeCalendar(); });
+
   /* ── boot ── */
   var local = null;
   try { local = JSON.parse(localStorage.getItem(LS_STATE) || "null"); } catch (e) {}
   state = valid(local) ? local : seed();
   ensureStreaks();
+  ensureLog();
   renderAll();
   updateProgress();
   if (!valid(local)) saveLocal();
