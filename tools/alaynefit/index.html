@@ -419,7 +419,7 @@
     CADENCES.forEach(function (c) {
       goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
     });
-    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } }, log: {} };
+    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } }, log: {}, weekDone: {}, monthDone: {} };
   }
   function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
 
@@ -451,6 +451,7 @@
           state = remote; loadedFromServer = true;
           ensureStreaks();
           ensureLog();
+          ensureMarks();
           renderAll(); updateProgress();
         } else if (state) {                  /* first run: seed the server */
           pushServer();
@@ -504,7 +505,7 @@
       });
       row.querySelector(".del").addEventListener("click", function () {
         state.goals[cadence] = state.goals[cadence].filter(function (g) { return g.id !== goal.id; });
-        scheduleSave(); renderSection(cadence); updateProgress();
+        recomputeMarks(); scheduleSave(); renderSection(cadence); updateProgress();
       });
     } else {
       row.setAttribute("role", "button");
@@ -548,7 +549,7 @@
       var doAdd = function () {
         var v = inp.value.trim(); if (!v) return;
         state.goals[cadence].push({ id: uid(), text: v, p: null, ts: 0 });
-        inp.value = ""; scheduleSave(); renderSection(cadence); updateProgress(); inp.focus();
+        recomputeMarks(); inp.value = ""; scheduleSave(); renderSection(cadence); updateProgress(); inp.focus();
       };
       btn.addEventListener("click", doAdd);
       inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); doAdd(); } });
@@ -596,13 +597,14 @@
   function toggleGoal(goal, cadence, row) {
     var done = isDone(goal, cadence);
     if (done) {
-      logUncomplete(cadence, goal.pd || ymd(now));   /* undo the day it was logged on */
+      if (cadence === "daily") logDailyUncomplete(goal.pd || ymd(now));
       goal.p = null; goal.ts = 0; goal.pd = null;
     } else {
-      goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++);
-      goal.pd = logComplete(cadence);                /* remember the day for an accurate undo */
+      goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); goal.pd = ymd(now);
+      if (cadence === "daily") logDailyComplete();
       bumpStreak(cadence);
     }
+    recomputeMarks();   /* update the 🍃/🍑 finished-set marks */
     row.classList.toggle("done", !done);
     row.setAttribute("aria-pressed", !done ? "true" : "false");
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
@@ -641,19 +643,34 @@
      that day (drive the leaf/apricot dots). Written from now on; there is no
      data for days before this feature shipped. ── */
   function ensureLog() { if (!state.log) state.log = {}; }
-  function logComplete(cadence) {
-    var key = ymd(now), e = state.log[key] || (state.log[key] = { d: 0, dt: 0, w: 0, m: 0 });
-    if (cadence === "daily")       { e.d++; e.dt = state.goals.daily.length; }
-    else if (cadence === "weekly")   e.w++;
-    else                             e.m++;
-    return key;
+  function ensureMarks() {
+    if (!state.weekDone)  state.weekDone  = {};   /* weekKey  -> date the week was finished  */
+    if (!state.monthDone) state.monthDone = {};   /* monthKey -> date the month was finished */
   }
-  function logUncomplete(cadence, key) {
+  /* Daily heatmap log: d / dt = daily goals done / total that day. */
+  function logDailyComplete() {
+    var key = ymd(now), e = state.log[key] || (state.log[key] = { d: 0, dt: 0 });
+    e.d++; e.dt = state.goals.daily.length;
+  }
+  function logDailyUncomplete(key) {
     var e = state.log[key]; if (!e) return;
-    if (cadence === "daily")       { e.d = Math.max(0, e.d - 1); e.dt = state.goals.daily.length; }
-    else if (cadence === "weekly")   e.w = Math.max(0, e.w - 1);
-    else                             e.m = Math.max(0, e.m - 1);
-    if (e.d <= 0 && e.w <= 0 && e.m <= 0) delete state.log[key];
+    e.d = Math.max(0, e.d - 1); e.dt = state.goals.daily.length;
+    if (e.d <= 0) delete state.log[key];
+  }
+  /* Weekly / monthly are recorded only when the WHOLE set for that period is
+     complete — one 🍃 stamped on the day the last weekly is ticked (max ~5 a
+     month), one 🍑 on the day the last monthly is ticked (max 1 a month).
+     The mark is set on the finishing day and cleared if completion is broken;
+     it isn't re-dated while the period stays complete. */
+  function recomputeMarks() {
+    var wk = periodKey("weekly");
+    if (state.goals.weekly.length > 0 && state.goals.weekly.every(function (g) { return isDone(g, "weekly"); })) {
+      if (!state.weekDone[wk]) state.weekDone[wk] = ymd(now);
+    } else { delete state.weekDone[wk]; }
+    var mo = periodKey("monthly");
+    if (state.goals.monthly.length > 0 && state.goals.monthly.every(function (g) { return isDone(g, "monthly"); })) {
+      if (!state.monthDone[mo]) state.monthDone[mo] = ymd(now);
+    } else { delete state.monthDone[mo]; }
   }
   function bumpStreak(cadence) {
     var key = STREAK_MAP[cadence]; if (!key) return;
@@ -814,6 +831,8 @@
     var todayKey = ymd(now), i, b;
     for (i = 0; i < offset; i++) { b = document.createElement("div"); b.className = "cal-cell cal-empty"; grid.appendChild(b); }
     var perfect = 0, wk = 0, mo = 0;
+    var weekDays = new Set(Object.values(state.weekDone || {}));
+    var monthDays = new Set(Object.values(state.monthDone || {}));
     for (var day = 1; day <= days; day++) {
       var key = calYear + "-" + pad(calMonth + 1) + "-" + pad(day);
       var e = state.log[key];
@@ -826,8 +845,8 @@
       }
       if (key === todayKey) cell.classList.add("cal-today");
       var dots = "";
-      if (e && e.w > 0) { dots += "🍃"; wk += e.w; }
-      if (e && e.m > 0) { dots += "🍑"; mo += e.m; }
+      if (weekDays.has(key))  { dots += "🍃"; wk++; }
+      if (monthDays.has(key)) { dots += "🍑"; mo++; }
       cell.innerHTML = '<span class="cal-day">' + day + '</span>' + (dots ? '<span class="cal-dots">' + dots + '</span>' : '');
       grid.appendChild(cell);
     }
@@ -843,9 +862,12 @@
       (calYear < first.y || (calYear === first.y && calMonth <= first.m));
   }
   function earliestLogMonth() {
-    var keys = Object.keys(state.log).sort();
-    if (!keys.length) return { y: now.getFullYear(), m: now.getMonth() };
-    return { y: parseInt(keys[0].slice(0, 4), 10), m: parseInt(keys[0].slice(5, 7), 10) - 1 };
+    var dates = Object.keys(state.log)
+      .concat(Object.values(state.weekDone || {}))
+      .concat(Object.values(state.monthDone || {}))
+      .sort();
+    if (!dates.length) return { y: now.getFullYear(), m: now.getMonth() };
+    return { y: parseInt(dates[0].slice(0, 4), 10), m: parseInt(dates[0].slice(5, 7), 10) - 1 };
   }
   document.getElementById("cal-open").addEventListener("click", openCalendar);
   document.getElementById("cal-close").addEventListener("click", closeCalendar);
@@ -865,6 +887,7 @@
   state = valid(local) ? local : seed();
   ensureStreaks();
   ensureLog();
+  ensureMarks();
   renderAll();
   updateProgress();
   if (!valid(local)) saveLocal();
