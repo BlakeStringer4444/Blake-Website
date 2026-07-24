@@ -15,7 +15,26 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#556A34">
+
+<!-- Icons: SVG for the browser tab, PNG for the iOS home-screen icon
+     (iOS ignores SVG here) and Android/PWA. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23556A34'/%3E%3Cpath d='M50 24c-16 0-26 12-26 26 0 8 4 15 10 19 2-14 9-22 18-27-7 7-11 16-12 28 3 1 6 2 10 2 16 0 26-14 26-30 0-9-2-18-4-24-8 4-14 5-22 6z' fill='%23E5E7CC'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" sizes="180x180" href="/tools/alaynefit/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/tools/alaynefit/icon-512.png">
+
+<!-- Social/link-share preview (works even though the page is noindex). -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="AlayneFIT">
+<meta property="og:description" content="A gentle daily wellness ritual — daily, weekly and monthly goals, with a positivity quote each day.">
+<meta property="og:url" content="https://www.blakestringer.com/tools/alaynefit/">
+<meta property="og:image" content="https://www.blakestringer.com/tools/alaynefit/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AlayneFIT — a gentle daily wellness ritual">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AlayneFIT">
+<meta name="twitter:description" content="A gentle daily wellness ritual — daily, weekly and monthly goals, with a positivity quote each day.">
+<meta name="twitter:image" content="https://www.blakestringer.com/tools/alaynefit/og.png">
 
 <style>
   :root {
@@ -51,6 +70,32 @@
     --accent:#EDAE5B; --accent-ink:#EFB974; --accent-soft:#372E1A; --sage:#444B31; --blush:#3B321F;
     --danger:#E1795C; --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.65);
   }
+
+  /* ── secret Synthwave theme (unlock by tapping the theme button 20×) ── */
+  :root[data-theme="synthwave"] {
+    --bg:#160A2E; --surface:#221643; --surface-2:#2C1E56; --chip:#2C1E56;
+    --ink:#F6E9FF; --ink-soft:#B79FD4; --line:#3D2F66;
+    --brand:#43E8FF; --brand-soft:#8A79C8;
+    --accent:#FF2D95; --accent-ink:#FF7AC0; --accent-soft:#3A1246;
+    --sage:#7A4FD6; --blush:#2A1550; --danger:#FF5C7A;
+    --shadow:0 0 0 1px rgba(255,45,149,.18), 0 12px 34px -12px rgba(120,40,200,.7);
+  }
+  :root[data-theme="synthwave"] body {
+    background:#160A2E;
+    background-image:
+      radial-gradient(120% 72% at 50% 118%, rgba(255,45,149,.42), transparent 60%),
+      radial-gradient(90% 50% at 50% 116%, rgba(67,232,255,.22), transparent 60%),
+      linear-gradient(180deg, #2A1250 0%, #160A2E 62%);
+    background-attachment:fixed;
+  }
+  :root[data-theme="synthwave"] .brand b { text-shadow:0 0 12px rgba(255,45,149,.7); }
+  :root[data-theme="synthwave"] .hello .name { text-shadow:0 0 12px rgba(255,45,149,.5); }
+
+  .synth-toast { position:fixed; left:50%; bottom:30px; transform:translate(-50%,20px); z-index:100;
+    background:linear-gradient(90deg,#FF2D95,#7A4FD6); color:#fff; font-weight:700; letter-spacing:.02em;
+    padding:12px 20px; border-radius:999px; box-shadow:0 10px 32px -6px rgba(255,45,149,.6);
+    opacity:0; transition:opacity .35s, transform .35s; }
+  .synth-toast.show { opacity:1; transform:translate(-50%,0); }
 
   * { box-sizing:border-box; margin:0; padding:0; }
   html { -webkit-text-size-adjust:100%; }
@@ -100,6 +145,8 @@
   .ptext { flex:1; min-width:0; }
   .ptext .h { font-weight:650; color:var(--ink); }
   .ptext .s { font-size:.85rem; color:var(--ink-soft); }
+  .sec-streak { margin:-2px 4px 12px; }
+  .sec-streak:empty { display:none; margin:0; }
   .streak { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft);
     color:var(--accent-ink); font-weight:650; font-size:.82rem; padding:6px 11px; border-radius:999px; white-space:nowrap; }
 
@@ -118,15 +165,16 @@
     will-change:transform; -webkit-tap-highlight-color:transparent; transition:background .2s; }
   .goal:first-child { border-top:0; }
   .goal:hover { background:color-mix(in srgb, var(--sage) 20%, var(--surface)); }
-  .box { flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--brand-soft);
-    display:grid; place-items:center; transition:border-color .2s, background .2s, transform .2s; }
-  .box svg { width:14px; height:14px; stroke:#fff; stroke-width:3.5; fill:none; stroke-linecap:round; stroke-linejoin:round;
-    stroke-dasharray:22; stroke-dashoffset:22; transition:stroke-dashoffset .3s ease .05s; }
+  .box { flex:none; width:28px; height:28px; display:grid; place-items:center; transition:transform .2s; }
+  .box svg { width:26px; height:26px; overflow:visible; }
+  .box .lf { fill:none; stroke:var(--brand-soft); stroke-width:1.8; stroke-linejoin:round; transition:fill .25s, stroke .25s; }
+  .box .lv { fill:none; stroke:var(--brand-soft); stroke-width:1.5; stroke-linecap:round; opacity:.55; transition:stroke .25s, opacity .25s; }
+  .goal:hover .box .lf { stroke:var(--brand); }
   .label { flex:1; font-size:.98rem; color:var(--ink); transition:color .25s; }
-  .goal.done .box { background:var(--accent); border-color:var(--accent); }
-  .goal.done .box svg { stroke-dashoffset:0; }
+  .goal.done .box .lf { fill:var(--accent); stroke:var(--accent); }
+  .goal.done .box .lv { stroke:#fff; opacity:.9; }
   .goal.done .label { color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--brand-soft); }
-  .goal.pop .box { transform:scale(1.18); }
+  .goal.pop .box { transform:scale(1.24) rotate(-10deg); }
 
   /* edit mode */
   .goal.editing { cursor:default; }
@@ -157,7 +205,8 @@
   .made b { color:var(--accent-ink); font-weight:700; }
   .sync { text-align:center; margin-top:8px; font-size:.7rem; color:var(--brand-soft); min-height:1em; letter-spacing:.02em; }
 
-  .petal { position:fixed; top:-20px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
+  .petal { position:fixed; top:-24px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
+  .petal.apricot { border-radius:50%; background:var(--accent); box-shadow:inset -2px -2px 4px rgba(0,0,0,.14); }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 </style>
@@ -176,7 +225,7 @@
   </div>
 
   <div class="date" id="date"></div>
-  <h1 class="hello"><span class="greet">Good morning, </span><span class="name">Alayne</span>.</h1>
+  <h1 class="hello"><span class="greet">Good morning, </span><span class="name">Alayne</span></h1>
 
   <div class="quote">
     <p id="quote"></p>
@@ -189,7 +238,6 @@
       <div class="h" id="phead">Let's begin the day</div>
       <div class="s" id="psub">Tick things off as you go — no rush.</div>
     </div>
-    <div class="streak" id="streak" hidden>🌱 <span id="streaknum">0</span> day streak</div>
   </div>
 
   <div id="sections"></div>
@@ -254,6 +302,43 @@
     "You don't have to earn rest. You're allowed to simply be."
   ];
 
+  /* Completion messages — a fresh one is chosen each time a section is fully
+     finished, so it feels different (and loving) every time. */
+  var MESSAGES = {
+    daily: [
+      "That's every daily done, Alayne. Rest easy tonight. 🌿",
+      "All of today, done — you showed up for yourself. So proud of you. 🌿",
+      "Every daily ticked off. Look at you go, my love. 🌿",
+      "A whole day of caring for you. Beautifully done, Alayne. 🌿",
+      "You did it — all of today. Go be gently proud of yourself. 🌿",
+      "Today, complete. You are doing so wonderfully. 🌿",
+      "Each little thing, done with love. Sleep well tonight. 🌿",
+      "That's the lot for today, Alayne. I'm so proud of you. 🌿"
+    ],
+    weekly: [
+      "A whole week of showing up — incredible, Alayne. 🌿",
+      "Every weekly goal, complete. You are unstoppable, my love. 🌿",
+      "What a week you've made. So very proud of you. 🌿",
+      "All done for the week — you've earned every bit of this. 🌿",
+      "Seven days of caring for yourself. Beautiful work, Alayne. 🌿",
+      "The whole week, ticked off. You amaze me. 🌿",
+      "Weekly goals: all yours. Go and celebrate you. 🌿"
+    ],
+    monthly: [
+      "A whole month of adventures and care — extraordinary, Alayne. 🍑🌿",
+      "Every monthly goal, complete. What a month you've made, my love. 🍑",
+      "You did the whole month. I am so, so proud of you. 🍑🌿",
+      "A month of living fully. Look how far you've come, Alayne. 🍑",
+      "All of it, done. You are wonderful — never forget it. 🍑🌿",
+      "The entire month, ticked off. Absolutely glowing work. 🍑",
+      "Month complete. Take a bow, my love — you've earned it. 🍑🌿"
+    ]
+  };
+  function pickMsg(cadence) {
+    var list = MESSAGES[cadence] || MESSAGES.daily;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
   /* ── date / period helpers (all local time = her timezone) ── */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -279,7 +364,7 @@
     CADENCES.forEach(function (c) {
       goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
     });
-    return { v: 1, goals: goals, streak: { count: 0, last: "" } };
+    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } } };
   }
   function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
 
@@ -312,6 +397,7 @@
       .then(function (remote) {
         if (valid(remote)) {                 /* server is the source of truth */
           state = remote; loadedFromServer = true;
+          ensureStreaks();
           renderAll(); updateProgress();
           setSync("Synced across devices");
         } else if (state) {                  /* first run: seed the server */
@@ -328,6 +414,9 @@
   document.getElementById("date").textContent = DOW[now.getDay()] + ", " + now.getDate() + " " + MON[now.getMonth()];
   var hr = now.getHours();
   document.querySelector(".greet").textContent = hr < 12 ? "Good morning, " : hr < 18 ? "Good afternoon, " : "Good evening, ";
+  /* A random affectionate nickname each time she opens the app. */
+  var PETNAMES = ["HUNBO!", "LUFFLY!", "PP!", "HONEY BOBO!", "LEEDEE!", "LANIE LOO!", "BB!"];
+  document.querySelector(".name").textContent = PETNAMES[Math.floor(Math.random() * PETNAMES.length)];
   var dayNum = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
   document.getElementById("quote").textContent = QUOTES[dayNum % QUOTES.length];
 
@@ -371,7 +460,9 @@
       row.setAttribute("tabindex", "0");
       row.setAttribute("aria-pressed", isDone(goal, cadence) ? "true" : "false");
       row.innerHTML =
-        '<span class="box"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg></span>' +
+        '<span class="box"><svg viewBox="0 0 24 24" aria-hidden="true">' +
+          '<path class="lf" d="M5 19 C5 10 11 5 19 5 C19 13 13 19 5 19 Z"/>' +
+          '<path class="lv" d="M8.5 16.5 C11 12 14 9 17.5 7.5"/></svg></span>' +
         '<span class="label"></span>';
       row.querySelector(".label").textContent = goal.text;
       var toggle = function () { toggleGoal(goal, cadence, row); };
@@ -420,10 +511,16 @@
     var done = items.filter(function (g) { return isDone(g, cadence); }).length;
     ref.count.textContent = done + " / " + items.length;
     var all = items.length > 0 && done === items.length && !editing;
-    ref.cheer.textContent = cadence === "daily"
-      ? "That's every daily done, Alayne. Rest easy tonight. 🌿"
-      : "All wrapped up — beautifully done. 🌿";
-    ref.cheer.classList.toggle("show", all);
+    if (all) {
+      /* Pick a message only on the transition INTO complete; keep it stable
+         while it stays complete (re-renders/reorders won't reshuffle it). */
+      if (!ref.msg) ref.msg = pickMsg(cadence);
+      ref.cheer.textContent = ref.msg;
+      ref.cheer.classList.add("show");
+    } else {
+      ref.msg = null;
+      ref.cheer.classList.remove("show");
+    }
   }
 
   function reorder(cadence) {
@@ -448,34 +545,58 @@
   function toggleGoal(goal, cadence, row) {
     var done = isDone(goal, cadence);
     if (done) { goal.p = null; goal.ts = 0; }
-    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); if (cadence === "daily") bumpStreak(); }
+    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); bumpStreak(cadence); }
     row.classList.toggle("done", !done);
     row.setAttribute("aria-pressed", !done ? "true" : "false");
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
     setTimeout(function () { reorder(cadence); }, 150);
     updateCount(cadence); updateProgress(); scheduleSave();
-    if (!done && cadence === "daily" && state.goals.daily.every(function (g) { return isDone(g, "daily"); })) burst();
+    /* Celebrate only when a completion (not an un-tick) finishes a whole
+       section — leaves for daily, more for weekly, a downpour with apricots
+       for monthly. */
+    if (!done && state.goals[cadence].every(function (g) { return isDone(g, cadence); })) celebrate(cadence);
   }
 
-  /* ── streak: counts days on which at least one daily goal was completed ── */
-  function bumpStreak() {
-    var today = ymd(now);
-    var s = state.streak || (state.streak = { count: 0, last: "" });
-    if (s.last === today) return;
-    var y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    s.count = (s.last === ymd(y)) ? s.count + 1 : 1;
-    s.last = today;
-    renderStreak();
+  /* ── streaks ── one per cadence. A streak counts consecutive periods (days /
+     weeks / months) in which at least one goal of that cadence was completed.
+     Day = sprout 🌱, week = leaf 🍃, month = apricot 🍑. ── */
+  var STREAK_MAP  = { daily: "day", weekly: "week", monthly: "month" };
+  var STREAK_DEFS = [
+    { key: "day",   cad: "daily",   sym: "🌱", word: "day" },
+    { key: "week",  cad: "weekly",  sym: "🍃", word: "week" },
+    { key: "month", cad: "monthly", sym: "🍑", word: "month" }
+  ];
+  function curKey(cadence) { return periodKey(cadence, now); }
+  function prevKey(cadence) {
+    if (cadence === "daily")  return ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    if (cadence === "weekly") { var m = mondayOf(now); return "W" + ymd(new Date(m.getFullYear(), m.getMonth(), m.getDate() - 7)); }
+    var pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);   /* monthly */
+    return pm.getFullYear() + "-" + pad(pm.getMonth() + 1);
   }
-  function renderStreak() {
-    var s = state.streak || { count: 0, last: "" };
-    var el = document.getElementById("streak");
-    /* show only if the streak is live (something done today or yesterday) */
-    var today = ymd(now), y = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-    if (s.count > 0 && (s.last === today || s.last === y)) {
-      document.getElementById("streaknum").textContent = s.count;
-      el.hidden = false;
-    } else { el.hidden = true; }
+  function ensureStreaks() {
+    if (!state.streaks) state.streaks = { day: state.streak || { count: 0, last: "" } };
+    ["day", "week", "month"].forEach(function (k) { if (!state.streaks[k]) state.streaks[k] = { count: 0, last: "" }; });
+    if (state.streak) delete state.streak;
+  }
+  function bumpStreak(cadence) {
+    var key = STREAK_MAP[cadence]; if (!key) return;
+    var s = state.streaks[key], cur = curKey(cadence), prev = prevKey(cadence);
+    if (s.last === cur) return;                       /* already counted this period */
+    s.count = (s.last === prev) ? s.count + 1 : 1;    /* consecutive? extend : restart */
+    s.last = cur;
+    renderStreaks();
+  }
+  function renderStreaks() {
+    STREAK_DEFS.forEach(function (d) {
+      var ref = secRefs[d.cad]; if (!ref || !ref.streak) return;
+      ref.streak.innerHTML = "";
+      var s = state.streaks[d.key]; if (!s || s.count < 1) return;
+      /* show only while still live (current or immediately previous period) */
+      if (s.last !== curKey(d.cad) && s.last !== prevKey(d.cad)) return;
+      var chip = document.createElement("div"); chip.className = "streak";
+      chip.textContent = d.sym + " " + s.count + " " + d.word + " streak";
+      ref.streak.appendChild(chip);
+    });
   }
 
   /* ── daily progress ring ── */
@@ -490,7 +611,7 @@
     else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
     else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
     else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
-    renderStreak();
+    renderStreaks();
   }
 
   function renderAll() {
@@ -499,31 +620,48 @@
       var sec = document.createElement("section"); sec.className = "section";
       sec.innerHTML =
         '<div class="sec-head"><div class="sec-title"><h2></h2><span class="reset"></span></div><span class="sec-count"></span></div>' +
-        '<div class="list"></div><div class="cheer"></div>';
+        '<div class="sec-streak"></div><div class="list"></div><div class="cheer"></div>';
       sec.querySelector("h2").textContent = META[cadence].title;
       sec.querySelector(".reset").textContent = META[cadence].reset;
       sectionsEl.appendChild(sec);
       secRefs[cadence] = { list: sec.querySelector(".list"), cheer: sec.querySelector(".cheer"),
-                           count: sec.querySelector(".sec-count"), nodes: {} };
+                           count: sec.querySelector(".sec-count"), streak: sec.querySelector(".sec-streak"), nodes: {} };
       renderSection(cadence);
     });
   }
 
-  /* ── celebration ── */
-  function burst() {
+  /* ── celebration ── falling leaves (and apricots for the big one) ── */
+  function rain(opts) {
     if (reduce) return;
     var cs = getComputedStyle(document.documentElement);
-    var acc = cs.getPropertyValue("--accent"), sg = cs.getPropertyValue("--sage");
-    for (var i = 0; i < 14; i++) (function (i) {
-      var p = document.createElement("div"); p.className = "petal";
-      p.style.left = (8 + Math.random() * 84) + "%";
-      p.style.background = i % 2 ? acc : sg;
+    var leaves = [cs.getPropertyValue("--sage").trim(), cs.getPropertyValue("--brand").trim(),
+                  cs.getPropertyValue("--accent").trim(), cs.getPropertyValue("--sage").trim()];
+    var spread = opts.spread || 500;
+    for (var i = 0; i < opts.count; i++) (function (i) {
+      var p = document.createElement("div");
+      if (opts.apricots && Math.random() < 0.33) {
+        p.className = "petal apricot";
+        var a = 13 + Math.random() * 7; p.style.width = a + "px"; p.style.height = a + "px";
+      } else {
+        p.className = "petal";
+        p.style.background = leaves[i % leaves.length];
+        var s = 9 + Math.random() * 6; p.style.width = s + "px"; p.style.height = s + "px";
+      }
+      p.style.left = (3 + Math.random() * 94) + "%";
       document.body.appendChild(p);
-      var x = (Math.random() * 2 - 1) * 60, dur = 2200 + Math.random() * 1200;
-      p.animate([{ transform: "translate(0,0) rotate(0)", opacity: 1 },
-                 { transform: "translate(" + x + "px," + (innerHeight + 40) + "px) rotate(540deg)", opacity: .9 }],
-                { duration: dur, easing: "cubic-bezier(.3,.4,.5,1)" }).onfinish = function () { p.remove(); };
+      var x = (Math.random() * 2 - 1) * 80, dur = 2200 + Math.random() * 1700,
+          delay = Math.random() * spread, spin = 360 + Math.random() * 420;
+      p.animate(
+        [{ transform: "translate(0,0) rotate(0)", opacity: 1 },
+         { transform: "translate(" + x + "px," + (innerHeight + 50) + "px) rotate(" + spin + "deg)", opacity: .9 }],
+        { duration: dur, delay: delay, easing: "cubic-bezier(.3,.4,.5,1)", fill: "forwards" }
+      ).onfinish = function () { p.remove(); };
     })(i);
+  }
+  function celebrate(cadence) {
+    if (cadence === "weekly")       rain({ count: 44, spread: 850 });
+    else if (cadence === "monthly") rain({ count: 74, apricots: true, spread: 1250 });
+    else                            rain({ count: 16, spread: 450 });
   }
 
   /* ── edit toggle ── */
@@ -536,23 +674,54 @@
     updateProgress();
   });
 
-  /* ── theme ── */
+  /* ── theme (with a secret Synthwave mode) ── */
+  var SYNTH_KEY = "alaynefit-synth-unlocked";
+  function synthUnlocked() { try { return localStorage.getItem(SYNTH_KEY) === "1"; } catch (e) { return false; } }
+  function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    try { localStorage.setItem(LS_THEME, t); } catch (e) {}
+  }
   (function initTheme() {
     var saved = null; try { saved = localStorage.getItem(LS_THEME); } catch (e) {}
+    if (saved === "synthwave" && !synthUnlocked()) saved = "dark";   /* safety */
     if (saved) document.documentElement.setAttribute("data-theme", saved);
   })();
+  function curTheme() {
+    var c = document.documentElement.getAttribute("data-theme");
+    return c || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }
+  var tapTimes = [];
   document.getElementById("theme").addEventListener("click", function () {
-    var cur = document.documentElement.getAttribute("data-theme");
-    if (!cur) cur = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    var next = cur === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem(LS_THEME, next); } catch (e) {}
+    if (synthUnlocked()) {                       /* cycle light → dark → synthwave */
+      var order = ["light", "dark", "synthwave"], i = order.indexOf(curTheme());
+      setTheme(order[(i + 1) % order.length]);
+      return;
+    }
+    setTheme(curTheme() === "dark" ? "light" : "dark");   /* normal toggle… */
+    var t = Date.now();                                   /* …while counting rapid taps */
+    tapTimes.push(t);
+    tapTimes = tapTimes.filter(function (x) { return t - x <= 30000; });
+    if (tapTimes.length >= 20) {
+      tapTimes = [];
+      try { localStorage.setItem(SYNTH_KEY, "1"); } catch (e) {}
+      setTheme("synthwave");
+      showSynthToast();
+    }
   });
+  function showSynthToast() {
+    var el = document.createElement("div");
+    el.className = "synth-toast";
+    el.textContent = "🌆 Synthwave Mode unlocked!";
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add("show"); });
+    setTimeout(function () { el.classList.remove("show"); setTimeout(function () { el.remove(); }, 400); }, 3600);
+  }
 
   /* ── boot ── */
   var local = null;
   try { local = JSON.parse(localStorage.getItem(LS_STATE) || "null"); } catch (e) {}
   state = valid(local) ? local : seed();
+  ensureStreaks();
   renderAll();
   updateProgress();
   if (!valid(local)) saveLocal();
