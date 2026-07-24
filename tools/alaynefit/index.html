@@ -145,7 +145,8 @@
   .ptext { flex:1; min-width:0; }
   .ptext .h { font-weight:650; color:var(--ink); }
   .ptext .s { font-size:.85rem; color:var(--ink-soft); }
-  .streaks { display:flex; flex-wrap:wrap; gap:8px; margin:14px 2px 0; }
+  .sec-streak { margin:-2px 4px 12px; }
+  .sec-streak:empty { display:none; margin:0; }
   .streak { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft);
     color:var(--accent-ink); font-weight:650; font-size:.82rem; padding:6px 11px; border-radius:999px; white-space:nowrap; }
 
@@ -238,8 +239,6 @@
       <div class="s" id="psub">Tick things off as you go — no rush.</div>
     </div>
   </div>
-
-  <div class="streaks" id="streaks"></div>
 
   <div id="sections"></div>
 
@@ -588,14 +587,15 @@
     renderStreaks();
   }
   function renderStreaks() {
-    var wrap = document.getElementById("streaks"); wrap.innerHTML = "";
     STREAK_DEFS.forEach(function (d) {
+      var ref = secRefs[d.cad]; if (!ref || !ref.streak) return;
+      ref.streak.innerHTML = "";
       var s = state.streaks[d.key]; if (!s || s.count < 1) return;
       /* show only while still live (current or immediately previous period) */
       if (s.last !== curKey(d.cad) && s.last !== prevKey(d.cad)) return;
       var chip = document.createElement("div"); chip.className = "streak";
       chip.textContent = d.sym + " " + s.count + " " + d.word + " streak";
-      wrap.appendChild(chip);
+      ref.streak.appendChild(chip);
     });
   }
 
@@ -620,12 +620,12 @@
       var sec = document.createElement("section"); sec.className = "section";
       sec.innerHTML =
         '<div class="sec-head"><div class="sec-title"><h2></h2><span class="reset"></span></div><span class="sec-count"></span></div>' +
-        '<div class="list"></div><div class="cheer"></div>';
+        '<div class="sec-streak"></div><div class="list"></div><div class="cheer"></div>';
       sec.querySelector("h2").textContent = META[cadence].title;
       sec.querySelector(".reset").textContent = META[cadence].reset;
       sectionsEl.appendChild(sec);
       secRefs[cadence] = { list: sec.querySelector(".list"), cheer: sec.querySelector(".cheer"),
-                           count: sec.querySelector(".sec-count"), nodes: {} };
+                           count: sec.querySelector(".sec-count"), streak: sec.querySelector(".sec-streak"), nodes: {} };
       renderSection(cadence);
     });
   }
