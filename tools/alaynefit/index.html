@@ -71,6 +71,32 @@
     --danger:#E1795C; --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.65);
   }
 
+  /* ── secret Synthwave theme (unlock by tapping the theme button 20×) ── */
+  :root[data-theme="synthwave"] {
+    --bg:#160A2E; --surface:#221643; --surface-2:#2C1E56; --chip:#2C1E56;
+    --ink:#F6E9FF; --ink-soft:#B79FD4; --line:#3D2F66;
+    --brand:#43E8FF; --brand-soft:#8A79C8;
+    --accent:#FF2D95; --accent-ink:#FF7AC0; --accent-soft:#3A1246;
+    --sage:#7A4FD6; --blush:#2A1550; --danger:#FF5C7A;
+    --shadow:0 0 0 1px rgba(255,45,149,.18), 0 12px 34px -12px rgba(120,40,200,.7);
+  }
+  :root[data-theme="synthwave"] body {
+    background:#160A2E;
+    background-image:
+      radial-gradient(120% 72% at 50% 118%, rgba(255,45,149,.42), transparent 60%),
+      radial-gradient(90% 50% at 50% 116%, rgba(67,232,255,.22), transparent 60%),
+      linear-gradient(180deg, #2A1250 0%, #160A2E 62%);
+    background-attachment:fixed;
+  }
+  :root[data-theme="synthwave"] .brand b { text-shadow:0 0 12px rgba(255,45,149,.7); }
+  :root[data-theme="synthwave"] .hello .name { text-shadow:0 0 12px rgba(255,45,149,.5); }
+
+  .synth-toast { position:fixed; left:50%; bottom:30px; transform:translate(-50%,20px); z-index:100;
+    background:linear-gradient(90deg,#FF2D95,#7A4FD6); color:#fff; font-weight:700; letter-spacing:.02em;
+    padding:12px 20px; border-radius:999px; box-shadow:0 10px 32px -6px rgba(255,45,149,.6);
+    opacity:0; transition:opacity .35s, transform .35s; }
+  .synth-toast.show { opacity:1; transform:translate(-50%,0); }
+
   * { box-sizing:border-box; margin:0; padding:0; }
   html { -webkit-text-size-adjust:100%; }
   body {
@@ -119,6 +145,7 @@
   .ptext { flex:1; min-width:0; }
   .ptext .h { font-weight:650; color:var(--ink); }
   .ptext .s { font-size:.85rem; color:var(--ink-soft); }
+  .streaks { display:flex; flex-wrap:wrap; gap:8px; margin:14px 2px 0; }
   .streak { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft);
     color:var(--accent-ink); font-weight:650; font-size:.82rem; padding:6px 11px; border-radius:999px; white-space:nowrap; }
 
@@ -210,8 +237,9 @@
       <div class="h" id="phead">Let's begin the day</div>
       <div class="s" id="psub">Tick things off as you go — no rush.</div>
     </div>
-    <div class="streak" id="streak" hidden>🌱 <span id="streaknum">0</span> day streak</div>
   </div>
+
+  <div class="streaks" id="streaks"></div>
 
   <div id="sections"></div>
 
@@ -337,7 +365,7 @@
     CADENCES.forEach(function (c) {
       goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
     });
-    return { v: 1, goals: goals, streak: { count: 0, last: "" } };
+    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } } };
   }
   function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
 
@@ -370,6 +398,7 @@
       .then(function (remote) {
         if (valid(remote)) {                 /* server is the source of truth */
           state = remote; loadedFromServer = true;
+          ensureStreaks();
           renderAll(); updateProgress();
           setSync("Synced across devices");
         } else if (state) {                  /* first run: seed the server */
@@ -517,7 +546,7 @@
   function toggleGoal(goal, cadence, row) {
     var done = isDone(goal, cadence);
     if (done) { goal.p = null; goal.ts = 0; }
-    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); if (cadence === "daily") bumpStreak(); }
+    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); bumpStreak(cadence); }
     row.classList.toggle("done", !done);
     row.setAttribute("aria-pressed", !done ? "true" : "false");
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
@@ -529,25 +558,45 @@
     if (!done && state.goals[cadence].every(function (g) { return isDone(g, cadence); })) celebrate(cadence);
   }
 
-  /* ── streak: counts days on which at least one daily goal was completed ── */
-  function bumpStreak() {
-    var today = ymd(now);
-    var s = state.streak || (state.streak = { count: 0, last: "" });
-    if (s.last === today) return;
-    var y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    s.count = (s.last === ymd(y)) ? s.count + 1 : 1;
-    s.last = today;
-    renderStreak();
+  /* ── streaks ── one per cadence. A streak counts consecutive periods (days /
+     weeks / months) in which at least one goal of that cadence was completed.
+     Day = sprout 🌱, week = leaf 🍃, month = apricot 🍑. ── */
+  var STREAK_MAP  = { daily: "day", weekly: "week", monthly: "month" };
+  var STREAK_DEFS = [
+    { key: "day",   cad: "daily",   sym: "🌱", word: "day" },
+    { key: "week",  cad: "weekly",  sym: "🍃", word: "week" },
+    { key: "month", cad: "monthly", sym: "🍑", word: "month" }
+  ];
+  function curKey(cadence) { return periodKey(cadence, now); }
+  function prevKey(cadence) {
+    if (cadence === "daily")  return ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    if (cadence === "weekly") { var m = mondayOf(now); return "W" + ymd(new Date(m.getFullYear(), m.getMonth(), m.getDate() - 7)); }
+    var pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);   /* monthly */
+    return pm.getFullYear() + "-" + pad(pm.getMonth() + 1);
   }
-  function renderStreak() {
-    var s = state.streak || { count: 0, last: "" };
-    var el = document.getElementById("streak");
-    /* show only if the streak is live (something done today or yesterday) */
-    var today = ymd(now), y = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-    if (s.count > 0 && (s.last === today || s.last === y)) {
-      document.getElementById("streaknum").textContent = s.count;
-      el.hidden = false;
-    } else { el.hidden = true; }
+  function ensureStreaks() {
+    if (!state.streaks) state.streaks = { day: state.streak || { count: 0, last: "" } };
+    ["day", "week", "month"].forEach(function (k) { if (!state.streaks[k]) state.streaks[k] = { count: 0, last: "" }; });
+    if (state.streak) delete state.streak;
+  }
+  function bumpStreak(cadence) {
+    var key = STREAK_MAP[cadence]; if (!key) return;
+    var s = state.streaks[key], cur = curKey(cadence), prev = prevKey(cadence);
+    if (s.last === cur) return;                       /* already counted this period */
+    s.count = (s.last === prev) ? s.count + 1 : 1;    /* consecutive? extend : restart */
+    s.last = cur;
+    renderStreaks();
+  }
+  function renderStreaks() {
+    var wrap = document.getElementById("streaks"); wrap.innerHTML = "";
+    STREAK_DEFS.forEach(function (d) {
+      var s = state.streaks[d.key]; if (!s || s.count < 1) return;
+      /* show only while still live (current or immediately previous period) */
+      if (s.last !== curKey(d.cad) && s.last !== prevKey(d.cad)) return;
+      var chip = document.createElement("div"); chip.className = "streak";
+      chip.textContent = d.sym + " " + s.count + " " + d.word + " streak";
+      wrap.appendChild(chip);
+    });
   }
 
   /* ── daily progress ring ── */
@@ -562,7 +611,7 @@
     else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
     else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
     else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
-    renderStreak();
+    renderStreaks();
   }
 
   function renderAll() {
@@ -625,23 +674,54 @@
     updateProgress();
   });
 
-  /* ── theme ── */
+  /* ── theme (with a secret Synthwave mode) ── */
+  var SYNTH_KEY = "alaynefit-synth-unlocked";
+  function synthUnlocked() { try { return localStorage.getItem(SYNTH_KEY) === "1"; } catch (e) { return false; } }
+  function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    try { localStorage.setItem(LS_THEME, t); } catch (e) {}
+  }
   (function initTheme() {
     var saved = null; try { saved = localStorage.getItem(LS_THEME); } catch (e) {}
+    if (saved === "synthwave" && !synthUnlocked()) saved = "dark";   /* safety */
     if (saved) document.documentElement.setAttribute("data-theme", saved);
   })();
+  function curTheme() {
+    var c = document.documentElement.getAttribute("data-theme");
+    return c || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }
+  var tapTimes = [];
   document.getElementById("theme").addEventListener("click", function () {
-    var cur = document.documentElement.getAttribute("data-theme");
-    if (!cur) cur = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    var next = cur === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem(LS_THEME, next); } catch (e) {}
+    if (synthUnlocked()) {                       /* cycle light → dark → synthwave */
+      var order = ["light", "dark", "synthwave"], i = order.indexOf(curTheme());
+      setTheme(order[(i + 1) % order.length]);
+      return;
+    }
+    setTheme(curTheme() === "dark" ? "light" : "dark");   /* normal toggle… */
+    var t = Date.now();                                   /* …while counting rapid taps */
+    tapTimes.push(t);
+    tapTimes = tapTimes.filter(function (x) { return t - x <= 30000; });
+    if (tapTimes.length >= 20) {
+      tapTimes = [];
+      try { localStorage.setItem(SYNTH_KEY, "1"); } catch (e) {}
+      setTheme("synthwave");
+      showSynthToast();
+    }
   });
+  function showSynthToast() {
+    var el = document.createElement("div");
+    el.className = "synth-toast";
+    el.textContent = "🌆 Synthwave Mode unlocked!";
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add("show"); });
+    setTimeout(function () { el.classList.remove("show"); setTimeout(function () { el.remove(); }, 400); }, 3600);
+  }
 
   /* ── boot ── */
   var local = null;
   try { local = JSON.parse(localStorage.getItem(LS_STATE) || "null"); } catch (e) {}
   state = valid(local) ? local : seed();
+  ensureStreaks();
   renderAll();
   updateProgress();
   if (!valid(local)) saveLocal();
