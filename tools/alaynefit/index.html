@@ -203,7 +203,6 @@
 
   .made { text-align:center; margin-top:36px; font-size:.78rem; color:var(--brand-soft); }
   .made b { color:var(--accent-ink); font-weight:700; }
-  .sync { text-align:center; margin-top:8px; font-size:.7rem; color:var(--brand-soft); min-height:1em; letter-spacing:.02em; }
 
   .petal { position:fixed; top:-24px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
   .petal.apricot { border-radius:50%; background:var(--accent); box-shadow:inset -2px -2px 4px rgba(0,0,0,.14); }
@@ -243,7 +242,6 @@
   <div id="sections"></div>
 
   <p class="made">Made with love, for Alayne. <b>♥</b></p>
-  <p class="sync" id="sync"></p>
 </div>
 
 <script>
@@ -382,13 +380,10 @@
   }
   function pushServer() {
     if (!API_URL) return;
-    setSync("Saving…");
     fetch(API_URL, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(state)
-    }).then(function (r) {
-      setSync(r.ok ? "Saved · synced across devices" : "Saved on this device");
-    }).catch(function () { setSync("Saved on this device (offline)"); });
+    }).catch(function () {});
   }
   function pullServer() {
     if (!API_URL) return;
@@ -399,13 +394,11 @@
           state = remote; loadedFromServer = true;
           ensureStreaks();
           renderAll(); updateProgress();
-          setSync("Synced across devices");
         } else if (state) {                  /* first run: seed the server */
           pushServer();
         }
-      }).catch(function () { setSync("Saved on this device (offline)"); });
+      }).catch(function () {});
   }
-  function setSync(msg) { document.getElementById("sync").textContent = msg; }
 
   /* ── header: date, greeting, quote ── */
   var now = new Date();
