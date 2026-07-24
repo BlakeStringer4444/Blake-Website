@@ -837,10 +837,20 @@
     document.getElementById("cal-note").textContent = thisMonth ? "History records from the day you started using this view." : "";
     document.getElementById("cal-next").disabled =
       (calYear > now.getFullYear() || (calYear === now.getFullYear() && calMonth >= now.getMonth()));
+    /* Don't allow going back before the first month that has any history. */
+    var first = earliestLogMonth();
+    document.getElementById("cal-prev").disabled =
+      (calYear < first.y || (calYear === first.y && calMonth <= first.m));
+  }
+  function earliestLogMonth() {
+    var keys = Object.keys(state.log).sort();
+    if (!keys.length) return { y: now.getFullYear(), m: now.getMonth() };
+    return { y: parseInt(keys[0].slice(0, 4), 10), m: parseInt(keys[0].slice(5, 7), 10) - 1 };
   }
   document.getElementById("cal-open").addEventListener("click", openCalendar);
   document.getElementById("cal-close").addEventListener("click", closeCalendar);
   document.getElementById("cal-prev").addEventListener("click", function () {
+    if (this.disabled) return;
     calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar();
   });
   document.getElementById("cal-next").addEventListener("click", function () {
