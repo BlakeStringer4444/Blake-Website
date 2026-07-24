@@ -313,10 +313,10 @@
 
   var LS_STATE = "alaynefit-state-v1";
   var LS_THEME = "alaynefit-theme";
-  /* Best-effort deep link to Apple's Journal app. iOS has no documented URL
-     scheme for Journal, so this may or may not open on a given device; it
-     fails harmlessly (stays on the page) if nothing handles it. */
-  var JOURNAL_URL = "journal://";
+  /* Ticking the "good things" goal sends Alayne to Journal's App Store page,
+     where she can tap Open. (Apple publishes no direct URL scheme for Journal,
+     so this App Store universal link is the reliable route.) */
+  var JOURNAL_URL = "https://apps.apple.com/au/app/journal/id6447391597";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ── default content ── */
@@ -629,8 +629,8 @@
        section — leaves for daily, more for weekly, a downpour with apricots
        for monthly. */
     if (!done && state.goals[cadence].every(function (g) { return isDone(g, cadence); })) celebrate(cadence);
-    /* After marking off, try to hop over to the Journal app (short delay so the
-       tick registers visually first). Only when completing, not un-ticking. */
+    /* After marking off, open Journal's App Store page (she taps Open from
+       there). Short delay so the tick registers first; only on completing. */
     if (!done && opensJournal(goal)) setTimeout(launchJournal, 450);
   }
 
