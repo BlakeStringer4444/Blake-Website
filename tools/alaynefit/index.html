@@ -176,7 +176,8 @@
   .made b { color:var(--accent-ink); font-weight:700; }
   .sync { text-align:center; margin-top:8px; font-size:.7rem; color:var(--brand-soft); min-height:1em; letter-spacing:.02em; }
 
-  .petal { position:fixed; top:-20px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
+  .petal { position:fixed; top:-24px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
+  .petal.apricot { border-radius:50%; background:var(--accent); box-shadow:inset -2px -2px 4px rgba(0,0,0,.14); }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 </style>
@@ -272,6 +273,43 @@
     "The little things are the big things. Notice one today.",
     "You don't have to earn rest. You're allowed to simply be."
   ];
+
+  /* Completion messages — a fresh one is chosen each time a section is fully
+     finished, so it feels different (and loving) every time. */
+  var MESSAGES = {
+    daily: [
+      "That's every daily done, Alayne. Rest easy tonight. 🌿",
+      "All of today, done — you showed up for yourself. So proud of you. 🌿",
+      "Every daily ticked off. Look at you go, my love. 🌿",
+      "A whole day of caring for you. Beautifully done, Alayne. 🌿",
+      "You did it — all of today. Go be gently proud of yourself. 🌿",
+      "Today, complete. You are doing so wonderfully. 🌿",
+      "Each little thing, done with love. Sleep well tonight. 🌿",
+      "That's the lot for today, Alayne. I'm so proud of you. 🌿"
+    ],
+    weekly: [
+      "A whole week of showing up — incredible, Alayne. 🌿",
+      "Every weekly goal, complete. You are unstoppable, my love. 🌿",
+      "What a week you've made. So very proud of you. 🌿",
+      "All done for the week — you've earned every bit of this. 🌿",
+      "Seven days of caring for yourself. Beautiful work, Alayne. 🌿",
+      "The whole week, ticked off. You amaze me. 🌿",
+      "Weekly goals: all yours. Go and celebrate you. 🌿"
+    ],
+    monthly: [
+      "A whole month of adventures and care — extraordinary, Alayne. 🍑🌿",
+      "Every monthly goal, complete. What a month you've made, my love. 🍑",
+      "You did the whole month. I am so, so proud of you. 🍑🌿",
+      "A month of living fully. Look how far you've come, Alayne. 🍑",
+      "All of it, done. You are wonderful — never forget it. 🍑🌿",
+      "The entire month, ticked off. Absolutely glowing work. 🍑",
+      "Month complete. Take a bow, my love — you've earned it. 🍑🌿"
+    ]
+  };
+  function pickMsg(cadence) {
+    var list = MESSAGES[cadence] || MESSAGES.daily;
+    return list[Math.floor(Math.random() * list.length)];
+  }
 
   /* ── date / period helpers (all local time = her timezone) ── */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -439,10 +477,16 @@
     var done = items.filter(function (g) { return isDone(g, cadence); }).length;
     ref.count.textContent = done + " / " + items.length;
     var all = items.length > 0 && done === items.length && !editing;
-    ref.cheer.textContent = cadence === "daily"
-      ? "That's every daily done, Alayne. Rest easy tonight. 🌿"
-      : "All wrapped up — beautifully done. 🌿";
-    ref.cheer.classList.toggle("show", all);
+    if (all) {
+      /* Pick a message only on the transition INTO complete; keep it stable
+         while it stays complete (re-renders/reorders won't reshuffle it). */
+      if (!ref.msg) ref.msg = pickMsg(cadence);
+      ref.cheer.textContent = ref.msg;
+      ref.cheer.classList.add("show");
+    } else {
+      ref.msg = null;
+      ref.cheer.classList.remove("show");
+    }
   }
 
   function reorder(cadence) {
@@ -473,7 +517,10 @@
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
     setTimeout(function () { reorder(cadence); }, 150);
     updateCount(cadence); updateProgress(); scheduleSave();
-    if (!done && cadence === "daily" && state.goals.daily.every(function (g) { return isDone(g, "daily"); })) burst();
+    /* Celebrate only when a completion (not an un-tick) finishes a whole
+       section — leaves for daily, more for weekly, a downpour with apricots
+       for monthly. */
+    if (!done && state.goals[cadence].every(function (g) { return isDone(g, cadence); })) celebrate(cadence);
   }
 
   /* ── streak: counts days on which at least one daily goal was completed ── */
@@ -528,21 +575,38 @@
     });
   }
 
-  /* ── celebration ── */
-  function burst() {
+  /* ── celebration ── falling leaves (and apricots for the big one) ── */
+  function rain(opts) {
     if (reduce) return;
     var cs = getComputedStyle(document.documentElement);
-    var acc = cs.getPropertyValue("--accent"), sg = cs.getPropertyValue("--sage");
-    for (var i = 0; i < 14; i++) (function (i) {
-      var p = document.createElement("div"); p.className = "petal";
-      p.style.left = (8 + Math.random() * 84) + "%";
-      p.style.background = i % 2 ? acc : sg;
+    var leaves = [cs.getPropertyValue("--sage").trim(), cs.getPropertyValue("--brand").trim(),
+                  cs.getPropertyValue("--accent").trim(), cs.getPropertyValue("--sage").trim()];
+    var spread = opts.spread || 500;
+    for (var i = 0; i < opts.count; i++) (function (i) {
+      var p = document.createElement("div");
+      if (opts.apricots && Math.random() < 0.33) {
+        p.className = "petal apricot";
+        var a = 13 + Math.random() * 7; p.style.width = a + "px"; p.style.height = a + "px";
+      } else {
+        p.className = "petal";
+        p.style.background = leaves[i % leaves.length];
+        var s = 9 + Math.random() * 6; p.style.width = s + "px"; p.style.height = s + "px";
+      }
+      p.style.left = (3 + Math.random() * 94) + "%";
       document.body.appendChild(p);
-      var x = (Math.random() * 2 - 1) * 60, dur = 2200 + Math.random() * 1200;
-      p.animate([{ transform: "translate(0,0) rotate(0)", opacity: 1 },
-                 { transform: "translate(" + x + "px," + (innerHeight + 40) + "px) rotate(540deg)", opacity: .9 }],
-                { duration: dur, easing: "cubic-bezier(.3,.4,.5,1)" }).onfinish = function () { p.remove(); };
+      var x = (Math.random() * 2 - 1) * 80, dur = 2200 + Math.random() * 1700,
+          delay = Math.random() * spread, spin = 360 + Math.random() * 420;
+      p.animate(
+        [{ transform: "translate(0,0) rotate(0)", opacity: 1 },
+         { transform: "translate(" + x + "px," + (innerHeight + 50) + "px) rotate(" + spin + "deg)", opacity: .9 }],
+        { duration: dur, delay: delay, easing: "cubic-bezier(.3,.4,.5,1)", fill: "forwards" }
+      ).onfinish = function () { p.remove(); };
     })(i);
+  }
+  function celebrate(cadence) {
+    if (cadence === "weekly")       rain({ count: 44, spread: 850 });
+    else if (cadence === "monthly") rain({ count: 74, apricots: true, spread: 1250 });
+    else                            rain({ count: 16, spread: 450 });
   }
 
   /* ── edit toggle ── */
