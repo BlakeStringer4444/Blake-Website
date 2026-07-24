@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AlayneFIT</title>
+<meta name="description" content="A gentle daily, weekly and monthly wellness tracker for Alayne.">
+<!-- Private app — keep it out of search results. -->
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Home-screen / app naming + full-screen behaviour -->
+<meta name="apple-mobile-web-app-title" content="AlayneFIT">
+<meta name="application-name" content="AlayneFIT">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#556A34">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23556A34'/%3E%3Cpath d='M50 24c-16 0-26 12-26 26 0 8 4 15 10 19 2-14 9-22 18-27-7 7-11 16-12 28 3 1 6 2 10 2 16 0 26-14 26-30 0-9-2-18-4-24-8 4-14 5-22 6z' fill='%23E5E7CC'/%3E%3C/svg%3E">
+
+<style>
+  :root {
+    --bg:#D7DBB6; --surface:#FAFAEF; --surface-2:#E5E7CC; --chip:#DDE1BF;
+    --ink:#2F3320; --ink-soft:#5F6347; --line:#C6C99E;
+    --brand:#556A34; --brand-soft:#8A9268;
+    --accent:#E59A3C; --accent-ink:#A96D19; --accent-soft:#F4E3C1;
+    --sage:#C8CFA0; --blush:#EFE1C2;
+    --danger:#C7583B;
+    --shadow:0 1px 2px rgba(45,48,25,.10), 0 10px 26px -12px rgba(45,48,25,.28);
+    --f-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --f-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#1A1D12; --surface:#23271A; --surface-2:#2C3122; --chip:#2E3324;
+      --ink:#EAEAD9; --ink-soft:#ABAE93; --line:#363B29;
+      --brand:#BAC48D; --brand-soft:#8E9769;
+      --accent:#EDAE5B; --accent-ink:#EFB974; --accent-soft:#372E1A;
+      --sage:#444B31; --blush:#3B321F; --danger:#E1795C;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.65);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#D7DBB6; --surface:#FAFAEF; --surface-2:#E5E7CC; --chip:#DDE1BF;
+    --ink:#2F3320; --ink-soft:#5F6347; --line:#C6C99E; --brand:#556A34; --brand-soft:#8A9268;
+    --accent:#E59A3C; --accent-ink:#A96D19; --accent-soft:#F4E3C1; --sage:#C8CFA0; --blush:#EFE1C2;
+    --danger:#C7583B; --shadow:0 1px 2px rgba(45,48,25,.10), 0 10px 26px -12px rgba(45,48,25,.28);
+  }
+  :root[data-theme="dark"] {
+    --bg:#1A1D12; --surface:#23271A; --surface-2:#2C3122; --chip:#2E3324;
+    --ink:#EAEAD9; --ink-soft:#ABAE93; --line:#363B29; --brand:#BAC48D; --brand-soft:#8E9769;
+    --accent:#EDAE5B; --accent-ink:#EFB974; --accent-soft:#372E1A; --sage:#444B31; --blush:#3B321F;
+    --danger:#E1795C; --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.65);
+  }
+
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    font-family:var(--f-ui); background:var(--bg); color:var(--ink); line-height:1.5;
+    min-height:100vh; transition:background .35s, color .35s;
+    background-image:radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--blush) 50%, transparent), transparent 60%);
+    background-attachment:fixed;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+  button { font:inherit; touch-action:manipulation; }
+  .wrap { max-width:540px; margin:0 auto; padding:22px 18px 70px; }
+
+  .top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; }
+  .brand { display:flex; align-items:baseline; gap:1px; font-weight:700; letter-spacing:-.02em; font-size:1.2rem; color:var(--brand); }
+  .brand b { color:var(--accent-ink); font-weight:800; }
+  .actions { display:flex; gap:8px; }
+  .iconbtn { border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    height:40px; min-width:40px; padding:0 12px; border-radius:999px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; font-size:.85rem; font-weight:600; }
+  .iconbtn:hover { color:var(--ink); border-color:var(--brand-soft); }
+  .iconbtn.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .iconbtn svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+  .date { font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--brand-soft); font-weight:600; }
+  .hello { font-size:1.55rem; font-weight:650; letter-spacing:-.01em; margin:2px 0 16px; color:var(--ink); text-wrap:balance; }
+  .hello .name { color:var(--accent-ink); }
+
+  .quote { position:relative; background:var(--surface); border:1px solid var(--line);
+    border-radius:18px; padding:24px 22px 22px; box-shadow:var(--shadow); overflow:hidden; }
+  .quote::before { content:"\201C"; position:absolute; top:-14px; left:14px;
+    font-family:var(--f-display); font-size:5.5rem; line-height:1; color:var(--accent); opacity:.30; }
+  .quote p { font-family:var(--f-display); font-size:1.3rem; line-height:1.4; color:var(--ink);
+    text-wrap:balance; position:relative; font-style:italic; }
+  .quote .sprig { display:block; margin-top:14px; height:2px; width:44px;
+    background:linear-gradient(90deg, var(--accent), transparent); border-radius:2px; }
+
+  .progress { display:flex; align-items:center; gap:16px; margin:22px 2px 6px; }
+  .ring { --pct:0; position:relative; width:60px; height:60px; flex:none; }
+  .ring i { position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(var(--accent) calc(var(--pct)*1%), var(--surface-2) 0);
+    -webkit-mask:radial-gradient(farthest-side, transparent 63%, #000 64%);
+            mask:radial-gradient(farthest-side, transparent 63%, #000 64%);
+    transition:background .6s cubic-bezier(.4,0,.2,1); }
+  .ring span { position:absolute; inset:0; display:grid; place-items:center;
+    font-weight:700; font-size:.95rem; color:var(--brand); font-variant-numeric:tabular-nums; }
+  .ptext { flex:1; min-width:0; }
+  .ptext .h { font-weight:650; color:var(--ink); }
+  .ptext .s { font-size:.85rem; color:var(--ink-soft); }
+  .streak { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft);
+    color:var(--accent-ink); font-weight:650; font-size:.82rem; padding:6px 11px; border-radius:999px; white-space:nowrap; }
+
+  .section { margin-top:24px; }
+  .sec-head { display:flex; align-items:baseline; justify-content:space-between; margin:0 4px 10px; }
+  .sec-title { display:flex; align-items:baseline; gap:9px; }
+  .sec-title h2 { font-size:1.05rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
+  .sec-title .reset { font-size:.7rem; color:var(--brand-soft); letter-spacing:.02em; }
+  .sec-count { font-size:.8rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+
+  .list { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  .empty { padding:16px; text-align:center; color:var(--ink-soft); font-size:.9rem; }
+
+  .goal { display:flex; align-items:center; gap:13px; padding:14px 16px; cursor:pointer;
+    border-top:1px solid var(--line); background:var(--surface);
+    will-change:transform; -webkit-tap-highlight-color:transparent; transition:background .2s; }
+  .goal:first-child { border-top:0; }
+  .goal:hover { background:color-mix(in srgb, var(--sage) 20%, var(--surface)); }
+  .box { flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--brand-soft);
+    display:grid; place-items:center; transition:border-color .2s, background .2s, transform .2s; }
+  .box svg { width:14px; height:14px; stroke:#fff; stroke-width:3.5; fill:none; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:22; stroke-dashoffset:22; transition:stroke-dashoffset .3s ease .05s; }
+  .label { flex:1; font-size:.98rem; color:var(--ink); transition:color .25s; }
+  .goal.done .box { background:var(--accent); border-color:var(--accent); }
+  .goal.done .box svg { stroke-dashoffset:0; }
+  .goal.done .label { color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--brand-soft); }
+  .goal.pop .box { transform:scale(1.18); }
+
+  /* edit mode */
+  .goal.editing { cursor:default; }
+  .goal.editing:hover { background:var(--surface); }
+  .goal .edit-input { flex:1; font:inherit; font-size:.98rem; color:var(--ink); background:var(--bg);
+    border:1px solid var(--line); border-radius:9px; padding:7px 10px; }
+  .goal .edit-input:focus { outline:none; border-color:var(--accent); }
+  .grip { flex:none; color:var(--brand-soft); display:grid; place-items:center; width:22px; }
+  .grip svg { width:16px; height:16px; fill:currentColor; }
+  .del { flex:none; border:none; background:transparent; color:var(--danger); cursor:pointer;
+    width:34px; height:34px; border-radius:8px; display:grid; place-items:center; }
+  .del:hover { background:color-mix(in srgb, var(--danger) 14%, transparent); }
+  .del svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+
+  .addrow { display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--line); background:var(--surface-2); }
+  .addrow input { flex:1; font:inherit; font-size:.95rem; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:9px; padding:9px 11px; }
+  .addrow input:focus { outline:none; border-color:var(--accent); }
+  .addrow button { border:none; background:var(--brand); color:#fff; font-weight:650; padding:0 16px;
+    border-radius:9px; cursor:pointer; }
+  .addrow button:hover { background:color-mix(in srgb, var(--brand) 88%, #000); }
+
+  .cheer { text-align:center; font-family:var(--f-display); font-style:italic; font-size:1.05rem;
+    color:var(--accent-ink); opacity:0; transform:translateY(6px); transition:opacity .4s, transform .4s; height:0; overflow:hidden; }
+  .cheer.show { opacity:1; transform:none; height:auto; margin-top:14px; }
+
+  .made { text-align:center; margin-top:36px; font-size:.78rem; color:var(--brand-soft); }
+  .made b { color:var(--accent-ink); font-weight:700; }
+  .sync { text-align:center; margin-top:8px; font-size:.7rem; color:var(--brand-soft); min-height:1em; letter-spacing:.02em; }
+
+  .petal { position:fixed; top:-20px; width:12px; height:12px; border-radius:60% 0 60% 0; pointer-events:none; z-index:50; opacity:.9; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Alayne<b>FIT</b></div>
+    <div class="actions">
+      <button class="iconbtn" id="edit" aria-pressed="false" title="Edit goals">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span id="editlbl">Edit</span>
+      </button>
+      <button class="iconbtn" id="theme" title="Switch light or dark" aria-label="Switch light or dark">◑</button>
+    </div>
+  </div>
+
+  <div class="date" id="date"></div>
+  <h1 class="hello"><span class="greet">Good morning, </span><span class="name">Alayne</span>.</h1>
+
+  <div class="quote">
+    <p id="quote"></p>
+    <span class="sprig"></span>
+  </div>
+
+  <div class="progress">
+    <div class="ring" id="ring"><i></i><span id="ringtxt">0/0</span></div>
+    <div class="ptext">
+      <div class="h" id="phead">Let's begin the day</div>
+      <div class="s" id="psub">Tick things off as you go — no rush.</div>
+    </div>
+    <div class="streak" id="streak" hidden>🌱 <span id="streaknum">0</span> day streak</div>
+  </div>
+
+  <div id="sections"></div>
+
+  <p class="made">Made with love, for Alayne. <b>♥</b></p>
+  <p class="sync" id="sync"></p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── CONFIG ───────────────────────────────────────────────────────────────
+     After deploying workers/alaynefit-worker.js, paste its URL here. Until
+     then the app still works fully on this device (local storage) — it just
+     won't sync across devices yet. */
+  var API_URL = "https://alaynefit.blakestringer.workers.dev";
+
+  var LS_STATE = "alaynefit-state-v1";
+  var LS_THEME = "alaynefit-theme";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ── default content ── */
+  var DEFAULTS = {
+    daily: {
+      title: "Today", reset: "resets at midnight", items: [
+        "Get 7+ hours sleep", "Maintain a regular bedtime", "Chat to someone",
+        "Go for a walk", "Read something worthwhile", "Meditate",
+        "Note good things that happened", "Listen to music", "No‑alcohol night"
+      ]
+    },
+    weekly: {
+      title: "This week", reset: "resets Monday", items: [
+        "Beach, lake or bush walk", "Listen to a podcast",
+        "Brunch with Blake, family or friends", "Photograph something interesting"
+      ]
+    },
+    monthly: {
+      title: "This month", reset: "resets on the 1st", items: [
+        "Browse in a bookshop", "Walk through a laneway", "Get coffee somewhere new",
+        "Go to a market", "Catch up with the kids", "Visit an old building", "Go to the movies"
+      ]
+    }
+  };
+  var CADENCES = ["daily", "weekly", "monthly"];
+  var META = { daily: DEFAULTS.daily, weekly: DEFAULTS.weekly, monthly: DEFAULTS.monthly };
+
+  var QUOTES = [
+    "You are allowed to be both a work in progress and a masterpiece.",
+    "Small steps, taken kindly, still carry you forward.",
+    "How you speak to yourself matters — be gentle today.",
+    "Rest is productive. Joy is allowed.",
+    "Progress, not perfection — and today, that's enough.",
+    "Bloom at your own pace. Nothing is late that's still growing.",
+    "Your body carries you through every day. Thank it.",
+    "One kind choice at a time is how a whole life changes.",
+    "You've done hard things before. Today is on your side.",
+    "Be proud of how far you've come, quietly and for yourself.",
+    "A calm mind is a kind of strength. Breathe into today.",
+    "Tend to yourself the way you'd tend to someone you love.",
+    "The little things are the big things. Notice one today.",
+    "You don't have to earn rest. You're allowed to simply be."
+  ];
+
+  /* ── date / period helpers (all local time = her timezone) ── */
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function mondayOf(d) {
+    var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var day = (t.getDay() + 6) % 7;           /* Mon = 0 … Sun = 6 */
+    t.setDate(t.getDate() - day);
+    return t;
+  }
+  function periodKey(cadence, d) {
+    d = d || new Date();
+    if (cadence === "daily")   return ymd(d);
+    if (cadence === "weekly")  return "W" + ymd(mondayOf(d));
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1);   /* monthly */
+  }
+  function isDone(goal, cadence) { return !!goal.p && goal.p === periodKey(cadence); }
+
+  /* ── state ── */
+  var uidCounter = 0;
+  function uid() { uidCounter++; return "g" + Date.now().toString(36) + uidCounter.toString(36); }
+  function seed() {
+    var goals = {};
+    CADENCES.forEach(function (c) {
+      goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
+    });
+    return { v: 1, goals: goals, streak: { count: 0, last: "" } };
+  }
+  function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
+
+  var state = null, loadedFromServer = false;
+
+  /* ── persistence ── */
+  function saveLocal() { try { localStorage.setItem(LS_STATE, JSON.stringify(state)); } catch (e) {} }
+
+  var putTimer = null;
+  function scheduleSave() {
+    saveLocal();
+    if (!API_URL) return;
+    clearTimeout(putTimer);
+    putTimer = setTimeout(pushServer, 700);
+  }
+  function pushServer() {
+    if (!API_URL) return;
+    setSync("Saving…");
+    fetch(API_URL, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state)
+    }).then(function (r) {
+      setSync(r.ok ? "Saved · synced across devices" : "Saved on this device");
+    }).catch(function () { setSync("Saved on this device (offline)"); });
+  }
+  function pullServer() {
+    if (!API_URL) return;
+    fetch(API_URL, { headers: { "Content-Type": "application/json" }, cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (remote) {
+        if (valid(remote)) {                 /* server is the source of truth */
+          state = remote; loadedFromServer = true;
+          renderAll(); updateProgress();
+          setSync("Synced across devices");
+        } else if (state) {                  /* first run: seed the server */
+          pushServer();
+        }
+      }).catch(function () { setSync("Saved on this device (offline)"); });
+  }
+  function setSync(msg) { document.getElementById("sync").textContent = msg; }
+
+  /* ── header: date, greeting, quote ── */
+  var now = new Date();
+  var DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var MON = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("date").textContent = DOW[now.getDay()] + ", " + now.getDate() + " " + MON[now.getMonth()];
+  var hr = now.getHours();
+  document.querySelector(".greet").textContent = hr < 12 ? "Good morning, " : hr < 18 ? "Good afternoon, " : "Good evening, ";
+  var dayNum = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  document.getElementById("quote").textContent = QUOTES[dayNum % QUOTES.length];
+
+  /* ── rendering ── */
+  var sectionsEl = document.getElementById("sections");
+  var editing = false;
+  var secRefs = {};   /* cadence -> {list, cheer, count, nodes:{id:row}} */
+
+  function ordered(cadence) {
+    return state.goals[cadence].slice().sort(function (a, b) {
+      var da = isDone(a, cadence), db = isDone(b, cadence);
+      if (da !== db) return da ? 1 : -1;   /* done sink to bottom */
+      if (da) return a.ts - b.ts;          /* by completion order */
+      return 0;                            /* else keep stored order */
+    });
+  }
+
+  function esc(t) { return t; }  /* textContent is used, no escaping needed */
+
+  function buildGoalRow(goal, cadence) {
+    var row = document.createElement("div");
+    row.className = "goal" + (isDone(goal, cadence) ? " done" : "") + (editing ? " editing" : "");
+
+    if (editing) {
+      row.innerHTML =
+        '<span class="grip"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>' +
+        '<input class="edit-input" type="text" aria-label="Goal name">' +
+        '<button class="del" title="Delete goal" aria-label="Delete goal"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></button>';
+      var input = row.querySelector(".edit-input");
+      input.value = goal.text;
+      input.addEventListener("change", function () {
+        var v = input.value.trim();
+        if (v) { goal.text = v; scheduleSave(); } else { input.value = goal.text; }
+      });
+      row.querySelector(".del").addEventListener("click", function () {
+        state.goals[cadence] = state.goals[cadence].filter(function (g) { return g.id !== goal.id; });
+        scheduleSave(); renderSection(cadence); updateProgress();
+      });
+    } else {
+      row.setAttribute("role", "button");
+      row.setAttribute("tabindex", "0");
+      row.setAttribute("aria-pressed", isDone(goal, cadence) ? "true" : "false");
+      row.innerHTML =
+        '<span class="box"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg></span>' +
+        '<span class="label"></span>';
+      row.querySelector(".label").textContent = goal.text;
+      var toggle = function () { toggleGoal(goal, cadence, row); };
+      row.addEventListener("click", toggle);
+      row.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+      });
+    }
+    return row;
+  }
+
+  function renderSection(cadence) {
+    var ref = secRefs[cadence];
+    var list = ref.list;
+    list.innerHTML = "";
+    ref.nodes = {};
+    var items = editing ? state.goals[cadence] : ordered(cadence);
+    if (!items.length && !editing) {
+      var e = document.createElement("div"); e.className = "empty";
+      e.textContent = "No goals here yet — tap Edit to add some.";
+      list.appendChild(e);
+    }
+    items.forEach(function (goal) {
+      var row = buildGoalRow(goal, cadence);
+      ref.nodes[goal.id] = row;
+      list.appendChild(row);
+    });
+    if (editing) {
+      var add = document.createElement("div"); add.className = "addrow";
+      add.innerHTML = '<input type="text" placeholder="Add a goal…" aria-label="Add a goal"><button type="button">Add</button>';
+      var inp = add.querySelector("input"), btn = add.querySelector("button");
+      var doAdd = function () {
+        var v = inp.value.trim(); if (!v) return;
+        state.goals[cadence].push({ id: uid(), text: v, p: null, ts: 0 });
+        inp.value = ""; scheduleSave(); renderSection(cadence); updateProgress(); inp.focus();
+      };
+      btn.addEventListener("click", doAdd);
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); doAdd(); } });
+      list.appendChild(add);
+    }
+    updateCount(cadence);
+  }
+
+  function updateCount(cadence) {
+    var ref = secRefs[cadence], items = state.goals[cadence];
+    var done = items.filter(function (g) { return isDone(g, cadence); }).length;
+    ref.count.textContent = done + " / " + items.length;
+    var all = items.length > 0 && done === items.length && !editing;
+    ref.cheer.textContent = cadence === "daily"
+      ? "That's every daily done, Alayne. Rest easy tonight. 🌿"
+      : "All wrapped up — beautifully done. 🌿";
+    ref.cheer.classList.toggle("show", all);
+  }
+
+  function reorder(cadence) {
+    if (editing) return;
+    var ref = secRefs[cadence], list = ref.list, first = {};
+    Object.keys(ref.nodes).forEach(function (id) {
+      if (ref.nodes[id].parentNode === list) first[id] = ref.nodes[id].getBoundingClientRect().top;
+    });
+    ordered(cadence).forEach(function (goal) { if (ref.nodes[goal.id]) list.appendChild(ref.nodes[goal.id]); });
+    if (reduce) return;
+    ordered(cadence).forEach(function (goal) {
+      var el = ref.nodes[goal.id]; if (!el || first[goal.id] == null) return;
+      var d = first[goal.id] - el.getBoundingClientRect().top; if (!d) return;
+      el.style.transition = "none"; el.style.transform = "translateY(" + d + "px)";
+      requestAnimationFrame(function () {
+        el.style.transition = "transform .45s cubic-bezier(.2,.7,.2,1)"; el.style.transform = "";
+      });
+    });
+  }
+
+  var tsCounter = 1;
+  function toggleGoal(goal, cadence, row) {
+    var done = isDone(goal, cadence);
+    if (done) { goal.p = null; goal.ts = 0; }
+    else { goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); if (cadence === "daily") bumpStreak(); }
+    row.classList.toggle("done", !done);
+    row.setAttribute("aria-pressed", !done ? "true" : "false");
+    row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
+    setTimeout(function () { reorder(cadence); }, 150);
+    updateCount(cadence); updateProgress(); scheduleSave();
+    if (!done && cadence === "daily" && state.goals.daily.every(function (g) { return isDone(g, "daily"); })) burst();
+  }
+
+  /* ── streak: counts days on which at least one daily goal was completed ── */
+  function bumpStreak() {
+    var today = ymd(now);
+    var s = state.streak || (state.streak = { count: 0, last: "" });
+    if (s.last === today) return;
+    var y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    s.count = (s.last === ymd(y)) ? s.count + 1 : 1;
+    s.last = today;
+    renderStreak();
+  }
+  function renderStreak() {
+    var s = state.streak || { count: 0, last: "" };
+    var el = document.getElementById("streak");
+    /* show only if the streak is live (something done today or yesterday) */
+    var today = ymd(now), y = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    if (s.count > 0 && (s.last === today || s.last === y)) {
+      document.getElementById("streaknum").textContent = s.count;
+      el.hidden = false;
+    } else { el.hidden = true; }
+  }
+
+  /* ── daily progress ring ── */
+  function updateProgress() {
+    var items = state.goals.daily;
+    var done = items.filter(function (g) { return isDone(g, "daily"); }).length;
+    var pct = items.length ? Math.round(done / items.length * 100) : 0;
+    document.getElementById("ring").style.setProperty("--pct", pct);
+    document.getElementById("ringtxt").textContent = done + "/" + items.length;
+    var h = document.getElementById("phead"), s = document.getElementById("psub");
+    if (!items.length) { h.textContent = "Add a few daily goals"; s.textContent = "Tap Edit to make it yours."; }
+    else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
+    else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
+    else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
+    renderStreak();
+  }
+
+  function renderAll() {
+    sectionsEl.innerHTML = ""; secRefs = {};
+    CADENCES.forEach(function (cadence) {
+      var sec = document.createElement("section"); sec.className = "section";
+      sec.innerHTML =
+        '<div class="sec-head"><div class="sec-title"><h2></h2><span class="reset"></span></div><span class="sec-count"></span></div>' +
+        '<div class="list"></div><div class="cheer"></div>';
+      sec.querySelector("h2").textContent = META[cadence].title;
+      sec.querySelector(".reset").textContent = META[cadence].reset;
+      sectionsEl.appendChild(sec);
+      secRefs[cadence] = { list: sec.querySelector(".list"), cheer: sec.querySelector(".cheer"),
+                           count: sec.querySelector(".sec-count"), nodes: {} };
+      renderSection(cadence);
+    });
+  }
+
+  /* ── celebration ── */
+  function burst() {
+    if (reduce) return;
+    var cs = getComputedStyle(document.documentElement);
+    var acc = cs.getPropertyValue("--accent"), sg = cs.getPropertyValue("--sage");
+    for (var i = 0; i < 14; i++) (function (i) {
+      var p = document.createElement("div"); p.className = "petal";
+      p.style.left = (8 + Math.random() * 84) + "%";
+      p.style.background = i % 2 ? acc : sg;
+      document.body.appendChild(p);
+      var x = (Math.random() * 2 - 1) * 60, dur = 2200 + Math.random() * 1200;
+      p.animate([{ transform: "translate(0,0) rotate(0)", opacity: 1 },
+                 { transform: "translate(" + x + "px," + (innerHeight + 40) + "px) rotate(540deg)", opacity: .9 }],
+                { duration: dur, easing: "cubic-bezier(.3,.4,.5,1)" }).onfinish = function () { p.remove(); };
+    })(i);
+  }
+
+  /* ── edit toggle ── */
+  document.getElementById("edit").addEventListener("click", function () {
+    editing = !editing;
+    this.setAttribute("aria-pressed", editing ? "true" : "false");
+    this.classList.toggle("on", editing);
+    document.getElementById("editlbl").textContent = editing ? "Done" : "Edit";
+    CADENCES.forEach(renderSection);
+    updateProgress();
+  });
+
+  /* ── theme ── */
+  (function initTheme() {
+    var saved = null; try { saved = localStorage.getItem(LS_THEME); } catch (e) {}
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+  })();
+  document.getElementById("theme").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    if (!cur) cur = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    var next = cur === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(LS_THEME, next); } catch (e) {}
+  });
+
+  /* ── boot ── */
+  var local = null;
+  try { local = JSON.parse(localStorage.getItem(LS_STATE) || "null"); } catch (e) {}
+  state = valid(local) ? local : seed();
+  renderAll();
+  updateProgress();
+  if (!valid(local)) saveLocal();
+  pullServer();
+})();
+</script>
+</body>
+</html>
