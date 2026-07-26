@@ -1344,6 +1344,7 @@ button.td-link { background: none; cursor: pointer; }
   color: var(--purple); padding: 8px 16px; border-bottom: 1px solid var(--card-border);
 }
 [data-theme="terminal"] .td-map-detail-travel { color: var(--lime); }
+.td-map-detail-links { display: flex; gap: 5px; padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
 .td-map-detail-show { padding: 10px 16px; border-bottom: 1px solid var(--card-border); }
 .td-map-detail-show-title { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.3; margin-bottom: 3px; }
 .td-map-detail-show-dates { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--purple); }
@@ -11279,11 +11280,22 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     const travel = (pin && pin.dist != null)
       ? `<div class="td-map-detail-travel">${fmtDist(pin.dist)}${pin.mins != null ? ' · ' + fmtMins(padMins(pin.mins)) + ' drive' : ''} from your location</div>`
       : '';
+    /* Company social/web links (same for every show of a company; take the
+       first non-empty value in case a row is missing one). */
+    const fb  = shows.map(s => s.url_facebook).find(Boolean);
+    const ig  = shows.map(s => s.url_instagram).find(Boolean);
+    const web = shows.map(s => s.url_web).find(Boolean);
+    const linkChips = [];
+    if (fb)  linkChips.push(`<a class="td-link" href="${safeUrl(fb)}"  target="_blank" rel="noopener noreferrer" aria-label="Facebook (opens in new tab)">${iconFB} FB</a>`);
+    if (ig)  linkChips.push(`<a class="td-link" href="${safeUrl(ig)}"  target="_blank" rel="noopener noreferrer" aria-label="Instagram (opens in new tab)">${iconIG} IG</a>`);
+    if (web) linkChips.push(`<a class="td-link" href="${safeUrl(web)}" target="_blank" rel="noopener noreferrer" aria-label="Website (opens in new tab)">${iconWeb} Web</a>`);
+    const linksHtml = linkChips.length ? `<div class="td-map-detail-links">${linkChips.join('')}</div>` : '';
     const el = document.getElementById('td-map-list');
     el.innerHTML =
       `<button class="td-map-detail-back"><span class="td-back-x">✕</span>Back to all companies</button>` +
       `<div class="td-map-detail-co-name">${name}</div>` +
       travel +
+      linksHtml +
       shows.map(s => {
         const people = [
           s.director   ? 'Dir · ' + s.director   : '',
