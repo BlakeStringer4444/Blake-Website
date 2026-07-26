@@ -11281,7 +11281,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       if (mapPinsData.length)
         leafletMap.fitBounds(L.latLngBounds(mapPinsData.map(p => p._anchor)).pad(0.1), { animate: true });
     });
-    el.scrollTop = 0;
+    /* Always show the top (company name, links, first show) when a company is
+       opened. The scroll container is .td-map-sidebar, not #td-map-list, so
+       reset THAT — and again on the next frame to beat iOS momentum scrolling. */
+    const scroller = el.closest('.td-map-sidebar') || el;
+    scroller.scrollTop = 0;
+    requestAnimationFrame(() => { scroller.scrollTop = 0; });
   }
 
   /* Detect an explicit Australian state/territory in the typed address so we
