@@ -281,6 +281,19 @@
   .gd-note { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:15px 17px; margin-bottom:10px;
     font-family:var(--f-display); font-style:italic; color:var(--ink); line-height:1.5; box-shadow:var(--shadow); }
   .gd-note.locked { color:var(--brand-soft); font-style:normal; font-family:var(--f-ui); text-align:center; box-shadow:none; background:var(--surface-2); }
+  .gd-clearrow { display:flex; justify-content:center; margin-top:26px; }
+  .gd-clearbtn { border:1px solid var(--line); background:transparent; color:var(--ink-soft);
+    padding:8px 18px; border-radius:999px; font:inherit; font-size:.85rem; font-weight:600; cursor:pointer; touch-action:manipulation; }
+  .gd-clearbtn:hover { border-color:var(--danger); color:var(--danger); }
+  .gd-confirm { position:fixed; inset:0; z-index:95; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:24px; }
+  .gd-confirm.open { display:flex; }
+  .gd-confirm-card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 20px; max-width:320px; width:100%; box-shadow:var(--shadow); text-align:center; }
+  .gd-confirm-msg { font-weight:700; color:var(--ink); font-size:1.05rem; margin-bottom:6px; }
+  .gd-confirm-sub { color:var(--ink-soft); font-size:.85rem; line-height:1.4; margin-bottom:18px; }
+  .gd-confirm-btns { display:flex; gap:10px; }
+  .gd-confirm-btns button { flex:1; padding:11px; border-radius:10px; font:inherit; font-weight:650; cursor:pointer; touch-action:manipulation; }
+  .gd-confirm-no { border:1px solid var(--line); background:var(--surface); color:var(--ink); }
+  .gd-confirm-yes { border:1px solid var(--danger); background:var(--danger); color:#fff; }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 </style>
@@ -342,13 +355,24 @@
       <div class="gd-tools">
         <button class="gd-toolbtn on" id="gd-mode-fill">🌿 Fill</button>
         <button class="gd-toolbtn" id="gd-mode-mark">✕ Mark</button>
-        <button class="gd-toolbtn" id="gd-clear">Clear</button>
       </div>
       <div class="gd-status" id="gd-status"></div>
+      <div class="gd-clearrow"><button class="gd-clearbtn" id="gd-clear">Clear board</button></div>
       <div class="gd-help">Fill the squares so every row &amp; column matches its number clues. Solve to grow today's picture — and unlock a note. A new puzzle appears each day.</div>
     </div>
     <div id="gd-view-notes" hidden>
       <div id="gd-notes"></div>
+    </div>
+  </div>
+</div>
+
+<div class="gd-confirm" id="gd-confirm">
+  <div class="gd-confirm-card">
+    <p class="gd-confirm-msg">Clear the whole board?</p>
+    <p class="gd-confirm-sub">This wipes everything you've filled in on this puzzle.</p>
+    <div class="gd-confirm-btns">
+      <button class="gd-confirm-no" id="gd-confirm-no">No, keep it</button>
+      <button class="gd-confirm-yes" id="gd-confirm-yes">Yes, clear</button>
     </div>
   </div>
 </div>
@@ -1153,16 +1177,25 @@
   document.getElementById("gd-size-h").addEventListener("click", function () { gdSetSize("H"); });
   document.getElementById("gd-mode-fill").addEventListener("click", function () { gdSetMode("fill"); });
   document.getElementById("gd-mode-mark").addEventListener("click", function () { gdSetMode("mark"); });
-  document.getElementById("gd-clear").addEventListener("click", function () {
-    if (gdSolvedToday()) return;
+  function gdConfirmOpen(o) { document.getElementById("gd-confirm").classList.toggle("open", o); }
+  function gdClearBoard() {
     garden.progress[gdKey()] = gdZeros(); garden.marks[gdKey()] = gdZeros();
     gdSaveState(); gdRenderBoard(); document.getElementById("gd-status").textContent = "";
+  }
+  document.getElementById("gd-clear").addEventListener("click", function () {
+    if (gdSolvedToday()) return;
+    gdConfirmOpen(true);
   });
+  document.getElementById("gd-confirm-no").addEventListener("click", function () { gdConfirmOpen(false); });
+  document.getElementById("gd-confirm-yes").addEventListener("click", function () { gdConfirmOpen(false); gdClearBoard(); });
+  document.getElementById("gd-confirm").addEventListener("click", function (e) { if (e.target === this) gdConfirmOpen(false); });
   document.getElementById("gd-tab-puzzle").addEventListener("click", function () { gdShowTab("puzzle"); });
   document.getElementById("gd-tab-notes").addEventListener("click", function () { gdShowTab("notes"); gdRenderNotes(); });
   document.getElementById("gd-close").addEventListener("click", gdClose);
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && document.getElementById("af-garden").classList.contains("open")) gdClose();
+    if (e.key !== "Escape") return;
+    if (document.getElementById("gd-confirm").classList.contains("open")) { gdConfirmOpen(false); return; }
+    if (document.getElementById("af-garden").classList.contains("open")) gdClose();
   });
   /* Heart activation: 5 quick taps to discover it the first time, then a
      single tap opens it thereafter. */
