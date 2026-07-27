@@ -255,7 +255,8 @@
     padding:7px 16px; border-radius:999px; font:inherit; font-size:.85rem; font-weight:650; cursor:pointer; touch-action:manipulation; }
   .gd-sizebtn.on { background:var(--brand); border-color:var(--brand); color:#fff; }
   .gd-sub { text-align:center; color:var(--ink-soft); font-size:.9rem; margin-bottom:14px; min-height:1.3em; }
-  .gd-board { --gd-cell:44px; display:grid; justify-content:center; margin:0 auto 16px; user-select:none; }
+  .gd-boardwrap { overflow-x:auto; margin:0 auto 16px; }
+  .gd-board { --gd-cell:44px; display:grid; justify-content:center; margin:0 auto; user-select:none; }
   .gd-cclue { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0;
     padding-bottom:5px; font-size:.74rem; font-weight:700; color:var(--brand-soft); line-height:1.15; font-variant-numeric:tabular-nums; }
   .gd-rclue { display:flex; align-items:center; justify-content:flex-end; gap:5px; padding-right:7px;
@@ -266,9 +267,10 @@
   .gd-cell.mark::after { content:"✕"; color:var(--ink-soft); font-size:.95rem; font-weight:700; }
   .gd-board.done .gd-cell.fill { background:var(--accent); }
   .gd-board.done .gd-cell { cursor:default; }
-  .gd-board.big { --gd-cell:30px; }
-  .gd-board.big .gd-cclue, .gd-board.big .gd-rclue { font-size:.58rem; gap:3px; padding-right:5px; }
-  .gd-board.big .gd-cell.mark::after { font-size:.66rem; }
+  .gd-board[data-n="10"] .gd-cclue, .gd-board[data-n="10"] .gd-rclue { font-size:.58rem; gap:3px; padding-right:5px; }
+  .gd-board[data-n="15"] .gd-cclue, .gd-board[data-n="15"] .gd-rclue { font-size:.46rem; gap:2px; padding-right:4px; line-height:1.05; }
+  .gd-board[data-n="10"] .gd-cell.mark::after { font-size:.66rem; }
+  .gd-board[data-n="15"] .gd-cell.mark::after { font-size:.5rem; }
   .gd-tools { display:flex; gap:8px; justify-content:center; margin-bottom:4px; flex-wrap:wrap; }
   .gd-toolbtn { border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:8px 15px;
     border-radius:999px; font:inherit; font-weight:600; cursor:pointer; touch-action:manipulation; }
@@ -332,11 +334,11 @@
     </div>
     <div id="gd-view-puzzle">
       <div class="gd-sizes">
-        <button class="gd-sizebtn on" id="gd-size-s">Small · 5×5</button>
-        <button class="gd-sizebtn" id="gd-size-b">Big · 10×10</button>
+        <button class="gd-sizebtn on" id="gd-size-b">10 × 10</button>
+        <button class="gd-sizebtn" id="gd-size-h">15 × 15</button>
       </div>
       <div class="gd-sub" id="gd-sub"></div>
-      <div class="gd-board" id="gd-board"></div>
+      <div class="gd-boardwrap"><div class="gd-board" id="gd-board"></div></div>
       <div class="gd-tools">
         <button class="gd-toolbtn on" id="gd-mode-fill">🌿 Fill</button>
         <button class="gd-toolbtn" id="gd-mode-mark">✕ Mark</button>
@@ -977,24 +979,6 @@
      clues always lead to the intended picture. Solving days unlocks notes. */
   var GD_KEY = "alaynefit-garden";
   var GD_UNLOCK_KEY = "alaynefit-garden-unlocked";
-  var PUZZLES5 = [
-    { name: "a heart",     rows: ["01010","11111","11111","01110","00100"] },
-    { name: "an apricot",  rows: ["00100","01000","01110","11111","01110"] },
-    { name: "a flower",    rows: ["00100","10101","01110","00100","01010"] },
-    { name: "a sprout",    rows: ["00100","01010","00100","00100","01110"] },
-    { name: "the sun",     rows: ["10101","01110","11111","01110","10101"] },
-    { name: "a star",      rows: ["00100","11111","01110","01010","01010"] },
-    { name: "a tree",      rows: ["00100","01110","11111","00100","01110"] },
-    { name: "a cloud",     rows: ["00000","01110","11111","11111","00000"] },
-    { name: "the moon",    rows: ["00110","01100","01000","01100","00110"] },
-    { name: "a diamond",   rows: ["00100","01110","11111","01110","00100"] },
-    { name: "a butterfly", rows: ["10001","11011","01110","11011","10001"] },
-    { name: "a fish",      rows: ["00010","01110","11101","01110","00010"] },
-    { name: "a house",     rows: ["00100","01110","11111","10101","11111"] },
-    { name: "a key",       rows: ["01110","01010","01110","00100","00110"] },
-    { name: "a bird",      rows: ["01000","11100","01111","00100","00100"] },
-    { name: "a warm mug",  rows: ["00000","11110","11111","11110","01100"] }
-  ];
   var PUZZLES10 = [
     { name: "a heart",     rows: ["0000000000","0110000110","1111001111","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000","0000000000"] },
     { name: "an apricot",  rows: ["0000001000","0000011000","0001110000","0011111000","0111111100","1111111110","1111111110","0111111100","0011111000","0000000000"] },
@@ -1008,6 +992,20 @@
     { name: "a cat",       rows: ["1100000011","1110000111","1111111111","1101001011","1111111111","1110110111","1111111111","0111111110","0011111100","0000000000"] },
     { name: "a teacup",    rows: ["0000000000","0111111000","0111111010","0111111011","0111111010","0111111000","0011110000","0000000000","1111111100","0000000000"] },
     { name: "a diamond",   rows: ["0000110000","0001111000","0011111100","0111111110","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000"] }
+  ];
+  var PUZZLES15 = [
+    { name: "a heart",        rows: ["000000000000000","001111000111100","011111101111110","111111111111111","111111111111111","111111111111111","111111111111111","111111111111111","011111111111110","011111111111110","001111111111100","000111111111000","000011111110000","000001111100000","000000111000000"] },
+    { name: "a full moon",    rows: ["000000000000000","000000010000000","000011111110000","000111111111000","001111111111100","001111111111100","001111111111100","011111111111110","001111111111100","001111111111100","001111111111100","000111111111000","000011111110000","000000010000000","000000000000000"] },
+    { name: "a berry",        rows: ["000000000000000","000000000000000","000000000000000","000001111100000","000011111110000","000111111111000","000111111111000","000111111111000","000111111111000","000111111111000","000011111110000","000001111100000","000000000000000","000000000000000","000000000000000"] },
+    { name: "a diamond",      rows: ["000000000000000","000000010000000","000000111000000","000001111100000","000011111110000","000111111111000","001111111111100","011111111111110","001111111111100","000111111111000","000011111110000","000001111100000","000000111000000","000000010000000","000000000000000"] },
+    { name: "a small diamond",rows: ["000000000000000","000000000000000","000000000000000","000000010000000","000000111000000","000001111100000","000011111110000","000111111111000","000011111110000","000001111100000","000000111000000","000000010000000","000000000000000","000000000000000","000000000000000"] },
+    { name: "a plus",         rows: ["000000000000000","000000111000000","000000111000000","000000111000000","000000111000000","000000111000000","011111111111110","011111111111110","011111111111110","000000111000000","000000111000000","000000111000000","000000111000000","000000111000000","000000000000000"] },
+    { name: "a sparkle",      rows: ["000000000000000","011000000000110","011100000001110","001110000011100","000111000111000","000011101110000","000001111100000","000000111000000","000001111100000","000011101110000","000111000111000","001110000011100","011100000001110","011000000000110","000000000000000"] },
+    { name: "a frame",        rows: ["000000000000000","011111111111110","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","010000000000010","011111111111110","000000000000000"] },
+    { name: "a tree",         rows: ["000000000000000","000000010000000","000000010000000","000000111000000","000000111000000","000001111100000","000001111100000","000011111110000","000011111110000","000111111111000","000111111111000","000000111000000","000000111000000","000000111000000","000000000000000"] },
+    { name: "a mountain",     rows: ["000000000000000","000000000000000","000000010000000","000000111000000","000001111100000","000011111110000","000111111111000","001111111111100","011111111111110","111111111111111","111111111111111","111111111111111","111111111111111","111111111111111","111111111111111"] },
+    { name: "an up-arrow",    rows: ["000000010000000","000000111000000","000001111100000","000011111110000","000111111111000","001111111111100","011111111111110","111111111111111","000001111100000","000001111100000","000001111100000","000001111100000","000001111100000","000001111100000","000001111100000"] },
+    { name: "a butterfly",    rows: ["000000000000000","000011101110000","000011101110000","011111101111110","011111101111110","011111101111110","011111101111110","011111101111110","011111101111110","011111101111110","011111101111110","011111101111110","000011101110000","000011101110000","000000000000000"] }
   ];
   /* ▼▼ Notes from Blake — replace these placeholders with your own. Each solved
      day reveals the next one, in order. Add as many as you like. ▼▼ */
@@ -1040,11 +1038,11 @@
     garden[m] = nu;
   });
   var gdMode = "fill";
-  var gdSize = "S";   /* "S" = 5×5, "B" = 10×10 */
+  var gdSize = "B";   /* "B" = 10×10, "H" = 15×15 */
 
   function gdDayNumber() { return Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(2020, 0, 1)) / 86400000); }
-  function gdList() { return gdSize === "B" ? PUZZLES10 : PUZZLES5; }
-  function gdN() { return gdSize === "B" ? 10 : 5; }
+  function gdList() { return gdSize === "H" ? PUZZLES15 : PUZZLES10; }
+  function gdN() { return gdSize === "H" ? 15 : 10; }
   function gdKey() { return gdSize + ":" + ymd(now); }   /* size-scoped so 5×5 & 10×10 are tracked separately */
   function gdPuzzle() { var L = gdList(); return L[((gdDayNumber() % L.length) + L.length) % L.length]; }
   function gdSolution() { return gdPuzzle().rows.map(r => r.split("").map(Number)); }
@@ -1060,7 +1058,8 @@
     for (var q=0;q<n;q++) idx.push(q);
     var cc = idx.map(function (j) { return gdClues(sol.map(function (r) { return r[j]; })); });
     var board = document.getElementById("gd-board");
-    board.classList.toggle("big", gdSize === "B");
+    board.dataset.n = n;
+    board.style.setProperty("--gd-cell", (n === 15 ? 20 : 30) + "px");
     board.style.gridTemplateColumns = "auto repeat(" + n + ", var(--gd-cell))";
     board.classList.toggle("done", gdSolvedToday());
     var html = "<div></div>";
@@ -1144,14 +1143,14 @@
   }
   function gdSetSize(s) {
     gdSize = s;
-    document.getElementById("gd-size-s").classList.toggle("on", s === "S");
     document.getElementById("gd-size-b").classList.toggle("on", s === "B");
+    document.getElementById("gd-size-h").classList.toggle("on", s === "H");
     gdSetMode("fill");
     document.getElementById("gd-status").textContent = gdSolvedToday() ? "🌸 Already grown today 🌿" : "";
     gdRenderBoard();
   }
-  document.getElementById("gd-size-s").addEventListener("click", function () { gdSetSize("S"); });
   document.getElementById("gd-size-b").addEventListener("click", function () { gdSetSize("B"); });
+  document.getElementById("gd-size-h").addEventListener("click", function () { gdSetSize("H"); });
   document.getElementById("gd-mode-fill").addEventListener("click", function () { gdSetMode("fill"); });
   document.getElementById("gd-mode-mark").addEventListener("click", function () { gdSetMode("mark"); });
   document.getElementById("gd-clear").addEventListener("click", function () {
