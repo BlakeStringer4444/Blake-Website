@@ -250,18 +250,25 @@
   .gd-tab { flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     padding:9px; border-radius:10px; font:inherit; font-weight:650; cursor:pointer; touch-action:manipulation; }
   .gd-tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .gd-sizes { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .gd-sizebtn { border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    padding:7px 16px; border-radius:999px; font:inherit; font-size:.85rem; font-weight:650; cursor:pointer; touch-action:manipulation; }
+  .gd-sizebtn.on { background:var(--brand); border-color:var(--brand); color:#fff; }
   .gd-sub { text-align:center; color:var(--ink-soft); font-size:.9rem; margin-bottom:14px; min-height:1.3em; }
-  .gd-board { display:grid; justify-content:center; margin:0 auto 16px; user-select:none; }
+  .gd-board { --gd-cell:44px; display:grid; justify-content:center; margin:0 auto 16px; user-select:none; }
   .gd-cclue { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0;
     padding-bottom:5px; font-size:.74rem; font-weight:700; color:var(--brand-soft); line-height:1.15; font-variant-numeric:tabular-nums; }
   .gd-rclue { display:flex; align-items:center; justify-content:flex-end; gap:5px; padding-right:7px;
     font-size:.74rem; font-weight:700; color:var(--brand-soft); font-variant-numeric:tabular-nums; }
-  .gd-cell { width:44px; height:44px; border:1px solid var(--line); background:var(--surface-2);
+  .gd-cell { width:var(--gd-cell); height:var(--gd-cell); border:1px solid var(--line); background:var(--surface-2);
     display:grid; place-items:center; cursor:pointer; touch-action:manipulation; transition:background .1s, transform .1s; }
   .gd-cell.fill { background:var(--brand); }
   .gd-cell.mark::after { content:"✕"; color:var(--ink-soft); font-size:.95rem; font-weight:700; }
   .gd-board.done .gd-cell.fill { background:var(--accent); }
   .gd-board.done .gd-cell { cursor:default; }
+  .gd-board.big { --gd-cell:30px; }
+  .gd-board.big .gd-cclue, .gd-board.big .gd-rclue { font-size:.58rem; gap:3px; padding-right:5px; }
+  .gd-board.big .gd-cell.mark::after { font-size:.66rem; }
   .gd-tools { display:flex; gap:8px; justify-content:center; margin-bottom:4px; flex-wrap:wrap; }
   .gd-toolbtn { border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:8px 15px;
     border-radius:999px; font:inherit; font-weight:600; cursor:pointer; touch-action:manipulation; }
@@ -324,6 +331,10 @@
       <button class="gd-tab" id="gd-tab-notes">Notes 💌</button>
     </div>
     <div id="gd-view-puzzle">
+      <div class="gd-sizes">
+        <button class="gd-sizebtn on" id="gd-size-s">Small · 5×5</button>
+        <button class="gd-sizebtn" id="gd-size-b">Big · 10×10</button>
+      </div>
       <div class="gd-sub" id="gd-sub"></div>
       <div class="gd-board" id="gd-board"></div>
       <div class="gd-tools">
@@ -966,7 +977,7 @@
      clues always lead to the intended picture. Solving days unlocks notes. */
   var GD_KEY = "alaynefit-garden";
   var GD_UNLOCK_KEY = "alaynefit-garden-unlocked";
-  var PUZZLES = [
+  var PUZZLES5 = [
     { name: "a heart",     rows: ["01010","11111","11111","01110","00100"] },
     { name: "an apricot",  rows: ["00100","01000","01110","11111","01110"] },
     { name: "a flower",    rows: ["00100","10101","01110","00100","01010"] },
@@ -983,6 +994,20 @@
     { name: "a key",       rows: ["01110","01010","01110","00100","00110"] },
     { name: "a bird",      rows: ["01000","11100","01111","00100","00100"] },
     { name: "a warm mug",  rows: ["00000","11110","11111","11110","01100"] }
+  ];
+  var PUZZLES10 = [
+    { name: "a heart",     rows: ["0000000000","0110000110","1111001111","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000","0000000000"] },
+    { name: "an apricot",  rows: ["0000001000","0000011000","0001110000","0011111000","0111111100","1111111110","1111111110","0111111100","0011111000","0000000000"] },
+    { name: "a flower",    rows: ["0001111000","0011001100","0110000110","0100110010","0100110010","0110000110","0011001100","0000110000","0000110000","0001111000"] },
+    { name: "a tree",      rows: ["0001111000","0011111100","0111111110","1111111111","0111111110","0011111100","0000110000","0000110000","0000110000","0001111000"] },
+    { name: "the sun",     rows: ["0000110000","0010110100","0001111000","0111111110","1111111111","1111111111","0111111110","0001111000","0010110100","0000110000"] },
+    { name: "a butterfly", rows: ["1100000011","1110000111","1111001111","0111111110","0011111100","0011111100","0111111110","1111001111","1110000111","1100000011"] },
+    { name: "a star",      rows: ["0000110000","0000110000","1111111111","0111111110","0011111100","0011111100","0111001110","0110000110","1100000011","0000000000"] },
+    { name: "a house",     rows: ["0000110000","0001111000","0011111100","0111111110","1111111111","1110110111","1110110111","1110000111","1110110111","1111111111"] },
+    { name: "a mushroom",  rows: ["0001111000","0011111100","0111111110","1111111111","1111111111","0011111100","0000110000","0000110000","0001111000","0000000000"] },
+    { name: "a cat",       rows: ["1100000011","1110000111","1111111111","1101001011","1111111111","1110110111","1111111111","0111111110","0011111100","0000000000"] },
+    { name: "a teacup",    rows: ["0000000000","0111111000","0111111010","0111111011","0111111010","0111111000","0011110000","0000000000","1111111100","0000000000"] },
+    { name: "a diamond",   rows: ["0000110000","0001111000","0011111100","0111111110","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000"] }
   ];
   /* ▼▼ Notes from Blake — replace these placeholders with your own. Each solved
      day reveals the next one, in order. Add as many as you like. ▼▼ */
@@ -1006,30 +1031,43 @@
   if (!garden.progress) garden.progress = {};
   if (!garden.marks)    garden.marks = {};
   if (!garden.solved)   garden.solved = [];
+  /* Migrate pre-size-toggle data: old keys were the bare date; they were all
+     the 5×5 puzzle, so prefix them with "S:". */
+  garden.solved = garden.solved.map(function (k) { return k.indexOf(":") < 0 ? "S:" + k : k; });
+  ["progress", "marks"].forEach(function (m) {
+    var o = garden[m] || {}, nu = {};
+    Object.keys(o).forEach(function (k) { nu[k.indexOf(":") < 0 ? "S:" + k : k] = o[k]; });
+    garden[m] = nu;
+  });
   var gdMode = "fill";
+  var gdSize = "S";   /* "S" = 5×5, "B" = 10×10 */
 
   function gdDayNumber() { return Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(2020, 0, 1)) / 86400000); }
-  function gdKey() { return ymd(now); }
-  function gdPuzzle() { return PUZZLES[((gdDayNumber() % PUZZLES.length) + PUZZLES.length) % PUZZLES.length]; }
+  function gdList() { return gdSize === "B" ? PUZZLES10 : PUZZLES5; }
+  function gdN() { return gdSize === "B" ? 10 : 5; }
+  function gdKey() { return gdSize + ":" + ymd(now); }   /* size-scoped so 5×5 & 10×10 are tracked separately */
+  function gdPuzzle() { var L = gdList(); return L[((gdDayNumber() % L.length) + L.length) % L.length]; }
   function gdSolution() { return gdPuzzle().rows.map(r => r.split("").map(Number)); }
-  function gdZeros() { return [0,1,2,3,4].map(() => [0,0,0,0,0]); }
+  function gdZeros() { var n = gdN(); return Array.from({ length: n }, function () { return Array(n).fill(0); }); }
   function gdClues(line) { var r=[], c=0; for (var k=0;k<line.length;k++){ if(line[k]) c++; else if(c){ r.push(c); c=0; } } if(c) r.push(c); return r.length?r:[0]; }
   function gdSolvedToday() { return garden.solved.indexOf(gdKey()) >= 0; }
 
   function gdRenderBoard() {
-    var sol = gdSolution(), key = gdKey();
+    var n = gdN(), sol = gdSolution(), key = gdKey();
     var fill = garden.progress[key] || (garden.progress[key] = gdZeros());
     var mark = garden.marks[key]    || (garden.marks[key]    = gdZeros());
-    var rc = sol.map(gdClues);
-    var cc = [0,1,2,3,4].map(j => gdClues(sol.map(r => r[j])));
+    var rc = sol.map(gdClues), idx = [];
+    for (var q=0;q<n;q++) idx.push(q);
+    var cc = idx.map(function (j) { return gdClues(sol.map(function (r) { return r[j]; })); });
     var board = document.getElementById("gd-board");
-    board.style.gridTemplateColumns = "auto repeat(5, 44px)";
+    board.classList.toggle("big", gdSize === "B");
+    board.style.gridTemplateColumns = "auto repeat(" + n + ", var(--gd-cell))";
     board.classList.toggle("done", gdSolvedToday());
-    var html = '<div></div>';
-    for (var j=0;j<5;j++) html += '<div class="gd-cclue">' + cc[j].map(n => '<span>'+n+'</span>').join('') + '</div>';
-    for (var i=0;i<5;i++) {
-      html += '<div class="gd-rclue">' + rc[i].map(n => '<span>'+n+'</span>').join('') + '</div>';
-      for (var j2=0;j2<5;j2++) {
+    var html = "<div></div>";
+    for (var j=0;j<n;j++) html += '<div class="gd-cclue">' + cc[j].map(function (x) { return "<span>"+x+"</span>"; }).join("") + "</div>";
+    for (var i=0;i<n;i++) {
+      html += '<div class="gd-rclue">' + rc[i].map(function (x) { return "<span>"+x+"</span>"; }).join("") + "</div>";
+      for (var j2=0;j2<n;j2++) {
         var cls = "gd-cell" + (fill[i][j2] ? " fill" : "") + (mark[i][j2] ? " mark" : "");
         html += '<div class="'+cls+'" data-i="'+i+'" data-j="'+j2+'"></div>';
       }
@@ -1056,8 +1094,8 @@
     gdCheckWin();
   }
   function gdCheckWin() {
-    var sol = gdSolution(), fill = garden.progress[gdKey()];
-    for (var i=0;i<5;i++) for (var j=0;j<5;j++) if ((fill[i][j] ? 1 : 0) !== sol[i][j]) return;
+    var n = gdN(), sol = gdSolution(), fill = garden.progress[gdKey()];
+    for (var i=0;i<n;i++) for (var j=0;j<n;j++) if ((fill[i][j] ? 1 : 0) !== sol[i][j]) return;
     var fresh = !gdSolvedToday();
     if (fresh) { garden.solved.push(gdKey()); gdSaveState(); }
     gdRenderBoard();
@@ -1086,12 +1124,8 @@
     document.getElementById("gd-tab-notes").classList.toggle("on", !isP);
   }
   function gdOpen() {
-    gdMode = "fill";
-    document.getElementById("gd-mode-fill").classList.add("on");
-    document.getElementById("gd-mode-mark").classList.remove("on");
-    document.getElementById("gd-status").textContent = gdSolvedToday() ? "🌸 Already grown today 🌿" : "";
     gdShowTab("puzzle");
-    gdRenderBoard();
+    gdSetSize(gdSize);   /* syncs size buttons + mode + status, and renders the board */
     gdRenderNotes();
     document.getElementById("af-garden").classList.add("open");
     document.body.style.overflow = "hidden";
@@ -1108,6 +1142,16 @@
     document.getElementById("gd-mode-fill").classList.toggle("on", m === "fill");
     document.getElementById("gd-mode-mark").classList.toggle("on", m === "mark");
   }
+  function gdSetSize(s) {
+    gdSize = s;
+    document.getElementById("gd-size-s").classList.toggle("on", s === "S");
+    document.getElementById("gd-size-b").classList.toggle("on", s === "B");
+    gdSetMode("fill");
+    document.getElementById("gd-status").textContent = gdSolvedToday() ? "🌸 Already grown today 🌿" : "";
+    gdRenderBoard();
+  }
+  document.getElementById("gd-size-s").addEventListener("click", function () { gdSetSize("S"); });
+  document.getElementById("gd-size-b").addEventListener("click", function () { gdSetSize("B"); });
   document.getElementById("gd-mode-fill").addEventListener("click", function () { gdSetMode("fill"); });
   document.getElementById("gd-mode-mark").addEventListener("click", function () { gdSetMode("mark"); });
   document.getElementById("gd-clear").addEventListener("click", function () {
