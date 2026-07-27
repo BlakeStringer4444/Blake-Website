@@ -238,6 +238,48 @@
   .cal-legend .sw { width:26px; height:13px; border-radius:4px;
     background:linear-gradient(90deg, color-mix(in srgb,#5E7D33 22%,var(--surface-2)), #5E7D33); }
 
+  /* ── The Secret Garden (secret picross game behind the heart) ── */
+  #af-heart { cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; }
+  .gd-overlay { position:fixed; inset:0; z-index:90; display:none; background:var(--bg);
+    overflow-y:auto; padding:calc(env(safe-area-inset-top) + 6px) 0 44px; }
+  .gd-overlay.open { display:block; }
+  .gd-panel { max-width:460px; margin:0 auto; padding:16px 18px; }
+  .gd-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .gd-title { font-weight:700; color:var(--brand); font-size:1.15rem; letter-spacing:-.01em; }
+  .gd-tabs { display:flex; gap:8px; margin-bottom:16px; }
+  .gd-tab { flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    padding:9px; border-radius:10px; font:inherit; font-weight:650; cursor:pointer; touch-action:manipulation; }
+  .gd-tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .gd-sizes { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .gd-sizebtn { border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    padding:7px 16px; border-radius:999px; font:inherit; font-size:.85rem; font-weight:650; cursor:pointer; touch-action:manipulation; }
+  .gd-sizebtn.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .gd-sub { text-align:center; color:var(--ink-soft); font-size:.9rem; margin-bottom:14px; min-height:1.3em; }
+  .gd-board { --gd-cell:44px; display:grid; justify-content:center; margin:0 auto 16px; user-select:none; }
+  .gd-cclue { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0;
+    padding-bottom:5px; font-size:.74rem; font-weight:700; color:var(--brand-soft); line-height:1.15; font-variant-numeric:tabular-nums; }
+  .gd-rclue { display:flex; align-items:center; justify-content:flex-end; gap:5px; padding-right:7px;
+    font-size:.74rem; font-weight:700; color:var(--brand-soft); font-variant-numeric:tabular-nums; }
+  .gd-cell { width:var(--gd-cell); height:var(--gd-cell); border:1px solid var(--line); background:var(--surface-2);
+    display:grid; place-items:center; cursor:pointer; touch-action:manipulation; transition:background .1s, transform .1s; }
+  .gd-cell.fill { background:var(--brand); }
+  .gd-cell.mark::after { content:"✕"; color:var(--ink-soft); font-size:.95rem; font-weight:700; }
+  .gd-board.done .gd-cell.fill { background:var(--accent); }
+  .gd-board.done .gd-cell { cursor:default; }
+  .gd-board.big { --gd-cell:30px; }
+  .gd-board.big .gd-cclue, .gd-board.big .gd-rclue { font-size:.58rem; gap:3px; padding-right:5px; }
+  .gd-board.big .gd-cell.mark::after { font-size:.66rem; }
+  .gd-tools { display:flex; gap:8px; justify-content:center; margin-bottom:4px; flex-wrap:wrap; }
+  .gd-toolbtn { border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:8px 15px;
+    border-radius:999px; font:inherit; font-weight:600; cursor:pointer; touch-action:manipulation; }
+  .gd-toolbtn.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .gd-status { text-align:center; min-height:1.5em; margin-top:12px; font-weight:700; color:var(--accent-ink); font-size:1rem; }
+  .gd-help { text-align:center; color:var(--brand-soft); font-size:.76rem; line-height:1.5; margin-top:14px; padding:0 6px; }
+  .gd-notes-count { text-align:center; color:var(--brand-soft); font-size:.82rem; font-weight:650; margin-bottom:14px; }
+  .gd-note { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:15px 17px; margin-bottom:10px;
+    font-family:var(--f-display); font-style:italic; color:var(--ink); line-height:1.5; box-shadow:var(--shadow); }
+  .gd-note.locked { color:var(--brand-soft); font-style:normal; font-family:var(--f-ui); text-align:center; box-shadow:none; background:var(--surface-2); }
+
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -275,7 +317,38 @@
 
   <div id="sections"></div>
 
-  <p class="made">Made with love, for Alayne <b>♥</b></p>
+  <p class="made">Made with love, for Alayne <b id="af-heart">♥</b></p>
+</div>
+
+<div class="gd-overlay" id="af-garden">
+  <div class="gd-panel">
+    <div class="gd-top">
+      <div class="gd-title">The Secret Garden 🌿</div>
+      <button class="iconbtn" id="gd-close" aria-label="Close">✕ Close</button>
+    </div>
+    <div class="gd-tabs">
+      <button class="gd-tab on" id="gd-tab-puzzle">Today's puzzle</button>
+      <button class="gd-tab" id="gd-tab-notes">Notes 💌</button>
+    </div>
+    <div id="gd-view-puzzle">
+      <div class="gd-sizes">
+        <button class="gd-sizebtn on" id="gd-size-s">Small · 5×5</button>
+        <button class="gd-sizebtn" id="gd-size-b">Big · 10×10</button>
+      </div>
+      <div class="gd-sub" id="gd-sub"></div>
+      <div class="gd-board" id="gd-board"></div>
+      <div class="gd-tools">
+        <button class="gd-toolbtn on" id="gd-mode-fill">🌿 Fill</button>
+        <button class="gd-toolbtn" id="gd-mode-mark">✕ Mark</button>
+        <button class="gd-toolbtn" id="gd-clear">Clear</button>
+      </div>
+      <div class="gd-status" id="gd-status"></div>
+      <div class="gd-help">Fill the squares so every row &amp; column matches its number clues. Solve to grow today's picture — and unlock a note. A new puzzle appears each day.</div>
+    </div>
+    <div id="gd-view-notes" hidden>
+      <div id="gd-notes"></div>
+    </div>
+  </div>
 </div>
 
 <div class="cal-overlay" id="cal-overlay">
@@ -898,6 +971,216 @@
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar();
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && calOv.classList.contains("open")) closeCalendar(); });
+
+  /* ── The Secret Garden — a daily picross (nonogram) behind the heart ──
+     Every puzzle below is verified to have a single logical solution, so the
+     clues always lead to the intended picture. Solving days unlocks notes. */
+  var GD_KEY = "alaynefit-garden";
+  var GD_UNLOCK_KEY = "alaynefit-garden-unlocked";
+  var PUZZLES5 = [
+    { name: "a heart",     rows: ["01010","11111","11111","01110","00100"] },
+    { name: "an apricot",  rows: ["00100","01000","01110","11111","01110"] },
+    { name: "a flower",    rows: ["00100","10101","01110","00100","01010"] },
+    { name: "a sprout",    rows: ["00100","01010","00100","00100","01110"] },
+    { name: "the sun",     rows: ["10101","01110","11111","01110","10101"] },
+    { name: "a star",      rows: ["00100","11111","01110","01010","01010"] },
+    { name: "a tree",      rows: ["00100","01110","11111","00100","01110"] },
+    { name: "a cloud",     rows: ["00000","01110","11111","11111","00000"] },
+    { name: "the moon",    rows: ["00110","01100","01000","01100","00110"] },
+    { name: "a diamond",   rows: ["00100","01110","11111","01110","00100"] },
+    { name: "a butterfly", rows: ["10001","11011","01110","11011","10001"] },
+    { name: "a fish",      rows: ["00010","01110","11101","01110","00010"] },
+    { name: "a house",     rows: ["00100","01110","11111","10101","11111"] },
+    { name: "a key",       rows: ["01110","01010","01110","00100","00110"] },
+    { name: "a bird",      rows: ["01000","11100","01111","00100","00100"] },
+    { name: "a warm mug",  rows: ["00000","11110","11111","11110","01100"] }
+  ];
+  var PUZZLES10 = [
+    { name: "a heart",     rows: ["0000000000","0110000110","1111001111","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000","0000000000"] },
+    { name: "an apricot",  rows: ["0000001000","0000011000","0001110000","0011111000","0111111100","1111111110","1111111110","0111111100","0011111000","0000000000"] },
+    { name: "a flower",    rows: ["0001111000","0011001100","0110000110","0100110010","0100110010","0110000110","0011001100","0000110000","0000110000","0001111000"] },
+    { name: "a tree",      rows: ["0001111000","0011111100","0111111110","1111111111","0111111110","0011111100","0000110000","0000110000","0000110000","0001111000"] },
+    { name: "the sun",     rows: ["0000110000","0010110100","0001111000","0111111110","1111111111","1111111111","0111111110","0001111000","0010110100","0000110000"] },
+    { name: "a butterfly", rows: ["1100000011","1110000111","1111001111","0111111110","0011111100","0011111100","0111111110","1111001111","1110000111","1100000011"] },
+    { name: "a star",      rows: ["0000110000","0000110000","1111111111","0111111110","0011111100","0011111100","0111001110","0110000110","1100000011","0000000000"] },
+    { name: "a house",     rows: ["0000110000","0001111000","0011111100","0111111110","1111111111","1110110111","1110110111","1110000111","1110110111","1111111111"] },
+    { name: "a mushroom",  rows: ["0001111000","0011111100","0111111110","1111111111","1111111111","0011111100","0000110000","0000110000","0001111000","0000000000"] },
+    { name: "a cat",       rows: ["1100000011","1110000111","1111111111","1101001011","1111111111","1110110111","1111111111","0111111110","0011111100","0000000000"] },
+    { name: "a teacup",    rows: ["0000000000","0111111000","0111111010","0111111011","0111111010","0111111000","0011110000","0000000000","1111111100","0000000000"] },
+    { name: "a diamond",   rows: ["0000110000","0001111000","0011111100","0111111110","1111111111","1111111111","0111111110","0011111100","0001111000","0000110000"] }
+  ];
+  /* ▼▼ Notes from Blake — replace these placeholders with your own. Each solved
+     day reveals the next one, in order. Add as many as you like. ▼▼ */
+  var GD_NOTES = [
+    "You make the ordinary feel like something. 🌿",
+    "I'm proud of you — the quiet wins count too.",
+    "Whatever kind of day it's been, I'm on your team. 💚",
+    "You are my favourite person to do nothing with.",
+    "Little by little, you're becoming even more you. 🌱",
+    "Thank you for being gentle with yourself today.",
+    "You've got a whole garden growing in here. 🌸",
+    "On the hard days, remember how far you've come.",
+    "I love you at every pace — fast, slow, and resting.",
+    "You found this? Of course you did. You're brilliant. 🍑"
+  ];
+
+  function gdEsc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function gdLoad() { try { return JSON.parse(localStorage.getItem(GD_KEY)) || {}; } catch (e) { return {}; } }
+  function gdSaveState() { try { localStorage.setItem(GD_KEY, JSON.stringify(garden)); } catch (e) {} }
+  var garden = gdLoad();
+  if (!garden.progress) garden.progress = {};
+  if (!garden.marks)    garden.marks = {};
+  if (!garden.solved)   garden.solved = [];
+  /* Migrate pre-size-toggle data: old keys were the bare date; they were all
+     the 5×5 puzzle, so prefix them with "S:". */
+  garden.solved = garden.solved.map(function (k) { return k.indexOf(":") < 0 ? "S:" + k : k; });
+  ["progress", "marks"].forEach(function (m) {
+    var o = garden[m] || {}, nu = {};
+    Object.keys(o).forEach(function (k) { nu[k.indexOf(":") < 0 ? "S:" + k : k] = o[k]; });
+    garden[m] = nu;
+  });
+  var gdMode = "fill";
+  var gdSize = "S";   /* "S" = 5×5, "B" = 10×10 */
+
+  function gdDayNumber() { return Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(2020, 0, 1)) / 86400000); }
+  function gdList() { return gdSize === "B" ? PUZZLES10 : PUZZLES5; }
+  function gdN() { return gdSize === "B" ? 10 : 5; }
+  function gdKey() { return gdSize + ":" + ymd(now); }   /* size-scoped so 5×5 & 10×10 are tracked separately */
+  function gdPuzzle() { var L = gdList(); return L[((gdDayNumber() % L.length) + L.length) % L.length]; }
+  function gdSolution() { return gdPuzzle().rows.map(r => r.split("").map(Number)); }
+  function gdZeros() { var n = gdN(); return Array.from({ length: n }, function () { return Array(n).fill(0); }); }
+  function gdClues(line) { var r=[], c=0; for (var k=0;k<line.length;k++){ if(line[k]) c++; else if(c){ r.push(c); c=0; } } if(c) r.push(c); return r.length?r:[0]; }
+  function gdSolvedToday() { return garden.solved.indexOf(gdKey()) >= 0; }
+
+  function gdRenderBoard() {
+    var n = gdN(), sol = gdSolution(), key = gdKey();
+    var fill = garden.progress[key] || (garden.progress[key] = gdZeros());
+    var mark = garden.marks[key]    || (garden.marks[key]    = gdZeros());
+    var rc = sol.map(gdClues), idx = [];
+    for (var q=0;q<n;q++) idx.push(q);
+    var cc = idx.map(function (j) { return gdClues(sol.map(function (r) { return r[j]; })); });
+    var board = document.getElementById("gd-board");
+    board.classList.toggle("big", gdSize === "B");
+    board.style.gridTemplateColumns = "auto repeat(" + n + ", var(--gd-cell))";
+    board.classList.toggle("done", gdSolvedToday());
+    var html = "<div></div>";
+    for (var j=0;j<n;j++) html += '<div class="gd-cclue">' + cc[j].map(function (x) { return "<span>"+x+"</span>"; }).join("") + "</div>";
+    for (var i=0;i<n;i++) {
+      html += '<div class="gd-rclue">' + rc[i].map(function (x) { return "<span>"+x+"</span>"; }).join("") + "</div>";
+      for (var j2=0;j2<n;j2++) {
+        var cls = "gd-cell" + (fill[i][j2] ? " fill" : "") + (mark[i][j2] ? " mark" : "");
+        html += '<div class="'+cls+'" data-i="'+i+'" data-j="'+j2+'"></div>';
+      }
+    }
+    board.innerHTML = html;
+    board.querySelectorAll(".gd-cell").forEach(function (c) {
+      c.addEventListener("click", function () { gdTap(+c.dataset.i, +c.dataset.j); });
+    });
+    gdUpdateSub();
+  }
+  function gdUpdateSub() {
+    var sub = document.getElementById("gd-sub");
+    sub.textContent = gdSolvedToday()
+      ? "🌸 Today you grew " + gdPuzzle().name + "."
+      : "Today's garden — solve to reveal what grows. 🌱";
+  }
+  function gdTap(i, j) {
+    if (gdSolvedToday()) return;
+    var key = gdKey(), fill = garden.progress[key], mark = garden.marks[key];
+    if (gdMode === "fill") { fill[i][j] = fill[i][j] ? 0 : 1; if (fill[i][j]) mark[i][j] = 0; }
+    else                   { mark[i][j] = mark[i][j] ? 0 : 1; if (mark[i][j]) fill[i][j] = 0; }
+    gdSaveState();
+    gdRenderBoard();
+    gdCheckWin();
+  }
+  function gdCheckWin() {
+    var n = gdN(), sol = gdSolution(), fill = garden.progress[gdKey()];
+    for (var i=0;i<n;i++) for (var j=0;j<n;j++) if ((fill[i][j] ? 1 : 0) !== sol[i][j]) return;
+    var fresh = !gdSolvedToday();
+    if (fresh) { garden.solved.push(gdKey()); gdSaveState(); }
+    gdRenderBoard();
+    var newNote = fresh && garden.solved.length <= GD_NOTES.length;
+    document.getElementById("gd-status").textContent = newNote
+      ? "🌸 Solved! A new note has bloomed 💌"
+      : "🌸 Beautifully solved — that's " + gdPuzzle().name + "!";
+    if (fresh) rain({ count: 22, apricots: true, spread: 700 });
+    gdRenderNotes();
+  }
+  function gdRenderNotes() {
+    var unlocked = Math.min(garden.solved.length, GD_NOTES.length);
+    var html = '<div class="gd-notes-count">' + unlocked + ' of ' + GD_NOTES.length + ' notes found</div>';
+    GD_NOTES.forEach(function (note, i) {
+      html += (i < unlocked)
+        ? '<div class="gd-note">“' + gdEsc(note) + '”</div>'
+        : '<div class="gd-note locked">🔒 Solve ' + (i + 1) + ' puzzle' + (i + 1 > 1 ? 's' : '') + ' to unlock</div>';
+    });
+    document.getElementById("gd-notes").innerHTML = html;
+  }
+  function gdShowTab(which) {
+    var isP = which === "puzzle";
+    document.getElementById("gd-view-puzzle").hidden = !isP;
+    document.getElementById("gd-view-notes").hidden = isP;
+    document.getElementById("gd-tab-puzzle").classList.toggle("on", isP);
+    document.getElementById("gd-tab-notes").classList.toggle("on", !isP);
+  }
+  function gdOpen() {
+    gdShowTab("puzzle");
+    gdSetSize(gdSize);   /* syncs size buttons + mode + status, and renders the board */
+    gdRenderNotes();
+    document.getElementById("af-garden").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function gdClose() { document.getElementById("af-garden").classList.remove("open"); document.body.style.overflow = ""; }
+  function gdToast(msg) {
+    var el = document.createElement("div"); el.className = "synth-toast"; el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add("show"); });
+    setTimeout(function () { el.classList.remove("show"); setTimeout(function () { el.remove(); }, 400); }, 3200);
+  }
+  function gdSetMode(m) {
+    gdMode = m;
+    document.getElementById("gd-mode-fill").classList.toggle("on", m === "fill");
+    document.getElementById("gd-mode-mark").classList.toggle("on", m === "mark");
+  }
+  function gdSetSize(s) {
+    gdSize = s;
+    document.getElementById("gd-size-s").classList.toggle("on", s === "S");
+    document.getElementById("gd-size-b").classList.toggle("on", s === "B");
+    gdSetMode("fill");
+    document.getElementById("gd-status").textContent = gdSolvedToday() ? "🌸 Already grown today 🌿" : "";
+    gdRenderBoard();
+  }
+  document.getElementById("gd-size-s").addEventListener("click", function () { gdSetSize("S"); });
+  document.getElementById("gd-size-b").addEventListener("click", function () { gdSetSize("B"); });
+  document.getElementById("gd-mode-fill").addEventListener("click", function () { gdSetMode("fill"); });
+  document.getElementById("gd-mode-mark").addEventListener("click", function () { gdSetMode("mark"); });
+  document.getElementById("gd-clear").addEventListener("click", function () {
+    if (gdSolvedToday()) return;
+    garden.progress[gdKey()] = gdZeros(); garden.marks[gdKey()] = gdZeros();
+    gdSaveState(); gdRenderBoard(); document.getElementById("gd-status").textContent = "";
+  });
+  document.getElementById("gd-tab-puzzle").addEventListener("click", function () { gdShowTab("puzzle"); });
+  document.getElementById("gd-tab-notes").addEventListener("click", function () { gdShowTab("notes"); gdRenderNotes(); });
+  document.getElementById("gd-close").addEventListener("click", gdClose);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && document.getElementById("af-garden").classList.contains("open")) gdClose();
+  });
+  /* Heart activation: 5 quick taps to discover it the first time, then a
+     single tap opens it thereafter. */
+  var gdTaps = [];
+  document.getElementById("af-heart").addEventListener("click", function () {
+    var unlocked = false; try { unlocked = localStorage.getItem(GD_UNLOCK_KEY) === "1"; } catch (e) {}
+    if (unlocked) { gdOpen(); return; }
+    var t = Date.now();
+    gdTaps.push(t);
+    gdTaps = gdTaps.filter(function (x) { return t - x <= 2500; });
+    if (gdTaps.length >= 5) {
+      gdTaps = [];
+      try { localStorage.setItem(GD_UNLOCK_KEY, "1"); } catch (e) {}
+      gdToast("🌿 You found the Secret Garden");
+      gdOpen();
+    }
+  });
 
   /* ── boot ── */
   var local = null;
