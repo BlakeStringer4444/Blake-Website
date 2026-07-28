@@ -1400,6 +1400,9 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
 .snd-reelstrip {
   margin: 22px -48px 40px;
   overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;   /* let the page scroll vertically; JS handles horizontal swipe */
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
 }
@@ -1407,10 +1410,7 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   display: flex; gap: 14px; width: max-content; padding: 4px 0;
   animation: snd-reel-scroll 15s linear infinite;   /* JS refines this to match the acting filmstrip's px/sec */
 }
-/* Pause when hovered, focused (keyboard), or tapped (JS adds .paused) so a reel is easy to click. */
-.snd-reelstrip:hover .snd-reelstrip-track,
-.snd-reelstrip:focus-within .snd-reelstrip-track,
-.snd-reelstrip.paused .snd-reelstrip-track { animation-play-state: paused; }
+/* Pause/scrub is handled in JS (freeze on hover/drag, resume after) — see the reel IIFE. */
 .snd-reelstrip .video-card { width: 152px; flex-shrink: 0; }
 @keyframes snd-reel-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (max-width: 639px) {
@@ -6883,40 +6883,78 @@ if (siteName) {
 })();
 
 
-/* ── Music Design Reel carousel ── clone the cards once for a seamless
-   auto-scroll loop, and pause briefly on touch so a reel can be tapped. */
+/* ── Music Design Reel carousel ── clone for a seamless loop, match the acting
+   filmstrip's speed, and support hover-pause + drag/swipe scrubbing (mirrors
+   the acting filmstrip). A drag/swipe suppresses the click so it won't open a
+   reel by accident; a genuine tap opens the reel's Instagram link. */
 (function () {
   var track = document.getElementById('snd-reelstrip-track');
   if (!track) return;
-  var strip = track.parentElement;
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduce) {
-    var n = track.children.length;   /* real cards, before cloning */
-    Array.prototype.slice.call(track.children).forEach(function (node) {
-      var clone = node.cloneNode(true);
-      clone.setAttribute('aria-hidden', 'true');
-      clone.setAttribute('tabindex', '-1');
-      track.appendChild(clone);
-    });
-    /* Match the acting filmstrip's linear speed (px/sec), not just its duration.
-       Acting: 16 photos (160px desktop / 120 mobile) + 8px gap, over 50s. We
-       can't measure widths here (panels are hidden on load), so compute from
-       those known metrics. If the acting photo count/size changes, update here. */
-    var matchSpeed = function () {
-      var mobile = window.innerWidth <= 639;
-      var actHalf = 16 * ((mobile ? 120 : 160) + 8), actDur = 50;   /* px in one loop, seconds */
-      var reelHalf = n * ((mobile ? 126 : 152) + 14);
-      track.style.animationDuration = (reelHalf / (actHalf / actDur)) + 's';
-    };
-    matchSpeed();
-    window.addEventListener('resize', matchSpeed);
+  if (reduce) return;   /* reduced motion: no animation (CSS), page can scroll it natively */
+
+  var n = track.children.length;   /* real cards before cloning */
+  Array.prototype.slice.call(track.children).forEach(function (node) {
+    var clone = node.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    clone.setAttribute('tabindex', '-1');
+    track.appendChild(clone);
+  });
+  track.querySelectorAll('a, img').forEach(function (el) { el.draggable = false; });
+  track.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+  /* Match the acting filmstrip's linear speed (px/sec). Acting: 16 photos
+     (160px desktop / 120 mobile) + 8px gap over 50s. Panels are hidden on load
+     so we compute from those known metrics (update if acting's count/size changes). */
+  var DUR = 15, resumeTimer = null, inlineAnim = false;
+  function matchSpeed() {
+    var mobile = window.innerWidth <= 639;
+    var actHalf = 16 * ((mobile ? 120 : 160) + 8), actDur = 50;
+    var reelHalf = n * ((mobile ? 126 : 152) + 14);
+    DUR = reelHalf / (actHalf / actDur);
+    if (!inlineAnim) track.style.animationDuration = DUR + 's';
   }
-  var resume;
-  strip.addEventListener('touchstart', function () {
-    strip.classList.add('paused');
-    clearTimeout(resume);
-    resume = setTimeout(function () { strip.classList.remove('paused'); }, 4000);
+  function currentX() { return new DOMMatrix(getComputedStyle(track).transform).m41; }
+  function freeze() { clearTimeout(resumeTimer); var x = currentX(); track.style.animation = 'none'; track.style.transform = 'translateX(' + x + 'px)'; }
+  function resumeFrom(x) {
+    var halfW = track.scrollWidth / 2; if (!halfW) return;
+    var nx = ((x % halfW) + halfW) % halfW - halfW;   /* [-halfW, 0) */
+    track.style.animation = 'none'; void track.offsetWidth;
+    track.style.animation = 'snd-reel-scroll ' + DUR + 's linear ' + ((nx / halfW) * DUR) + 's infinite';
+    inlineAnim = true;
+  }
+  function thaw(x) { var pos = x !== undefined ? x : currentX(); track.style.transform = ''; resumeFrom(pos); }
+  function scheduleResume(x) { clearTimeout(resumeTimer); resumeTimer = setTimeout(function () { thaw(x); }, 3000); }
+
+  matchSpeed();
+  window.addEventListener('resize', matchSpeed);
+
+  var isHovering = false, mDrag = false, m0 = 0, base = 0, dragged = false;
+  track.addEventListener('mouseenter', function () { isHovering = true; if (!mDrag) freeze(); });
+  track.addEventListener('mouseleave', function () { isHovering = false; if (mDrag) return; clearTimeout(resumeTimer); thaw(); });
+  track.addEventListener('mousedown', function (e) { mDrag = true; dragged = false; m0 = e.clientX; base = currentX(); freeze(); document.body.style.cursor = 'grabbing'; });
+  document.addEventListener('mousemove', function (e) { if (!mDrag) return; var dx = e.clientX - m0; if (Math.abs(dx) > 4) dragged = true; track.style.transform = 'translateX(' + (base + dx) + 'px)'; });
+  document.addEventListener('mouseup', function (e) {
+    if (!mDrag) return;
+    mDrag = false; document.body.style.cursor = '';
+    var finalX = base + (e.clientX - m0);
+    track.style.transform = 'translateX(' + finalX + 'px)';
+    if (!isHovering) thaw(finalX);
+  });
+
+  var t0 = 0, tBase = 0, tDrag = false;
+  track.addEventListener('touchstart', function (e) { tDrag = true; dragged = false; t0 = e.touches[0].clientX; tBase = currentX(); freeze(); }, { passive: true });
+  track.addEventListener('touchmove', function (e) { if (!tDrag) return; var dx = e.touches[0].clientX - t0; if (Math.abs(dx) > 6) dragged = true; track.style.transform = 'translateX(' + (tBase + dx) + 'px)'; }, { passive: true });
+  track.addEventListener('touchend', function (e) {
+    if (!tDrag) return;
+    tDrag = false;
+    var finalX = tBase + (e.changedTouches[0].clientX - t0);
+    track.style.transform = 'translateX(' + finalX + 'px)';
+    if (dragged) thaw(finalX); else scheduleResume(finalX);
   }, { passive: true });
+
+  /* A drag/swipe must not open the card's link. */
+  track.addEventListener('click', function (e) { if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; } }, true);
 })();
 
 </script>
