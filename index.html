@@ -1405,7 +1405,7 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
 }
 .snd-reelstrip-track {
   display: flex; gap: 14px; width: max-content; padding: 4px 0;
-  animation: snd-reel-scroll 45s linear infinite;
+  animation: snd-reel-scroll 15s linear infinite;   /* JS refines this to match the acting filmstrip's px/sec */
 }
 /* Pause when hovered, focused (keyboard), or tapped (JS adds .paused) so a reel is easy to click. */
 .snd-reelstrip:hover .snd-reelstrip-track,
@@ -3132,17 +3132,16 @@ body[data-theme="terminal"] :focus-visible {
     <div class="panel" id="panel-sound">
       <h2 class="section-label">Sound Design CV</h2>
       <div class="jump-nav">
-        <a class="jump-btn" href="#snd-reel">Music Design Reel</a>
         <a class="jump-btn" href="#snd-theatre">Theatre</a>
         <a class="jump-btn" href="#snd-software">Software</a>
         <a class="jump-btn" href="#snd-accolades">Accolades</a>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════════════
-           MUSIC DESIGN REEL CAROUSEL — auto-scrolls (pauses on hover/tap).
-           Cards are cloned once by JS for the seamless loop; edit them here
-           only (the clones are generated). ═══════════════════════════════ -->
-      <div class="section-sublabel" id="snd-reel">Music Design Reel</div>
+           MUSIC DESIGN REEL CAROUSEL — no header (matches the other sections'
+           top work-samples). Auto-scrolls (pauses on hover/tap); cards are
+           cloned once by JS for the seamless loop; edit them here only.
+           ═══════════════════════════════════════════════════════════════ -->
       <div class="snd-reelstrip">
         <div class="snd-reelstrip-track" id="snd-reelstrip-track">
           <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
@@ -6892,12 +6891,25 @@ if (siteName) {
   var strip = track.parentElement;
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduce) {
+    var n = track.children.length;   /* real cards, before cloning */
     Array.prototype.slice.call(track.children).forEach(function (node) {
       var clone = node.cloneNode(true);
       clone.setAttribute('aria-hidden', 'true');
       clone.setAttribute('tabindex', '-1');
       track.appendChild(clone);
     });
+    /* Match the acting filmstrip's linear speed (px/sec), not just its duration.
+       Acting: 16 photos (160px desktop / 120 mobile) + 8px gap, over 50s. We
+       can't measure widths here (panels are hidden on load), so compute from
+       those known metrics. If the acting photo count/size changes, update here. */
+    var matchSpeed = function () {
+      var mobile = window.innerWidth <= 639;
+      var actHalf = 16 * ((mobile ? 120 : 160) + 8), actDur = 50;   /* px in one loop, seconds */
+      var reelHalf = n * ((mobile ? 126 : 152) + 14);
+      track.style.animationDuration = (reelHalf / (actHalf / actDur)) + 's';
+    };
+    matchSpeed();
+    window.addEventListener('resize', matchSpeed);
   }
   var resume;
   strip.addEventListener('touchstart', function () {
