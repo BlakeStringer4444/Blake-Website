@@ -1396,6 +1396,32 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   .act-filmstrip-item { width: 120px; height: 170px; }
 }
 
+/* ── SOUND DESIGN REEL CAROUSEL (top of section, like the acting filmstrip) ── */
+.snd-reelstrip {
+  margin: 22px -48px 40px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
+}
+.snd-reelstrip-track {
+  display: flex; gap: 14px; width: max-content; padding: 4px 0;
+  animation: snd-reel-scroll 45s linear infinite;
+}
+/* Pause when hovered, focused (keyboard), or tapped (JS adds .paused) so a reel is easy to click. */
+.snd-reelstrip:hover .snd-reelstrip-track,
+.snd-reelstrip:focus-within .snd-reelstrip-track,
+.snd-reelstrip.paused .snd-reelstrip-track { animation-play-state: paused; }
+.snd-reelstrip .video-card { width: 152px; flex-shrink: 0; }
+@keyframes snd-reel-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (max-width: 639px) {
+  .snd-reelstrip { margin: 16px -20px 30px; }
+  .snd-reelstrip .video-card { width: 126px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snd-reelstrip-track { animation: none; }
+  .snd-reelstrip { overflow-x: auto; }
+}
+
 /* ── ACTING PHOTO LIGHTBOX ── */
 .act-lightbox {
   display: none;
@@ -3106,10 +3132,40 @@ body[data-theme="terminal"] :focus-visible {
     <div class="panel" id="panel-sound">
       <h2 class="section-label">Sound Design CV</h2>
       <div class="jump-nav">
+        <a class="jump-btn" href="#snd-reel">Music Design Reel</a>
         <a class="jump-btn" href="#snd-theatre">Theatre</a>
         <a class="jump-btn" href="#snd-software">Software</a>
         <a class="jump-btn" href="#snd-accolades">Accolades</a>
-        <a class="jump-btn" href="#snd-reel">Music Design Reel</a>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           MUSIC DESIGN REEL CAROUSEL — auto-scrolls (pauses on hover/tap).
+           Cards are cloned once by JS for the seamless loop; edit them here
+           only (the clones are generated). ═══════════════════════════════ -->
+      <div class="section-sublabel" id="snd-reel">Music Design Reel</div>
+      <div class="snd-reelstrip">
+        <div class="snd-reelstrip-track" id="snd-reelstrip-track">
+          <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
+            <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TheGift.png" alt="The Gift"></div>
+            <div class="video-info"><div class="video-title">The Gift</div><div class="video-meta">Torquay Theatre Troupe · 2026</div></div>
+          </a>
+          <a href="https://www.instagram.com/blakestringer4444/reel/DIx6nzUT7wd/" target="_blank" rel="noopener noreferrer" class="video-card">
+            <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TIKTBT.png" alt="Things I Know To Be True"></div>
+            <div class="video-info"><div class="video-title">Things I Know To Be True</div><div class="video-meta">Williamstown Little Theatre · 2025</div></div>
+          </a>
+          <a href="https://www.instagram.com/blakestringer4444/reel/DJTZzhFzm9J/" target="_blank" rel="noopener noreferrer" class="video-card">
+            <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-KnifeEdge.png" alt="Knife Edge"></div>
+            <div class="video-info"><div class="video-title">Knife Edge</div><div class="video-meta">Beaumaris Theatre Company · 2025</div></div>
+          </a>
+          <a href="https://www.instagram.com/blakestringer4444/reel/C8QJjMVvrxN/" target="_blank" rel="noopener noreferrer" class="video-card">
+            <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Lovesong.png" alt="Lovesong"></div>
+            <div class="video-info"><div class="video-title">Lovesong</div><div class="video-meta">Malvern Theatre Company · 2024</div></div>
+          </a>
+          <a href="https://www.instagram.com/blakestringer4444/reel/C6DD3vrS3-4/" target="_blank" rel="noopener noreferrer" class="video-card">
+            <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Berlin.png" alt="Berlin"></div>
+            <div class="video-info"><div class="video-title">Berlin</div><div class="video-meta">Heidelberg Theatre Company · 2024</div></div>
+          </a>
+        </div>
       </div>
 
       <div class="section-sublabel" id="snd-theatre">Theatre</div>
@@ -3180,30 +3236,6 @@ body[data-theme="terminal"] :focus-visible {
             <tr data-year="2022"><td>2022</td><td>VDL Awards</td><td><span class="award-win">Winner</span></td><td>Best Sound Design in a Comedy or Drama (Silver)</td><td>The Revlon Girl</td></tr>
           </tbody>
         </table>
-      </div>
-
-      <div class="section-sublabel" id="snd-reel">Music Design Reel</div>
-      <div class="video-grid">
-        <a href="https://www.instagram.com/blakestringer4444/reel/DV5mHaYEYYg/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TheGift.png" alt="The Gift"></div>
-          <div class="video-info"><div class="video-title">The Gift</div><div class="video-meta">Torquay Theatre Troupe · 2026</div></div>
-        </a>
-        <a href="https://www.instagram.com/blakestringer4444/reel/DIx6nzUT7wd/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-TIKTBT.png" alt="Things I Know To Be True"></div>
-          <div class="video-info"><div class="video-title">Things I Know To Be True</div><div class="video-meta">Williamstown Little Theatre · 2025</div></div>
-        </a>
-        <a href="https://www.instagram.com/blakestringer4444/reel/DJTZzhFzm9J/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-KnifeEdge.png" alt="Knife Edge"></div>
-          <div class="video-info"><div class="video-title">Knife Edge</div><div class="video-meta">Beaumaris Theatre Company · 2025</div></div>
-        </a>
-        <a href="https://www.instagram.com/blakestringer4444/reel/C8QJjMVvrxN/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Lovesong.png" alt="Lovesong"></div>
-          <div class="video-info"><div class="video-title">Lovesong</div><div class="video-meta">Malvern Theatre Company · 2024</div></div>
-        </a>
-        <a href="https://www.instagram.com/blakestringer4444/reel/C6DD3vrS3-4/" target="_blank" rel="noopener noreferrer" class="video-card">
-          <div class="video-thumb video-thumb--portrait"><img loading="lazy" decoding="async" src="Images/Reel-Berlin.png" alt="Berlin"></div>
-          <div class="video-info"><div class="video-title">Berlin</div><div class="video-meta">Heidelberg Theatre Company · 2024</div></div>
-        </a>
       </div>
 
     </div>
@@ -6851,6 +6883,29 @@ if (siteName) {
   setupAwardSort('act-award-th', 'act-acc-table');
 })();
 
+
+/* ── Music Design Reel carousel ── clone the cards once for a seamless
+   auto-scroll loop, and pause briefly on touch so a reel can be tapped. */
+(function () {
+  var track = document.getElementById('snd-reelstrip-track');
+  if (!track) return;
+  var strip = track.parentElement;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    Array.prototype.slice.call(track.children).forEach(function (node) {
+      var clone = node.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      clone.setAttribute('tabindex', '-1');
+      track.appendChild(clone);
+    });
+  }
+  var resume;
+  strip.addEventListener('touchstart', function () {
+    strip.classList.add('paused');
+    clearTimeout(resume);
+    resume = setTimeout(function () { strip.classList.remove('paused'); }, 4000);
+  }, { passive: true });
+})();
 
 </script>
 
