@@ -1379,6 +1379,7 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   height: 220px;
   border-radius: 4px;
   overflow: hidden;
+  position: relative;
 }
 .act-filmstrip-item img {
   width: 100%;
@@ -1387,6 +1388,21 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   object-position: center top;
   display: block;
 }
+/* Caption overlay — hidden until hover/tap so the strip stays clean while scrolling. */
+.act-filmstrip-cap {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 18px 10px 8px;
+  background: linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0));
+  color: #fff; font-size: 11px; line-height: 1.35;
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.act-filmstrip-cap em { font-style: italic; }
+.act-filmstrip-cap .act-cap-co { display: block; opacity: 0.8; font-size: 10px; margin-top: 1px; }
+.act-filmstrip-item:hover .act-filmstrip-cap {
+  opacity: 1; transform: translateY(0);
+}
 @keyframes act-filmstrip-scroll {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
@@ -1394,6 +1410,8 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
 @media (max-width: 639px) {
   .act-filmstrip { margin: 20px -20px 32px; height: 170px; }
   .act-filmstrip-item { width: 120px; height: 170px; }
+  .act-filmstrip-cap { font-size: 10px; padding: 14px 8px 7px; }
+  .act-filmstrip-cap .act-cap-co { font-size: 9px; }
 }
 
 /* ── SOUND DESIGN REEL CAROUSEL (top of section, like the acting filmstrip) ── */
@@ -1447,6 +1465,14 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   animation: act-lb-zoom 0.2s ease;
   pointer-events: none;
 }
+.act-lightbox-cap {
+  position: absolute; left: 0; right: 0; bottom: 28px;
+  text-align: center; color: rgba(255,255,255,0.9);
+  font-size: 13px; letter-spacing: 0.3px; line-height: 1.4;
+  pointer-events: none;
+}
+.act-lightbox-cap em { font-style: italic; }
+.act-lightbox-cap .act-cap-co { display: block; opacity: 0.65; font-size: 12px; margin-top: 2px; }
 .act-lightbox-close {
   position: absolute;
   top: 16px;
@@ -3384,7 +3410,7 @@ body[data-theme="terminal"] :focus-visible {
     <!-- TOOLS -->
     <div class="panel" id="panel-tools">
       <h2 class="section-label">Tools</h2>
-      <p class="tools-desc">A growing collection of projects I've been working on.</p>
+      <p class="tools-desc">A growing collection of web applications, built to make life easier for newcomers to the community theatre scene.</p>
       <div class="tools-group">
         <div class="tools-category">Theatre</div>
         <div class="tools-grid">
@@ -3830,6 +3856,35 @@ document.querySelectorAll('.cv-table').forEach(table => {
   const track = document.getElementById('act-filmstrip-track');
   if (!track) return;
 
+  /* Caption per photo — keyed by filename so it survives the shuffle below.
+     title/company shown as "Show Title — Company" (title italicised); year
+     folded into the alt text for accessibility/SEO but not shown visually. */
+  const CAPTIONS = {
+    'blake-acting-01.jpeg': { title: 'Torch Song',        year: 2022, company: 'Brighton Theatre Company' },
+    'blake-acting-02.jpeg': { title: 'Hearth',             year: 2024, company: 'Mordialloc Theatre Company' },
+    'blake-acting-03.jpeg': { title: 'Torch Song',        year: 2022, company: 'Brighton Theatre Company' },
+    'blake-acting-04.jpeg': { title: 'Hearth',             year: 2024, company: 'Mordialloc Theatre Company' },
+    'blake-acting-05.jpeg': { title: 'Ghosts',             year: 2019, company: 'The 1812 Theatre' },
+    'blake-acting-06.jpeg': { title: 'Patient 12',         year: 2015, company: 'The 1812 Theatre' },
+    'blake-acting-07.jpeg': { title: 'Photograph 51',      year: 2024, company: 'Williamstown Little Theatre' },
+    'blake-acting-08.jpeg': { title: 'The History Boys',   year: 2022, company: 'The 1812 Theatre' },
+    'blake-acting-09.jpeg': { title: 'Love, Love, Love',   year: 2025, company: 'Heidelberg Theatre Company' },
+    'blake-acting-10.jpeg': { title: 'Love, Love, Love',   year: 2025, company: 'Heidelberg Theatre Company' },
+    'blake-acting-11.jpeg': { title: 'Photograph 51',      year: 2024, company: 'Williamstown Little Theatre' },
+    'blake-acting-12.jpeg': { title: 'Hearth',             year: 2024, company: 'Mordialloc Theatre Company' },
+    'blake-acting-13.jpeg': { title: 'Hearth',             year: 2024, company: 'Mordialloc Theatre Company' },
+    'blake-acting-14.jpeg': { title: 'Torch Song',        year: 2022, company: 'Brighton Theatre Company' },
+    'blake-acting-15.jpeg': { title: 'Birdsong',           year: 2026, company: 'Heidelberg Theatre Company' },
+    'blake-acting-16.jpeg': { title: 'Birdsong',           year: 2026, company: 'Heidelberg Theatre Company' }
+  };
+  function capHtml(cap) {
+    return '<em>' + cap.title + '</em> (' + cap.year + ')<span class="act-cap-co">' + cap.company + '</span>';
+  }
+  function capAlt(file, cap) {
+    return cap ? cap.title + ' (' + cap.year + ') — ' + cap.company
+                : file.replace(/.*blake-acting-(\d+)\.jpeg/, 'Acting photo $1');
+  }
+
   /* Shuffle and render */
   const srcs = Array.from({length: 16}, (_, i) =>
     'Images/blake-acting-' + String(i + 1).padStart(2, '0') + '.jpeg'
@@ -3839,13 +3894,21 @@ document.querySelectorAll('.cv-table').forEach(table => {
     [srcs[i], srcs[j]] = [srcs[j], srcs[i]];
   }
   [...srcs, ...srcs].forEach((src, idx) => {
+    const file = src.split('/').pop();
+    const cap = CAPTIONS[file];
     const wrap = document.createElement('div');
     wrap.className = 'act-filmstrip-item';
     const img = document.createElement('img');
     img.src = src;
     img.draggable = false;
-    img.alt = idx < srcs.length ? src.replace(/.*blake-acting-(\d+)\.jpeg/, 'Acting photo $1') : '';
+    img.alt = idx < srcs.length ? capAlt(file, cap) : '';
     wrap.appendChild(img);
+    if (cap) {
+      const capEl = document.createElement('div');
+      capEl.className = 'act-filmstrip-cap';
+      capEl.innerHTML = capHtml(cap);
+      wrap.appendChild(capEl);
+    }
     track.appendChild(wrap);
   });
 
@@ -3895,14 +3958,18 @@ document.querySelectorAll('.cv-table').forEach(table => {
   lbClose.setAttribute('aria-label', 'Close photo');
   lbClose.textContent = '✕';
   const lbImg = document.createElement('img');
+  const lbCap = document.createElement('div');
+  lbCap.className = 'act-lightbox-cap';
   lb.appendChild(lbClose);
   lb.appendChild(lbImg);
+  lb.appendChild(lbCap);
   document.body.appendChild(lb);
 
-  function openLightbox(src, alt) {
+  function openLightbox(src, alt, cap) {
     clearTimeout(resumeTimer);
     lbImg.src = src;
     lbImg.alt = alt || '';
+    lbCap.innerHTML = cap ? capHtml(cap) : '';
     lb.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -3960,7 +4027,10 @@ document.querySelectorAll('.cv-table').forEach(table => {
     if (Math.abs(dx) <= 8) {
       /* Click — open lightbox for the photo under the cursor */
       const item = e.target.closest && e.target.closest('.act-filmstrip-item');
-      if (item) { const img = item.querySelector('img'); if (img) openLightbox(img.src, img.alt); }
+      if (item) {
+        const img = item.querySelector('img');
+        if (img) openLightbox(img.src, img.alt, CAPTIONS[img.src.split('/').pop()]);
+      }
     } else {
       /* Drag — park at final position; resume if mouse left filmstrip */
       track.style.transform = `translateX(${finalX}px)`;
@@ -3997,7 +4067,7 @@ document.querySelectorAll('.cv-table').forEach(table => {
       const item = el && el.closest('.act-filmstrip-item');
       if (item) {
         const img = item.querySelector('img');
-        if (img) { openLightbox(img.src, img.alt); return; }
+        if (img) { openLightbox(img.src, img.alt, CAPTIONS[img.src.split('/').pop()]); return; }
       }
       /* Tapped empty space — auto-resume after 3 s */
       track.style.transform = `translateX(${finalX}px)`;
