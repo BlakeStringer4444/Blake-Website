@@ -1501,11 +1501,23 @@ async function generateSummary(text, scenes, title, onProg) {
   };
 
   if (sceneList.length) {
+    /* Categories the overview already found somewhere in the play, deduped.
+       Passed to each scene-batch call below so the per-scene tagging pass
+       (a separate, independent read of the script) is anchored to what the
+       whole-play pass already knows is present — otherwise a category can
+       correctly appear as an advisory chip while the scene-level pass under-
+       tags an earlier scene, and "jump to" then lands on a later scene than
+       the true first instance. */
+    var knownCats = [];
+    summary.contentWarnings.forEach(function (w) {
+      if (w && w.category && knownCats.indexOf(w.category) === -1) knownCats.push(w.category);
+    });
+
     var BATCH = 12, batches = [];
     for (var i = 0; i < sceneList.length; i += BATCH) batches.push(sceneList.slice(i, i + BATCH));
     if (onProg) onProg(0, batches.length);
     var results = await pool(batches, 2, async function (batch) {
-      var r = await paWorkerJson({ mode: 'scenebatch', text: text, title: title || '', sceneLabels: batch });
+      var r = await paWorkerJson({ mode: 'scenebatch', text: text, title: title || '', sceneLabels: batch, knownCategories: knownCats });
       return (r && Array.isArray(r.scenes)) ? r.scenes : [];
     }, function (done, total) { if (onProg) onProg(done, total); });
     for (var k = 0; k < results.length; k++) summary.scenes = summary.scenes.concat(results[k]);
