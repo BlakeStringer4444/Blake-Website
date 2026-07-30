@@ -4350,6 +4350,7 @@ if (darkToggle) {
     setProgress(0);
     timeEl.textContent = '0:00';
     updateTrackDisplay();
+    updateMediaSessionMetadata();
     if (wasPlaying) {
       initAudio();
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -4392,6 +4393,15 @@ if (darkToggle) {
     source   = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
+    /* Mobile OSes suspend the AudioContext far more readily than a plain
+       <audio> element (backgrounding the tab, locking the phone) — since the
+       visualiser routes playback THROUGH this context, sound cuts out the
+       moment that happens even though `audio` itself is still "playing". Put
+       it straight back the instant it's suspended while we expect to be
+       audible, so background/lock-screen playback keeps going. */
+    audioCtx.addEventListener('statechange', () => {
+      if (audioCtx.state === 'suspended' && !audio.paused) audioCtx.resume().catch(() => {});
+    });
   }
 
   function draw() {
@@ -4443,23 +4453,60 @@ if (darkToggle) {
   function startVis() { if (!rafId) draw(); }
   function stopVis()  { /* loop keeps running; draw() falls back to idle animation */ }
 
+  /* ── Media Session (lock screen / control centre / background playback) ──
+     Registering a session is what tells mobile OSes this page is playing
+     real media, which is what makes them willing to keep audio going once
+     the tab is backgrounded or the phone is locked — the same mechanism
+     Spotify/SoundCloud/YouTube Music's web players rely on. It also drives
+     the native title/prev/play-pause/next widget on the lock screen. */
+  const hasMediaSession = 'mediaSession' in navigator;
+  function updateMediaSessionMetadata() {
+    if (!hasMediaSession) return;
+    const t = track();
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: trackLabel(t),
+      artist: 'Blake Stringer',
+      artwork: [{ src: '/Images/favicon.png', sizes: '180x180', type: 'image/png' }],
+    });
+  }
+  if (hasMediaSession) {
+    navigator.mediaSession.setActionHandler('play',         () => doPlay());
+    navigator.mediaSession.setActionHandler('pause',         () => doPause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => switchTrack(pos - 1, true));
+    navigator.mediaSession.setActionHandler('nexttrack',     () => switchTrack(pos + 1, true));
+  }
+  updateMediaSessionMetadata();
+
   /* ── Play / Pause ── */
-  playBtn.addEventListener('click', () => {
+  function doPlay() {
     if (loadedPos === -1) { audio.src = trackSrc(track()); loadedPos = pos; }  /* lazy: first load happens here */
     initAudio();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    if (audio.paused) { audio.play().catch(() => {}); } else { audio.pause(); }
-  });
+    audio.play().catch(() => {});
+  }
+  function doPause() { audio.pause(); }
+
+  playBtn.addEventListener('click', () => { audio.paused ? doPlay() : doPause(); });
 
   /* ── Previous / Next ── */
   prevBtn.addEventListener('click', () => switchTrack(pos - 1));
   nextBtn.addEventListener('click', () => switchTrack(pos + 1));
+
+  /* Safety net: if the AudioContext got suspended while backgrounded (some
+     browsers only allow resuming once the page is genuinely foregrounded
+     again, rather than on the statechange listener in initAudio() alone). */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && audioCtx && audioCtx.state === 'suspended' && !audio.paused) {
+      audioCtx.resume().catch(() => {});
+    }
+  });
 
   audio.addEventListener('play', () => {
     iconPlay.style.display  = 'none';
     iconPause.style.display = '';
     playBtn.setAttribute('aria-label', 'Pause ' + trackLabel(track()));
     progFill.classList.add('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'playing';
     startVis();
   });
   audio.addEventListener('pause', () => {
@@ -4467,6 +4514,7 @@ if (darkToggle) {
     iconPause.style.display = 'none';
     playBtn.setAttribute('aria-label', 'Play ' + trackLabel(track()));
     progFill.classList.remove('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'paused';
     stopVis();
   });
   audio.addEventListener('ended', () => {
