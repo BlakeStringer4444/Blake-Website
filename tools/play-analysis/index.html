@@ -611,6 +611,7 @@
       <div class="summary-head">
         <span>Scene-by-scene summary</span>
         <span class="summary-actions" id="summary-actions" style="display:none">
+          <button class="export-btn" id="sum-regen" title="Re-run the AI summary and content-warning tagging for this script">↻ Regenerate</button>
           <span class="summary-actions-label">Download</span>
           <button class="export-btn" id="sum-dl-pdf">.pdf</button>
           <button class="export-btn" id="sum-dl-doc">.docx</button>
@@ -1635,7 +1636,10 @@ advisoryBody.addEventListener('click', function (e) {
   var chip = e.target.closest('.adv-chip'); if (!chip) return;
   var cat = chip.getAttribute('data-cat');
   var matches = summaryBody.querySelectorAll('.summary-scene[data-warn~="' + cat + '"]');
-  if (!matches.length) { showToast('That theme isn’t tagged to a specific scene.'); return; }
+  if (!matches.length) {
+    showToast('This theme wasn’t pinned to one specific scene — browse Scene-by-Scene below, or try ↻ Regenerate for another pass.', 4600);
+    return;
+  }
   matches.forEach(function (m) { m.classList.add('ss-flash'); setTimeout(function () { m.classList.remove('ss-flash'); }, 1600); });
   scrollToEl(matches[0]);
 });
@@ -2315,12 +2319,18 @@ function exportSummaryPdf() {
   win.document.close();
 }
 
-/* Summary download buttons */
+/* Summary download + regenerate buttons */
 (function () {
-  var pdfBtn = document.getElementById('sum-dl-pdf');
-  var docBtn = document.getElementById('sum-dl-doc');
+  var pdfBtn   = document.getElementById('sum-dl-pdf');
+  var docBtn   = document.getElementById('sum-dl-doc');
+  var regenBtn = document.getElementById('sum-regen');
   if (pdfBtn) pdfBtn.addEventListener('click', exportSummaryPdf);
   if (docBtn) docBtn.addEventListener('click', exportSummaryDocx);
+  if (regenBtn) regenBtn.addEventListener('click', function () {
+    if (summaryGenerating) return;
+    if (!confirm('Regenerate the summary and content-warning tags for this script? This re-reads the whole play with AI, which may take a minute.')) return;
+    generateAndShowSummary();
+  });
 })();
 
 /* ── UTILS ── */
@@ -2329,11 +2339,11 @@ function esc(s) {
 }
 
 var toastTimer;
-function showToast(msg) {
+function showToast(msg, ms) {
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2800);
+  toastTimer = setTimeout(function () { toast.classList.remove('show'); }, ms || 2800);
 }
 
 /* ── INIT ── */
