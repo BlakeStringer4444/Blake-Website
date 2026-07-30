@@ -349,6 +349,22 @@ async function handleSceneBatch(body, env) {
   const MAX = 600000;
   const script = text.length > MAX ? text.slice(0, MAX) : text;
 
+  /* Categories a prior full-script read already found present in the play
+     (see the overview mode's contentWarnings). Anchoring the per-scene pass
+     to these cuts down on a scene being under-tagged relative to a category
+     the whole-play read already confirmed is there — the client's "jump to
+     this content warning" feature relies on scene-level tags landing on the
+     true first occurrence, not just any occurrence. */
+  const knownCats = Array.isArray(body.knownCategories)
+    ? body.knownCategories.filter(c => typeof c === 'string' && c).slice(0, 20)
+    : [];
+  const knownCatsHint = knownCats.length
+    ? ' A full read of this play already confirmed these categories occur SOMEWHERE in it: ' +
+      knownCats.join(', ') + '. Check every one of the requested scenes carefully for each of ' +
+      'these — an earlier scene can easily be missed if a later one is more explicit, so do not ' +
+      'under-tag just because a moment is brief, referenced, or implicit.'
+    : '';
+
   const system =
     'You are a dramaturg. You receive the FULL text of a play and a list of scene labels to ' +
     'summarise. Summarise ONLY those scenes, in the given order, basing everything strictly on ' +
@@ -362,7 +378,8 @@ async function handleSceneBatch(body, env) {
     '- Keep every summary concrete and specific to THIS script — not generic.\n' +
     '- Names in "characters" should match how they appear in the script.\n' +
     '- warnings: for EACH scene, list which of these keys apply to what happens in that scene (empty array if ' +
-    'none). ' + ADVISORY_CATS + ' Use ONLY these exact keys; flag only what genuinely occurs in the scene.\n' +
+    'none). ' + ADVISORY_CATS + ' Use ONLY these exact keys; flag only what genuinely occurs in the scene.' +
+    knownCatsHint + '\n' +
     'Output JSON only.';
 
   const out = await callClaude(env, {
