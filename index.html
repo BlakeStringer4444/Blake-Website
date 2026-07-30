@@ -1212,6 +1212,21 @@ body[data-theme="dark"] .jump-nav {
   transition: opacity 0.15s;
 }
 .music-play-btn:hover { opacity: 0.8; }
+.music-skip-btn {
+  background: none;
+  color: var(--purple);
+  border: none;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.6;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.music-skip-btn:hover { opacity: 1; }
+body[data-theme="terminal"] .music-skip-btn { color: var(--lime); }
 .music-track-name {
   font-family: 'DM Mono', monospace;
   font-size: 9px;
@@ -3023,11 +3038,17 @@ body[data-theme="terminal"] :focus-visible {
 
       <div class="music-player" id="music-player">
         <div class="music-player-row">
-          <button class="music-play-btn" id="music-play-btn" aria-label="Play Proteas">
+          <button class="music-skip-btn" id="music-prev-btn" aria-label="Previous track">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="3" width="3" height="18"/><polygon points="20,3 20,21 8,12"/></svg>
+          </button>
+          <button class="music-play-btn" id="music-play-btn" aria-label="Play">
             <svg class="music-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
             <svg class="music-icon-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           </button>
-          <span class="music-track-name">Proteas</span>
+          <button class="music-skip-btn" id="music-next-btn" aria-label="Next track">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="17" y="3" width="3" height="18"/><polygon points="4,3 4,21 16,12"/></svg>
+          </button>
+          <span class="music-track-name" id="music-track-name">Loading…</span>
           <span class="music-time" id="music-time">0:00</span>
         </div>
         <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
@@ -3562,7 +3583,7 @@ body[data-theme="terminal"] :focus-visible {
               <td class="ee-chk-td"><input type="checkbox" class="ee-chk" data-id="ee11"></td>
               <td>11</td><td>BLAKE HERO 3</td>
               <td><span class="ee-cell-wrap"><span class="ee-cell-text">Music tab</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
-              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the "Proteas" track name 5× within 3 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
+              <td><span class="ee-cell-wrap"><span class="ee-cell-text">Click the music player's track name 5× within 3 seconds</span><span class="ee-cell-cover">▓ TAP TO REVEAL</span></span></td>
             </tr>
           </tbody>
         </table>
@@ -4260,10 +4281,18 @@ if (darkToggle) {
   window.addEventListener('scroll', updateActiveJumpBtn, { passive: true });
 })();
 
-/* ── MUSIC PLAYER ── */
+/* ── MUSIC PLAYER ──
+   Plays straight from /Audio/ in a shuffled order that's re-randomised every
+   page load (so the opening track differs each visit). Tracks are lazy —
+   audio.src is only set (and therefore only fetched, since preload="none")
+   at the moment a track actually starts playing, whether via Play, Next/
+   Previous, or auto-advance at the end of a track. */
 (function () {
   const audio     = document.getElementById('music-audio');
   const playBtn   = document.getElementById('music-play-btn');
+  const prevBtn   = document.getElementById('music-prev-btn');
+  const nextBtn   = document.getElementById('music-next-btn');
+  const nameEl    = document.getElementById('music-track-name');
   const timeEl    = document.getElementById('music-time');
   const progBar   = document.getElementById('music-progress');
   const progFill  = document.getElementById('music-progress-fill');
@@ -4271,7 +4300,64 @@ if (darkToggle) {
   const canvas    = document.getElementById('music-vis');
   const iconPlay  = playBtn.querySelector('.music-icon-play');
   const iconPause = playBtn.querySelector('.music-icon-pause');
-  let loaded = false, audioCtx, analyser, source, rafId, dragging = false;
+  let audioCtx, analyser, source, rafId, dragging = false;
+
+  /* ── Playlist ── */
+  const TRACKS = [
+    { title: 'Proteas',        year: 2024, file: 'Proteas - Blake Stringer.mp3' },
+    { title: 'Lantana',        year: 2024, file: 'Lantana - Blake Stringer.mp3' },
+    { title: 'Nightshade',     year: 2024, file: 'Nightshade - Blake Stringer.mp3' },
+    { title: 'Rind',           year: 2024, file: 'Rind - Blake Stringer.mp3' },
+    { title: 'Undergrowth',    year: 2022, file: 'Undergrowth - Blake Stringer.mp3' },
+    { title: 'Untold Stories', year: 2022, file: 'Untold Stories - Blake Stringer.mp3' },
+    { title: 'Dark Mode',      year: 2021, file: 'Dark Mode - Blake Stringer.mp3' },
+    { title: 'Sanguine',       year: 2019, file: 'Sanguine.mp3' },
+  ];
+  /* Fisher–Yates, once per page load — this is what makes the opening track
+     (order[0]) different each visit while keeping a fixed play-through order
+     for that visit. */
+  const order = TRACKS.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  let pos = 0;              /* index into `order` */
+  let loadedPos = -1;       /* which pos is currently set as audio.src, or -1 if none yet */
+
+  function track()    { return TRACKS[order[pos]]; }
+  function trackSrc(t) { return encodeURI('/Audio/' + t.file); }
+  function trackLabel(t) { return t.title + ' (' + t.year + ')'; }
+
+  function updateTrackDisplay() {
+    const t = track();
+    nameEl.textContent = trackLabel(t);
+    playBtn.setAttribute('aria-label', (audio.paused ? 'Play ' : 'Pause ') + trackLabel(t));
+  }
+
+  /* Switch to `newPos`. If audio was already playing, the new track keeps
+     playing (skip-while-listening); if paused, it's just cued — matching the
+     lazy-load intent, since preload="none" means changing .src alone doesn't
+     fetch anything until play() is actually called.
+     `forcePlay` overrides this — used when a track finishes naturally (the
+     "ended" event fires with audio already paused, but the whole point of a
+     shuffled playlist is that it keeps going). */
+  function switchTrack(newPos, forcePlay) {
+    const wasPlaying = forcePlay || !audio.paused;
+    audio.pause();
+    pos = ((newPos % order.length) + order.length) % order.length;
+    audio.src = trackSrc(track());
+    loadedPos = pos;
+    setProgress(0);
+    timeEl.textContent = '0:00';
+    updateTrackDisplay();
+    if (wasPlaying) {
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audio.play().catch(() => {});
+    }
+  }
+
+  updateTrackDisplay();  /* show the shuffled opening track's name before anything has loaded */
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00';
@@ -4359,35 +4445,34 @@ if (darkToggle) {
 
   /* ── Play / Pause ── */
   playBtn.addEventListener('click', () => {
-    if (!loaded) { audio.src = '/Audio/Proteas - Blake Stringer.mp3'; loaded = true; }
+    if (loadedPos === -1) { audio.src = trackSrc(track()); loadedPos = pos; }  /* lazy: first load happens here */
     initAudio();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     if (audio.paused) { audio.play().catch(() => {}); } else { audio.pause(); }
   });
 
+  /* ── Previous / Next ── */
+  prevBtn.addEventListener('click', () => switchTrack(pos - 1));
+  nextBtn.addEventListener('click', () => switchTrack(pos + 1));
+
   audio.addEventListener('play', () => {
     iconPlay.style.display  = 'none';
     iconPause.style.display = '';
-    playBtn.setAttribute('aria-label', 'Pause Proteas');
+    playBtn.setAttribute('aria-label', 'Pause ' + trackLabel(track()));
     progFill.classList.add('playing');
     startVis();
   });
   audio.addEventListener('pause', () => {
     iconPlay.style.display  = '';
     iconPause.style.display = 'none';
-    playBtn.setAttribute('aria-label', 'Play Proteas');
+    playBtn.setAttribute('aria-label', 'Play ' + trackLabel(track()));
     progFill.classList.remove('playing');
     stopVis();
   });
   audio.addEventListener('ended', () => {
-    iconPlay.style.display  = '';
-    iconPause.style.display = 'none';
-    setProgress(0);
-    progFill.classList.remove('playing');
-    timeEl.textContent = '0:00';
-    playBtn.setAttribute('aria-label', 'Play Proteas');
-    audio.currentTime = 0;
-    stopVis();
+    /* Keep the shuffled playlist going — advance to the next track and play
+       it, wrapping back to the start once the whole order has played through. */
+    switchTrack(pos + 1, true);
   });
   audio.addEventListener('timeupdate', () => {
     if (!audio.duration || dragging) return;
