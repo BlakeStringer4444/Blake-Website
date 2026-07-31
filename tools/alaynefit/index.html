@@ -475,22 +475,22 @@
       "That's a full day, Alayne. I'm so proud of you. 🌿"
     ],
     weekly: [
-      "A whole week of showing up — incredible, Alayne. 🌿",
-      "Every weekly goal, complete. You are unstoppable, my love. 🌿",
+      "That's a full week, Alayne — incredible. 🌿",
+      "A full week, done. You are unstoppable, my love. 🌿",
       "What a week you've made. So very proud of you. 🌿",
-      "All done for the week — you've earned every bit of this. 🌿",
-      "Seven days of caring for yourself. Beautiful work, Alayne. 🌿",
-      "The whole week, ticked off. You amaze me. 🌿",
-      "Weekly goals: all yours. Go and celebrate you. 🌿"
+      "A full week — you've earned every bit of this. 🌿",
+      "A full week of caring for yourself. Beautiful work, Alayne. 🌿",
+      "A full week, ticked off. You amaze me. 🌿",
+      "A full week, yours. Go and celebrate you. 🌿"
     ],
     monthly: [
-      "A whole month of adventures and care — extraordinary, Alayne. 🍑🌿",
-      "Every monthly goal, complete. What a month you've made, my love. 🍑",
-      "You did the whole month. I am so, so proud of you. 🍑🌿",
-      "A month of living fully. Look how far you've come, Alayne. 🍑",
-      "All of it, done. You are wonderful — never forget it. 🍑🌿",
-      "The entire month, ticked off. Absolutely glowing work. 🍑",
-      "Month complete. Take a bow, my love — you've earned it. 🍑🌿"
+      "That's a full month of adventures and care — extraordinary, Alayne. 🍑🌿",
+      "A full month, done. What a month you've made, my love. 🍑",
+      "A full month — I am so, so proud of you. 🍑🌿",
+      "A full month of living fully. Look how far you've come, Alayne. 🍑",
+      "A full month, cared for. You are wonderful — never forget it. 🍑🌿",
+      "A full month, ticked off. Absolutely glowing work. 🍑",
+      "A full month. Take a bow, my love — you've earned it. 🍑🌿"
     ]
   };
   function pickMsg(cadence) {
@@ -515,13 +515,13 @@
   }
   function isDone(goal, cadence) { return !!goal.p && goal.p === periodKey(cadence); }
 
-  /* "Full Day" grace threshold — Daily only. She gets the completion badge
-     for finishing all but 2 of that day's goals, e.g. 9 goals → needs 7,
-     11 goals → needs 9. Never below 1 (has to do at least one thing) and
-     never above the actual total. Weekly/monthly are unaffected — those
-     still require completing everything. */
-  function dailyThreshold(total) { return total > 0 ? Math.max(1, total - 2) : 0; }
-  function isFullDay(done, total) { return total > 0 && done >= dailyThreshold(total); }
+  /* "All minus 2" grace threshold — applies to every cadence (daily,
+     weekly, monthly). She gets the completion badge for finishing all but
+     2 of that period's goals, e.g. 9 goals → needs 7, 11 goals → needs 9.
+     Never below 1 (has to do at least one thing) and never above the
+     actual total. */
+  function periodThreshold(total) { return total > 0 ? Math.max(1, total - 2) : 0; }
+  function isFullPeriod(done, total) { return total > 0 && done >= periodThreshold(total); }
 
   /* ── state ── */
   var uidCounter = 0;
@@ -674,7 +674,7 @@
     var ref = secRefs[cadence], items = state.goals[cadence];
     var done = items.filter(function (g) { return isDone(g, cadence); }).length;
     ref.count.textContent = done + " / " + items.length;
-    var all = !editing && (cadence === "daily" ? isFullDay(done, items.length) : items.length > 0 && done === items.length);
+    var all = !editing && isFullPeriod(done, items.length);
     if (all) {
       /* Pick a message only on the transition INTO complete; keep it stable
          while it stays complete (re-renders/reorders won't reshuffle it). */
@@ -734,16 +734,12 @@
     setTimeout(function () { reorder(cadence); }, 150);
     updateCount(cadence); updateProgress(); scheduleSave();
     /* Celebrate only on the SPECIFIC tick that crosses into "done for the
-       period" — leaves for daily (Full Day: all but 2 — a grace window, so
-       check before/after to fire exactly once, not on every tick within
-       it), more for weekly, a downpour with apricots for monthly (both of
-       those still require everything, where before/after is equivalent to
-       the old check but kept for consistency). */
+       period" (all but 2 — a grace window, so check before/after to fire
+       exactly once, not on every tick within it) — leaves for daily, more
+       for weekly, a downpour with apricots for monthly. */
     var sectionTotal = state.goals[cadence].length;
     var sectionDoneAfter = state.goals[cadence].filter(function (g) { return isDone(g, cadence); }).length;
-    function sectionFull(n) {
-      return cadence === "daily" ? isFullDay(n, sectionTotal) : n === sectionTotal;
-    }
+    function sectionFull(n) { return isFullPeriod(n, sectionTotal); }
     if (!done && sectionFull(sectionDoneAfter) && !sectionFull(sectionDoneAfter - 1)) celebrate(cadence);
     /* After marking off, open Journal's App Store page (she taps Open from
        there). Short delay so the tick registers first; only on completing. */
@@ -791,18 +787,20 @@
     e.d = Math.max(0, e.d - 1); e.dt = state.goals.daily.length;
     if (e.d <= 0) delete state.log[key];
   }
-  /* Weekly / monthly are recorded only when the WHOLE set for that period is
-     complete — one 🍃 stamped on the day the last weekly is ticked (max ~5 a
-     month), one 🍑 on the day the last monthly is ticked (max 1 a month).
-     The mark is set on the finishing day and cleared if completion is broken;
-     it isn't re-dated while the period stays complete. */
+  /* Weekly / monthly are recorded once the set for that period hits the
+     "all minus 2" threshold — one 🍃 stamped on the day it's reached (max
+     ~5 a month), one 🍑 on the day it's reached for monthly (max 1 a
+     month). The mark is set on the finishing day and cleared if it drops
+     back below threshold; it isn't re-dated while it stays met. */
   function recomputeMarks() {
     var wk = periodKey("weekly");
-    if (state.goals.weekly.length > 0 && state.goals.weekly.every(function (g) { return isDone(g, "weekly"); })) {
+    var wDone = state.goals.weekly.filter(function (g) { return isDone(g, "weekly"); }).length;
+    if (isFullPeriod(wDone, state.goals.weekly.length)) {
       if (!state.weekDone[wk]) state.weekDone[wk] = ymd(now);
     } else { delete state.weekDone[wk]; }
     var mo = periodKey("monthly");
-    if (state.goals.monthly.length > 0 && state.goals.monthly.every(function (g) { return isDone(g, "monthly"); })) {
+    var mDone = state.goals.monthly.filter(function (g) { return isDone(g, "monthly"); }).length;
+    if (isFullPeriod(mDone, state.goals.monthly.length)) {
       if (!state.monthDone[mo]) state.monthDone[mo] = ymd(now);
     } else { delete state.monthDone[mo]; }
   }
@@ -838,7 +836,7 @@
     if (!items.length) { h.textContent = "Add a few daily goals"; s.textContent = "Tap Edit to make it yours."; }
     else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
     else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
-    else if (isFullDay(done, items.length)) { h.textContent = "Full day ♥"; s.textContent = "You showed up for yourself today."; }
+    else if (isFullPeriod(done, items.length)) { h.textContent = "Full day ♥"; s.textContent = "You showed up for yourself today."; }
     else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
     renderStreaks();
   }
@@ -976,7 +974,7 @@
       /* 10 discrete fill levels — any completion rounds UP to its nearest
          10%, so 10% done is the faintest tint and 100% is full solid green. */
       var level = frac > 0 ? Math.max(1, Math.ceil(frac * 10)) : 0;
-      var isFull = !!e && isFullDay(e.d, e.dt);
+      var isFull = !!e && isFullPeriod(e.d, e.dt);
       if (level > 0) {
         cell.style.background = "color-mix(in srgb, #5E7D33 " + (level * 10) + "%, var(--surface-2))";
         if (level >= 5) cell.classList.add("cal-dark");
