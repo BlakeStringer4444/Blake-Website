@@ -230,7 +230,7 @@
   .cal-cell.cal-dark .cal-day { color:#F3F1E6; }
   .cal-cell.cal-today { outline:2px solid var(--accent); outline-offset:1px; }
   .cal-cell.cal-perfect { box-shadow:0 0 0 2px #6E9A3A, 0 3px 12px -3px rgba(110,154,58,.7); }
-  .cal-dots { position:absolute; bottom:3px; right:4px; font-size:10px; line-height:1; letter-spacing:-1px; }
+  .cal-dots { position:absolute; bottom:2px; right:2px; font-size:9px; line-height:1; letter-spacing:-2px; }
   .cal-summary { margin:18px 2px 4px; text-align:center; font-size:.9rem; color:var(--ink); font-weight:650; }
   .cal-note { text-align:center; font-size:.72rem; color:var(--brand-soft); margin-top:2px; }
   .cal-legend { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin-top:14px; font-size:.74rem; color:var(--ink-soft); }
@@ -394,6 +394,7 @@
     <div class="cal-note" id="cal-note"></div>
     <div class="cal-legend">
       <span><i class="sw"></i> daily done</span>
+      <span>🌱 full day</span>
       <span>🍃 weekly</span>
       <span>🍑 monthly</span>
     </div>
@@ -972,20 +973,25 @@
       var e = state.log[key];
       var cell = document.createElement("div"); cell.className = "cal-cell";
       var frac = (e && e.dt > 0) ? Math.min(1, e.d / e.dt) : 0;
-      if (frac > 0) {
-        cell.style.background = "color-mix(in srgb, #5E7D33 " + Math.round(22 + frac * 78) + "%, var(--surface-2))";
-        if (frac >= 0.5) cell.classList.add("cal-dark");
-        if (isFullDay(e.d, e.dt)) { cell.classList.add("cal-perfect"); perfect++; }
+      /* 10 discrete fill levels — any completion rounds UP to its nearest
+         10%, so 10% done is the faintest tint and 100% is full solid green. */
+      var level = frac > 0 ? Math.max(1, Math.ceil(frac * 10)) : 0;
+      var isFull = !!e && isFullDay(e.d, e.dt);
+      if (level > 0) {
+        cell.style.background = "color-mix(in srgb, #5E7D33 " + (level * 10) + "%, var(--surface-2))";
+        if (level >= 5) cell.classList.add("cal-dark");
       }
+      if (isFull) { cell.classList.add("cal-perfect"); perfect++; }
       if (key === todayKey) cell.classList.add("cal-today");
       var dots = "";
+      if (isFull)              { dots += "🌱"; }
       if (weekDays.has(key))  { dots += "🍃"; wk++; }
       if (monthDays.has(key)) { dots += "🍑"; mo++; }
       cell.innerHTML = '<span class="cal-day">' + day + '</span>' + (dots ? '<span class="cal-dots">' + dots + '</span>' : '');
       grid.appendChild(cell);
     }
     document.getElementById("cal-summary").textContent =
-      "🌿 " + perfect + " full " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
+      "🌱 " + perfect + " full " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
     var thisMonth = (calYear === now.getFullYear() && calMonth === now.getMonth());
     document.getElementById("cal-note").textContent = thisMonth ? "History records from the day you started using this view." : "";
     document.getElementById("cal-next").disabled =
