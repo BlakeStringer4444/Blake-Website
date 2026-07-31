@@ -464,14 +464,14 @@
      finished, so it feels different (and loving) every time. */
   var MESSAGES = {
     daily: [
-      "That's every daily done, Alayne. Rest easy tonight. 🌿",
-      "All of today, done — you showed up for yourself. So proud of you. 🌿",
-      "Every daily ticked off. Look at you go, my love. 🌿",
-      "A whole day of caring for you. Beautifully done, Alayne. 🌿",
-      "You did it — all of today. Go be gently proud of yourself. 🌿",
-      "Today, complete. You are doing so wonderfully. 🌿",
+      "That's a full day, Alayne. Rest easy tonight. 🌿",
+      "A full day, done — you showed up for yourself. So proud of you. 🌿",
+      "A full day ticked off. Look at you go, my love. 🌿",
+      "A full day of caring for you. Beautifully done, Alayne. 🌿",
+      "You did it — a full day. Go be gently proud of yourself. 🌿",
+      "Today: a full day. You are doing so wonderfully. 🌿",
       "Each little thing, done with love. Sleep well tonight. 🌿",
-      "That's the lot for today, Alayne. I'm so proud of you. 🌿"
+      "That's a full day, Alayne. I'm so proud of you. 🌿"
     ],
     weekly: [
       "A whole week of showing up — incredible, Alayne. 🌿",
@@ -513,6 +513,14 @@
     return d.getFullYear() + "-" + pad(d.getMonth() + 1);   /* monthly */
   }
   function isDone(goal, cadence) { return !!goal.p && goal.p === periodKey(cadence); }
+
+  /* "Full Day" grace threshold — Daily only. She gets the completion badge
+     for finishing all but 2 of that day's goals, e.g. 9 goals → needs 7,
+     11 goals → needs 9. Never below 1 (has to do at least one thing) and
+     never above the actual total. Weekly/monthly are unaffected — those
+     still require completing everything. */
+  function dailyThreshold(total) { return total > 0 ? Math.max(1, total - 2) : 0; }
+  function isFullDay(done, total) { return total > 0 && done >= dailyThreshold(total); }
 
   /* ── state ── */
   var uidCounter = 0;
@@ -665,7 +673,7 @@
     var ref = secRefs[cadence], items = state.goals[cadence];
     var done = items.filter(function (g) { return isDone(g, cadence); }).length;
     ref.count.textContent = done + " / " + items.length;
-    var all = items.length > 0 && done === items.length && !editing;
+    var all = !editing && (cadence === "daily" ? isFullDay(done, items.length) : items.length > 0 && done === items.length);
     if (all) {
       /* Pick a message only on the transition INTO complete; keep it stable
          while it stays complete (re-renders/reorders won't reshuffle it). */
@@ -724,10 +732,18 @@
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
     setTimeout(function () { reorder(cadence); }, 150);
     updateCount(cadence); updateProgress(); scheduleSave();
-    /* Celebrate only when a completion (not an un-tick) finishes a whole
-       section — leaves for daily, more for weekly, a downpour with apricots
-       for monthly. */
-    if (!done && state.goals[cadence].every(function (g) { return isDone(g, cadence); })) celebrate(cadence);
+    /* Celebrate only on the SPECIFIC tick that crosses into "done for the
+       period" — leaves for daily (Full Day: all but 2 — a grace window, so
+       check before/after to fire exactly once, not on every tick within
+       it), more for weekly, a downpour with apricots for monthly (both of
+       those still require everything, where before/after is equivalent to
+       the old check but kept for consistency). */
+    var sectionTotal = state.goals[cadence].length;
+    var sectionDoneAfter = state.goals[cadence].filter(function (g) { return isDone(g, cadence); }).length;
+    function sectionFull(n) {
+      return cadence === "daily" ? isFullDay(n, sectionTotal) : n === sectionTotal;
+    }
+    if (!done && sectionFull(sectionDoneAfter) && !sectionFull(sectionDoneAfter - 1)) celebrate(cadence);
     /* After marking off, open Journal's App Store page (she taps Open from
        there). Short delay so the tick registers first; only on completing. */
     if (!done && opensJournal(goal)) setTimeout(launchJournal, 450);
@@ -821,6 +837,7 @@
     if (!items.length) { h.textContent = "Add a few daily goals"; s.textContent = "Tap Edit to make it yours."; }
     else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
     else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
+    else if (isFullDay(done, items.length)) { h.textContent = "Full day ♥"; s.textContent = "You showed up for yourself today."; }
     else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
     renderStreaks();
   }
@@ -958,7 +975,7 @@
       if (frac > 0) {
         cell.style.background = "color-mix(in srgb, #5E7D33 " + Math.round(22 + frac * 78) + "%, var(--surface-2))";
         if (frac >= 0.5) cell.classList.add("cal-dark");
-        if (frac >= 1) { cell.classList.add("cal-perfect"); perfect++; }
+        if (isFullDay(e.d, e.dt)) { cell.classList.add("cal-perfect"); perfect++; }
       }
       if (key === todayKey) cell.classList.add("cal-today");
       var dots = "";

@@ -1285,6 +1285,45 @@ body[data-theme="terminal"] .music-skip-btn { color: var(--lime); }
   z-index: 2;
 }
 body[data-theme="terminal"] .music-progress-thumb { background: var(--lime); }
+.music-queue-btn.active { opacity: 1; }
+.music-queue {
+  border-top: 1px solid rgba(153,51,255,0.15);
+  margin: 10px 0 4px;
+  padding-top: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.music-queue-list { display: flex; flex-direction: column; gap: 2px; }
+.music-queue-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 6px 6px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(0,0,0,0.55);
+  border-radius: 2px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.music-queue-item:hover { background: rgba(153,51,255,0.08); color: var(--purple); }
+.music-queue-item .music-queue-num { flex-shrink: 0; opacity: 0.5; width: 14px; }
+.music-queue-item[aria-current="true"] { color: var(--purple); font-weight: 700; }
+.music-queue-item[aria-current="true"] .music-queue-num::after { content: '♪'; }
+body[data-theme="dark"] .music-queue { border-top-color: rgba(255,255,255,0.12); }
+body[data-theme="dark"] .music-queue-item { color: rgba(240,240,235,0.5); }
+body[data-theme="dark"] .music-queue-item:hover { background: rgba(255,255,255,0.06); color: #f0f0eb; }
+body[data-theme="dark"] .music-queue-item[aria-current="true"] { color: var(--lime); }
+body[data-theme="terminal"] .music-queue { border-top-color: rgba(255,255,255,0.15); }
+body[data-theme="terminal"] .music-queue-item { color: rgba(255,255,255,0.5); }
+body[data-theme="terminal"] .music-queue-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+body[data-theme="terminal"] .music-queue-item[aria-current="true"] { color: var(--lime); }
 .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
 @keyframes music-glow {
   0%, 100% { box-shadow: 0 0 4px 2px rgba(153,51,255,0.3); }
@@ -3050,6 +3089,12 @@ body[data-theme="terminal"] :focus-visible {
           </button>
           <span class="music-track-name" id="music-track-name">Loading…</span>
           <span class="music-time" id="music-time">0:00</span>
+          <button class="music-skip-btn music-queue-btn" id="music-queue-btn" aria-label="Playlist" aria-haspopup="listbox" aria-expanded="false">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="music-queue" id="music-queue" hidden>
+          <div class="music-queue-list" id="music-queue-list" role="listbox" aria-label="Up next"></div>
         </div>
         <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
         <div class="music-progress" id="music-progress" title="Seek">
@@ -4294,6 +4339,9 @@ if (darkToggle) {
   const nextBtn   = document.getElementById('music-next-btn');
   const nameEl    = document.getElementById('music-track-name');
   const timeEl    = document.getElementById('music-time');
+  const queueBtn  = document.getElementById('music-queue-btn');
+  const queuePanel = document.getElementById('music-queue');
+  const queueList = document.getElementById('music-queue-list');
   const progBar   = document.getElementById('music-progress');
   const progFill  = document.getElementById('music-progress-fill');
   const thumb     = document.getElementById('music-progress-thumb');
@@ -4313,14 +4361,16 @@ if (darkToggle) {
     { title: 'Dark Mode',      year: 2021, file: 'Dark Mode - Blake Stringer.mp3' },
     { title: 'Sanguine',       year: 2019, file: 'Sanguine.mp3' },
   ];
-  /* Fisher–Yates, once per page load — this is what makes the opening track
-     (order[0]) different each visit while keeping a fixed play-through order
-     for that visit. */
-  const order = TRACKS.map((_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) {
+  /* Proteas always opens (order[0]); the remaining tracks are Fisher–Yates
+     shuffled once per page load into the rest of the order, so what plays
+     after Proteas is different each visit. */
+  const openerIdx = TRACKS.findIndex(t => t.title === 'Proteas');
+  const rest = TRACKS.map((_, i) => i).filter(i => i !== openerIdx);
+  for (let i = rest.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
+    [rest[i], rest[j]] = [rest[j], rest[i]];
   }
+  const order = openerIdx >= 0 ? [openerIdx, ...rest] : rest;
   let pos = 0;              /* index into `order` */
   let loadedPos = -1;       /* which pos is currently set as audio.src, or -1 if none yet */
 
@@ -4332,7 +4382,43 @@ if (darkToggle) {
     const t = track();
     nameEl.textContent = trackLabel(t);
     playBtn.setAttribute('aria-label', (audio.paused ? 'Play ' : 'Pause ') + trackLabel(t));
+    renderQueue();
   }
+
+  /* ── Playlist dropdown — shows every track in the CURRENT shuffle order
+     (i.e. exactly what Next would step through), so it reads as "up next"
+     rather than a fixed track listing. Rebuilt on every track change so the
+     highlighted "now playing" row always matches. */
+  function renderQueue() {
+    queueList.innerHTML = order.map((trackIdx, i) => {
+      const t = TRACKS[trackIdx], current = i === pos;
+      return '<button type="button" class="music-queue-item" role="option" aria-current="' + current + '" data-pos="' + i + '">' +
+        '<span class="music-queue-num">' + (i + 1) + '</span><span>' + trackLabel(t) + '</span></button>';
+    }).join('');
+  }
+  function openQueue() {
+    queuePanel.hidden = false;
+    queueBtn.setAttribute('aria-expanded', 'true');
+    queueBtn.classList.add('active');
+  }
+  function closeQueue() {
+    queuePanel.hidden = true;
+    queueBtn.setAttribute('aria-expanded', 'false');
+    queueBtn.classList.remove('active');
+  }
+  queueBtn.addEventListener('click', () => { queuePanel.hidden ? openQueue() : closeQueue(); });
+  queueList.addEventListener('click', e => {
+    const item = e.target.closest('.music-queue-item');
+    if (!item) return;
+    switchTrack(parseInt(item.dataset.pos, 10));
+    closeQueue();
+  });
+  document.addEventListener('click', e => {
+    if (queuePanel.hidden) return;
+    if (queueBtn.contains(e.target) || queuePanel.contains(e.target)) return;
+    closeQueue();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !queuePanel.hidden) closeQueue(); });
 
   /* Switch to `newPos`. If audio was already playing, the new track keeps
      playing (skip-while-listening); if paused, it's just cued — matching the
@@ -4366,7 +4452,22 @@ if (darkToggle) {
     return m + ':' + String(sec).padStart(2, '0');
   }
 
-  function isTerminal() { return document.body.dataset.theme === 'terminal'; }
+  /* Visualiser bar colour — reads the REAL theme CSS variables rather than
+     hardcoding hex, so it stays correct if the palette ever changes. Light
+     uses --purple; dark and terminal both use --lime (terminal's own CSS
+     already redefines --lime to white for its black/white aesthetic, so this
+     one rule alone gives dark mode lime bars and terminal mode white bars).
+     Cached per theme name since getComputedStyle runs every animation frame. */
+  let cachedBarTheme = null, cachedBarColor = null;
+  function barColor() {
+    const theme = document.body.dataset.theme || 'light';
+    if (theme !== cachedBarTheme) {
+      cachedBarTheme = theme;
+      const varName = (theme === 'dark' || theme === 'terminal') ? '--lime' : '--purple';
+      cachedBarColor = getComputedStyle(document.body).getPropertyValue(varName).trim() || '#9933FF';
+    }
+    return cachedBarColor;
+  }
 
   function setProgress(pct) {
     progFill.style.width = pct + '%';
@@ -4413,7 +4514,7 @@ if (darkToggle) {
     const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    const color  = isTerminal() ? '#D4FF1A' : '#9933FF';
+    const color  = barColor();
 
     const nBars  = 20;
     const gap    = 3;
