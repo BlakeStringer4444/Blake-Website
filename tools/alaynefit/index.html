@@ -394,7 +394,7 @@
     <div class="cal-note" id="cal-note"></div>
     <div class="cal-legend">
       <span><i class="sw"></i> daily done</span>
-      <span>🌱 full day</span>
+      <span>🌱 well-lived day</span>
       <span>🍃 weekly</span>
       <span>🍑 monthly</span>
     </div>
@@ -461,36 +461,39 @@
     "You don't have to earn rest. You're allowed to simply be."
   ];
 
-  /* Completion messages — a fresh one is chosen each time a section is fully
-     finished, so it feels different (and loving) every time. */
+  /* Encouragement messages — a fresh one is chosen each time a section
+     crosses its "all minus 2" threshold, so it feels different (and
+     loving) every time. Framed around making the most of the day/week/
+     month, not literal 100% completion, since the threshold means she
+     may not have ticked off every single thing. */
   var MESSAGES = {
     daily: [
-      "That's a full day, Alayne. Rest easy tonight. 🌿",
-      "A full day, done — you showed up for yourself. So proud of you. 🌿",
-      "A full day ticked off. Look at you go, my love. 🌿",
-      "A full day of caring for you. Beautifully done, Alayne. 🌿",
-      "You did it — a full day. Go be gently proud of yourself. 🌿",
-      "Today: a full day. You are doing so wonderfully. 🌿",
-      "Each little thing, done with love. Sleep well tonight. 🌿",
-      "That's a full day, Alayne. I'm so proud of you. 🌿"
+      "That's a well-lived day, Alayne. Rest easy tonight. 🌿",
+      "You made the most of today — you showed up for yourself. So proud of you. 🌿",
+      "A day well spent. Look at you go, my love. 🌿",
+      "A day spent caring for you. Beautifully lived, Alayne. 🌿",
+      "You made it count today. Go be gently proud of yourself. 🌿",
+      "Today, well and truly lived. You are doing so wonderfully. 🌿",
+      "Each little thing, cared for with love. Sleep well tonight. 🌿",
+      "That's a well-lived day, Alayne. I'm so proud of you. 🌿"
     ],
     weekly: [
-      "That's a full week, Alayne — incredible. 🌿",
-      "A full week, done. You are unstoppable, my love. 🌿",
+      "That's a well-lived week, Alayne — incredible. 🌿",
+      "You made the most of this week. You are unstoppable, my love. 🌿",
       "What a week you've made. So very proud of you. 🌿",
-      "A full week — you've earned every bit of this. 🌿",
-      "A full week of caring for yourself. Beautiful work, Alayne. 🌿",
-      "A full week, ticked off. You amaze me. 🌿",
-      "A full week, yours. Go and celebrate you. 🌿"
+      "A week well spent — you've earned every bit of this. 🌿",
+      "A week of caring for yourself. Beautiful work, Alayne. 🌿",
+      "A week well lived. You amaze me. 🌿",
+      "This week, well spent and yours. Go and celebrate you. 🌿"
     ],
     monthly: [
-      "That's a full month of adventures and care — extraordinary, Alayne. 🍑🌿",
-      "A full month, done. What a month you've made, my love. 🍑",
-      "A full month — I am so, so proud of you. 🍑🌿",
-      "A full month of living fully. Look how far you've come, Alayne. 🍑",
-      "A full month, cared for. You are wonderful — never forget it. 🍑🌿",
-      "A full month, ticked off. Absolutely glowing work. 🍑",
-      "A full month. Take a bow, my love — you've earned it. 🍑🌿"
+      "A month well-lived, full of adventures and care — extraordinary, Alayne. 🍑🌿",
+      "You made the most of this month. What a month you've made, my love. 🍑",
+      "A month well spent — I am so, so proud of you. 🍑🌿",
+      "A month lived fully. Look how far you've come, Alayne. 🍑",
+      "A month, well cared for. You are wonderful — never forget it. 🍑🌿",
+      "A month well spent. Absolutely glowing work. 🍑",
+      "A month, well-lived. Take a bow, my love — you've earned it. 🍑🌿"
     ]
   };
   function pickMsg(cadence) {
@@ -835,8 +838,8 @@
     var h = document.getElementById("phead"), s = document.getElementById("psub");
     if (!items.length) { h.textContent = "Add a few daily goals"; s.textContent = "Tap Edit to make it yours."; }
     else if (done === 0) { h.textContent = "Let's begin the day"; s.textContent = "Tick things off as you go — no rush."; }
-    else if (done === items.length) { h.textContent = "Every daily done ♥"; s.textContent = "You showed up for yourself today."; }
-    else if (isFullPeriod(done, items.length)) { h.textContent = "Full day ♥"; s.textContent = "You showed up for yourself today."; }
+    else if (done === items.length) { h.textContent = "A day fully lived ♥"; s.textContent = "You showed up for yourself today."; }
+    else if (isFullPeriod(done, items.length)) { h.textContent = "A well-lived day ♥"; s.textContent = "You showed up for yourself today."; }
     else { h.textContent = done + " done, " + (items.length - done) + " to go"; s.textContent = "Lovely momentum — keep it gentle."; }
     renderStreaks();
   }
@@ -989,7 +992,7 @@
       grid.appendChild(cell);
     }
     document.getElementById("cal-summary").textContent =
-      "🌱 " + perfect + " full " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
+      "🌱 " + perfect + " well-lived " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
     var thisMonth = (calYear === now.getFullYear() && calMonth === now.getMonth());
     document.getElementById("cal-note").textContent = thisMonth ? "History records from the day you started using this view." : "";
     document.getElementById("cal-next").disabled =
