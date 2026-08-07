@@ -264,8 +264,12 @@
       color: transparent; position: absolute; white-space: pre;
       cursor: text; transform-origin: 0 0;
     }
+    /* The text layer is transparent — visible glyphs come from the canvas
+       underneath — so an opaque highlight (the old solid #ffb700) blots the
+       word out entirely instead of marking it. Both states stay translucent;
+       the active one is just more saturated/opaque than the rest. */
     .textLayer mark.hl { background: rgba(212,255,26,0.45); color: transparent; border-radius: 1px; }
-    .textLayer mark.hl.active { background: #ffb700; }
+    .textLayer mark.hl.active { background: rgba(255,183,0,0.55); }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 720px) {
@@ -917,13 +921,27 @@ function loadPDF() {
     return Promise.all([renderTask.promise, textTask.promise]).catch(function () {});
   }
 
-  /* ── Navigation ── */
+  /* ── Navigation ──
+     The Aa button applies CSS `zoom` to <html> (desktop defaults to 1.25× —
+     there's no 1.0 level), which scales getBoundingClientRect() into physical
+     screen pixels but leaves scrollTop in the element's own unzoomed pixels.
+     A delta measured via rects has to be divided back down before it's added
+     to scrollTop, or the scroll overshoots by exactly the zoom factor — small
+     jumps land close enough to look fine, but paging across several pages (or
+     jumping to a distant find-match) lands increasingly far off target. */
+  function currentZoom() {
+    return parseFloat(document.documentElement.style.zoom) || 1;
+  }
+  function scrollByPhysicalPx(px) {
+    pdfBody.scrollTop += px / currentZoom();
+  }
+
   function scrollToPage(n) {
     var el = pageEls[n - 1];
     if (!el) return;
     var bodyRect = pdfBody.getBoundingClientRect();
     var elRect   = el.getBoundingClientRect();
-    pdfBody.scrollTop += (elRect.top - bodyRect.top) - 12;
+    scrollByPhysicalPx((elRect.top - bodyRect.top) - 12);
   }
 
   /* Remember which point of the script is under a given screen position, so a
@@ -947,7 +965,7 @@ function loadPDF() {
     if (!el) return;
     var bodyRect = pdfBody.getBoundingClientRect();
     var r = el.getBoundingClientRect();
-    pdfBody.scrollTop += (r.top - bodyRect.top) - (a.screenY - a.frac * r.height);
+    scrollByPhysicalPx((r.top - bodyRect.top) - (a.screenY - a.frac * r.height));
   }
 
   function updateCurrentPage() {
@@ -1029,7 +1047,7 @@ function loadPDF() {
     if (scroll) {
       var bodyRect = pdfBody.getBoundingClientRect();
       var r = m.getBoundingClientRect();
-      pdfBody.scrollTop += (r.top - bodyRect.top) - bodyRect.height * 0.3;
+      scrollByPhysicalPx((r.top - bodyRect.top) - bodyRect.height * 0.3);
     }
     updateFindCount();
   }
