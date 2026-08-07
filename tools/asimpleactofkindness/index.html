@@ -109,6 +109,9 @@
     .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 72px); color: var(--lime); letter-spacing: 4px; }
 
     /* ── MODALS ── */
+    /* inset:0 already tracks the real viewport under `zoom` (and under a mobile
+       browser's expanded layout viewport), so the overlay is the reliable
+       reference for sizing the modal — see .modal's max-height below. */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 100;
       background: rgba(0,0,0,0.72);
@@ -122,7 +125,10 @@
     .modal {
       background: var(--bg); border: 1px solid var(--border);
       width: 100%; max-width: 860px;
-      max-height: calc(100vh - 96px);
+      /* Percentage of the overlay's content box, NOT vh: `zoom` on <html> scales
+         the modal but leaves vh reporting the unzoomed viewport, so a vh-based
+         height rendered 1.25× too tall and overflowed the window. */
+      max-height: 100%;
       display: flex; flex-direction: column;
       transform: scale(0.97); transition: transform 0.22s;
       overflow: hidden;
@@ -225,14 +231,28 @@
     .pdf-find-input:focus { outline: none; border-color: var(--lime); }
     .pdf-find-count { font-size: 9px; color: var(--muted); min-width: 36px; text-align: center; white-space: nowrap; }
 
-    #pdf-body { overflow: auto; }
+    /* pan-x pan-y = one finger still scrolls natively, but the browser hands
+       two-finger gestures to us so pinch zooms the script, not the whole page. */
+    #pdf-body { overflow: auto; touch-action: pan-x pan-y; }
     #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; padding: 16px; gap: 16px; }
-    .pdf-page { position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.12); flex-shrink: 0; }
-    .pdf-page canvas { display: block; }
+
+    /* --pw/--ph are each page's committed (sharply rendered) CSS size; --pz is a
+       transient pinch multiplier. Setting --pz on the wrapper rescales all pages
+       in one style write — the canvases stretch for instant feedback, then get
+       re-rendered at full resolution when the gesture ends. */
+    .pdf-page {
+      position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.12); flex-shrink: 0;
+      width:  calc(var(--pw) * var(--pz, 1));
+      height: calc(var(--ph) * var(--pz, 1));
+    }
+    .pdf-page canvas { display: block; width: 100%; height: 100%; }
 
     /* PDF.js text layer (for find/highlight) */
     .textLayer {
-      position: absolute; inset: 0; overflow: hidden; line-height: 1;
+      position: absolute; top: 0; left: 0;
+      width: var(--pw); height: var(--ph);
+      transform: scale(var(--pz, 1));
+      overflow: hidden; line-height: 1;
       text-align: initial; transform-origin: 0 0; z-index: 2;
       forced-color-adjust: none;
     }
@@ -254,7 +274,7 @@
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
       .modal-overlay { padding: 0 12px 0; align-items: flex-end; }
-      .modal { max-height: 84vh; max-height: 92dvh; max-width: 100%; border-radius: 8px 8px 0 0; }
+      .modal { max-height: 92%; max-width: 100%; border-radius: 8px 8px 0 0; }
       .modal-handle {
         display: block; width: 36px; height: 4px; border-radius: 2px;
         background: var(--border); margin: 10px auto 0;
@@ -759,6 +779,7 @@ function loadPDF() {
   var zoomMult = (window.innerWidth >= 720) ? 2.0 : 0.75;
   var ZOOM_MIN = 0.25, ZOOM_MAX = 4.0;
 
+  var renderToken = 0; /* invalidates an in-flight render pass when zoom changes */
   var pageObjs = {};   /* pdf page objects */
   var pageTexts = {};  /* textContent objects */
   var pageEls = [];    /* .pdf-page wrapper elements */
@@ -798,7 +819,9 @@ function loadPDF() {
     return renderAll();
   }).then(function () {
     updateZoomLabel();
-    scrollToPage(1);
+    /* Rendering 92 pages takes a moment; if the reader has already started
+       scrolling by the time it finishes, don't yank them back to the top. */
+    if (pdfBody.scrollTop < 8) scrollToPage(1);
   }).catch(function () {
     wrap.innerHTML = '<div class="sched-loading">Could not load PDF.</div>';
   });
@@ -815,17 +838,42 @@ function loadPDF() {
     }
   }
 
-  function renderAll() {
+  function renderAll(anchor) {
     /* zoomMult IS the scale: 1.0 = 100% real size, 2.0 = 200%, etc. */
     var scale = zoomMult;
+    /* Repainting 92 pages takes a while, so a second zoom can easily start
+       before the first finishes. Stamp each pass and let stale ones bail out,
+       otherwise the old pass keeps re-sizing pages at the superseded scale. */
+    var token = ++renderToken;
     pageDivs = {};
-    var chain = Promise.resolve();
+
+    /* Size every page up front so the scroll height is final immediately. The
+       existing canvases stay on screen, CSS-stretched into their new boxes, and
+       sharpen as they repaint — rather than the document growing under the
+       reader while 92 pages re-render one by one. */
     for (var n = 1; n <= numPages; n++) {
-      (function (n) {
-        chain = chain.then(function () { return renderOne(n, scale); });
-      })(n);
+      var vp = pageObjs[n].getViewport({ scale: scale });
+      pageEls[n - 1].style.setProperty('--pw', vp.width  + 'px');
+      pageEls[n - 1].style.setProperty('--ph', vp.height + 'px');
     }
+    if (anchor) restoreAnchor(anchor);
+
+    /* Repaint outward from whatever is on screen, so the page being read comes
+       back into focus first and distant pages catch up in the background. */
+    var centre = anchor ? anchor.page + 1 : curPage;
+    var order  = [];
+    for (var i = 1; i <= numPages; i++) order.push(i);
+    order.sort(function (a, b) { return Math.abs(a - centre) - Math.abs(b - centre); });
+
+    var chain = Promise.resolve();
+    order.forEach(function (n) {
+      chain = chain.then(function () {
+        if (token !== renderToken) return;
+        return renderOne(n, scale);
+      });
+    });
     return chain.then(function () {
+      if (token !== renderToken) return;
       if (findInput.value.trim()) runSearch(findInput.value.trim());
     });
   }
@@ -837,23 +885,24 @@ function loadPDF() {
     var vpHi  = page.getViewport({ scale: scale * dpr });  /* physical pixel dimensions */
     var el    = pageEls[n - 1];
 
-    el.style.width  = vpCss.width  + 'px';
-    el.style.height = vpCss.height + 'px';
+    /* Page box is driven by these two custom properties (see .pdf-page CSS) so a
+       pinch can rescale every page without touching each element individually. */
+    el.style.setProperty('--pw', vpCss.width  + 'px');
+    el.style.setProperty('--ph', vpCss.height + 'px');
     el.innerHTML = '';
 
     /* Canvas rendered at physical resolution, displayed at CSS size = sharp on retina */
     var canvas = document.createElement('canvas');
-    canvas.width        = vpHi.width;
-    canvas.height       = vpHi.height;
-    canvas.style.width  = vpCss.width  + 'px';
-    canvas.style.height = vpCss.height + 'px';
+    canvas.width  = vpHi.width;
+    canvas.height = vpHi.height;
     el.appendChild(canvas);
 
     /* Text layer uses CSS viewport for correct hit-test positioning */
     var tl = document.createElement('div');
     tl.className = 'textLayer';
-    tl.style.width  = vpCss.width  + 'px';
-    tl.style.height = vpCss.height + 'px';
+    /* pdf.js ≥3 positions its spans with calc() against this variable; without it
+       the layer collapses and find-highlights land in the wrong place. */
+    tl.style.setProperty('--scale-factor', scale);
     el.appendChild(tl);
 
     var divs = [];
@@ -876,6 +925,30 @@ function loadPDF() {
     var bodyRect = pdfBody.getBoundingClientRect();
     var elRect   = el.getBoundingClientRect();
     pdfBody.scrollTop += (elRect.top - bodyRect.top) - 12;
+  }
+
+  /* Remember which point of the script is under a given screen position, so a
+     zoom change can put that same point back rather than jumping to a page top.
+     Expressed as (page, fraction down that page) so it survives re-rendering. */
+  function captureAnchor(clientY) {
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var y = (clientY == null) ? bodyRect.top + bodyRect.height / 2 : clientY;
+    for (var i = 0; i < pageEls.length; i++) {
+      var r = pageEls[i].getBoundingClientRect();
+      if (r.bottom >= y || i === pageEls.length - 1) {
+        return { page: i, frac: r.height ? (y - r.top) / r.height : 0, screenY: y - bodyRect.top };
+      }
+    }
+    return null;
+  }
+
+  function restoreAnchor(a) {
+    if (!a) return;
+    var el = pageEls[a.page];
+    if (!el) return;
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    pdfBody.scrollTop += (r.top - bodyRect.top) - (a.screenY - a.frac * r.height);
   }
 
   function updateCurrentPage() {
@@ -915,9 +988,9 @@ function loadPDF() {
     zoomInBtn.disabled  = zoomMult >= ZOOM_MAX - 0.001;
   }
   function applyZoom() {
-    var keep = curPage;
+    var anchor = captureAnchor(null);
     updateZoomLabel();
-    renderAll().then(function () { scrollToPage(keep); });
+    renderAll(anchor).then(updateCurrentPage);
   }
   zoomInBtn.addEventListener('click', function () {
     zoomMult = Math.min(ZOOM_MAX, parseFloat((zoomMult + 0.25).toFixed(2)));
@@ -1017,19 +1090,61 @@ function loadPDF() {
     }
   });
 
-  /* ── Touch-swipe page navigation (left = next, right = prev) ── */
-  var touchX0 = 0, touchY0 = 0;
+  /* ── Pinch to zoom ──
+     Horizontal-swipe page flipping used to live here, but a pinch drags each
+     finger sideways too, so zooming would randomly jump pages mid-gesture.
+     Paging is now the toolbar/arrow keys only; touch is free for zooming and
+     ordinary vertical scrolling through the continuous page stack. */
+  var pinch = null;
+
+  function touchDist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  }
+
+  function endPinch() {
+    if (!pinch) return;
+    if (pinch.raf) cancelAnimationFrame(pinch.raf);
+    var anchor  = pinch.anchor;
+    var target  = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, parseFloat((pinch.z0 * pinch.f).toFixed(3))));
+    var changed = Math.abs(target - zoomMult) > 0.005;
+    pinch = null;
+    wrap.style.setProperty('--pz', 1);          /* drop the stretched preview */
+    if (!changed) { updateZoomLabel(); return; }
+    zoomMult = target;
+    updateZoomLabel();
+    renderAll(anchor).then(updateCurrentPage);
+  }
+
   pdfBody.addEventListener('touchstart', function (e) {
-    touchX0 = e.touches[0].clientX; touchY0 = e.touches[0].clientY;
-  }, { passive: true });
+    if (e.touches.length !== 2) return;
+    e.preventDefault();                          /* stop the browser zooming the page */
+    var d0 = touchDist(e.touches);
+    if (!d0) return;
+    pinch = {
+      d0: d0, z0: zoomMult, f: 1, raf: 0,
+      anchor: captureAnchor((e.touches[0].clientY + e.touches[1].clientY) / 2)
+    };
+  }, { passive: false });
+
+  pdfBody.addEventListener('touchmove', function (e) {
+    if (!pinch || e.touches.length !== 2) return;
+    e.preventDefault();
+    var next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinch.z0 * (touchDist(e.touches) / pinch.d0)));
+    pinch.f = next / pinch.z0;
+    if (pinch.raf) return;
+    pinch.raf = requestAnimationFrame(function () {
+      if (!pinch) return;
+      pinch.raf = 0;
+      wrap.style.setProperty('--pz', pinch.f);
+      zoomLabel.textContent = Math.round(pinch.z0 * pinch.f * 100) + '%';
+      restoreAnchor(pinch.anchor);               /* keep the pinch point under the fingers */
+    });
+  }, { passive: false });
+
   pdfBody.addEventListener('touchend', function (e) {
-    var dx = e.changedTouches[0].clientX - touchX0;
-    var dy = e.changedTouches[0].clientY - touchY0;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) >= 50) {
-      if (dx < 0 && curPage < numPages) scrollToPage(curPage + 1);
-      if (dx > 0 && curPage > 1)        scrollToPage(curPage - 1);
-    }
+    if (pinch && e.touches.length < 2) endPinch();
   }, { passive: true });
+  pdfBody.addEventListener('touchcancel', endPinch, { passive: true });
 }
 
 /* ── SCHEDULE PDF DOWNLOAD ── */
