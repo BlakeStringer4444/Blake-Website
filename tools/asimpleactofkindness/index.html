@@ -115,8 +115,12 @@
     .modal-overlay {
       position: fixed; inset: 0; z-index: 100;
       background: rgba(0,0,0,0.72);
-      display: flex; align-items: center; justify-content: center;
-      padding: 72px 24px 24px;
+      /* flex-start, not center: centering split any leftover height evenly
+         above and below the modal, so a modal shorter than the viewport
+         (e.g. the script at a low starting zoom) floated with a big gap on
+         top. Anchoring top makes that gap a fixed, small amount instead. */
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 56px 24px 24px;
       opacity: 0; pointer-events: none;
       transition: opacity 0.22s;
     }
@@ -264,8 +268,6 @@
     .textLayer mark.hl.active { background: #ffb700; }
 
     /* ── RESPONSIVE ── */
-    /* ── SWIPE HANDLE ── */
-    .modal-handle { display: none; }
     @media (max-width: 720px) {
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
@@ -273,12 +275,12 @@
       .btn-row { grid-template-columns: 1fr; gap: 2px; }
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
-      .modal-overlay { padding: 0 12px 0; align-items: flex-end; }
-      .modal { max-height: 92%; max-width: 100%; border-radius: 8px 8px 0 0; }
-      .modal-handle {
-        display: block; width: 36px; height: 4px; border-radius: 2px;
-        background: var(--border); margin: 10px auto 0;
-      }
+      /* Top-anchored, like desktop, rather than the old bottom-sheet (flush
+         bottom, floating top) — that left a big empty gap above the modal
+         whenever its content didn't reach the max-height. Flush-top with all
+         four corners rounded reads as a card near the top of the screen. */
+      .modal-overlay { padding: 16px 12px; align-items: flex-start; }
+      .modal { max-height: 100%; max-width: 100%; border-radius: 8px; }
       .modal-close { font-size: 24px; padding: 6px 10px; min-width: 40px; min-height: 40px; }
       .modal-header { padding: 10px 14px; }
       .modal-body { -webkit-overflow-scrolling: touch; }
@@ -334,7 +336,6 @@
   <!-- ── MODAL: Schedule ── -->
   <div class="modal-overlay" id="modal-schedule" role="dialog" aria-modal="true">
     <div class="modal">
-      <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">Rehearsal Schedule</span>
         <button id="sched-dl-btn" class="pdf-nav-btn pdf-download-btn" style="display:none" onclick="downloadSchedulePDF()">Download PDF</button>
@@ -349,7 +350,6 @@
   <!-- ── MODAL: Creatives ── -->
   <div class="modal-overlay" id="modal-cast" role="dialog" aria-modal="true">
     <div class="modal">
-      <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">Creatives</span>
         <button class="modal-close" data-close="modal-cast" aria-label="Close">×</button>
@@ -363,7 +363,6 @@
   <!-- ── MODAL: Script ── -->
   <div class="modal-overlay" id="modal-script" role="dialog" aria-modal="true">
     <div class="modal">
-      <div class="modal-handle"></div>
       <div class="modal-header">
         <span class="modal-header-title">The Script — A Simple Act of Kindness</span>
         <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
