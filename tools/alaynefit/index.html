@@ -395,7 +395,7 @@
     <div class="cal-legend">
       <span><i class="sw"></i> daily done</span>
       <span>🌱 well-lived day</span>
-      <span>🍃 weekly</span>
+      <span>🍎 weekly</span>
       <span>🍑 monthly</span>
     </div>
   </div>
@@ -730,7 +730,7 @@
       if (cadence === "daily") logDailyComplete();
       bumpStreak(cadence);
     }
-    recomputeMarks();   /* update the 🍃/🍑 finished-set marks */
+    recomputeMarks();   /* update the 🍎/🍑 finished-set marks */
     row.classList.toggle("done", !done);
     row.setAttribute("aria-pressed", !done ? "true" : "false");
     row.classList.add("pop"); setTimeout(function () { row.classList.remove("pop"); }, 220);
@@ -751,11 +751,11 @@
 
   /* ── streaks ── one per cadence. A streak counts consecutive periods (days /
      weeks / months) in which at least one goal of that cadence was completed.
-     Day = sprout 🌱, week = leaf 🍃, month = apricot 🍑. ── */
+     Day = sprout 🌱, week = apple 🍎, month = apricot 🍑. ── */
   var STREAK_MAP  = { daily: "day", weekly: "week", monthly: "month" };
   var STREAK_DEFS = [
     { key: "day",   cad: "daily",   sym: "🌱", word: "day" },
-    { key: "week",  cad: "weekly",  sym: "🍃", word: "week" },
+    { key: "week",  cad: "weekly",  sym: "🍎", word: "week" },
     { key: "month", cad: "monthly", sym: "🍑", word: "month" }
   ];
   function curKey(cadence) { return periodKey(cadence, now); }
@@ -773,7 +773,7 @@
 
   /* ── history log ── one small record per date: d/dt = daily done/total that
      day (drives the calendar's green fill), w/m = weekly/monthly completions
-     that day (drive the leaf/apricot dots). Written from now on; there is no
+     that day (drive the apple/apricot dots). Written from now on; there is no
      data for days before this feature shipped. ── */
   function ensureLog() { if (!state.log) state.log = {}; }
   function ensureMarks() {
@@ -791,7 +791,7 @@
     if (e.d <= 0) delete state.log[key];
   }
   /* Weekly / monthly are recorded once the set for that period hits the
-     "all minus 2" threshold — one 🍃 stamped on the day it's reached (max
+     "all minus 2" threshold — one 🍎 stamped on the day it's reached (max
      ~5 a month), one 🍑 on the day it's reached for monthly (max 1 a
      month). The mark is set on the finishing day and cleared if it drops
      back below threshold; it isn't re-dated while it stays met. */
@@ -986,13 +986,13 @@
       if (key === todayKey) cell.classList.add("cal-today");
       var dots = "";
       if (isFull)              { dots += "🌱"; }
-      if (weekDays.has(key))  { dots += "🍃"; wk++; }
+      if (weekDays.has(key))  { dots += "🍎"; wk++; }
       if (monthDays.has(key)) { dots += "🍑"; mo++; }
       cell.innerHTML = '<span class="cal-day">' + day + '</span>' + (dots ? '<span class="cal-dots">' + dots + '</span>' : '');
       grid.appendChild(cell);
     }
     document.getElementById("cal-summary").textContent =
-      "🌱 " + perfect + " well-lived " + (perfect === 1 ? "day" : "days") + " · 🍃 " + wk + " weekly · 🍑 " + mo + " monthly";
+      "🌱 " + perfect + " well-lived " + (perfect === 1 ? "day" : "days") + " · 🍎 " + wk + " weekly · 🍑 " + mo + " monthly";
     var thisMonth = (calYear === now.getFullYear() && calMonth === now.getMonth());
     document.getElementById("cal-note").textContent = thisMonth ? "History records from the day you started using this view." : "";
     document.getElementById("cal-next").disabled =
