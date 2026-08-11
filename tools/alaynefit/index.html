@@ -262,6 +262,7 @@
   .stats-bar-wrap { height:8px; background:var(--surface-2); border-radius:5px; overflow:hidden; }
   .stats-bar { height:100%; border-radius:5px; background:linear-gradient(90deg, var(--brand-soft), var(--brand)); }
   .stats-empty { text-align:center; color:var(--brand-soft); font-size:.85rem; padding:34px 10px; }
+  .stats-since { text-align:center; font-style:italic; color:var(--brand-soft); font-size:.78rem; margin:10px 0 4px; }
 
   /* ── The Secret Garden (secret picross game behind the heart) ── */
   #af-heart { cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; }
@@ -439,6 +440,7 @@
       <button id="stats-range-all" type="button">All-Time</button>
       <button id="stats-range-30" type="button">Last 30 Days</button>
     </div>
+    <div class="stats-since" id="stats-since"></div>
     <div id="stats-body"></div>
   </div>
 </div>
@@ -1103,6 +1105,11 @@
   /* ── stats / tally view ── how many times each goal has been ticked off,
      all-time or in the last 30 days. */
   var STATS_RANGE_KEY = "alaynefit-stats-range";
+  /* The tally only started recording on this date — anything ticked before it
+     was never captured (see ensureTally/tallyGoal), so All-Time is really
+     "since this date," not literally forever. Shown as a caveat under the
+     range toggle. */
+  var STATS_SINCE = "11/08/2026";
   var statsOv = document.getElementById("stats-overlay");
   function statsRange() {
     try { return localStorage.getItem(STATS_RANGE_KEY) === "30" ? "30" : "all"; } catch (e) { return "all"; }
@@ -1125,6 +1132,7 @@
     var range = statsRange();
     document.getElementById("stats-range-all").classList.toggle("on", range === "all");
     document.getElementById("stats-range-30").classList.toggle("on", range === "30");
+    document.getElementById("stats-since").textContent = range === "all" ? "as of " + STATS_SINCE : "";
     var body = document.getElementById("stats-body");
     body.innerHTML = "";
     var any = false;
