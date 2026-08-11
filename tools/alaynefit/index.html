@@ -238,6 +238,31 @@
   .cal-legend .sw { width:26px; height:13px; border-radius:4px;
     background:linear-gradient(90deg, color-mix(in srgb,#5E7D33 22%,var(--surface-2)), #5E7D33); }
 
+  /* ── stats / tally view ── how many times each individual goal has been
+     ticked off, all-time or in the last 30 days. Mirrors the calendar
+     overlay's look so the two feel like one family. */
+  .stats-overlay { position:fixed; inset:0; z-index:80; display:none; background:var(--bg);
+    overflow-y:auto; padding:calc(env(safe-area-inset-top) + 6px) 0 44px; }
+  .stats-overlay.open { display:block; }
+  .stats-panel { max-width:540px; margin:0 auto; padding:16px 18px; }
+  .stats-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .stats-title { font-weight:700; color:var(--brand); font-size:1.1rem; letter-spacing:-.01em; }
+  .stats-range { display:flex; gap:4px; margin:16px 0 8px; background:var(--surface-2); border-radius:999px; padding:3px; }
+  .stats-range button { flex:1; border:0; background:transparent; color:var(--ink-soft); font:inherit; font-size:.82rem;
+    font-weight:650; padding:9px 10px; border-radius:999px; cursor:pointer; touch-action:manipulation; }
+  .stats-range button.on { background:var(--surface); color:var(--brand); box-shadow:var(--shadow); }
+  .stats-section { margin-top:24px; }
+  .stats-section h2 { font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; color:var(--brand-soft);
+    font-weight:700; margin-bottom:4px; }
+  .stats-row { padding:10px 0; border-bottom:1px solid var(--line); }
+  .stats-row:last-child { border-bottom:0; }
+  .stats-row-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .stats-name { font-size:.87rem; color:var(--ink); font-weight:600; }
+  .stats-num { font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .stats-bar-wrap { height:8px; background:var(--surface-2); border-radius:5px; overflow:hidden; }
+  .stats-bar { height:100%; border-radius:5px; background:linear-gradient(90deg, var(--brand-soft), var(--brand)); }
+  .stats-empty { text-align:center; color:var(--brand-soft); font-size:.85rem; padding:34px 10px; }
+
   /* ── The Secret Garden (secret picross game behind the heart) ── */
   #af-heart { cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; }
   .gd-overlay { position:fixed; inset:0; z-index:90; display:none; background:var(--bg);
@@ -305,6 +330,9 @@
     <div class="actions">
       <button class="iconbtn" id="cal-open" title="History" aria-label="Open history">
         <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
+      <button class="iconbtn" id="stats-open" title="Stats" aria-label="Open stats">
+        <svg viewBox="0 0 24 24"><path d="M6 20V13M12 20V6M18 20V11"/><path d="M3 20h18"/></svg>
       </button>
       <button class="iconbtn" id="edit" aria-pressed="false" title="Edit goals">
         <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -398,6 +426,20 @@
       <span>🍎 weekly</span>
       <span>🍑 monthly</span>
     </div>
+  </div>
+</div>
+
+<div class="stats-overlay" id="stats-overlay">
+  <div class="stats-panel">
+    <div class="stats-top">
+      <div class="stats-title">Stats 📊</div>
+      <button class="iconbtn" id="stats-close" aria-label="Close stats">✕ Close</button>
+    </div>
+    <div class="stats-range">
+      <button id="stats-range-all" type="button">All-Time</button>
+      <button id="stats-range-30" type="button">Last 30 Days</button>
+    </div>
+    <div id="stats-body"></div>
   </div>
 </div>
 
@@ -534,7 +576,7 @@
     CADENCES.forEach(function (c) {
       goals[c] = DEFAULTS[c].items.map(function (t) { return { id: uid(), text: t, p: null, ts: 0 }; });
     });
-    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } }, log: {}, weekDone: {}, monthDone: {} };
+    return { v: 1, goals: goals, streaks: { day: { count: 0, last: "" }, week: { count: 0, last: "" }, month: { count: 0, last: "" } }, log: {}, weekDone: {}, monthDone: {}, tally: {} };
   }
   function valid(s) { return s && s.goals && s.goals.daily && s.goals.weekly && s.goals.monthly; }
 
@@ -567,6 +609,7 @@
           ensureStreaks();
           ensureLog();
           ensureMarks();
+          ensureTally();
           renderAll(); updateProgress();
         } else if (state) {                  /* first run: seed the server */
           pushServer();
@@ -620,6 +663,7 @@
       });
       row.querySelector(".del").addEventListener("click", function () {
         state.goals[cadence] = state.goals[cadence].filter(function (g) { return g.id !== goal.id; });
+        if (state.tally) delete state.tally[goal.id];   /* deleted goal's history goes with it */
         recomputeMarks(); scheduleSave(); renderSection(cadence); updateProgress();
       });
     } else {
@@ -724,11 +768,13 @@
     var done = isDone(goal, cadence);
     if (done) {
       if (cadence === "daily") logDailyUncomplete(goal.pd || ymd(now));
+      untallyGoal(goal, cadence);
       goal.p = null; goal.ts = 0; goal.pd = null;
     } else {
       goal.p = periodKey(cadence); goal.ts = Date.now() + (tsCounter++); goal.pd = ymd(now);
       if (cadence === "daily") logDailyComplete();
       bumpStreak(cadence);
+      tallyGoal(goal, cadence);
     }
     recomputeMarks();   /* update the 🍎/🍑 finished-set marks */
     row.classList.toggle("done", !done);
@@ -807,6 +853,37 @@
       if (!state.monthDone[mo]) state.monthDone[mo] = ymd(now);
     } else { delete state.monthDone[mo]; }
   }
+
+  /* ── per-goal tally ── how many times each individual goal has been ticked
+     off, for the Stats view. Keyed by goal id (so a rename keeps its history;
+     deleting a goal drops it — see the delete handler). One entry per
+     completed PERIOD (day and/or week and/or month, matching the same
+     once-per-period rule `isDone` already enforces), storing the date it
+     happened on — that date is what "last 30 days" filters against, for
+     every cadence, rather than parsing each cadence's differently-shaped
+     period key. Toggling off within the same period removes exactly the
+     entry that toggling on added, since periodKey(cadence) can't have rolled
+     over yet — isDone would already be false if it had, so it'd be a tick,
+     not an untick. */
+  function ensureTally() { if (!state.tally) state.tally = {}; }
+  function tallyGoal(goal, cadence) {
+    ensureTally();
+    var t = state.tally[goal.id] || (state.tally[goal.id] = {});
+    t[periodKey(cadence)] = ymd(now);
+  }
+  function untallyGoal(goal, cadence) {
+    if (!state.tally || !state.tally[goal.id]) return;
+    delete state.tally[goal.id][periodKey(cadence)];
+    if (!Object.keys(state.tally[goal.id]).length) delete state.tally[goal.id];
+  }
+  function tallyCount(goal, range) {
+    var t = (state.tally && state.tally[goal.id]) || {};
+    var dates = Object.keys(t).map(function (pk) { return t[pk]; });
+    if (range !== "30") return dates.length;
+    var since = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29));  /* last 30 days, incl. today */
+    return dates.filter(function (d) { return d >= since; }).length;
+  }
+
   function bumpStreak(cadence) {
     var key = STREAK_MAP[cadence]; if (!key) return;
     var s = state.streaks[key], cur = curKey(cadence), prev = prevKey(cadence);
@@ -950,6 +1027,7 @@
   /* ── calendar / history view ── */
   var calYear, calMonth, calOv = document.getElementById("cal-overlay");
   function openCalendar() {
+    closeStats();
     calYear = now.getFullYear(); calMonth = now.getMonth();
     renderCalendar();
     calOv.classList.add("open");
@@ -1021,6 +1099,72 @@
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar();
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && calOv.classList.contains("open")) closeCalendar(); });
+
+  /* ── stats / tally view ── how many times each goal has been ticked off,
+     all-time or in the last 30 days. */
+  var STATS_RANGE_KEY = "alaynefit-stats-range";
+  var statsOv = document.getElementById("stats-overlay");
+  function statsRange() {
+    try { return localStorage.getItem(STATS_RANGE_KEY) === "30" ? "30" : "all"; } catch (e) { return "all"; }
+  }
+  function setStatsRange(r) {
+    try { localStorage.setItem(STATS_RANGE_KEY, r); } catch (e) {}
+    renderStats();
+  }
+  function openStats() {
+    closeCalendar();
+    renderStats();
+    statsOv.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeStats() {
+    statsOv.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function renderStats() {
+    var range = statsRange();
+    document.getElementById("stats-range-all").classList.toggle("on", range === "all");
+    document.getElementById("stats-range-30").classList.toggle("on", range === "30");
+    var body = document.getElementById("stats-body");
+    body.innerHTML = "";
+    var any = false;
+    CADENCES.forEach(function (cadence) {
+      var items = state.goals[cadence];
+      if (!items.length) return;
+      any = true;
+      var rows = items.map(function (g) { return { goal: g, count: tallyCount(g, range) }; });
+      rows.sort(function (a, b) { return b.count - a.count; });
+      var max = Math.max(1, rows[0].count);
+      var section = document.createElement("div"); section.className = "stats-section";
+      var h = document.createElement("h2"); h.textContent = META[cadence].title;
+      section.appendChild(h);
+      rows.forEach(function (r) {
+        var row = document.createElement("div"); row.className = "stats-row";
+        var top = document.createElement("div"); top.className = "stats-row-top";
+        var name = document.createElement("span"); name.className = "stats-name"; name.textContent = r.goal.text;
+        var num = document.createElement("span"); num.className = "stats-num";
+        num.textContent = r.count + (r.count === 1 ? " time" : " times");
+        top.appendChild(name); top.appendChild(num);
+        var barWrap = document.createElement("div"); barWrap.className = "stats-bar-wrap";
+        var bar = document.createElement("div"); bar.className = "stats-bar";
+        bar.style.width = (r.count ? Math.max(4, Math.round(r.count / max * 100)) : 0) + "%";
+        barWrap.appendChild(bar);
+        row.appendChild(top); row.appendChild(barWrap);
+        section.appendChild(row);
+      });
+      body.appendChild(section);
+    });
+    if (!any) {
+      var e = document.createElement("div"); e.className = "stats-empty";
+      e.textContent = "Add some goals to start seeing stats here.";
+      body.appendChild(e);
+    }
+  }
+  document.getElementById("stats-open").addEventListener("click", openStats);
+  document.getElementById("stats-close").addEventListener("click", closeStats);
+  document.getElementById("stats-range-all").addEventListener("click", function () { setStatsRange("all"); });
+  document.getElementById("stats-range-30").addEventListener("click", function () { setStatsRange("30"); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && statsOv.classList.contains("open")) closeStats(); });
 
   /* ── The Secret Garden — a daily picross (nonogram) behind the heart ──
      Every puzzle below is verified to have a single logical solution, so the
@@ -1245,6 +1389,7 @@
   ensureStreaks();
   ensureLog();
   ensureMarks();
+  ensureTally();
   renderAll();
   updateProgress();
   if (!valid(local)) saveLocal();
