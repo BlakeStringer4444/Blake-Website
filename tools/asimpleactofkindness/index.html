@@ -82,7 +82,7 @@
     #font-btn.active { background: rgba(212,255,26,0.15); border-color: var(--lime); color: var(--lime); }
     #theme-btn { font-size: 16px; }
     .asak-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 9vw, 104px); letter-spacing: 6px; color: var(--lime); line-height: 1; }
-    .asak-subtitle { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
+    .asak-subtitle { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.4); margin-top: 6px; }
 
     /* ── MAIN LAYOUT ── */
     .page-body { max-width: 1080px; margin: 0 auto; padding: 48px; display: flex; flex-direction: column; gap: 0; }
@@ -99,6 +99,10 @@
     }
     .big-btn:hover { background: var(--lime); color: #000; border-color: var(--lime); }
 
+    /* Second row, below the countdown — currently just Soundtrack, sized to
+       however many buttons end up in it (more may join later). */
+    .btn-row-2 { grid-template-columns: 1fr; margin-top: 24px; }
+
     /* ── COUNTDOWN ── */
     .cd-wrap { display: flex; justify-content: center; align-items: center; padding: 56px 24px; }
     .cd-nums { display: flex; align-items: flex-end; gap: 4px; }
@@ -107,6 +111,68 @@
     .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 72px); color: var(--lime); line-height: 1; padding-bottom: 18px; opacity: 0.4; }
     .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
     .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 72px); color: var(--lime); letter-spacing: 4px; }
+
+    /* ── MUSIC PLAYER ── */
+    /* Sole content of the Soundtrack modal body, which brings no padding of
+       its own — .music-player supplies it instead of nesting another card
+       inside the modal. */
+    .music-player { padding: 18px 20px; }
+    .music-player-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .music-play-btn {
+      background: var(--lime); color: #000; border: none;
+      width: 34px; height: 34px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .music-play-btn:hover { opacity: 0.82; }
+    .music-play-btn:disabled { opacity: 0.3; cursor: default; }
+    .music-skip-btn {
+      background: none; border: none; color: var(--fg); opacity: 0.55;
+      width: 24px; height: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .music-skip-btn:hover { opacity: 1; }
+    .music-skip-btn:disabled { opacity: 0.2; cursor: default; }
+    .music-track-name {
+      font-family: var(--font); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--fg); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .music-time { font-family: var(--font); font-size: 9px; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+    .music-vis { display: block; width: 100%; height: 56px; margin: 4px 0 10px; transition: opacity 0.2s; }
+    .music-progress { height: 24px; cursor: pointer; overflow: visible; position: relative; display: flex; align-items: center; transition: opacity 0.2s; }
+    .music-progress::before {
+      content: ''; position: absolute; left: 0; right: 0; height: 3px;
+      background: var(--border); top: 50%; transform: translateY(-50%);
+    }
+    .music-progress-fill { height: 3px; background: var(--lime); width: 0%; pointer-events: none; transition: width 0.1s linear; position: relative; z-index: 1; }
+    .music-progress-thumb {
+      position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%);
+      width: 11px; height: 11px; border-radius: 50%; background: var(--lime); pointer-events: none; z-index: 2;
+    }
+    .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
+    @keyframes music-glow {
+      0%, 100% { box-shadow: 0 0 4px 2px rgba(212,255,26,0.3); }
+      50%       { box-shadow: 0 0 12px 4px rgba(212,255,26,0.7); }
+    }
+    .music-player.empty .music-progress,
+    .music-player.empty .music-vis { pointer-events: none; opacity: 0.4; }
+    .music-queue-btn.active { opacity: 1; }
+    .music-queue { border-top: 1px solid var(--border); margin: 10px 0 2px; padding-top: 8px; max-height: 200px; overflow-y: auto; }
+    .music-queue-list { display: flex; flex-direction: column; gap: 2px; }
+    .music-queue-item {
+      display: flex; align-items: baseline; gap: 8px; width: 100%;
+      background: none; border: none; text-align: left; padding: 6px;
+      cursor: pointer; font-family: var(--font); font-size: 10px; letter-spacing: 0.5px;
+      color: var(--muted); border-radius: 2px;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .music-queue-item:hover { background: rgba(212,255,26,0.1); color: var(--fg); }
+    .music-queue-item .music-queue-num { flex-shrink: 0; opacity: 0.5; width: 14px; }
+    .music-queue-item[aria-current="true"] { color: var(--fg); font-weight: 700; }
+    .music-queue-item[aria-current="true"] .music-queue-num::after { content: '♪'; }
 
     /* ── MODALS ── */
     /* inset:0 already tracks the real viewport under `zoom` (and under a mobile
@@ -296,6 +362,8 @@
       .pdf-find-input { width: 80px; font-size: 10px; }
       .pdf-download-btn { font-size: 8px; padding: 4px 8px; letter-spacing: 1px; }
       .pdf-zoom-label { min-width: 28px; font-size: 8px; }
+      .music-player { padding: 12px 14px; }
+      .music-vis { height: 44px; }
     }
 
     @media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; scroll-behavior:auto!important; } }
@@ -333,6 +401,10 @@
         <div class="cd-sep">:</div>
         <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-unit">sec</div></div>
       </div>
+    </div>
+
+    <div class="btn-row btn-row-2">
+      <button class="big-btn" id="open-soundtrack">Soundtrack</button>
     </div>
 
   </div>
@@ -390,6 +462,46 @@
       </div>
       <div class="modal-body" id="pdf-body">
         <div id="pdf-canvas-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Soundtrack ── -->
+  <div class="modal-overlay" id="modal-soundtrack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Soundtrack</span>
+        <button class="modal-close" data-close="modal-soundtrack" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="music-player" id="music-player">
+          <div class="music-player-row">
+            <button class="music-skip-btn" id="music-prev-btn" aria-label="Previous track">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="3" width="3" height="18"/><polygon points="20,3 20,21 8,12"/></svg>
+            </button>
+            <button class="music-play-btn" id="music-play-btn" aria-label="Play">
+              <svg class="music-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+              <svg class="music-icon-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <button class="music-skip-btn" id="music-next-btn" aria-label="Next track">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="17" y="3" width="3" height="18"/><polygon points="4,3 4,21 16,12"/></svg>
+            </button>
+            <span class="music-track-name" id="music-track-name">Loading…</span>
+            <span class="music-time" id="music-time">0:00</span>
+            <button class="music-skip-btn music-queue-btn" id="music-queue-btn" aria-label="Playlist" aria-haspopup="listbox" aria-expanded="false">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="music-queue" id="music-queue" hidden>
+            <div class="music-queue-list" id="music-queue-list" role="listbox" aria-label="Up next"></div>
+          </div>
+          <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
+          <div class="music-progress" id="music-progress" title="Seek">
+            <div class="music-progress-fill" id="music-progress-fill"></div>
+            <div class="music-progress-thumb" id="music-progress-thumb"></div>
+          </div>
+          <audio id="music-audio" preload="none"></audio>
+        </div>
       </div>
     </div>
   </div>
@@ -484,6 +596,10 @@
   document.getElementById('open-script').addEventListener('click', function () {
     openModal('modal-script');
     loadPDF();
+  });
+  document.getElementById('open-soundtrack').addEventListener('click', function () {
+    openModal('modal-soundtrack');
+    loadMusic();
   });
 
   /* Close buttons */
@@ -1375,6 +1491,334 @@ function downloadSchedulePDF() {
   }
 
   doc.save('ASAK – Rehearsal Schedule.pdf');
+}
+
+/* ── MUSIC PLAYER ──
+   Only set up the first time the Soundtrack modal is opened (mirrors
+   loadPDF() below) — no point wiring up an AudioContext and a running
+   requestAnimationFrame loop for visitors who never open it.
+   Plays straight from /tools/asimpleactofkindness/audio/. Tracks are lazy —
+   audio.src is only set (and therefore only fetched, since preload="none")
+   at the moment a track actually starts playing, whether via Play, Next/
+   Previous, or auto-advance at the end of a track. Modelled on the player at
+   blakestringer.com's Music section, trimmed to what this page needs (no
+   shuffle — just a straight playlist in the order below). */
+var musicLoaded = false;
+function loadMusic() {
+  if (musicLoaded) return;
+  musicLoaded = true;
+
+  var audio      = document.getElementById('music-audio');
+  var playerEl   = document.getElementById('music-player');
+  var playBtn    = document.getElementById('music-play-btn');
+  var prevBtn    = document.getElementById('music-prev-btn');
+  var nextBtn    = document.getElementById('music-next-btn');
+  var nameEl     = document.getElementById('music-track-name');
+  var timeEl     = document.getElementById('music-time');
+  var queueBtn   = document.getElementById('music-queue-btn');
+  var queuePanel = document.getElementById('music-queue');
+  var queueList  = document.getElementById('music-queue-list');
+  var progBar    = document.getElementById('music-progress');
+  var progFill   = document.getElementById('music-progress-fill');
+  var thumb      = document.getElementById('music-progress-thumb');
+  var canvas     = document.getElementById('music-vis');
+  var iconPlay   = playBtn.querySelector('.music-icon-play');
+  var iconPause  = playBtn.querySelector('.music-icon-pause');
+  var audioCtx, analyser, source, dragging = false;
+
+  /* ── Playlist ──
+     Empty until real files land in the audio/ folder next to this page — add
+     one entry here per track, with `file` matching the filename exactly
+     (the live server is case-sensitive even where a local filesystem isn't). */
+  var TRACKS = [
+    // { title: 'Track name', file: 'Track name.mp3' },
+  ];
+  var order = TRACKS.map(function (_, i) { return i; });
+  var pos = 0, loadedPos = -1;
+
+  function track()      { return TRACKS[order[pos]]; }
+  function trackSrc(t)  { return encodeURI('/tools/asimpleactofkindness/audio/' + t.file); }
+  function trackLabel(t) { return t.title; }
+
+  function setControlsEnabled(on) {
+    playBtn.disabled = prevBtn.disabled = nextBtn.disabled = queueBtn.disabled = !on;
+  }
+
+  function updateTrackDisplay() {
+    var t = track();
+    nameEl.textContent = trackLabel(t);
+    playBtn.setAttribute('aria-label', (audio.paused ? 'Play ' : 'Pause ') + trackLabel(t));
+    renderQueue();
+  }
+
+  /* ── Playlist dropdown ── rebuilt on every track change so the highlighted
+     "now playing" row always matches. */
+  function renderQueue() {
+    queueList.innerHTML = order.map(function (trackIdx, i) {
+      var t = TRACKS[trackIdx], current = i === pos;
+      return '<button type="button" class="music-queue-item" role="option" aria-current="' + current + '" data-pos="' + i + '">' +
+        '<span class="music-queue-num">' + (i + 1) + '</span><span>' + trackLabel(t) + '</span></button>';
+    }).join('');
+  }
+  function openQueue() {
+    queuePanel.hidden = false;
+    queueBtn.setAttribute('aria-expanded', 'true');
+    queueBtn.classList.add('active');
+  }
+  function closeQueue() {
+    queuePanel.hidden = true;
+    queueBtn.setAttribute('aria-expanded', 'false');
+    queueBtn.classList.remove('active');
+  }
+  queueBtn.addEventListener('click', function () { queuePanel.hidden ? openQueue() : closeQueue(); });
+  queueList.addEventListener('click', function (e) {
+    var item = e.target.closest('.music-queue-item');
+    if (!item) return;
+    switchTrack(parseInt(item.dataset.pos, 10));
+    closeQueue();
+  });
+  document.addEventListener('click', function (e) {
+    if (queuePanel.hidden) return;
+    if (queueBtn.contains(e.target) || queuePanel.contains(e.target)) return;
+    closeQueue();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !queuePanel.hidden) closeQueue(); });
+
+  /* Switch to `newPos`. If audio was already playing, the new track keeps
+     playing (skip-while-listening); if paused, it's just cued.
+     `forcePlay` overrides this — used when a track finishes naturally (the
+     "ended" event fires with audio already paused, but the playlist should
+     keep going). */
+  function switchTrack(newPos, forcePlay) {
+    if (!TRACKS.length) return;
+    var wasPlaying = forcePlay || !audio.paused;
+    audio.pause();
+    pos = ((newPos % order.length) + order.length) % order.length;
+    audio.src = trackSrc(track());
+    loadedPos = pos;
+    setProgress(0);
+    timeEl.textContent = '0:00';
+    updateTrackDisplay();
+    updateMediaSessionMetadata();
+    if (wasPlaying) {
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audio.play().catch(function () {});
+    }
+  }
+
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  }
+
+  function setProgress(pct) {
+    progFill.style.width = pct + '%';
+    thumb.style.left     = pct + '%';
+  }
+
+  /* ── Visualiser ── this page doesn't redefine --lime per theme, so the bar
+     colour is just the page's own lime accent, no light/dark switch needed. */
+  function barColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--lime').trim() || '#D4FF1A';
+  }
+
+  function resizeCanvas() {
+    var dpr  = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var w    = Math.round(rect.width  * dpr);
+    var h    = Math.round(rect.height * dpr);
+    if (w === 0 || h === 0 || (canvas.width === w && canvas.height === h)) return;
+    canvas.width  = w;
+    canvas.height = h;
+  }
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.82;
+    source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    /* Mobile OSes suspend the AudioContext far more readily than a plain
+       <audio> element (backgrounding the tab, locking the phone) — since the
+       visualiser routes playback THROUGH this context, sound cuts out the
+       moment that happens even though `audio` itself is still "playing". Put
+       it straight back the instant it's suspended while we expect to be
+       audible, so background/lock-screen playback keeps going. */
+    audioCtx.addEventListener('statechange', function () {
+      if (audioCtx.state === 'suspended' && !audio.paused) audioCtx.resume().catch(function () {});
+    });
+  }
+
+  function draw() {
+    requestAnimationFrame(draw);
+    resizeCanvas();
+    var dpr = window.devicePixelRatio || 1;
+    var W = canvas.width / dpr, H = canvas.height / dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    var color = barColor();
+    var nBars = 20, gap = 3;
+    var barW = (W - gap * (nBars - 1)) / nBars;
+    var vals = new Float32Array(nBars);
+
+    if (analyser && !audio.paused) {
+      var bins = analyser.frequencyBinCount;
+      var data = new Uint8Array(bins);
+      analyser.getByteFrequencyData(data);
+      var maxBin = Math.floor(bins * 0.40); /* cap at ~8.8kHz so all bars land on musically active frequencies */
+      for (var i = 0; i < nBars; i++) {
+        var t = i / (nBars - 1);
+        var b = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
+        var sum = 0, cnt = 0;
+        for (var d = -1; d <= 1; d++) { var idx = Math.max(0, Math.min(bins - 1, b + d)); sum += data[idx]; cnt++; }
+        vals[i] = sum / cnt / 255;
+      }
+    } else {
+      var tt = performance.now() / 1000;
+      for (var j = 0; j < nBars; j++) {
+        var x = j / (nBars - 1);
+        vals[j] = (Math.sin(x * Math.PI * 2 + tt * 0.6) * 0.5 + 0.5) * 0.18;
+      }
+    }
+
+    ctx.fillStyle = color;
+    for (var k = 0; k < nBars; k++) {
+      var xx = k * (barW + gap);
+      var barH = Math.max(3, vals[k] * H * 0.92);
+      ctx.globalAlpha = 0.3 + vals[k] * 0.7;
+      ctx.fillRect(xx, H - barH, barW, barH);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ── Media Session (lock screen / control centre / background playback) ──
+     Registering a session is what tells mobile OSes this page is playing
+     real media, which is what makes them willing to keep audio going once
+     the tab is backgrounded or the phone is locked. It also drives the
+     native title/prev/play-pause/next widget on the lock screen. */
+  var hasMediaSession = 'mediaSession' in navigator;
+  function updateMediaSessionMetadata() {
+    if (!hasMediaSession || !TRACKS.length) return;
+    var t = track();
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: trackLabel(t),
+      album: 'A Simple Act of Kindness',
+      artwork: [{ src: '/Images/favicon.png', sizes: '180x180', type: 'image/png' }]
+    });
+  }
+  if (hasMediaSession) {
+    navigator.mediaSession.setActionHandler('play',         function () { doPlay(); });
+    navigator.mediaSession.setActionHandler('pause',        function () { doPause(); });
+    navigator.mediaSession.setActionHandler('previoustrack', function () { switchTrack(pos - 1, true); });
+    navigator.mediaSession.setActionHandler('nexttrack',     function () { switchTrack(pos + 1, true); });
+  }
+
+  /* ── Play / Pause ── */
+  function doPlay() {
+    if (!TRACKS.length) return;
+    if (loadedPos === -1) { audio.src = trackSrc(track()); loadedPos = pos; } /* lazy: first load happens here */
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio.play().catch(function () {});
+  }
+  function doPause() { audio.pause(); }
+
+  playBtn.addEventListener('click', function () { audio.paused ? doPlay() : doPause(); });
+  prevBtn.addEventListener('click', function () { switchTrack(pos - 1); });
+  nextBtn.addEventListener('click', function () { switchTrack(pos + 1); });
+
+  /* Safety net: if the AudioContext got suspended while backgrounded (some
+     browsers only allow resuming once the page is genuinely foregrounded
+     again, rather than on the statechange listener in initAudio() alone). */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && audioCtx && audioCtx.state === 'suspended' && !audio.paused) {
+      audioCtx.resume().catch(function () {});
+    }
+  });
+
+  audio.addEventListener('play', function () {
+    iconPlay.style.display  = 'none';
+    iconPause.style.display = '';
+    playBtn.setAttribute('aria-label', 'Pause ' + trackLabel(track()));
+    progFill.classList.add('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'playing';
+  });
+  audio.addEventListener('pause', function () {
+    iconPlay.style.display  = '';
+    iconPause.style.display = 'none';
+    playBtn.setAttribute('aria-label', 'Play ' + trackLabel(track()));
+    progFill.classList.remove('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'paused';
+  });
+  audio.addEventListener('ended', function () {
+    /* Keep the playlist going — advance to the next track and play it,
+       wrapping back to the start once the whole list has played through. */
+    switchTrack(pos + 1, true);
+  });
+  audio.addEventListener('timeupdate', function () {
+    /* audio.seeking guards a race on an unbuffered scrub: currentTime is set
+       immediately in seekFromEvent, but actually landing there needs a
+       network fetch (preload="none" + un-downloaded range) that takes a
+       moment. A timeupdate firing in that gap still reports the OLD
+       position, which would otherwise snap the just-set progress bar back
+       until the seek actually completes. */
+    if (!audio.duration || dragging || audio.seeking) return;
+    setProgress(audio.currentTime / audio.duration * 100);
+    timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+  });
+
+  /* ── Scrubber (click + drag) ── */
+  function seekFromEvent(e) {
+    if (!TRACKS.length) return;
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var r = progBar.getBoundingClientRect();
+    var pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    setProgress(pct * 100);
+    if (audio.duration) {
+      audio.currentTime = pct * audio.duration;
+      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+    }
+  }
+  progBar.addEventListener('mousedown', function (e) {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  });
+  progBar.addEventListener('touchstart', function (e) {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  }, { passive: true });
+  document.addEventListener('mousemove', function (e) { if (dragging) seekFromEvent(e); });
+  document.addEventListener('touchmove', function (e) { if (dragging) seekFromEvent(e); }, { passive: true });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    progBar.classList.remove('dragging');
+    progFill.style.transition = '';
+  }
+  document.addEventListener('mouseup',  endDrag);
+  document.addEventListener('touchend', endDrag);
+
+  /* ── Init ── */
+  if (!TRACKS.length) {
+    playerEl.classList.add('empty');
+    setControlsEnabled(false);
+    nameEl.textContent = 'No tracks yet — check back soon';
+  } else {
+    updateTrackDisplay();
+    updateMediaSessionMetadata();
+  }
+
+  draw(); /* start idle animation immediately */
 }
 </script>
 </body>
