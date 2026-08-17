@@ -141,6 +141,10 @@
       color: var(--fg); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .music-time { font-family: var(--font); font-size: 9px; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+    .music-cue {
+      font-family: var(--font); font-size: 9px; letter-spacing: 0.5px; font-style: italic;
+      color: var(--muted); margin: -4px 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .music-vis { display: block; width: 100%; height: 56px; margin: 4px 0 10px; transition: opacity 0.2s; }
     .music-progress { height: 24px; cursor: pointer; overflow: visible; position: relative; display: flex; align-items: center; transition: opacity 0.2s; }
     .music-progress::before {
@@ -163,14 +167,17 @@
     .music-queue { border-top: 1px solid var(--border); margin: 10px 0 2px; padding-top: 8px; max-height: 200px; overflow-y: auto; }
     .music-queue-list { display: flex; flex-direction: column; gap: 2px; }
     .music-queue-item {
-      display: flex; align-items: baseline; gap: 8px; width: 100%;
-      background: none; border: none; text-align: left; padding: 6px;
+      display: flex; align-items: flex-start; gap: 8px; width: 100%;
+      background: none; border: none; text-align: left; padding: 7px 6px;
       cursor: pointer; font-family: var(--font); font-size: 10px; letter-spacing: 0.5px;
       color: var(--muted); border-radius: 2px;
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     .music-queue-item:hover { background: rgba(212,255,26,0.1); color: var(--fg); }
-    .music-queue-item .music-queue-num { flex-shrink: 0; opacity: 0.5; width: 14px; }
+    .music-queue-item .music-queue-num { flex-shrink: 0; opacity: 0.5; width: 14px; padding-top: 1px; }
+    .music-queue-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .music-queue-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .music-queue-cue { font-size: 9px; opacity: 0.7; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .music-queue-item[aria-current="true"] { color: var(--fg); font-weight: 700; }
     .music-queue-item[aria-current="true"] .music-queue-num::after { content: '♪'; }
 
@@ -492,6 +499,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>
             </button>
           </div>
+          <div class="music-cue" id="music-cue"></div>
           <div class="music-queue" id="music-queue" hidden>
             <div class="music-queue-list" id="music-queue-list" role="listbox" aria-label="Up next"></div>
           </div>
@@ -1515,6 +1523,7 @@ function loadMusic() {
   var nextBtn    = document.getElementById('music-next-btn');
   var nameEl     = document.getElementById('music-track-name');
   var timeEl     = document.getElementById('music-time');
+  var cueEl      = document.getElementById('music-cue');
   var queueBtn   = document.getElementById('music-queue-btn');
   var queuePanel = document.getElementById('music-queue');
   var queueList  = document.getElementById('music-queue-list');
@@ -1527,11 +1536,29 @@ function loadMusic() {
   var audioCtx, analyser, source, dragging = false;
 
   /* ── Playlist ──
-     Empty until real files land in the audio/ folder next to this page — add
-     one entry here per track, with `file` matching the filename exactly
-     (the live server is case-sensitive even where a local filesystem isn't). */
+     In show order (Act, then page) — matches the cue sheet, so playing
+     straight through follows the production. `file` must match the filename
+     in audio/ exactly (the live server is case-sensitive even where a local
+     filesystem isn't). */
   var TRACKS = [
-    // { title: 'Track name', file: 'Track name.mp3' },
+    { title: "Sot-l'y-laisse", artist: 'Odezenne & Rone', act: 1, page: 1,
+      context: 'Start of Act 1', file: "01 Sot-l'y-laisse.mp3" },
+    { title: 'F L Y', artist: 'Spectrum', act: 1, page: 4,
+      context: 'End of Scene 1', file: '02 F L Y.mp3' },
+    { title: 'Martini', artist: 'The Presets', act: 1, page: 4,
+      context: 'In the background, start of Scene 2', file: '03 Martini.mp3' },
+    { title: "I'm Still Standing", artist: 'Elton John', act: 1, page: 7,
+      context: 'End of Scene 2', file: "2-03 I'm Still Standing (Remastered).mp3" },
+    { title: 'Sounds of Then (This is Australia)', artist: 'GANGgajang', act: 1, page: 32,
+      context: 'End of Act 1', file: '02 Sounds Of Then (This Is Australia).mp3' },
+    { title: 'Love on my Mind', artist: 'Freemasons & Amanda Wilson', act: 2, page: 34,
+      context: 'Start of Act 2', file: '03 Love On My Mind (feat. Amanda Wilson) [Radio Edit].mp3' },
+    { title: 'Dirty Cash (Money Talks)', artist: 'The Adventures of Stevie V', act: 2, page: 55,
+      context: 'End of Scene 1', file: '01 Dirty Cash (Money Talks) [Sold Out 7 Inch Mix].mp3' },
+    { title: 'House', artist: 'Charli XCX & John Cale', act: 2, page: 65,
+      context: 'JULIE ring sequence', file: '01 House featuring John Cale.mp3' },
+    { title: 'Zoom', artist: "Fat Larry's Band", act: 2, page: 65,
+      context: 'After JULIE ring sequence', file: '03 Zoom.mp3' }
   ];
   var order = TRACKS.map(function (_, i) { return i; });
   var pos = 0, loadedPos = -1;
@@ -1539,6 +1566,11 @@ function loadMusic() {
   function track()      { return TRACKS[order[pos]]; }
   function trackSrc(t)  { return encodeURI('/tools/asimpleactofkindness/audio/' + t.file); }
   function trackLabel(t) { return t.title; }
+  /* cueLabel includes the artist (stands alone, next to just the title up
+     top); showCue doesn't (used in the playlist rows, where the artist is
+     already shown right next to the title). */
+  function showCue(t)  { return 'Act ' + t.act + ', p.' + t.page + ' — ' + t.context; }
+  function cueLabel(t) { return t.artist + ' · ' + showCue(t); }
 
   function setControlsEnabled(on) {
     playBtn.disabled = prevBtn.disabled = nextBtn.disabled = queueBtn.disabled = !on;
@@ -1547,17 +1579,24 @@ function loadMusic() {
   function updateTrackDisplay() {
     var t = track();
     nameEl.textContent = trackLabel(t);
+    cueEl.textContent = cueLabel(t);
     playBtn.setAttribute('aria-label', (audio.paused ? 'Play ' : 'Pause ') + trackLabel(t));
     renderQueue();
   }
 
   /* ── Playlist dropdown ── rebuilt on every track change so the highlighted
-     "now playing" row always matches. */
+     "now playing" row always matches. Each row shows the song + artist and,
+     underneath, where it lands in the show — the whole reason this playlist
+     is ordered by Act/page rather than the order the mp3s were dropped in. */
   function renderQueue() {
     queueList.innerHTML = order.map(function (trackIdx, i) {
       var t = TRACKS[trackIdx], current = i === pos;
       return '<button type="button" class="music-queue-item" role="option" aria-current="' + current + '" data-pos="' + i + '">' +
-        '<span class="music-queue-num">' + (i + 1) + '</span><span>' + trackLabel(t) + '</span></button>';
+        '<span class="music-queue-num">' + (i + 1) + '</span>' +
+        '<span class="music-queue-info">' +
+          '<span class="music-queue-title">' + escHtmlShared(trackLabel(t)) + ' — ' + escHtmlShared(t.artist) + '</span>' +
+          '<span class="music-queue-cue">' + escHtmlShared(showCue(t)) + '</span>' +
+        '</span></button>';
     }).join('');
   }
   function openQueue() {
@@ -1708,6 +1747,7 @@ function loadMusic() {
     var t = track();
     navigator.mediaSession.metadata = new MediaMetadata({
       title: trackLabel(t),
+      artist: t.artist,
       album: 'A Simple Act of Kindness',
       artwork: [{ src: '/Images/favicon.png', sizes: '180x180', type: 'image/png' }]
     });
