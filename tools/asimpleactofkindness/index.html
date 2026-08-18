@@ -99,9 +99,9 @@
     }
     .big-btn:hover { background: var(--lime); color: #000; border-color: var(--lime); }
 
-    /* Second row, below the countdown — currently just Soundtrack, sized to
-       however many buttons end up in it (more may join later). */
-    .btn-row-2 { grid-template-columns: 1fr; margin-top: 24px; }
+    /* Second row, below the countdown — grows to fit however many buttons
+       end up in it (more may join later). */
+    .btn-row-2 { grid-template-columns: 1fr 1fr; margin-top: 24px; }
 
     /* ── COUNTDOWN ── */
     .cd-wrap { display: flex; justify-content: center; align-items: center; padding: 56px 24px; }
@@ -180,6 +180,40 @@
     .music-queue-cue { font-size: 9px; opacity: 0.7; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .music-queue-item[aria-current="true"] { color: var(--fg); font-weight: 700; }
     .music-queue-item[aria-current="true"] .music-queue-num::after { content: '♪'; }
+
+    /* ── GLOSSARY ── */
+    .gloss-toolbar {
+      position: sticky; top: 0; z-index: 1; background: var(--bg);
+      padding: 14px 20px 10px; border-bottom: 1px solid var(--border);
+    }
+    .gloss-find-input {
+      width: 100%; background: var(--card-bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 12px; padding: 8px 12px; border-radius: 2px;
+    }
+    .gloss-find-input:focus { outline: none; border-color: var(--lime); }
+    .gloss-jump { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+    .gloss-jump button {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font); font-size: 9px; width: 22px; height: 22px; line-height: 1;
+      cursor: pointer; border-radius: 2px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .gloss-jump button:hover { border-color: var(--lime); color: var(--lime); }
+    .gloss-count { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin-top: 8px; }
+    .gloss-list { padding: 4px 20px 20px; }
+    /* scroll-margin-top keeps the jump-nav target clear of the sticky
+       toolbar above it once scrolled into view. */
+    .gloss-section-head {
+      font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--lime);
+      padding-top: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+      scroll-margin-top: 110px;
+    }
+    .gloss-entry { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .gloss-entry:last-child { border-bottom: 0; }
+    .gloss-term-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+    .gloss-term { font-weight: 700; font-size: 12px; color: var(--fg); }
+    .gloss-page { font-size: 9px; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+    .gloss-def { font-size: 11px; line-height: 1.6; color: var(--fg); opacity: 0.85; }
+    .gloss-def mark { background: rgba(212,255,26,0.45); color: inherit; border-radius: 1px; }
 
     /* ── MODALS ── */
     /* inset:0 already tracks the real viewport under `zoom` (and under a mobile
@@ -412,6 +446,7 @@
 
     <div class="btn-row btn-row-2">
       <button class="big-btn" id="open-soundtrack">Soundtrack</button>
+      <button class="big-btn" id="open-glossary">Glossary</button>
     </div>
 
   </div>
@@ -514,6 +549,26 @@
     </div>
   </div>
 
+  <!-- ── MODAL: Glossary ── -->
+  <div class="modal-overlay" id="modal-glossary" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Glossary — Reference A to Z</span>
+        <button class="modal-close" data-close="modal-glossary" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="gloss-modal-body">
+        <div class="gloss-toolbar">
+          <input class="gloss-find-input" id="gloss-find-input" type="text" placeholder="Search the glossary…" aria-label="Search the glossary" disabled>
+          <div class="gloss-jump" id="gloss-jump"></div>
+          <div class="gloss-count" id="gloss-count"></div>
+        </div>
+        <div class="gloss-list" id="gloss-list">
+          <div class="sched-loading">Loading glossary…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ── THEME ── */
 (function () {
@@ -608,6 +663,10 @@
   document.getElementById('open-soundtrack').addEventListener('click', function () {
     openModal('modal-soundtrack');
     loadMusic();
+  });
+  document.getElementById('open-glossary').addEventListener('click', function () {
+    openModal('modal-glossary');
+    loadGlossary();
   });
 
   /* Close buttons */
@@ -873,6 +932,116 @@ function loadCast() {
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function (txt) { render(toRows(txt)); })
     .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load cast &amp; crew.<br>' + esc(err.message) + '</div>'; });
+}
+
+/* ── GLOSSARY ── */
+var glossaryLoaded = false;
+function loadGlossary() {
+  if (glossaryLoaded) return;
+
+  var GLOSS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV/pub?gid=1037864490&single=true&output=csv';
+  var listEl    = document.getElementById('gloss-list');
+  var jumpEl    = document.getElementById('gloss-jump');
+  var countEl   = document.getElementById('gloss-count');
+  var findInput = document.getElementById('gloss-find-input');
+  var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var esc = escHtmlShared;
+  var ENTRIES = [];   /* {letter, term, definition, page} in sheet order */
+
+  function toRows(txt) {
+    var matrix = parseCSV(txt);
+    if (!matrix.length) return [];
+    var headers = matrix[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+    var rows = [];
+    for (var i = 1; i < matrix.length; i++) {
+      var cols = matrix[i], obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.term) rows.push(obj);
+    }
+    return rows;
+  }
+
+  /* Escapes first, then marks matches — marking on raw text and escaping
+     afterwards would let a match that happens to land on a literal &/</>
+     char corrupt the tag it's wrapped in. Marker bytes (\x01 \x02) survive
+     escHtmlShared untouched (it only rewrites &, < and >), so they're safe
+     to swap for real <mark> tags once escaping is done. */
+  function markedEscape(raw, qLower) {
+    if (!qLower) return esc(raw);
+    var lower = raw.toLowerCase(), out = '', i = 0, idx;
+    while ((idx = lower.indexOf(qLower, i)) !== -1) {
+      out += raw.slice(i, idx) + '\x01' + raw.slice(idx, idx + qLower.length) + '\x02';
+      i = idx + qLower.length;
+    }
+    out += raw.slice(i);
+    return esc(out).split('\x01').join('<mark>').split('\x02').join('</mark>');
+  }
+
+  function renderJump(letters) {
+    jumpEl.innerHTML = letters.map(function (L) {
+      return '<button type="button" data-jump="' + esc(L) + '">' + esc(L) + '</button>';
+    }).join('');
+  }
+
+  /* Rebuilt on every keystroke (cheap — <100 entries) rather than hiding
+     rows with CSS, so section headers with zero matching entries just don't
+     get emitted instead of needing their own show/hide bookkeeping. */
+  function renderList(query) {
+    var qLower = query.trim().toLowerCase();
+    var letters = [];
+    ENTRIES.forEach(function (e) { if (letters.indexOf(e.letter) === -1) letters.push(e.letter); });
+
+    var shown = 0, html = '';
+    letters.forEach(function (L) {
+      var group = ENTRIES.filter(function (e) {
+        return e.letter === L && (!qLower || (e.term + ' ' + e.definition).toLowerCase().indexOf(qLower) !== -1);
+      });
+      if (!group.length) return;
+      shown += group.length;
+      html += '<div class="gloss-section-head" id="gloss-letter-' + esc(L) + '">' + esc(L) + '</div>';
+      group.forEach(function (e) {
+        html += '<div class="gloss-entry">'
+              + '<div class="gloss-term-row"><span class="gloss-term">' + markedEscape(e.term, qLower) + '</span>'
+              + '<span class="gloss-page">' + esc(e.page) + '</span></div>'
+              + '<div class="gloss-def">' + markedEscape(e.definition, qLower) + '</div></div>';
+      });
+    });
+
+    listEl.innerHTML = html || '<div class="sched-loading">No matches found.</div>';
+    countEl.textContent = shown + (shown === 1 ? ' term' : ' terms') + (qLower ? ' matching “' + query.trim() + '”' : ' total');
+  }
+
+  var findTimer = null;
+  findInput.addEventListener('input', function () {
+    clearTimeout(findTimer);
+    var v = this.value;
+    findTimer = setTimeout(function () { renderList(v); }, 120);
+  });
+
+  jumpEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-jump]');
+    if (!btn) return;
+    if (findInput.value) { findInput.value = ''; renderList(''); }
+    var target = document.getElementById('gloss-letter-' + btn.getAttribute('data-jump'));
+    if (target) target.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+
+  fetch(GLOSS_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) {
+      ENTRIES = toRows(txt);
+      glossaryLoaded = true;
+      if (!ENTRIES.length) { listEl.innerHTML = '<div class="sched-loading">No entries found.</div>'; return; }
+      var letters = [];
+      ENTRIES.forEach(function (e) { if (letters.indexOf(e.letter) === -1) letters.push(e.letter); });
+      renderJump(letters);
+      renderList('');
+      findInput.disabled = false;
+    })
+    .catch(function (err) {
+      listEl.innerHTML = '<div class="sched-error">Could not load the glossary.<br>' + esc(err.message) + '</div>';
+    });
 }
 
 /* ── PDF VIEWER (continuous scroll + find) ── */
