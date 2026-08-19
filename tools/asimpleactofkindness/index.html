@@ -151,15 +151,19 @@
       content: ''; position: absolute; left: 0; right: 0; height: 3px;
       background: var(--border); top: 50%; transform: translateY(-50%);
     }
-    .music-progress-fill { height: 3px; background: var(--lime); width: 0%; pointer-events: none; transition: width 0.1s linear; position: relative; z-index: 1; }
+    /* Purple, not lime, for the scrubber — lime-on-page-background (rather
+       than lime as a solid button's own fill) is the combination that reads
+       poorly in light mode; --purple holds up in both themes since it isn't
+       redefined per theme the way --bg/--fg are. */
+    .music-progress-fill { height: 3px; background: var(--purple); width: 0%; pointer-events: none; transition: width 0.1s linear; position: relative; z-index: 1; }
     .music-progress-thumb {
       position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%);
-      width: 11px; height: 11px; border-radius: 50%; background: var(--lime); pointer-events: none; z-index: 2;
+      width: 11px; height: 11px; border-radius: 50%; background: var(--purple); pointer-events: none; z-index: 2;
     }
     .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
     @keyframes music-glow {
-      0%, 100% { box-shadow: 0 0 4px 2px rgba(212,255,26,0.3); }
-      50%       { box-shadow: 0 0 12px 4px rgba(212,255,26,0.7); }
+      0%, 100% { box-shadow: 0 0 4px 2px rgba(153,51,255,0.3); }
+      50%       { box-shadow: 0 0 12px 4px rgba(153,51,255,0.7); }
     }
     .music-player.empty .music-progress,
     .music-player.empty .music-vis { pointer-events: none; opacity: 0.4; }
@@ -190,20 +194,20 @@
       width: 100%; background: var(--card-bg); border: 1px solid var(--border); color: var(--fg);
       font-family: var(--font); font-size: 12px; padding: 8px 12px; border-radius: 2px;
     }
-    .gloss-find-input:focus { outline: none; border-color: var(--lime); }
+    .gloss-find-input:focus { outline: none; border-color: var(--purple); }
     .gloss-jump { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
     .gloss-jump button {
       background: none; border: 1px solid var(--border); color: var(--muted);
       font-family: var(--font); font-size: 9px; width: 22px; height: 22px; line-height: 1;
       cursor: pointer; border-radius: 2px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
-    .gloss-jump button:hover { border-color: var(--lime); color: var(--lime); }
+    .gloss-jump button:hover { border-color: var(--purple); color: var(--purple); }
     .gloss-count { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin-top: 8px; }
     .gloss-list { padding: 4px 20px 20px; }
     /* scroll-margin-top keeps the jump-nav target clear of the sticky
        toolbar above it once scrolled into view. */
     .gloss-section-head {
-      font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--lime);
+      font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--purple);
       padding-top: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
       scroll-margin-top: 110px;
     }
@@ -1826,10 +1830,11 @@ function loadMusic() {
     thumb.style.left     = pct + '%';
   }
 
-  /* ── Visualiser ── this page doesn't redefine --lime per theme, so the bar
-     colour is just the page's own lime accent, no light/dark switch needed. */
+  /* ── Visualiser ── purple, not lime — lime bars drawn against the page's
+     own background read poorly in light mode; --purple isn't redefined per
+     theme, so it holds up in both without needing a light/dark switch. */
   function barColor() {
-    return getComputedStyle(document.documentElement).getPropertyValue('--lime').trim() || '#D4FF1A';
+    return getComputedStyle(document.documentElement).getPropertyValue('--purple').trim() || '#9933FF';
   }
 
   function resizeCanvas() {
