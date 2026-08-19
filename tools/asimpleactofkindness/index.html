@@ -58,9 +58,37 @@
       --border:  rgba(212,255,26,0.14);
     }
 
+    /* ── secret Synthwave theme — tap the theme button 20× to unlock ── */
+    [data-theme="synthwave"] {
+      --bg:      #15092c;
+      --card-bg: #20123f;
+      --fg:      #f6ecff;
+      --muted:   rgba(255,122,224,0.45);
+      --border:  rgba(255,45,149,0.22);
+    }
+    [data-theme="synthwave"] body {
+      background:
+        radial-gradient(120% 70% at 50% 118%, rgba(255,45,149,.38), transparent 60%),
+        radial-gradient(90% 50% at 50% 112%, rgba(67,232,255,.20), transparent 60%),
+        linear-gradient(180deg, #241146 0%, #15092c 62%);
+      background-attachment: fixed;
+    }
+    [data-theme="synthwave"] .asak-title {
+      text-shadow: 0 0 16px rgba(255,45,149,.6), 0 0 42px rgba(153,51,255,.4);
+    }
+    .synth-toast {
+      position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 20px); z-index: 200;
+      background: linear-gradient(90deg, #FF2D95, var(--purple)); color: #fff;
+      font-family: var(--font); font-weight: 500; letter-spacing: 0.02em; font-size: 12px;
+      padding: 12px 20px; border-radius: 999px; box-shadow: 0 10px 32px -6px rgba(255,45,149,.6);
+      opacity: 0; transition: opacity 0.35s, transform 0.35s; pointer-events: none;
+    }
+    .synth-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
     [data-theme="dark"] :focus-visible,
-    [data-theme="terminal"] :focus-visible { outline-color: var(--lime); }
+    [data-theme="terminal"] :focus-visible,
+    [data-theme="synthwave"] :focus-visible { outline-color: var(--lime); }
 
     html, body { min-height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; transition: background 0.2s, color 0.2s; }
 
@@ -574,24 +602,70 @@
   </div>
 
 <script>
-/* ── THEME ── */
+/* ── THEME (with a secret Synthwave mode — tap this button 20× to unlock) ── */
 (function () {
-  var themes = ['light', 'dark'];
-  var sunSVG  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
-  function iconFor(theme) { return theme === 'dark' ? sunSVG : '☾'; }
-  /* Terminal mode has been removed; fold any leftover terminal preference into dark. */
-  var saved  = localStorage.getItem('theme') || 'light';
+  var SYNTH_KEY = 'asak-synth-unlocked';
+  function synthUnlocked() { return localStorage.getItem(SYNTH_KEY) === '1'; }
+
+  var sunSVG   = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+  var sparkSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M17.7 6.3l-2.4 2.4M8.7 15.3l-2.4 2.4"/></svg>`;
+  /* Icon shows what the NEXT click switches to: moon = going dark, sun =
+     going light, spark = going synthwave (only shown once that's unlocked —
+     until then dark still just goes back to light, same as always). */
+  function iconFor(theme) {
+    if (theme === 'synthwave') return sunSVG;
+    if (theme === 'dark')      return synthUnlocked() ? sparkSVG : sunSVG;
+    return '☾';
+  }
+
+  /* Terminal mode has been removed; fold any leftover terminal preference
+     into dark — and do the same for a saved "synthwave" that isn't actually
+     unlocked (e.g. the unlock flag got cleared on its own). */
+  var saved = localStorage.getItem('theme') || 'light';
   if (saved === 'terminal') saved = 'dark';
+  if (saved === 'synthwave' && !synthUnlocked()) saved = 'dark';
   localStorage.setItem('theme', saved);
   document.documentElement.setAttribute('data-theme', saved);
+
   var btn = document.getElementById('theme-btn');
   btn.innerHTML = iconFor(saved);
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    btn.innerHTML = iconFor(t);
+  }
+
+  function showSynthToast() {
+    var el = document.createElement('div');
+    el.className = 'synth-toast';
+    el.textContent = '🌆 Synthwave Mode unlocked!';
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    setTimeout(function () {
+      el.classList.remove('show');
+      setTimeout(function () { el.remove(); }, 400);
+    }, 3600);
+  }
+
+  var tapTimes = [];
   btn.addEventListener('click', function () {
-    var cur  = document.documentElement.getAttribute('data-theme') || 'light';
-    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    btn.innerHTML = iconFor(next);
+    var cur = document.documentElement.getAttribute('data-theme') || 'light';
+    if (synthUnlocked()) {                            /* cycle light → dark → synthwave */
+      var order = ['light', 'dark', 'synthwave'];
+      setTheme(order[(order.indexOf(cur) + 1) % order.length]);
+      return;
+    }
+    setTheme(cur === 'dark' ? 'light' : 'dark');       /* normal toggle… */
+    var t = Date.now();                                /* …while counting rapid taps */
+    tapTimes.push(t);
+    tapTimes = tapTimes.filter(function (x) { return t - x <= 30000; });
+    if (tapTimes.length >= 20) {
+      tapTimes = [];
+      localStorage.setItem(SYNTH_KEY, '1');
+      setTheme('synthwave');
+      showSynthToast();
+    }
   });
 })();
 
