@@ -8964,6 +8964,14 @@ const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste you
    THEATREDEX_CSV_URL secret. */
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
+   they're discovered, but shouldn't be public yet — filtered out of
+   `allData` in init() below, before anything derives from it. The same
+   filter also lives in scripts/build-theatredex.mjs (the baked SEO/JSON-LD
+   fallback) and spreadsheet.html (the public spreadsheet view) — update all
+   three together, or just delete the filter once that season is ready to
+   announce. */
+const HIDDEN_YEAR = 2027;
 
 /* ── URL NORMALISER ── */
 function safeUrl(url) {
@@ -9255,6 +9263,10 @@ async function init() {
        set. Every load starts on Plays — mode isn't read from the URL, so a
        refresh never remembers a Musicals selection. */
     allData = parseCSV(text)
+      .filter(s => {
+        const d = parseDate(s.date_start);
+        return !d || d.getFullYear() !== HIDDEN_YEAR;
+      })
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
     if (!allData.length) throw new Error('empty');
     setModeData('play');

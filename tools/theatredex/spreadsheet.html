@@ -107,6 +107,13 @@
 const WORKER_URL = 'https://blakeai.blakestringer.workers.dev';
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
+   they're discovered, but shouldn't be public yet — filtered out in init()
+   below. The same filter also lives in index.html (the live client-side
+   app) and scripts/build-theatredex.mjs (the baked SEO/JSON-LD fallback) —
+   update all three together, or just delete the filter once that season is
+   ready to announce. */
+const HIDDEN_YEAR = 2027;
 
 const mode = new URLSearchParams(location.search).get('mode') === 'musical' ? 'musical' : 'play';
 document.getElementById('ss-year').textContent = new Date().getFullYear();
@@ -252,9 +259,11 @@ async function init() {
     const res = await fetch(DATA_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
-    const rows = parseCSV(text).filter(s => mode === 'musical'
-      ? isMusicalShow(s)
-      : s.Musical_Theatre_Company !== '1');
+    const rows = parseCSV(text).filter(s => {
+      const d = parseDate(s.date_start);
+      if (d && d.getFullYear() === HIDDEN_YEAR) return false;
+      return mode === 'musical' ? isMusicalShow(s) : s.Musical_Theatre_Company !== '1';
+    });
     render(rows);
   } catch (e) {
     document.getElementById('ss-scroll').innerHTML =

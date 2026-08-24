@@ -36,6 +36,16 @@ const PAGE_PATH = join(REPO_ROOT, 'tools', 'theatredex', 'index.html');
 const CANONICAL = 'https://www.blakestringer.com/tools/theatredex';
 const YEAR      = 2026;
 
+/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
+   they're discovered, but shouldn't be public yet — filtered out here so
+   they never reach the baked SEO/JSON-LD content search engines see. The
+   exact same filter also lives in tools/theatredex/index.html and
+   spreadsheet.html (the live client-side app and its public spreadsheet
+   view), since this script only covers the crawlable fallback content —
+   update all three together, or just delete the filter once that season
+   is ready to announce. */
+const HIDDEN_YEAR = 2027;
+
 const DEFAULT_CSV_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vShrAdd1Wbvx9DPxhtZpcXmsT7k8yDUPUqX-oNBCMjQn6jsDaTKfDWiGPe-v08g_AEEc5VRG_GrLr-z/pub?output=csv';
 
@@ -231,11 +241,19 @@ async function loadCsv() {
 
 /* ── main ── */
 async function main() {
-  const csv  = await loadCsv();
-  const rows = parseCSV(csv);
-  if (!rows.length) throw new Error('No rows parsed from CSV — refusing to overwrite with empty content.');
+  const csv     = await loadCsv();
+  const allRows = parseCSV(csv);
+  if (!allRows.length) throw new Error('No rows parsed from CSV — refusing to overwrite with empty content.');
+
+  const rows = allRows.filter(r => {
+    const d = parseDate(r.date_start);
+    return !d || d.getFullYear() !== HIDDEN_YEAR;
+  });
+  if (!rows.length) {
+    throw new Error(`All ${allRows.length} rows were for ${HIDDEN_YEAR} (hidden) — refusing to overwrite with empty content.`);
+  }
   rows.sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-  console.log(`Parsed ${rows.length} productions.`);
+  console.log(`Parsed ${allRows.length} productions (${rows.length} after hiding ${HIDDEN_YEAR}).`);
 
   let html = await readFile(PAGE_PATH, 'utf8');
   html = replaceRegion(html, 'TDX:SEO',    buildSeoSection(rows));
