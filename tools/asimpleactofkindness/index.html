@@ -355,9 +355,11 @@
     .cc-table td.tbc { color: var(--muted); font-style: italic; }
     .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
     .cc-table td a:hover { color: var(--purple); }
+    /* A step up from the 8px column headers, so Cast/Crew read as dividers
+       within the table rather than as another header row. */
     .cc-section-row td {
-      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 14px 16px 6px; background: var(--bg); font-weight: 400;
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 10px 6px; background: var(--bg); font-weight: 400;
       border-bottom: 1px solid var(--border);
     }
 
@@ -452,6 +454,9 @@
       #sched-body, #cast-body { zoom: 1; }
       #modal-cast .modal { min-height: 72vh; }
       .cc-table thead th, .cc-table td { padding: 9px 7px; }
+      /* Comes after the rule above, which would otherwise flatten the
+         divider's deliberate lead-in spacing to a uniform 9px. */
+      .cc-section-row td { padding: 13px 7px 5px; }
       .cc-table td { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
       .cc-table td a { white-space: normal; overflow: visible; text-overflow: clip; }
       .pdf-toolbar { padding: 6px 10px; gap: 4px; }
