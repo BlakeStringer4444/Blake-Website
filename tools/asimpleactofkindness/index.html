@@ -28,7 +28,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1535,72 +1534,218 @@ function loadPDF() {
   pdfBody.addEventListener('touchcancel', endPinch, { passive: true });
 }
 
-/* ── SCHEDULE PDF DOWNLOAD ── */
+/* ── SCHEDULE PDF DOWNLOAD ──
+   Hand-laid rather than run through autoTable, because the shape we want
+   isn't a table: it's a call sheet. Each day is a block — a date rail on the
+   left, what we're rehearsing set as a headline, and who's called in its own
+   column — grouped under week headings. No vertical rules, no zebra fills and
+   no boxed cells, which is what made the old table version read as a pasted
+   spreadsheet.
+
+   Two deliberate departures from the on-screen table:
+   · Purple is the accent, not the fluro lime. Lime is a screen colour — on
+     paper it's nearly invisible on white and muddy on black. Lime survives
+     only as the short rule under the masthead, as a brand signature.
+   · Nothing is styled by "today"/"past". The PDF is a snapshot that gets
+     printed and pinned up, so baking the download date into row colours makes
+     it look stale the next morning. The generated date sits in the masthead
+     instead. */
 function downloadSchedulePDF() {
   if (!schedPdfRows || !schedPdfRows.length) return;
   var J = window.jspdf;
   if (!J) return;
 
-  var rehearsals  = schedPdfRows.filter(function (r) { return !r.performance; });
-  var productions = schedPdfRows.filter(function (r) { return !!r.performance; });
-
   var doc = new J.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  var W   = doc.internal.pageSize.getWidth();   /* 210 */
-  var H   = doc.internal.pageSize.getHeight();  /* 297 */
-  var MX  = 12;
+  var W = doc.internal.pageSize.getWidth();    /* 210 */
+  var H = doc.internal.pageSize.getHeight();   /* 297 */
+
+  /* ── palette ── */
+  var INK    = [17, 17, 17];
+  var BODY   = [58, 58, 58];
+  var META   = [112, 112, 112];
+  var MUTED  = [145, 145, 145];
+  var HAIR   = [232, 232, 228];
+  var RULE   = [196, 196, 190];
+  var PURPLE = [153, 51, 255];   /* brand purple — rules and larger accents */
+  var DEEP   = [104, 32, 190];   /* deeper purple — holds up at 6–8pt in print */
+  var LIME   = [212, 255, 26];
+
+  /* ── grid ──
+     rail (date) | main (what) | call (who). The call column is dropped and
+     its width handed back to main when the sheet has no characters data. */
+  var ML = 16, MR = 16;
+  var RAIL_X = ML,  RAIL_W = 22;
+  var MAIN_X = ML + RAIL_W + 4;
+  var CALL_ON = !!(schedPdfHas && schedPdfHas.characters);
+  var CALL_X  = 143, CALL_W = W - MR - CALL_X;
+  var MAIN_W  = CALL_ON ? (CALL_X - 5 - MAIN_X) : (W - MR - MAIN_X);
+
+  var FOOT_Y = H - 14;          /* footer rule */
+  var BOTTOM = FOOT_Y - 6;      /* last usable baseline for content */
+
   var now = new Date();
-  var mo  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var dateStr = now.getDate() + ' ' + mo[now.getMonth()] + ' ' + now.getFullYear();
+  var dateStr = now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
 
-  function drawPageHeader(subtitle) {
-    doc.setFillColor(10, 10, 10);
-    doc.rect(0, 0, W, 26, 'F');
-    doc.setFillColor(212, 255, 26);
-    doc.rect(0, 26, W, 0.6, 'F');
+  var rehearsals  = schedPdfRows.filter(function (r) { return !r.performance && parseDT(r.datetime); });
+  var productions = schedPdfRows.filter(function (r) { return !!r.performance && parseDT(r.datetime); });
+
+  /* ── drawing helpers ── */
+  function font(style, size, color) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(color[0], color[1], color[2]);
+  }
+  function hline(x1, x2, yy, color, wt) {
+    doc.setDrawColor(color[0], color[1], color[2]);
+    doc.setLineWidth(wt);
+    doc.line(x1, yy, x2, yy);
+  }
+
+  var y = 0;
+  function drawFooter() {
+    hline(ML, W - MR, FOOT_Y, HAIR, 0.2);
+    font('normal', 6.8, MUTED);
+    doc.text('A Simple Act of Kindness  ·  Brighton Theatre Company  ·  Season 2026', ML, FOOT_Y + 4.4);
+  }
+  function drawRunningHead() {
+    font('bold', 6.8, DEEP);
+    doc.text('A SIMPLE ACT OF KINDNESS', ML, 13.5, { charSpace: 0.5 });
+    font('normal', 6.8, MUTED);
+    doc.text('Rehearsal Schedule', W - MR, 13.5, { align: 'right' });
+    hline(ML, W - MR, 16.6, HAIR, 0.2);
+    y = 25;
+  }
+  function newPage() {
+    drawFooter();
+    doc.addPage();
+    drawRunningHead();
+  }
+  /* Page-break guard. Callers pass the height of the block about to be drawn
+     so a heading never lands alone at the foot of a page. */
+  function ensure(h) { if (y + h > BOTTOM) newPage(); }
+
+  /* ── masthead (page 1 only) ── */
+  font('bold', 23, INK);
+  doc.text('A SIMPLE ACT OF KINDNESS', ML, 26, { charSpace: 0.2 });
+  font('bold', 8, DEEP);
+  doc.text('REHEARSAL SCHEDULE', ML, 32.5, { charSpace: 1.5 });
+
+  font('normal', 7.6, BODY);
+  doc.text('Brighton Theatre Company', W - MR, 18.5, { align: 'right' });
+  doc.text('6 – 21 November 2026', W - MR, 23, { align: 'right' });
+  font('normal', 6.8, MUTED);
+  doc.text('Generated ' + dateStr, W - MR, 27.5, { align: 'right' });
+
+  /* Two-tone brand rule: a short lime bar, then purple across the measure. */
+  doc.setLineWidth(1.1);
+  doc.setDrawColor(LIME[0], LIME[1], LIME[2]);
+  doc.line(ML, 37, ML + 15, 37);
+  doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+  doc.line(ML + 15, 37, W - MR, 37);
+
+  /* Summary strip — the two numbers people actually want up front. */
+  function shortDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  var summary = '';
+  if (rehearsals.length) {
+    var rd = rehearsals.map(function (r) { return parseDT(r.datetime); })
+                       .sort(function (a, b) { return a - b; });
+    summary = rehearsals.length + (rehearsals.length === 1 ? ' rehearsal call' : ' rehearsal calls') +
+              '   ·   ' + shortDate(rd[0]) + ' – ' + shortDate(rd[rd.length - 1]) + ' ' + rd[rd.length - 1].getFullYear();
+  }
+  font('normal', 8, BODY);
+  if (summary) doc.text(summary, ML, 43.5);
+  if (productions.length) {
+    font('normal', 8, DEEP);
+    doc.text(productions.length + ' performances', W - MR, 43.5, { align: 'right' });
+  }
+  y = 55;
+
+  /* ── week heading ── */
+  function drawWeekHead(label, meta) {
+    y += 3;
+    ensure(30);
+    hline(ML, W - MR, y - 5, RULE, 0.35);
+    font('bold', 7.8, DEEP);
+    doc.text(String(label).toUpperCase(), ML, y, { charSpace: 0.7 });
+    if (meta) {
+      font('normal', 6.8, MUTED);
+      doc.text(meta, CALL_ON ? CALL_X - 5 : W - MR, y, { align: 'right' });
+    }
+    if (CALL_ON) {
+      font('normal', 6, MUTED);
+      doc.text('CALLED', CALL_X, y, { charSpace: 0.6 });
+    }
+    y += 7.5;
+  }
+
+  /* ── one rehearsal call ── */
+  function drawCall(d, headline, metaRest, called, lastInWeek) {
+    font('bold', 9.6, INK);
+    var headLines = doc.splitTextToSize(headline, MAIN_W);
+    font('normal', 7.8, META);
+    var timeStr = fmtTime(d);
+    var timeW   = 0;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.setTextColor(212, 255, 26);
-    doc.text('A SIMPLE ACT OF KINDNESS', MX, 10);
+    timeW = doc.getTextWidth(timeStr + '   ·   ');
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(115, 115, 115);
-    doc.text(subtitle + '  ·  BRIGHTON THEATRE COMPANY  ·  6–21 NOV 2026', MX, 18);
-    doc.setTextColor(85, 85, 85);
-    doc.text('Generated ' + dateStr, W - MX, 18, { align: 'right' });
+    var metaLines = metaRest ? doc.splitTextToSize(metaRest, MAIN_W - timeW) : [];
+    font('normal', 8, BODY);
+    var callLines = (CALL_ON && called) ? doc.splitTextToSize(called, CALL_W) : [];
+
+    var mainH = headLines.length * 4.6 + 1.2 + Math.max(metaLines.length, 1) * 4.1;
+    var callH = callLines.length * 4.2;
+    var railH = 10.4;
+    var h = 2.2 + Math.max(mainH, callH, railH) + 4.4;
+
+    ensure(h);
+    var top = y;
+
+    /* rail — weekday over date */
+    font('bold', 6.4, DEEP);
+    doc.text(DAYS[d.getDay()].toUpperCase(), RAIL_X, top + 3.2, { charSpace: 0.6 });
+    font('bold', 11, INK);
+    doc.text(d.getDate() + ' ' + MONTHS[d.getMonth()].toUpperCase(), RAIL_X, top + 9.4);
+
+    /* main — what we're doing, then the reference line beneath it */
+    font('bold', 9.6, INK);
+    var by = top + 4.4;
+    headLines.forEach(function (ln) { doc.text(ln, MAIN_X, by); by += 4.6; });
+    by += 1.2;
+    font('bold', 7.8, DEEP);
+    doc.text(timeStr, MAIN_X, by);
+    if (metaLines.length) {
+      font('normal', 7.8, META);
+      doc.text('   ·   ' + metaLines[0], MAIN_X + doc.getTextWidth(timeStr) - 0.2, by);
+      for (var i = 1; i < metaLines.length; i++) doc.text(metaLines[i], MAIN_X, by + i * 4.1);
+    }
+
+    /* call — who's needed */
+    if (callLines.length) {
+      font('normal', 8, BODY);
+      var cy = top + 4.3;
+      callLines.forEach(function (ln) { doc.text(ln, CALL_X, cy); cy += 4.2; });
+    }
+
+    y = top + h;
+    /* The week heading below draws its own, heavier rule — a hairline here
+       too would read as a doubled line. */
+    if (!lastInWeek) hline(ML, W - MR, y - 2.2, HAIR, 0.2);
   }
 
-  function drawPageFooter() {
-    doc.setDrawColor(212, 255, 26);
-    doc.setLineWidth(0.5);
-    doc.line(MX, H - 10, W - MX, H - 10);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(130, 130, 130);
-    doc.text('A Simple Act of Kindness  ·  Brighton Theatre Company  ·  Season 2026', MX, H - 5.5);
+  /* Turn act/scene/pages into readable prose rather than three stub columns:
+     "Act 1, Scene 3  ·  pp. 16–24". */
+  function refLine(row) {
+    var bits = [];
+    var act = (row.act || '').trim(), scene = (row.scene || '').trim(), pages = (row.pages || '').trim();
+    var ap = act ? (/^all$/i.test(act) ? 'All acts' : 'Act ' + act) : '';
+    var sp = scene ? (/^all$/i.test(scene) ? (ap ? 'all scenes' : 'All scenes') : 'Scene ' + scene) : '';
+    var as = [ap, sp].filter(Boolean).join(', ');
+    if (as) bits.push(as);
+    if (pages) bits.push((/[-–—]/.test(pages) ? 'pp. ' : 'p. ') + pages.replace(/\s*-\s*/g, '–'));
+    return bits.join('   ·   ');
   }
 
-  /* ── PAGE 1: REHEARSALS ── */
-  drawPageHeader('REHEARSAL SCHEDULE');
-
-  var has    = schedPdfHas;
-  var availW = W - 2 * MX;
-
-  /* Narrow columns for portrait */
-  var colDef = [
-    { header: 'DATE',  r: 16 },
-    { header: 'TIME',  r: 8  },
-  ];
-  if (has.pages)      colDef.push({ header: 'PG',   r: 7  });
-  if (has.act)        colDef.push({ header: 'ACT',  r: 6  });
-  if (has.scene)      colDef.push({ header: 'SCENE', r: 9  });
-  if (has.characters) colDef.push({ header: 'CHARACTERS', r: 22 });
-  if (has.context)    colDef.push({ header: 'NOTES',      r: 32 });
-
-  var totalR = colDef.reduce(function (s, c) { return s + c.r; }, 0);
-  var colStyles = {};
-  colDef.forEach(function (c, i) { colStyles[i] = { cellWidth: (c.r / totalR) * availW }; });
-
-  /* Group rehearsal rows by week */
+  /* ── rehearsals, grouped by week ── */
   var groups = [], gmap = {};
   rehearsals.forEach(function (r) {
     var wk = r.week || 'Schedule';
@@ -1608,141 +1753,67 @@ function downloadSchedulePDF() {
     gmap[wk].push(r);
   });
 
-  var rHead = [colDef.map(function (c) { return c.header; })];
-  var rBody = [], rMeta = [];
-
   groups.forEach(function (g) {
-    if (!g.rows.length) return;
-    rBody.push(colDef.map(function (_, i) { return i === 0 ? g.label.toUpperCase() : ''; }));
-    rMeta.push({ type: 'week' });
-    g.rows.forEach(function (row) {
+    var ds = g.rows.map(function (r) { return parseDT(r.datetime); }).sort(function (a, b) { return a - b; });
+    var span = ds.length
+      ? shortDate(ds[0]) + (ds.length > 1 ? ' – ' + shortDate(ds[ds.length - 1]) : '') +
+        '   ·   ' + ds.length + (ds.length === 1 ? ' call' : ' calls')
+      : '';
+    drawWeekHead(g.label, span);
+    g.rows.forEach(function (row, i) {
       var d = parseDT(row.datetime);
       if (!d) return;
-      var isToday = sameDay(d, now);
-      var isPast  = !isToday && d < now;
-      var cells   = [fmtDate(d), fmtTime(d)];
-      if (has.pages)      cells.push(row.pages      || '');
-      if (has.act)        cells.push(row.act        || '');
-      if (has.scene)      cells.push(row.scene      || '');
-      if (has.characters) cells.push(row.characters || '');
-      if (has.context)    cells.push(row.context    || '');
-      rBody.push(cells);
-      rMeta.push({ type: 'data', isPast: isPast, isToday: isToday });
+      drawCall(d, row.context || 'Rehearsal call', refLine(row), row.characters || '',
+               i === g.rows.length - 1);
     });
   });
 
-  doc.autoTable({
-    head: rHead, body: rBody,
-    startY: 30,
-    margin: { left: MX, right: MX, bottom: 14 },
-    theme: 'plain',
-    headStyles: {
-      fillColor: [18, 18, 18], textColor: [212, 255, 26],
-      fontSize: 6, fontStyle: 'bold',
-      cellPadding: { top: 2, right: 3, bottom: 2, left: 3 },
-    },
-    bodyStyles: {
-      fontSize: 6.5,
-      cellPadding: { top: 1, right: 3, bottom: 1, left: 3 },
-      textColor: [30, 30, 30], lineColor: [228, 228, 222], lineWidth: 0.18,
-      fillColor: [255, 255, 255],
-    },
-    columnStyles: colStyles,
-    didParseCell: function (data) {
-      if (data.section !== 'body') return;
-      var meta = rMeta[data.row.index];
-      if (!meta) return;
-      if (meta.type === 'week') {
-        data.cell.styles.fillColor   = [20, 20, 20];
-        data.cell.styles.textColor   = [105, 105, 105];
-        data.cell.styles.fontSize    = 5.5;
-        data.cell.styles.fontStyle   = 'bold';
-        data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 2, left: 3 };
-      } else if (meta.isPast) {
-        data.cell.styles.textColor = [165, 165, 165];
-        data.cell.styles.fillColor = [248, 248, 248];
-      } else if (meta.isToday) {
-        data.cell.styles.fillColor = [228, 255, 100];
-        data.cell.styles.textColor = [20, 20, 20];
-        data.cell.styles.fontStyle = 'bold';
-      } else if (data.row.index % 2 === 1) {
-        data.cell.styles.fillColor = [251, 251, 249];
-      }
-    },
-    didDrawPage: function () { drawPageFooter(); },
-  });
-
-  /* ── PAGE 2: PRODUCTION DATES ── */
+  /* ── the season ── */
   if (productions.length) {
-    doc.addPage();
-    drawPageHeader('PRODUCTION DATES');
+    ensure(40);
+    y += 6;
+    doc.setLineWidth(0.8);
+    doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+    doc.line(ML, y - 5, W - MR, y - 5);
+    font('bold', 10, INK);
+    doc.text('THE SEASON', ML, y, { charSpace: 1.0 });
+    font('normal', 7.2, MUTED);
+    doc.text('Brighton Theatre Company', W - MR, y, { align: 'right' });
+    y += 9;
 
-    var pColDef = [
-      { header: 'DATE',        r: 20 },
-      { header: 'TIME',        r: 10 },
-      { header: 'PERFORMANCE', r: 70 },
-    ];
-    var pTotalR = pColDef.reduce(function (s, c) { return s + c.r; }, 0);
-    var pColStyles = {};
-    pColDef.forEach(function (c, i) { pColStyles[i] = { cellWidth: (c.r / pTotalR) * availW }; });
-
-    var pHead = [pColDef.map(function (c) { return c.header; })];
-    var pBody = [], pMeta = [];
     productions.forEach(function (row) {
       var d = parseDT(row.datetime);
       if (!d) return;
-      var isToday = sameDay(d, now);
-      var isPast  = !isToday && d < now;
-      pBody.push([fmtDate(d), fmtTime(d), row.performance || '']);
-      pMeta.push({ isPast: isPast, isToday: isToday });
-    });
+      var name = row.performance || '';
+      var marquee = /opening|closing|gala|preview/i.test(name);
+      var h = 16;
+      ensure(h);
+      var top = y;
 
-    doc.autoTable({
-      head: pHead, body: pBody,
-      startY: 30,
-      margin: { left: MX, right: MX, bottom: 14 },
-      theme: 'plain',
-      headStyles: {
-        fillColor: [18, 18, 18], textColor: [212, 255, 26],
-        fontSize: 6, fontStyle: 'bold',
-        cellPadding: { top: 2, right: 4, bottom: 2, left: 4 },
-      },
-      bodyStyles: {
-        fontSize: 8,
-        cellPadding: { top: 2.5, right: 4, bottom: 2.5, left: 4 },
-        textColor: [30, 30, 30], lineColor: [228, 228, 222], lineWidth: 0.18,
-        fillColor: [255, 255, 255],
-      },
-      columnStyles: pColStyles,
-      didParseCell: function (data) {
-        if (data.section !== 'body') return;
-        var meta = pMeta[data.row.index];
-        if (!meta) return;
-        if (meta.isPast) {
-          data.cell.styles.textColor = [165, 165, 165];
-          data.cell.styles.fillColor = [248, 248, 248];
-        } else if (meta.isToday) {
-          data.cell.styles.fillColor = [228, 255, 100];
-          data.cell.styles.textColor = [20, 20, 20];
-          data.cell.styles.fontStyle = 'bold';
-        } else if (data.row.index % 2 === 0) {
-          data.cell.styles.fillColor = [244, 255, 185];
-        } else {
-          data.cell.styles.fillColor = [250, 255, 220];
-        }
-      },
-      didDrawPage: function () { drawPageFooter(); },
+      font('bold', 6.4, DEEP);
+      doc.text(DAYS[d.getDay()].toUpperCase(), RAIL_X, top + 3.2, { charSpace: 0.6 });
+      font('bold', 11, INK);
+      doc.text(d.getDate() + ' ' + MONTHS[d.getMonth()].toUpperCase(), RAIL_X, top + 9.4);
+
+      font('bold', 11.5, marquee ? DEEP : INK);
+      doc.text(name, MAIN_X, top + 9.4);
+
+      font('bold', 9.5, BODY);
+      doc.text(fmtTime(d), W - MR, top + 9.4, { align: 'right' });
+
+      y = top + h;
+      hline(ML, W - MR, y - 2.2, HAIR, 0.2);
     });
   }
 
-  /* Write page numbers after all pages are finalised */
+  drawFooter();
+
+  /* Page numbers last, once the total is known. */
   var totalPages = doc.internal.getNumberOfPages();
   for (var pg = 1; pg <= totalPages; pg++) {
     doc.setPage(pg);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(130, 130, 130);
-    doc.text('Page ' + pg + ' of ' + totalPages, W - MX, H - 5.5, { align: 'right' });
+    font('normal', 6.8, MUTED);
+    doc.text('Page ' + pg + ' of ' + totalPages, W - MR, FOOT_Y + 4.4, { align: 'right' });
   }
 
   doc.save('ASAK – Rehearsal Schedule.pdf');
