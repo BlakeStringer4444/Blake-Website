@@ -962,26 +962,25 @@ function loadCast() {
     var crew = rows.filter(function (r) { return r.role_crew; });
 
     var html = '<table class="cc-table"><colgroup>'
-             + '<col style="width:30%"><col style="width:28%"><col style="width:18%"><col style="width:24%">'
-             + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Email</th></tr></thead><tbody>';
+             + '<col style="width:34%"><col style="width:30%"><col style="width:36%">'
+             + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Email</th></tr></thead><tbody>';
 
     if (cast.length) {
-      html += '<tr class="cc-section-row"><td colspan="4">Cast</td></tr>';
+      html += '<tr class="cc-section-row"><td colspan="3">Cast</td></tr>';
       cast.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_cast) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '<td></td><td></td></tr>';
+              + '<td></td></tr>';
       });
     }
 
     if (crew.length) {
-      html += '<tr class="cc-section-row"><td colspan="4">Crew</td></tr>';
+      html += '<tr class="cc-section-row"><td colspan="3">Crew</td></tr>';
       crew.forEach(function (r) {
         html += '<tr>'
               + '<td>' + esc(r.role_crew) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '<td>' + (r.number ? '<a href="tel:' + esc(r.number) + '">' + esc(r.number) + '</a>' : '') + '</td>'
               + '<td>' + (r.email  ? '<a href="mailto:' + esc(r.email)  + '">' + esc(r.email)  + '</a>' : '') + '</td>'
               + '</tr>';
       });
