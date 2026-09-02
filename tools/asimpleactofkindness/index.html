@@ -347,14 +347,14 @@
     .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
     .cc-table thead th {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      padding: 10px 16px; text-align: left; font-weight: 400;
+      padding: 10px 10px; text-align: left; font-weight: 400;
       border-bottom: 2px solid var(--border); background: var(--bg);
       position: sticky; top: 0; z-index: 1;
     }
-    .cc-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cc-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cc-table td.tbc { color: var(--muted); font-style: italic; }
-    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; }
-    .cc-table td a:hover { color: var(--lime); }
+    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
+    .cc-table td a:hover { color: var(--purple); }
     .cc-section-row td {
       font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
       padding: 14px 16px 6px; background: var(--bg); font-weight: 400;
@@ -451,7 +451,8 @@
       .modal-body { -webkit-overflow-scrolling: touch; }
       #sched-body, #cast-body { zoom: 1; }
       #modal-cast .modal { min-height: 72vh; }
-      .cc-table td { white-space: normal; overflow: visible; text-overflow: clip; }
+      .cc-table thead th, .cc-table td { padding: 9px 7px; }
+      .cc-table td { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
       .cc-table td a { white-space: normal; overflow: visible; text-overflow: clip; }
       .pdf-toolbar { padding: 6px 10px; gap: 4px; }
       .pdf-find-input { width: 80px; font-size: 10px; }
@@ -1027,8 +1028,13 @@ function loadCast() {
     var cast = rows.filter(function (r) { return r.role_cast; });
     var crew = rows.filter(function (r) { return r.role_crew; });
 
+    function attr(v) { return esc(v).replace(/"/g, '&quot;'); }
+    function emailCell(email) {
+      return '<td>' + (email ? '<a href="mailto:' + attr(email) + '">' + esc(email) + '</a>' : '') + '</td>';
+    }
+
     var html = '<table class="cc-table"><colgroup>'
-             + '<col style="width:34%"><col style="width:30%"><col style="width:36%">'
+             + '<col style="width:31%"><col style="width:28%"><col style="width:41%">'
              + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Email</th></tr></thead><tbody>';
 
     if (cast.length) {
@@ -1037,7 +1043,7 @@ function loadCast() {
         html += '<tr>'
               + '<td>' + esc(r.role_cast) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '<td></td></tr>';
+              + emailCell(r.email) + '</tr>';
       });
     }
 
@@ -1047,7 +1053,7 @@ function loadCast() {
         html += '<tr>'
               + '<td>' + esc(r.role_crew) + '</td>'
               + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
-              + '<td>' + (r.email  ? '<a href="mailto:' + esc(r.email)  + '">' + esc(r.email)  + '</a>' : '') + '</td>'
+              + emailCell(r.email)
               + '</tr>';
       });
     }
