@@ -114,8 +114,9 @@
     /* ── MAIN LAYOUT ── */
     .page-body { max-width: 1080px; margin: 0 auto; padding: 48px; display: flex; flex-direction: column; gap: 0; }
 
-    /* ── 3 BIG BUTTONS ── */
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+    /* ── BIG BUTTONS ── */
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+    .btn-row-3 { grid-template-columns: 1fr 1fr 1fr; }
     .big-btn {
       background: var(--card-bg); border: 1px solid var(--border);
       color: var(--fg); font-family: 'Bebas Neue', sans-serif;
@@ -126,9 +127,30 @@
     }
     .big-btn:hover { background: var(--lime); color: #000; border-color: var(--lime); }
 
-    /* Second row, below the countdown — grows to fit however many buttons
-       end up in it (more may join later). */
-    .btn-row-2 { grid-template-columns: 1fr 1fr; margin-top: 24px; }
+    /* The row under the countdown needs to clear it; add .btn-row-3 (or a
+       further column) as more buttons join it. */
+    .btn-row-below-cd { margin-top: 24px; }
+
+    /* ── MOBILE SCROLL CUE ──
+       The button rows collapse to a single column on a phone, so the row
+       under the countdown can sit entirely below the fold with nothing to
+       suggest it's there. Phone-only, never interactive (pointer-events
+       none, aria-hidden), and sits under the modal layer's z-index so it
+       can't float over an open modal. The bob is killed by the global
+       prefers-reduced-motion rule at the end of this stylesheet. */
+    .scroll-cue {
+      position: fixed; left: 50%; bottom: 16px; z-index: 90;
+      display: none; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--card-bg); border: 1px solid var(--border);
+      color: var(--muted); pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+      opacity: 0; transform: translate(-50%, 6px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .scroll-cue.show { opacity: 1; transform: translate(-50%, 0); }
+    .scroll-cue svg { animation: cue-bob 1.9s ease-in-out infinite; }
+    @keyframes cue-bob { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(2px); } }
 
     /* ── COUNTDOWN ── */
     .cd-wrap { display: flex; justify-content: center; align-items: center; padding: 56px 24px; }
@@ -414,7 +436,8 @@
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
       .page-body { padding: 24px 16px; }
-      .btn-row { grid-template-columns: 1fr; gap: 2px; }
+      .btn-row, .btn-row-3 { grid-template-columns: 1fr; gap: 2px; }
+      .scroll-cue { display: flex; }
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
       /* Top-anchored, like desktop, rather than the old bottom-sheet (flush
@@ -460,7 +483,6 @@
     <div class="btn-row">
       <button class="big-btn" id="open-schedule">Schedule</button>
       <button class="big-btn" id="open-cast">Creatives</button>
-      <button class="big-btn" id="open-script">Script</button>
     </div>
 
     <div class="cd-wrap">
@@ -475,11 +497,20 @@
       </div>
     </div>
 
-    <div class="btn-row btn-row-2">
+    <div class="btn-row btn-row-3 btn-row-below-cd">
+      <button class="big-btn" id="open-script">Script</button>
       <button class="big-btn" id="open-soundtrack">Soundtrack</button>
       <button class="big-btn" id="open-glossary">Glossary</button>
     </div>
 
+  </div>
+
+  <!-- Sits above the fold on a phone only; see the scroll-cue script. -->
+  <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
   </div>
 
   <!-- ── MODAL: Schedule ── -->
@@ -703,6 +734,41 @@
   }
   tick();
   setInterval(tick, 1000);
+})();
+
+/* ── MOBILE SCROLL CUE ──
+   Shown while there's still page below the fold, so the buttons under the
+   countdown aren't missed on a phone; it fades out on reaching the bottom.
+   Visibility is CSS-gated to the phone breakpoint, so this runs harmlessly
+   on desktop. A modal open is detected via the overflow lock openModal()
+   sets on <body> — that's exactly the state where the page behind can't be
+   scrolled, so the cue would be both wrong and floating under the backdrop. */
+(function () {
+  var cue = document.getElementById('scroll-cue');
+  if (!cue) return;
+  var pending = false;
+  function update() {
+    pending = false;
+    var doc     = document.documentElement;
+    var atEnd   = window.innerHeight + window.scrollY >= doc.scrollHeight - 24;
+    var locked  = document.body.style.overflow === 'hidden';
+    cue.classList.toggle('show', !atEnd && !locked);
+  }
+  /* Scroll fires far faster than paint; coalesce to one check per frame. */
+  function schedule() {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(update);
+  }
+  addEventListener('scroll', schedule, { passive: true });
+  addEventListener('resize', schedule);
+  /* Late webfont and image loads change the page height after first paint. */
+  addEventListener('load', schedule);
+  /* Bubble-phase, so a modal's own handler has already set/cleared the lock
+     by the time this runs. Escape-to-close needs the key listener. */
+  document.addEventListener('click', schedule);
+  document.addEventListener('keyup', schedule);
+  update();
 })();
 
 /* ── MODALS ── */
