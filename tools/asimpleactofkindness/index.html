@@ -1570,8 +1570,8 @@ function downloadSchedulePDF() {
   var LIME   = [212, 255, 26];
 
   var ML = 16, MR = 16;
-  var FOOT_Y = H - 14;
-  var BOTTOM = FOOT_Y - 6;
+  var PAGENUM_Y = H - 14;      /* baseline the page number hangs off */
+  var BOTTOM    = PAGENUM_Y - 6;   /* last y content may occupy */
 
   var CALL_ON = !!(schedPdfHas && schedPdfHas.characters);
 
@@ -1607,12 +1607,6 @@ function downloadSchedulePDF() {
     doc.setFontSize(size);
     return doc.splitTextToSize(String(text), width);
   }
-  function drawFooter() {
-    hline(ML, W - MR, FOOT_Y, HAIR, 0.2);
-    font('normal', 6.8, MUTED);
-    doc.text('A Simple Act of Kindness  ·  Brighton Theatre Company  ·  Season 2026', ML, FOOT_Y + 4.4);
-  }
-
   /* Shrink a section until it fits the height it's been given. Wrapping
      depends on type size and type size depends on the fit, so this iterates
      to a fixed point rather than solving in one step. Floors at 0.75 — below
@@ -1649,6 +1643,8 @@ function downloadSchedulePDF() {
     font('bold', 7.6, DEEP);
     doc.text(kicker, ML, 30, { charSpace: 1.5 });
 
+    font('bold', 7.4, INK);
+    doc.text('dir. by Blake Stringer', W - MR, 13.4, { align: 'right' });
     font('normal', 7.4, BODY);
     doc.text('Brighton Theatre Company', W - MR, 17.5, { align: 'right' });
     doc.text('6 – 21 November 2026', W - MR, 21.6, { align: 'right' });
@@ -1662,7 +1658,6 @@ function downloadSchedulePDF() {
     doc.line(ML + 15, 34, W - MR, 34);
   }
   function newContentPage(kicker, labels) {
-    drawFooter();
     doc.addPage();
     font('bold', 6.8, DEEP);
     doc.text('A SIMPLE ACT OF KINDNESS', ML, 13.5, { charSpace: 0.5 });
@@ -1756,8 +1751,6 @@ function downloadSchedulePDF() {
     hline(ML, W - MR, y - 2 * rScale, HAIR, 0.2);
   });
 
-  drawFooter();
-
   /* ══ THE SEASON — its own single page ══ */
   if (productions.length) {
     doc.addPage();
@@ -1835,15 +1828,13 @@ function downloadSchedulePDF() {
       y += h;
       hline(ML, W - MR, y - 2 * sScale, HAIR, 0.2);
     });
-
-    drawFooter();
   }
 
   var totalPages = doc.internal.getNumberOfPages();
   for (var pg = 1; pg <= totalPages; pg++) {
     doc.setPage(pg);
     font('normal', 6.8, MUTED);
-    doc.text('Page ' + pg + ' of ' + totalPages, W - MR, FOOT_Y + 4.4, { align: 'right' });
+    doc.text('Page ' + pg + ' of ' + totalPages, W - MR, PAGENUM_Y + 4.4, { align: 'right' });
   }
 
   doc.save('ASAOK - Rehearsal Schedule.pdf');
