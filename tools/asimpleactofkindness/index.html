@@ -1535,21 +1535,20 @@ function loadPDF() {
 }
 
 /* ── SCHEDULE PDF DOWNLOAD ──
-   Hand-laid rather than run through autoTable, because the shape we want
-   isn't a table: it's a call sheet. Each day is a block — a date rail on the
-   left, what we're rehearsing set as a headline, and who's called in its own
-   column — grouped under week headings. No vertical rules, no zebra fills and
-   no boxed cells, which is what made the old table version read as a pasted
-   spreadsheet.
+   Hand-laid rather than run through autoTable, because we need control over
+   two things a table plugin won't give us: the rehearsal schedule has to land
+   on exactly one page, and the season on exactly one more.
 
-   Two deliberate departures from the on-screen table:
-   · Purple is the accent, not the fluro lime. Lime is a screen colour — on
-     paper it's nearly invisible on white and muddy on black. Lime survives
-     only as the short rule under the masthead, as a brand signature.
-   · Nothing is styled by "today"/"past". The PDF is a snapshot that gets
-     printed and pinned up, so baking the download date into row colours makes
-     it look stale the next morning. The generated date sits in the masthead
-     instead. */
+   Both sections therefore measure themselves first and pick a scale factor
+   that makes them fit (see fitScale below) instead of using fixed type sizes.
+   Rows are single-line wherever the text allows, no vertical rules, no zebra
+   and no boxed cells — hairlines and whitespace do the separating.
+
+   Purple is the print accent rather than the fluro lime: lime is a screen
+   colour that all but disappears on white paper. It survives as the short bar
+   under the masthead, as a brand signature. Nothing is coloured by
+   today/past either — this gets printed and pinned up, so baking the download
+   date into the rows would make it look stale the next morning. */
 function downloadSchedulePDF() {
   if (!schedPdfRows || !schedPdfRows.length) return;
   var J = window.jspdf;
@@ -1559,29 +1558,32 @@ function downloadSchedulePDF() {
   var W = doc.internal.pageSize.getWidth();    /* 210 */
   var H = doc.internal.pageSize.getHeight();   /* 297 */
 
-  /* ── palette ── */
   var INK    = [17, 17, 17];
   var BODY   = [58, 58, 58];
   var META   = [112, 112, 112];
   var MUTED  = [145, 145, 145];
   var HAIR   = [232, 232, 228];
   var RULE   = [196, 196, 190];
-  var PURPLE = [153, 51, 255];   /* brand purple — rules and larger accents */
-  var DEEP   = [104, 32, 190];   /* deeper purple — holds up at 6–8pt in print */
+  var PURPLE = [153, 51, 255];
+  var DEEP   = [104, 32, 190];
+  var WASH   = [246, 238, 255];   /* matinee row tint */
   var LIME   = [212, 255, 26];
 
-  /* ── grid ──
-     rail (date) | main (what) | call (who). The call column is dropped and
-     its width handed back to main when the sheet has no characters data. */
   var ML = 16, MR = 16;
-  var RAIL_X = ML,  RAIL_W = 22;
-  var MAIN_X = ML + RAIL_W + 4;
-  var CALL_ON = !!(schedPdfHas && schedPdfHas.characters);
-  var CALL_X  = 143, CALL_W = W - MR - CALL_X;
-  var MAIN_W  = CALL_ON ? (CALL_X - 5 - MAIN_X) : (W - MR - MAIN_X);
+  var FOOT_Y = H - 14;
+  var BOTTOM = FOOT_Y - 6;
 
-  var FOOT_Y = H - 14;          /* footer rule */
-  var BOTTOM = FOOT_Y - 6;      /* last usable baseline for content */
+  var CALL_ON = !!(schedPdfHas && schedPdfHas.characters);
+
+  /* Rehearsal columns. The "what" column takes the slack when there are no
+     characters to list. */
+  var C = CALL_ON ? {
+    date: { x: ML, w: 24 }, time: { x: 40, w: 13 }, what: { x: 53, w: 67 },
+    ref:  { x: 125, w: 32 }, call: { x: 160, w: 34 },
+  } : {
+    date: { x: ML, w: 24 }, time: { x: 40, w: 13 }, what: { x: 53, w: 101 },
+    ref:  { x: 158, w: 36 }, call: { x: 0, w: 0 },
+  };
 
   var now = new Date();
   var dateStr = now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
@@ -1589,7 +1591,6 @@ function downloadSchedulePDF() {
   var rehearsals  = schedPdfRows.filter(function (r) { return !r.performance && parseDT(r.datetime); });
   var productions = schedPdfRows.filter(function (r) { return !!r.performance && parseDT(r.datetime); });
 
-  /* ── drawing helpers ── */
   function font(style, size, color) {
     doc.setFont('helvetica', style);
     doc.setFontSize(size);
@@ -1600,152 +1601,98 @@ function downloadSchedulePDF() {
     doc.setLineWidth(wt);
     doc.line(x1, yy, x2, yy);
   }
-
-  var y = 0;
+  function wrap(text, width, style, size) {
+    if (!text) return [];
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    return doc.splitTextToSize(String(text), width);
+  }
   function drawFooter() {
     hline(ML, W - MR, FOOT_Y, HAIR, 0.2);
     font('normal', 6.8, MUTED);
     doc.text('A Simple Act of Kindness  ·  Brighton Theatre Company  ·  Season 2026', ML, FOOT_Y + 4.4);
   }
-  function drawRunningHead() {
-    font('bold', 6.8, DEEP);
-    doc.text('A SIMPLE ACT OF KINDNESS', ML, 13.5, { charSpace: 0.5 });
-    font('normal', 6.8, MUTED);
-    doc.text('Rehearsal Schedule', W - MR, 13.5, { align: 'right' });
-    hline(ML, W - MR, 16.6, HAIR, 0.2);
-    y = 25;
-  }
-  function newPage() {
-    drawFooter();
-    doc.addPage();
-    drawRunningHead();
-  }
-  /* Page-break guard. Callers pass the height of the block about to be drawn
-     so a heading never lands alone at the foot of a page. */
-  function ensure(h) { if (y + h > BOTTOM) newPage(); }
 
-  /* ── masthead (page 1 only) ── */
-  font('bold', 23, INK);
-  doc.text('A SIMPLE ACT OF KINDNESS', ML, 26, { charSpace: 0.2 });
-  font('bold', 8, DEEP);
-  doc.text('REHEARSAL SCHEDULE', ML, 32.5, { charSpace: 1.5 });
-
-  font('normal', 7.6, BODY);
-  doc.text('Brighton Theatre Company', W - MR, 18.5, { align: 'right' });
-  doc.text('6 – 21 November 2026', W - MR, 23, { align: 'right' });
-  font('normal', 6.8, MUTED);
-  doc.text('Generated ' + dateStr, W - MR, 27.5, { align: 'right' });
-
-  /* Two-tone brand rule: a short lime bar, then purple across the measure. */
-  doc.setLineWidth(1.1);
-  doc.setDrawColor(LIME[0], LIME[1], LIME[2]);
-  doc.line(ML, 37, ML + 15, 37);
-  doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
-  doc.line(ML + 15, 37, W - MR, 37);
-
-  /* Summary strip — the two numbers people actually want up front. */
-  function shortDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
-  var summary = '';
-  if (rehearsals.length) {
-    var rd = rehearsals.map(function (r) { return parseDT(r.datetime); })
-                       .sort(function (a, b) { return a - b; });
-    summary = rehearsals.length + (rehearsals.length === 1 ? ' rehearsal call' : ' rehearsal calls') +
-              '   ·   ' + shortDate(rd[0]) + ' – ' + shortDate(rd[rd.length - 1]) + ' ' + rd[rd.length - 1].getFullYear();
-  }
-  font('normal', 8, BODY);
-  if (summary) doc.text(summary, ML, 43.5);
-  if (productions.length) {
-    font('normal', 8, DEEP);
-    doc.text(productions.length + ' performances', W - MR, 43.5, { align: 'right' });
-  }
-  y = 55;
-
-  /* ── week heading ── */
-  function drawWeekHead(label, meta) {
-    y += 3;
-    ensure(30);
-    hline(ML, W - MR, y - 5, RULE, 0.35);
-    font('bold', 7.8, DEEP);
-    doc.text(String(label).toUpperCase(), ML, y, { charSpace: 0.7 });
-    if (meta) {
-      font('normal', 6.8, MUTED);
-      doc.text(meta, CALL_ON ? CALL_X - 5 : W - MR, y, { align: 'right' });
+  /* Shrink a section until it fits the height it's been given. Wrapping
+     depends on type size and type size depends on the fit, so this iterates
+     to a fixed point rather than solving in one step. Floors at 0.75 — below
+     that the type stops being readable, so an over-long schedule spills to a
+     second page (see newContentPage) instead of shrinking into illegibility. */
+  function fitScale(avail, measure) {
+    var s = 1;
+    for (var i = 0; i < 10; i++) {
+      var need = measure(s);
+      if (need <= avail) break;
+      s = Math.max(0.75, s * (avail / need) * 0.995);
+      if (s === 0.75) break;
     }
-    if (CALL_ON) {
-      font('normal', 6, MUTED);
-      doc.text('CALLED', CALL_X, y, { charSpace: 0.6 });
-    }
-    y += 7.5;
+    return s;
   }
 
-  /* ── one rehearsal call ── */
-  function drawCall(d, headline, metaRest, called, lastInWeek) {
-    font('bold', 9.6, INK);
-    var headLines = doc.splitTextToSize(headline, MAIN_W);
-    font('normal', 7.8, META);
-    var timeStr = fmtTime(d);
-    var timeW   = 0;
-    doc.setFont('helvetica', 'bold');
-    timeW = doc.getTextWidth(timeStr + '   ·   ');
-    doc.setFont('helvetica', 'normal');
-    var metaLines = metaRest ? doc.splitTextToSize(metaRest, MAIN_W - timeW) : [];
-    font('normal', 8, BODY);
-    var callLines = (CALL_ON && called) ? doc.splitTextToSize(called, CALL_W) : [];
-
-    var mainH = headLines.length * 4.6 + 1.2 + Math.max(metaLines.length, 1) * 4.1;
-    var callH = callLines.length * 4.2;
-    var railH = 10.4;
-    var h = 2.2 + Math.max(mainH, callH, railH) + 4.4;
-
-    ensure(h);
-    var top = y;
-
-    /* rail — weekday over date */
-    font('bold', 6.4, DEEP);
-    doc.text(DAYS[d.getDay()].toUpperCase(), RAIL_X, top + 3.2, { charSpace: 0.6 });
-    font('bold', 11, INK);
-    doc.text(d.getDate() + ' ' + MONTHS[d.getMonth()].toUpperCase(), RAIL_X, top + 9.4);
-
-    /* main — what we're doing, then the reference line beneath it */
-    font('bold', 9.6, INK);
-    var by = top + 4.4;
-    headLines.forEach(function (ln) { doc.text(ln, MAIN_X, by); by += 4.6; });
-    by += 1.2;
-    font('bold', 7.8, DEEP);
-    doc.text(timeStr, MAIN_X, by);
-    if (metaLines.length) {
-      font('normal', 7.8, META);
-      doc.text('   ·   ' + metaLines[0], MAIN_X + doc.getTextWidth(timeStr) - 0.2, by);
-      for (var i = 1; i < metaLines.length; i++) doc.text(metaLines[i], MAIN_X, by + i * 4.1);
-    }
-
-    /* call — who's needed */
-    if (callLines.length) {
-      font('normal', 8, BODY);
-      var cy = top + 4.3;
-      callLines.forEach(function (ln) { doc.text(ln, CALL_X, cy); cy += 4.2; });
-    }
-
-    y = top + h;
-    /* The week heading below draws its own, heavier rule — a hairline here
-       too would read as a doubled line. */
-    if (!lastInWeek) hline(ML, W - MR, y - 2.2, HAIR, 0.2);
-  }
-
-  /* Turn act/scene/pages into readable prose rather than three stub columns:
-     "Act 1, Scene 3  ·  pp. 16–24". */
+  /* Compact enough to sit in a 33mm column: "Act 1, Sc 3  ·  pp. 16–24". */
   function refLine(row) {
-    var bits = [];
     var act = (row.act || '').trim(), scene = (row.scene || '').trim(), pages = (row.pages || '').trim();
-    var ap = act ? (/^all$/i.test(act) ? 'All acts' : 'Act ' + act) : '';
-    var sp = scene ? (/^all$/i.test(scene) ? (ap ? 'all scenes' : 'All scenes') : 'Scene ' + scene) : '';
+    var allAct = /^all$/i.test(act), allSc = /^all$/i.test(scene);
+    var ap = act ? (allAct ? 'All acts' : 'Act ' + act) : '';
+    var sp = scene ? (allSc ? (allAct ? '' : (ap ? 'all sc.' : 'All scenes')) : 'Sc ' + scene) : '';
+    var bits = [];
     var as = [ap, sp].filter(Boolean).join(', ');
     if (as) bits.push(as);
     if (pages) bits.push((/[-–—]/.test(pages) ? 'pp. ' : 'p. ') + pages.replace(/\s*-\s*/g, '–'));
-    return bits.join('   ·   ');
+    return bits.join('  ·  ');
   }
 
-  /* ── rehearsals, grouped by week ── */
+  /* ── masthead ── */
+  function drawMasthead(kicker) {
+    font('bold', 21, INK);
+    doc.text('A SIMPLE ACT OF KINDNESS', ML, 24, { charSpace: 0.2 });
+    font('bold', 7.6, DEEP);
+    doc.text(kicker, ML, 30, { charSpace: 1.5 });
+
+    font('normal', 7.4, BODY);
+    doc.text('Brighton Theatre Company', W - MR, 17.5, { align: 'right' });
+    doc.text('6 – 21 November 2026', W - MR, 21.6, { align: 'right' });
+    font('normal', 6.6, MUTED);
+    doc.text('Generated ' + dateStr, W - MR, 25.7, { align: 'right' });
+
+    doc.setLineWidth(1.1);
+    doc.setDrawColor(LIME[0], LIME[1], LIME[2]);
+    doc.line(ML, 34, ML + 15, 34);
+    doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+    doc.line(ML + 15, 34, W - MR, 34);
+  }
+  function newContentPage(kicker, labels) {
+    drawFooter();
+    doc.addPage();
+    font('bold', 6.8, DEEP);
+    doc.text('A SIMPLE ACT OF KINDNESS', ML, 13.5, { charSpace: 0.5 });
+    font('normal', 6.8, MUTED);
+    doc.text(kicker, W - MR, 13.5, { align: 'right' });
+    hline(ML, W - MR, 16.6, HAIR, 0.2);
+    labels(21);
+    return 27;
+  }
+  function colLabel(text, x, yy, align) {
+    font('normal', 6, MUTED);
+    doc.text(text, x, yy, align ? { charSpace: 0.6, align: align } : { charSpace: 0.6 });
+  }
+
+  /* ══ REHEARSAL SCHEDULE — one page ══ */
+  drawMasthead('REHEARSAL SCHEDULE');
+
+  var LABEL_Y = 41;
+  function rehearsalLabels(ly) {
+    colLabel('DATE', C.date.x, ly);
+    colLabel('TIME', C.time.x, ly);
+    colLabel('REHEARSAL', C.what.x, ly);
+    colLabel('REFERENCE', C.ref.x, ly);
+    if (CALL_ON) colLabel('CALLED', C.call.x, ly);
+    hline(ML, W - MR, ly + 2.6, RULE, 0.35);
+  }
+  rehearsalLabels(LABEL_Y);
+
+  var TOP = LABEL_Y + 7;
+
   var groups = [], gmap = {};
   rehearsals.forEach(function (r) {
     var wk = r.week || 'Schedule';
@@ -1753,62 +1700,145 @@ function downloadSchedulePDF() {
     gmap[wk].push(r);
   });
 
-  groups.forEach(function (g) {
-    var ds = g.rows.map(function (r) { return parseDT(r.datetime); }).sort(function (a, b) { return a - b; });
-    var span = ds.length
-      ? shortDate(ds[0]) + (ds.length > 1 ? ' – ' + shortDate(ds[ds.length - 1]) : '') +
-        '   ·   ' + ds.length + (ds.length === 1 ? ' call' : ' calls')
-      : '';
-    drawWeekHead(g.label, span);
-    g.rows.forEach(function (row, i) {
-      var d = parseDT(row.datetime);
-      if (!d) return;
-      drawCall(d, row.context || 'Rehearsal call', refLine(row), row.characters || '',
-               i === g.rows.length - 1);
+  /* Blocks are measured once per candidate scale, then drawn from the winning
+     set — so what gets measured is exactly what gets drawn. */
+  function buildRehearsalBlocks(s) {
+    var out = [];
+    groups.forEach(function (g, gi) {
+      out.push({ type: 'week', label: g.label, first: gi === 0, h: (gi === 0 ? 7.2 : 9.6) * s });
+      g.rows.forEach(function (row) {
+        var d = parseDT(row.datetime);
+        if (!d) return;
+        var whatLines = wrap(row.context || 'Rehearsal', C.what.w, 'bold', 8.6 * s);
+        var refLines  = wrap(refLine(row), C.ref.w, 'normal', 7.6 * s);
+        var callLines = CALL_ON ? wrap(row.characters || '', C.call.w, 'normal', 7.6 * s) : [];
+        var lines = Math.max(whatLines.length, refLines.length, callLines.length, 1);
+        out.push({
+          type: 'row', d: d, whatLines: whatLines, refLines: refLines, callLines: callLines,
+          h: (lines === 1 ? 8.2 : 5.2 + lines * 4.5) * s,
+        });
+      });
     });
-  });
-
-  /* ── the season ── */
-  if (productions.length) {
-    ensure(40);
-    y += 6;
-    doc.setLineWidth(0.8);
-    doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
-    doc.line(ML, y - 5, W - MR, y - 5);
-    font('bold', 10, INK);
-    doc.text('THE SEASON', ML, y, { charSpace: 1.0 });
-    font('normal', 7.2, MUTED);
-    doc.text('Brighton Theatre Company', W - MR, y, { align: 'right' });
-    y += 9;
-
-    productions.forEach(function (row) {
-      var d = parseDT(row.datetime);
-      if (!d) return;
-      var name = row.performance || '';
-      var marquee = /opening|closing|gala|preview/i.test(name);
-      var h = 16;
-      ensure(h);
-      var top = y;
-
-      font('bold', 6.4, DEEP);
-      doc.text(DAYS[d.getDay()].toUpperCase(), RAIL_X, top + 3.2, { charSpace: 0.6 });
-      font('bold', 11, INK);
-      doc.text(d.getDate() + ' ' + MONTHS[d.getMonth()].toUpperCase(), RAIL_X, top + 9.4);
-
-      font('bold', 11.5, marquee ? DEEP : INK);
-      doc.text(name, MAIN_X, top + 9.4);
-
-      font('bold', 9.5, BODY);
-      doc.text(fmtTime(d), W - MR, top + 9.4, { align: 'right' });
-
-      y = top + h;
-      hline(ML, W - MR, y - 2.2, HAIR, 0.2);
-    });
+    return out;
   }
+
+  var rBlocks = null;
+  var rScale = fitScale(BOTTOM - TOP, function (s) {
+    rBlocks = buildRehearsalBlocks(s);
+    return rBlocks.reduce(function (a, b) { return a + b.h; }, 0);
+  });
+  rBlocks = buildRehearsalBlocks(rScale);
+
+  var y = TOP;
+  rBlocks.forEach(function (b) {
+    var needs = b.h + (b.type === 'week' ? 12 * rScale : 0);
+    if (y + needs > BOTTOM) y = newContentPage('Rehearsal Schedule', rehearsalLabels);
+    if (b.type === 'week') {
+      var ly = y + b.h - 2.4 * rScale;
+      if (!b.first) hline(ML, W - MR, y + b.h - 7.4 * rScale, RULE, 0.35);
+      font('bold', 7.6 * rScale, DEEP);
+      doc.text(String(b.label).toUpperCase(), ML, ly, { charSpace: 0.7 });
+      y += b.h;
+      return;
+    }
+    var base = y + 5.2 * rScale, step = 4.5 * rScale;
+    font('bold', 8.6 * rScale, INK);
+    doc.text(DAYS[b.d.getDay()] + ' ' + b.d.getDate() + ' ' + MONTHS[b.d.getMonth()], C.date.x, base);
+    font('bold', 8.6 * rScale, DEEP);
+    doc.text(fmtTime(b.d), C.time.x, base);
+    font('bold', 8.6 * rScale, INK);
+    b.whatLines.forEach(function (ln, i) { doc.text(ln, C.what.x, base + i * step); });
+    font('normal', 7.6 * rScale, META);
+    b.refLines.forEach(function (ln, i) { doc.text(ln, C.ref.x, base + i * step); });
+    font('normal', 7.6 * rScale, BODY);
+    b.callLines.forEach(function (ln, i) { doc.text(ln, C.call.x, base + i * step); });
+    y += b.h;
+    hline(ML, W - MR, y - 2 * rScale, HAIR, 0.2);
+  });
 
   drawFooter();
 
-  /* Page numbers last, once the total is known. */
+  /* ══ THE SEASON — its own single page ══ */
+  if (productions.length) {
+    doc.addPage();
+    drawMasthead('THE SEASON');
+
+    var S = {
+      num:  { x: ML,  w: 10 },
+      date: { x: 28,  w: 34 },
+      time: { x: 64,  w: 22 },
+      name: { x: 90,  w: W - MR - 90 },
+    };
+    function seasonLabels(ly) {
+      colLabel('#', S.num.x, ly);
+      colLabel('DATE', S.date.x, ly);
+      colLabel('TIME', S.time.x, ly);
+      colLabel('PERFORMANCE', S.name.x, ly);
+      hline(ML, W - MR, ly + 2.6, RULE, 0.35);
+    }
+    seasonLabels(LABEL_Y);
+
+    /* A matinee is anything the sheet calls one, or anything starting before
+       5pm — so an afternoon show still stands out if it's named otherwise. */
+    var perfs = productions.map(function (row, i) {
+      var d = parseDT(row.datetime);
+      return {
+        n: i + 1, d: d, name: row.performance || '',
+        matinee: /matinee|mat\b/i.test(row.performance || '') || d.getHours() < 17,
+      };
+    });
+
+    /* Same type size as the rehearsal page unless the season needs to be
+       smaller still to hold one page (it won't, at any realistic count). */
+    var sScale = Math.min(rScale, fitScale(BOTTOM - TOP, function (s) {
+      return perfs.reduce(function (a, p) {
+        return a + Math.max(9.8, 5.2 + wrap(p.name, S.name.w, 'bold', 8.6 * s).length * 4.5) * s;
+      }, 0);
+    }));
+
+    y = TOP;
+    perfs.forEach(function (p) {
+      var nameLines = wrap(p.name, S.name.w, 'bold', 8.6 * sScale);
+      var h = Math.max(9.8, 5.2 + nameLines.length * 4.5) * sScale;
+      if (y + h > BOTTOM) y = newContentPage('The Season', seasonLabels);
+
+      if (p.matinee) {
+        doc.setFillColor(WASH[0], WASH[1], WASH[2]);
+        doc.rect(ML, y - 1.2 * sScale, W - ML - MR, h - 0.6 * sScale, 'F');
+      }
+      var base = y + 6.0 * sScale, step = 4.5 * sScale;
+
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : MUTED);
+      doc.text(String(p.n), S.num.x, base);
+      font('bold', 8.6 * sScale, INK);
+      doc.text(DAYS[p.d.getDay()] + ' ' + p.d.getDate() + ' ' + MONTHS[p.d.getMonth()], S.date.x, base);
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : BODY);
+      doc.text(fmtTime(p.d), S.time.x, base);
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : INK);
+      nameLines.forEach(function (ln, i) { doc.text(ln, S.name.x, base + i * step); });
+
+      /* Only tag an afternoon show the sheet hasn't already named as one. */
+      if (p.matinee && !/matinee|mat\b/i.test(p.name)) {
+        var last = nameLines.length - 1;
+        var nameW = doc.getTextWidth(nameLines[last]);   /* still the 8.6pt face */
+        var pill = 'MATINEE', cs = 0.3;
+        font('bold', 5.8 * sScale, [255, 255, 255]);
+        var pw = doc.getTextWidth(pill) + cs * (pill.length - 1) + 3.2 * sScale;
+        var ph = 4.0 * sScale;
+        var px = S.name.x + nameW + 3 * sScale;
+        var py = base + last * step;
+        doc.setFillColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+        doc.roundedRect(px, py - ph + 1.0 * sScale, pw, ph, 0.7, 0.7, 'F');
+        doc.text(pill, px + 1.6 * sScale, py - 0.6 * sScale, { charSpace: cs });
+      }
+
+      y += h;
+      hline(ML, W - MR, y - 2 * sScale, HAIR, 0.2);
+    });
+
+    drawFooter();
+  }
+
   var totalPages = doc.internal.getNumberOfPages();
   for (var pg = 1; pg <= totalPages; pg++) {
     doc.setPage(pg);
@@ -1816,7 +1846,7 @@ function downloadSchedulePDF() {
     doc.text('Page ' + pg + ' of ' + totalPages, W - MR, FOOT_Y + 4.4, { align: 'right' });
   }
 
-  doc.save('ASAK – Rehearsal Schedule.pdf');
+  doc.save('ASAOK - Rehearsal Schedule.pdf');
 }
 
 /* ── MUSIC PLAYER ──
