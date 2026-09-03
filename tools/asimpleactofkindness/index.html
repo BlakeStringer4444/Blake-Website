@@ -116,7 +116,11 @@
 
     /* ── BIG BUTTONS ── */
     .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-    .btn-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    /* Two across at every size above the phone breakpoint, however many
+       buttons a row holds — four of them simply wrap to 2x2. Three or four
+       across was tried and doesn't work: .big-btn's font is sized in vw, so
+       the type grows faster than the column does and "Soundtrack" never fits,
+       at any viewport width. Equal-sized buttons beat a row of shrunken ones. */
     .big-btn {
       background: var(--card-bg); border: 1px solid var(--border);
       color: var(--fg); font-family: 'Bebas Neue', sans-serif;
@@ -127,8 +131,7 @@
     }
     .big-btn:hover { background: var(--lime); color: #000; border-color: var(--lime); }
 
-    /* The row under the countdown needs to clear it; add .btn-row-3 (or a
-       further column) as more buttons join it. */
+    /* The row under the countdown needs to clear it. */
     .btn-row-below-cd { margin-top: 24px; }
 
     /* ── MOBILE SCROLL CUE ──
@@ -379,6 +382,9 @@
     .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
     .pdf-download-btn { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 11px; background: var(--lime); color: #000; border-color: var(--lime); }
     .pdf-download-btn:hover { opacity: 0.82; background: var(--lime); }
+    /* The schedule's copy isn't crowded by a toolbar the way the viewers'
+       are, so it can afford to be a proper button. */
+    #sched-dl-btn { font-size: 10px; padding: 9px 16px; letter-spacing: 2px; }
     .pdf-page-input {
       background: var(--bg); border: 1px solid var(--border); color: var(--fg);
       font-family: var(--font); font-size: 11px; width: 42px; text-align: center;
@@ -399,8 +405,9 @@
 
     /* pan-x pan-y = one finger still scrolls natively, but the browser hands
        two-finger gestures to us so pinch zooms the script, not the whole page. */
-    #pdf-body { overflow: auto; touch-action: pan-x pan-y; }
-    #pdf-canvas-wrap { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; padding: 16px; gap: 16px; }
+    /* Both viewer instances (script and design) share these. */
+    #pdf-body, #design-body { overflow: auto; touch-action: pan-x pan-y; }
+    #pdf-canvas-wrap, #design-canvas-wrap { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; padding: 16px; gap: 16px; }
 
     /* --pw/--ph are each page's committed (sharply rendered) CSS size; --pz is a
        transient pinch multiplier. Setting --pz on the wrapper rescales all pages
@@ -438,7 +445,7 @@
       .asak-header { padding: 18px 20px 14px; }
       .asak-title { font-size: clamp(34px, 11vw, 56px); }
       .page-body { padding: 24px 16px; }
-      .btn-row, .btn-row-3 { grid-template-columns: 1fr; gap: 2px; }
+      .btn-row { grid-template-columns: 1fr; gap: 2px; }
       .scroll-cue { display: flex; }
       .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
       .cd-wrap { padding: 36px 16px; }
@@ -503,10 +510,11 @@
       </div>
     </div>
 
-    <div class="btn-row btn-row-3 btn-row-below-cd">
+    <div class="btn-row btn-row-below-cd">
       <button class="big-btn" id="open-script">Script</button>
       <button class="big-btn" id="open-soundtrack">Soundtrack</button>
       <button class="big-btn" id="open-glossary">Glossary</button>
+      <button class="big-btn" id="open-design">Design</button>
     </div>
 
   </div>
@@ -572,6 +580,38 @@
       </div>
       <div class="modal-body" id="pdf-body">
         <div id="pdf-canvas-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Design ──
+       Same toolbar/body shape as the script modal above, with a "design-"
+       id stem; loadPDF() takes that stem so both run the same viewer. -->
+  <div class="modal-overlay" id="modal-design" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Design — Production Meeting</span>
+        <button class="modal-close" data-close="modal-design" aria-label="Close">&times;</button>
+      </div>
+      <div class="pdf-toolbar" id="design-nav" style="display:none;">
+        <a class="pdf-nav-btn pdf-download-btn" id="design-download" href="/tools/asimpleactofkindness/design.pdf" download="A Simple Act of Kindness - Design.pdf">Download</a>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="design-prev" aria-label="Previous page" disabled>&lsaquo;</button>
+        <input class="pdf-page-input" id="design-page-input" type="number" min="1" value="1" aria-label="Page number" disabled>
+        <span class="pdf-page-sep" id="design-page-sep">/ --</span>
+        <button class="pdf-nav-btn" id="design-next" aria-label="Next page" disabled>&rsaquo;</button>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="design-zoom-out" aria-label="Zoom out" disabled>&minus;</button>
+        <span class="pdf-zoom-label" id="design-zoom-label">100%</span>
+        <button class="pdf-nav-btn" id="design-zoom-in" aria-label="Zoom in" disabled>+</button>
+        <div class="pdf-zoom-divider"></div>
+        <input class="pdf-find-input" id="design-find-input" type="text" placeholder="Find&hellip;" aria-label="Find in the design deck" disabled>
+        <span class="pdf-find-count" id="design-find-count"></span>
+        <button class="pdf-nav-btn" id="design-find-prev" aria-label="Previous match" disabled>&lsaquo;</button>
+        <button class="pdf-nav-btn" id="design-find-next" aria-label="Next match" disabled>&rsaquo;</button>
+      </div>
+      <div class="modal-body" id="design-body">
+        <div id="design-canvas-wrap"></div>
       </div>
     </div>
   </div>
@@ -807,7 +847,7 @@
   });
   document.getElementById('open-script').addEventListener('click', function () {
     openModal('modal-script');
-    loadPDF();
+    loadPDF('pdf', '/tools/asimpleactofkindness/script.pdf');
   });
   document.getElementById('open-soundtrack').addEventListener('click', function () {
     openModal('modal-soundtrack');
@@ -816,6 +856,10 @@
   document.getElementById('open-glossary').addEventListener('click', function () {
     openModal('modal-glossary');
     loadGlossary();
+  });
+  document.getElementById('open-design').addEventListener('click', function () {
+    openModal('modal-design');
+    loadPDF('design', '/tools/asimpleactofkindness/design.pdf', { fitWidth: true });
   });
 
   /* Close buttons */
@@ -1197,32 +1241,45 @@ function loadGlossary() {
     });
 }
 
-/* ── PDF VIEWER (continuous scroll + find) ── */
-var pdfLoaded = false;
-function loadPDF() {
-  if (pdfLoaded) return;
-  pdfLoaded = true;
+/* ── PDF VIEWER (continuous scroll + find) ──
+   One instance per modal. `prefix` is the id stem that modal's toolbar and
+   body markup use ('pdf' for the script, 'design' for the design deck), so
+   the Script and Design viewers each get their own state, zoom and search
+   rather than fighting over one set of elements. The .pdf-* CSS classes are
+   shared between them; only the ids are per-instance.
 
-  var PDF_PATH = '/tools/asimpleactofkindness/script.pdf';
+   `opts.fitWidth` opens the document scaled to the modal instead of at the
+   default 200% of natural size. The script wants that 200% — a page of A4
+   dialogue shrunk to the modal is unreadable — but a landscape slide is
+   already wider than the modal at natural size, so a deck opening at 200%
+   shows the blank top-left corner of slide one. */
+var pdfViewersLoaded = {};
+function loadPDF(prefix, path, opts) {
+  opts = opts || {};
+  if (pdfViewersLoaded[prefix]) return;
+  pdfViewersLoaded[prefix] = true;
+
+  var PDF_PATH = path;
   if (typeof pdfjsLib === 'undefined') return;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  var wrap      = document.getElementById('pdf-canvas-wrap');
-  var pdfBody   = document.getElementById('pdf-body');
-  var nav       = document.getElementById('pdf-nav');
-  var prevBtn   = document.getElementById('pdf-prev');
-  var nextBtn   = document.getElementById('pdf-next');
-  var pageInput = document.getElementById('pdf-page-input');
-  var pageSep   = document.getElementById('pdf-page-sep');
-  var zoomInBtn = document.getElementById('pdf-zoom-in');
-  var zoomOutBtn= document.getElementById('pdf-zoom-out');
-  var zoomLabel = document.getElementById('pdf-zoom-label');
-  var findInput = document.getElementById('pdf-find-input');
-  var findCount = document.getElementById('pdf-find-count');
-  var findPrev  = document.getElementById('pdf-find-prev');
-  var findNext  = document.getElementById('pdf-find-next');
+  function elById(suffix) { return document.getElementById(prefix + suffix); }
+  var wrap      = elById('-canvas-wrap');
+  var pdfBody   = elById('-body');
+  var nav       = elById('-nav');
+  var prevBtn   = elById('-prev');
+  var nextBtn   = elById('-next');
+  var pageInput = elById('-page-input');
+  var pageSep   = elById('-page-sep');
+  var zoomInBtn = elById('-zoom-in');
+  var zoomOutBtn= elById('-zoom-out');
+  var zoomLabel = elById('-zoom-label');
+  var findInput = elById('-find-input');
+  var findCount = elById('-find-count');
+  var findPrev  = elById('-find-prev');
+  var findNext  = elById('-find-next');
 
   var pdfDoc = null, numPages = 0, curPage = 1;
   var zoomMult = (window.innerWidth >= 720) ? 2.0 : 0.75;
@@ -1257,8 +1314,15 @@ function loadPDF() {
       });
     }, Promise.resolve());
   }).then(function () {
-    /* On mobile, default to fit-to-width expressed as a real percentage */
-    if (window.innerWidth < 720) {
+    if (opts.fitWidth) {
+      /* Exact fit, not the 25%-rounded figure the mobile branch uses below:
+         rounding can go up, which leaves the page overflowing by a few
+         percent and puts a sideways scrollbar on a deck that should just
+         sit in the frame. The label rounds for display only. */
+      var vpF = pageObjs[1].getViewport({ scale: 1 });
+      zoomMult = Math.max(ZOOM_MIN, Math.max(pdfBody.clientWidth - 36, 200) / vpF.width);
+    } else if (window.innerWidth < 720) {
+      /* On mobile, default to fit-to-width expressed as a real percentage */
       var vp1   = pageObjs[1].getViewport({ scale: 1 });
       var avail = Math.max(pdfBody.clientWidth - 32, 200);
       zoomMult  = Math.round((avail / vp1.width) * 4) / 4; /* round to nearest 25% */
