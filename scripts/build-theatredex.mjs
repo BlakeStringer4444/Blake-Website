@@ -43,7 +43,12 @@ const YEAR      = 2026;
    spreadsheet.html (the live client-side app and its public spreadsheet
    view), since this script only covers the crawlable fallback content —
    update all three together, or just delete the filter once that season
-   is ready to announce. */
+   is ready to announce.
+
+   Those two have a reveal (a code word in the search box, ?reveal= on the
+   spreadsheet view) that shows the hidden season anyway. This script
+   deliberately has no equivalent: its output is what search engines index,
+   and an unannounced season should not be in it under any circumstances. */
 const HIDDEN_YEAR = 2027;
 
 const DEFAULT_CSV_URL =
