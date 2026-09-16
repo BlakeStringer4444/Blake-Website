@@ -112,12 +112,20 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
    below. The same filter also lives in index.html (the live client-side
    app) and scripts/build-theatredex.mjs (the baked SEO/JSON-LD fallback) —
    update all three together, or just delete the filter once that season is
-   ready to announce. */
-const HIDDEN_YEAR = 2027;
+   ready to announce.
 
-const mode = new URLSearchParams(location.search).get('mode') === 'musical' ? 'musical' : 'play';
+   ?reveal=<REVEAL_CODE> shows them anyway. The main tool appends it to its
+   Spreadsheet View link while the season is revealed there, so unlocking in
+   one place doesn't make them disappear in the other. */
+const HIDDEN_YEAR = 2027;
+const REVEAL_CODE = '2027blake';
+
+const params = new URLSearchParams(location.search);
+const mode = params.get('mode') === 'musical' ? 'musical' : 'play';
+const revealHidden = params.get('reveal') === REVEAL_CODE;
 document.getElementById('ss-year').textContent = new Date().getFullYear();
-document.getElementById('ss-mode').textContent = '— ' + (mode === 'musical' ? 'Musicals' : 'Plays');
+document.getElementById('ss-mode').textContent = '— ' + (mode === 'musical' ? 'Musicals' : 'Plays') +
+  (revealHidden ? ' + ' + HIDDEN_YEAR : '');
 document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + (mode === 'musical' ? 'Musicals' : 'Plays') + ' Spreadsheet';
 
 /* ── CSV (identical parsing to the main tool) ── */
@@ -261,7 +269,7 @@ async function init() {
     const text = await res.text();
     const rows = parseCSV(text).filter(s => {
       const d = parseDate(s.date_start);
-      if (d && d.getFullYear() === HIDDEN_YEAR) return false;
+      if (!revealHidden && d && d.getFullYear() === HIDDEN_YEAR) return false;
       return mode === 'musical' ? isMusicalShow(s) : s.Musical_Theatre_Company !== '1';
     });
     render(rows);

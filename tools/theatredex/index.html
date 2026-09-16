@@ -440,6 +440,23 @@ body {
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--muted);
 }
+/* Shown only while the hidden season is revealed. Deliberately visible
+   rather than silent: without it there's no way to tell an unlocked tab
+   from a locked one, and the whole point is that these shows aren't
+   public yet. */
+.td-reveal-flag {
+  display: none; align-items: center; gap: 7px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--purple); border: 1px solid var(--purple);
+  border-radius: 999px; padding: 4px 6px 4px 11px;
+}
+.td-reveal-flag.on { display: inline-flex; }
+.td-reveal-flag button {
+  background: none; border: 0; cursor: pointer; color: inherit;
+  font: inherit; line-height: 1; padding: 3px 5px; border-radius: 50%;
+}
+.td-reveal-flag button:hover { background: var(--purple); color: #fff; }
 
 /* ── MAIN ── */
 .td-main { padding: 28px 48px 72px; }
@@ -8098,6 +8115,10 @@ button.td-link { background: none; cursor: pointer; }
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
+    <span class="td-reveal-flag" id="td-reveal-flag">
+      <span id="td-reveal-label"></span>
+      <button type="button" id="td-reveal-off" title="Hide them again" aria-label="Hide the hidden season again">&times;</button>
+    </span>
   </div>
 </div>
 
@@ -8965,13 +8986,22 @@ const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste you
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
-   they're discovered, but shouldn't be public yet — filtered out of
-   `allData` in init() below, before anything derives from it. The same
-   filter also lives in scripts/build-theatredex.mjs (the baked SEO/JSON-LD
-   fallback) and spreadsheet.html (the public spreadsheet view) — update all
-   three together, or just delete the filter once that season is ready to
-   announce. */
-const HIDDEN_YEAR = 2027;
+   they're discovered, but shouldn't be public yet — see applyHiddenFilter(),
+   which sits between the fetched rows and `allData`, so everything that
+   derives from `allData` inherits the filter. The same filter also lives in
+   scripts/build-theatredex.mjs (the baked SEO/JSON-LD fallback) and
+   spreadsheet.html (the public spreadsheet view) — update all three together,
+   or just delete the filter once that season is ready to announce.
+
+   Typing REVEAL_CODE into the search box toggles them back on for whoever
+   knows it, and the same word passed as ?reveal= does it on the spreadsheet
+   view. This is obscurity, not security: the rows are in the CSV the Worker
+   serves, so anyone reading the network tab can see them. It's here to keep
+   an unannounced season out of the way of ordinary visitors and out of the
+   baked SEO section search engines read — not to withstand someone looking. */
+const HIDDEN_YEAR  = 2027;
+const REVEAL_CODE  = '2027blake';
+const REVEAL_KEY   = 'tdx-reveal-hidden';
 
 /* ── URL NORMALISER ── */
 function safeUrl(url) {
@@ -9056,6 +9086,56 @@ function isNowShowing(row) {
 
 /* ── STATE ── */
 let allData = [], allShows = [], mode = 'play', activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
+/* The whole sheet as fetched, hidden rows and all; `allData` is the filtered
+   view of it. Kept so revealing doesn't need a second network round trip. */
+let rawRows = [];
+let revealHidden = (function () {
+  try { return localStorage.getItem(REVEAL_KEY) === '1'; } catch (e) { return false; }
+})();
+
+function applyHiddenFilter() {
+  allData = revealHidden ? rawRows.slice() : rawRows.filter(s => {
+    const d = parseDate(s.date_start);
+    return !d || d.getFullYear() !== HIDDEN_YEAR;
+  });
+}
+
+function updateRevealFlag() {
+  const flag = document.getElementById('td-reveal-flag');
+  if (!flag) return;
+  flag.classList.toggle('on', revealHidden);
+  const n = rawRows.filter(s => {
+    const d = parseDate(s.date_start);
+    return d && d.getFullYear() === HIDDEN_YEAR;
+  }).length;
+  document.getElementById('td-reveal-label').textContent =
+    HIDDEN_YEAR + ' showing · ' + n + (n === 1 ? ' show' : ' shows');
+}
+
+/* Rebuilds `allData` and everything derived from it — the company and month
+   dropdowns included, so a company that only has hidden-season shows appears
+   and disappears with them. */
+function setRevealHidden(on) {
+  revealHidden = !!on;
+  try {
+    if (revealHidden) localStorage.setItem(REVEAL_KEY, '1');
+    else localStorage.removeItem(REVEAL_KEY);
+  } catch (e) { /* private mode — the toggle just won't outlive the tab */ }
+  applyHiddenFilter();
+  setModeData(mode);
+  /* A company or month chosen while revealed may no longer exist once hidden. */
+  if (!revealHidden) {
+    const companies = new Set(allShows.map(s => s.company));
+    if (activeCompany && !companies.has(activeCompany)) activeCompany = '';
+    const monthSel = document.getElementById('td-month');
+    if (activeMonth && !Array.from(monthSel.options).some(o => o.value === activeMonth)) activeMonth = '';
+    document.getElementById('td-company').value = activeCompany;
+    monthSel.value = activeMonth;
+    syncSelectActive();
+  }
+  updateRevealFlag();
+  render();
+}
 
 /* ── MODE (Plays / Musicals) ── `allData` holds the full sheet; `allShows` is
    the mode-scoped working set every feature reads from (grid, map, calendar,
@@ -9262,16 +9342,14 @@ async function init() {
     /* Full sheet kept in memory; `setModeData` derives the mode-scoped working
        set. Every load starts on Plays — mode isn't read from the URL, so a
        refresh never remembers a Musicals selection. */
-    allData = parseCSV(text)
-      .filter(s => {
-        const d = parseDate(s.date_start);
-        return !d || d.getFullYear() !== HIDDEN_YEAR;
-      })
+    rawRows = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
+    applyHiddenFilter();
     if (!allData.length) throw new Error('empty');
     setModeData('play');
     readUrlState();
     syncSelectActive();
+    updateRevealFlag();
     render();
     markDataReady();
   } catch (e) {
@@ -9296,7 +9374,20 @@ function revealStaticFallback() {
 }
 
 /* ── EVENTS ── */
-document.getElementById('td-search').addEventListener('input',   e  => { searchQ = e.target.value; render(); });
+document.getElementById('td-search').addEventListener('input', e => {
+  /* Typing the code word toggles the hidden season instead of searching for
+     it — and clears the box, so it isn't left sitting there for the next
+     person to read over your shoulder. */
+  if (e.target.value.trim().toLowerCase() === REVEAL_CODE) {
+    e.target.value = '';
+    searchQ = '';
+    setRevealHidden(!revealHidden);
+    return;
+  }
+  searchQ = e.target.value;
+  render();
+});
+document.getElementById('td-reveal-off').addEventListener('click', () => setRevealHidden(false));
 function syncSelectActive() {
   document.getElementById('td-company').classList.toggle('td-select--active', activeCompany !== '');
   document.getElementById('td-month').classList.toggle('td-select--active',   activeMonth   !== '');
@@ -9350,7 +9441,10 @@ function updateModeUI() {
      behaviour, no target=_blank). */
   const ssBtn = document.getElementById('td-spreadsheet-btn');
   ssBtn.style.display = '';
-  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode;
+  /* Carry the reveal across, or the hidden shows would silently vanish on a
+     view the reader just unlocked here. */
+  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode +
+    (revealHidden ? '&reveal=' + encodeURIComponent(REVEAL_CODE) : '');
   /* Auditions stays in both modes: plays links straight to VDL; musical opens
      the Facebook-groups modal (see the audition-modal handler). The button keeps
      its icon + label in both modes; behaviour is handled by the click handler. */
