@@ -217,6 +217,14 @@
         <button class="bb-chip" data-read="read">Read</button>
         <button class="bb-chip" data-read="unread">Unread</button>
       </div>
+      <div class="bb-filtergroup" id="bb-gender-filters">
+        <button class="bb-chip on" data-gender="all">All</button>
+        <button class="bb-chip" data-gender="F">Women</button>
+        <button class="bb-chip" data-gender="M">Men</button>
+        <!-- Revealed only if the sheet has rows the gender column doesn't
+             classify, so Women + Men can always be reconciled to the total. -->
+        <button class="bb-chip" data-gender="other" id="bb-gender-other" hidden>Unlisted</button>
+      </div>
     </div>
 
     <div class="bb-count" id="bb-count"></div>
@@ -235,7 +243,7 @@ var BB_WORKER_URL = 'https://bookbook.blakestringer.workers.dev';
 
 var SPINES = ['#7c2d2d','#8a5a2b','#a9822f','#4a5d23','#2f4858','#5b3a5b','#3b6b5e','#8a3b2e','#6b4423','#2e4a62','#7a4a52','#556b2f','#933','#654321'];
 
-var state = { books: [], data: {}, ready: false, search: '', list: 'all', read: 'all', sort: 'no' };
+var state = { books: [], data: {}, ready: false, search: '', list: 'all', read: 'all', gender: 'all', sort: 'no' };
 
 /* ═══════════ THEME + TEXT SIZE ═══════════ */
 (function () {
@@ -270,6 +278,16 @@ function parseCSV(text) {
 }
 function spineColor(b) { var s = b.no + '|' + b.title, h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return SPINES[h % SPINES.length]; }
 function bState(no) { return state.data[no] || { read: false, rating: 0, note: '' }; }
+/* Matched whole rather than by first letter: 'M' must not also swallow a
+   'Mixed' or 'Multiple' on a co-authored row. Anything unrecognised — including
+   a blank cell — returns '' and lands under the Unlisted chip instead of being
+   quietly filed as one gender or the other. */
+function normGender(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  if (/^(f|female|woman|women)$/.test(s)) return 'F';
+  if (/^(m|male|man|men)$/.test(s)) return 'M';
+  return '';
+}
 
 /* ═══════════ DATA ═══════════ */
 function bb(payload) { return fetch(BB_WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(function (r) { return r.json(); }); }
@@ -290,7 +308,8 @@ function parseBooks(csv) {
   var head = rows[0].map(function (h) { return String(h).trim().toLowerCase(); });
   function col() { for (var a = 0; a < arguments.length; a++) { var i = head.indexOf(arguments[a]); if (i >= 0) return i; } return -1; }
   var iNo = col('no.', 'no', '#'), iT = col('title'), iA = col('author'), iY = col('year'),
-      iC = col('critics rank', 'critics'), iR = col('readers rank', 'readers'), iB = col('on both lists', 'both');
+      iC = col('critics rank', 'critics'), iR = col('readers rank', 'readers'), iB = col('on both lists', 'both'),
+      iG = col('gender', 'sex');
   var out = [];
   for (var r = 1; r < rows.length; r++) {
     var row = rows[r];
@@ -304,6 +323,7 @@ function parseBooks(csv) {
       critics: iC >= 0 ? parseInt(row[iC], 10) || null : null,
       readers: iR >= 0 ? parseInt(row[iR], 10) || null : null,
       both: iB >= 0 ? /^y/i.test(String(row[iB]).trim()) : false,
+      gender: iG >= 0 ? normGender(row[iG]) : '',
     });
   }
   state.books = out;
@@ -345,6 +365,7 @@ function filtered() {
     if (state.list === 'both' && !b.both) return false;
     if (state.list === 'critics' && !b.critics) return false;
     if (state.list === 'readers' && !b.readers) return false;
+    if (state.gender === 'other' ? !!b.gender : (state.gender !== 'all' && b.gender !== state.gender)) return false;
     var rd = bState(b.no).read;
     if (state.read === 'read' && !rd) return false;
     if (state.read === 'unread' && rd) return false;
@@ -461,7 +482,7 @@ document.getElementById('bb-shelf').addEventListener('click', function (e) {
 
 function jumpToBook(no) {
   /* clear filters so the target is guaranteed visible, then scroll to it */
-  state.read = 'all'; state.list = 'all'; syncChips();
+  state.read = 'all'; state.list = 'all'; state.gender = 'all'; syncChips();
   state.search = ''; document.getElementById('bb-search').value = '';
   renderGrid();
   var card = grid.querySelector('.bb-card[data-no="' + no + '"]');
@@ -475,9 +496,11 @@ function jumpToBook(no) {
 function syncChips() {
   document.querySelectorAll('#bb-list-filters .bb-chip').forEach(function (c) { c.classList.toggle('on', c.getAttribute('data-list') === state.list); });
   document.querySelectorAll('#bb-read-filters .bb-chip').forEach(function (c) { c.classList.toggle('on', c.getAttribute('data-read') === state.read); });
+  document.querySelectorAll('#bb-gender-filters .bb-chip').forEach(function (c) { c.classList.toggle('on', c.getAttribute('data-gender') === state.gender); });
 }
 document.getElementById('bb-list-filters').addEventListener('click', function (e) { var c = e.target.closest('[data-list]'); if (!c) return; state.list = c.getAttribute('data-list'); syncChips(); renderGrid(); });
 document.getElementById('bb-read-filters').addEventListener('click', function (e) { var c = e.target.closest('[data-read]'); if (!c) return; state.read = c.getAttribute('data-read'); syncChips(); renderGrid(); });
+document.getElementById('bb-gender-filters').addEventListener('click', function (e) { var c = e.target.closest('[data-gender]'); if (!c) return; state.gender = c.getAttribute('data-gender'); syncChips(); renderGrid(); });
 document.getElementById('bb-search').addEventListener('input', function (e) { state.search = e.target.value; renderGrid(); });
 document.getElementById('bb-sort').addEventListener('change', function (e) { state.sort = e.target.value; renderGrid(); });
 
@@ -498,7 +521,10 @@ document.getElementById('bb-surprise').addEventListener('click', function () {
 
 /* ═══════════ INIT ═══════════ */
 renderGrid();
-loadAll().then(function () { renderHero(); renderGrid(); })
+loadAll().then(function () {
+  if (state.books.some(function (b) { return !b.gender; })) document.getElementById('bb-gender-other').hidden = false;
+  renderHero(); renderGrid();
+})
   .catch(function (e) { console.error(e); document.getElementById('bb-grid').innerHTML = '<div class="bb-empty">Couldn’t load the book list. Refresh to try again.</div>'; });
 </script>
 </body>
