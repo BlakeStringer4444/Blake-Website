@@ -38,6 +38,12 @@
   --lime:   #D4FF1A;
   --purple: #9933FF;
   --musical:#FF17C3;
+  /* Titles of the next season. Deep teal rather than the obvious champagne
+     gold: gold looks handsome against the purple here, but in dark mode the
+     titles are fluro lime and a gold sits in the same yellow family — it
+     reads as a slightly duller lime, like a rendering fault, rather than a
+     different colour. Teal is unmistakable against both. */
+  --nextyear:#0E7C7B;
   --black:  #0a0a0a;
   --offwhite: #f5f5f0;
   --bg:         var(--offwhite);
@@ -49,6 +55,7 @@
   --input-border:rgba(0,0,0,0.15);
 }
 [data-theme="dark"] {
+  --nextyear:   #2DD4BF;
   --bg:         var(--black);
   --fg:         #f5f5f0;
   --card-bg:    #141414;
@@ -58,6 +65,7 @@
   --input-border:rgba(255,255,255,0.14);
 }
 [data-theme="terminal"] {
+  --nextyear:   #2DD4BF;
   --bg:         #0a0a0a;
   --fg:         #ffffff;
   --card-bg:    #111111;
@@ -80,6 +88,7 @@
   --input-border:rgba(255,45,149,0.45);
   --lime:       #43e8ff;   /* chrome accent → cyan  */
   --purple:     #ff2d95;   /* data accent  → hot pink */
+  --nextyear:   #ffd86b;   /* gold here — synthwave's accents are cyan and pink, so teal would vanish into the cyan */
 }
 [data-theme="synthwave"] body {
   background:
@@ -561,6 +570,8 @@ body {
 }
 [data-theme="dark"]     .td-title-text { color: var(--lime); }
 [data-theme="terminal"] .td-title-text { color: #ffffff; }
+/* Last, so it beats every per-theme rule above and the musical-mode accent. */
+.td-title-text.td-next-year { color: var(--nextyear); }
 
 .td-dates {
   font-family: 'DM Mono', monospace;
@@ -9193,6 +9204,10 @@ function card(show) {
   const key       = showKey(show);
   const starred   = watchlist.has(key);
   const nowShowing = isNowShowing(show);
+  /* Only reachable while the season is revealed, so in normal use this is
+     always false and no card is ever gold to the public. */
+  const startDate = parseDate(show.date_start);
+  const nextYear  = !!startDate && startDate.getFullYear() === HIDDEN_YEAR;
 
   const links = [];
   if (show.url_map)       links.push(`<a class="td-link" href="${safeUrl(show.url_map)}" target="_blank" rel="noopener noreferrer" aria-label="Map (opens in new tab)">${iconMap} Map</a>`);
@@ -9224,7 +9239,7 @@ function card(show) {
         <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">${iconStar}</button>
       </span>
     </div>
-    <div class="td-title-text">${escapeHtml(show.title)}</div>
+    <div class="td-title-text${nextYear ? ' td-next-year' : ''}">${escapeHtml(show.title)}</div>
     <div class="td-dates">${fmtRange(show)}</div>
     ${progressBar}
     <div class="td-company" title="${escapeHtml(show.company)}">${escapeHtml(show.company)}</div>
