@@ -229,6 +229,13 @@
   .cal-day { font-size:.8rem; font-weight:600; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
   .cal-cell.cal-dark .cal-day { color:#F3F1E6; }
   .cal-cell.cal-today { outline:2px solid var(--accent); outline-offset:1px; }
+  .cal-cell.cal-editable { cursor:pointer; }
+  .cal-cell.cal-editable:hover { box-shadow:0 0 0 2px var(--brand-soft); }
+  .cal-cell.cal-editable:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  .day-overlay { position:fixed; inset:0; z-index:90; display:none; background:var(--bg);
+    overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 16px 40px; }
+  .day-overlay.open { display:block; }
+  .day-sub { text-align:center; font-size:.78rem; color:var(--brand-soft); margin:2px 2px 14px; line-height:1.5; }
   .cal-cell.cal-perfect { box-shadow:0 0 0 2px #6E9A3A, 0 3px 12px -3px rgba(110,154,58,.7); }
   .cal-dots { position:absolute; bottom:2px; right:2px; font-size:9px; line-height:1; letter-spacing:-2px; }
   .cal-summary { margin:18px 2px 4px; text-align:center; font-size:.9rem; color:var(--ink); font-weight:650; }
@@ -427,6 +434,19 @@
       <span>🍎 weekly</span>
       <span>🍑 monthly</span>
     </div>
+  </div>
+</div>
+
+<!-- Retro-edit a single day's daily goals. Opened by tapping a day in the
+     history calendar; sits above it so closing returns to the calendar. -->
+<div class="day-overlay" id="day-overlay">
+  <div class="cal-panel">
+    <div class="cal-top">
+      <div class="cal-title" id="day-title"></div>
+      <button class="iconbtn" id="day-close" aria-label="Close day">✕ Done</button>
+    </div>
+    <div class="day-sub" id="day-sub"></div>
+    <div class="list" id="day-list"></div>
   </div>
 </div>
 
@@ -886,6 +906,66 @@
     return dates.filter(function (d) { return d >= since; }).length;
   }
 
+  /* ── retroactive day editing ──
+     A daily goal's tally is keyed by that period's key, and for the daily
+     cadence the period key IS the date — so state.tally already records
+     exactly which goals were ticked on which day. Editing a past day needs no
+     new storage, only a different way in. */
+  function wasDoneOn(goal, dateKey) {
+    /* Today's tick lives in goal.p; state saved before the tally existed may
+       have no entry for it, so trust goal.p first for today. */
+    if (dateKey === ymd(now) && isDone(goal, "daily")) return true;
+    var t = state.tally && state.tally[goal.id];
+    return !!(t && t[dateKey]);
+  }
+
+  /* Returns true if anything changed. The log count moves by a delta rather
+     than being recounted from the current goals: a goal deleted since that day
+     took its tally with it, so recounting would quietly erase its contribution
+     to a day she really did complete. */
+  function setDailyDoneOn(goal, dateKey, want) {
+    if (wasDoneOn(goal, dateKey) === !!want) return false;
+    ensureTally(); ensureLog();
+    var t = state.tally[goal.id] || (state.tally[goal.id] = {});
+    var e = state.log[dateKey];
+    if (want) {
+      t[dateKey] = dateKey;
+      if (!e) e = state.log[dateKey] = { d: 0, dt: state.goals.daily.length };
+      e.d++;
+      if (e.dt < e.d) e.dt = e.d;          /* goals added since that day */
+    } else {
+      delete t[dateKey];
+      if (!Object.keys(t).length) delete state.tally[goal.id];
+      if (e) {
+        e.d = Math.max(0, e.d - 1);
+        if (e.d <= 0) delete state.log[dateKey];
+      }
+    }
+    /* Today is also the live tick on the main screen, which reads goal.p. */
+    if (dateKey === ymd(now)) {
+      if (want) { goal.p = periodKey("daily"); goal.ts = Date.now() + (tsCounter++); goal.pd = dateKey; }
+      else      { goal.p = null; goal.ts = 0; goal.pd = null; }
+    }
+    return true;
+  }
+
+  /* A forgotten tick can break a streak, so repairing the day should be able
+     to mend it. Only ever upward: the log starts the day the history view
+     shipped, so a recount can't see days before that and would otherwise
+     shorten — or wipe — a streak that legitimately predates it. */
+  function repairDayStreak() {
+    var s = state.streaks && state.streaks.day;
+    if (!s) return;
+    function fullOn(d) { var e = state.log[ymd(d)]; return !!e && isFullPeriod(e.d, e.dt); }
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var yday  = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    var anchor = fullOn(today) ? today : (fullOn(yday) ? yday : null);
+    if (!anchor) return;                    /* streak isn't live — leave it be */
+    var count = 0, cur = new Date(anchor);
+    while (fullOn(cur)) { count++; cur.setDate(cur.getDate() - 1); }
+    if (count > s.count) { s.count = count; s.last = ymd(anchor); }
+  }
+
   function bumpStreak(cadence) {
     var key = STREAK_MAP[cadence]; if (!key) return;
     var s = state.streaks[key], cur = curKey(cadence), prev = prevKey(cadence);
@@ -1064,6 +1144,13 @@
       }
       if (isFull) { cell.classList.add("cal-perfect"); perfect++; }
       if (key === todayKey) cell.classList.add("cal-today");
+      if (key <= todayKey) {                      /* past + today are editable */
+        cell.classList.add("cal-editable");
+        cell.setAttribute("role", "button");
+        cell.setAttribute("tabindex", "0");
+        cell.setAttribute("aria-label", "Edit " + key);
+        cell.dataset.key = key;
+      }
       var dots = "";
       if (isFull)              { dots += "🌱"; }
       if (weekDays.has(key))  { dots += "🍎"; wk++; }
@@ -1090,6 +1177,89 @@
     if (!dates.length) return { y: now.getFullYear(), m: now.getMonth() };
     return { y: parseInt(dates[0].slice(0, 4), 10), m: parseInt(dates[0].slice(5, 7), 10) - 1 };
   }
+  document.getElementById("cal-grid").addEventListener("click", function (ev) {
+    var cell = ev.target.closest(".cal-editable");
+    if (cell) openDay(cell.dataset.key);
+  });
+  document.getElementById("cal-grid").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter" && ev.key !== " ") return;
+    var cell = ev.target.closest(".cal-editable");
+    if (!cell) return;
+    ev.preventDefault();
+    openDay(cell.dataset.key);
+  });
+
+  /* ── day editor ── */
+  var dayOv = document.getElementById("day-overlay"), dayKey = null;
+  function prettyDate(key) {
+    var y = +key.slice(0, 4), m = +key.slice(5, 7) - 1, d = +key.slice(8, 10);
+    var dt = new Date(y, m, d);
+    return DOW[dt.getDay()] + ", " + d + " " + MON[m];
+  }
+  function openDay(key) {
+    dayKey = key;
+    document.getElementById("day-title").textContent = prettyDate(key);
+    renderDay();
+    dayOv.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeDay() {
+    dayOv.classList.remove("open");
+    dayKey = null;
+    /* The calendar is still open underneath and its fills may have moved. */
+    renderCalendar();
+    document.body.style.overflow = "hidden";
+  }
+  function renderDay() {
+    var list = document.getElementById("day-list");
+    list.innerHTML = "";
+    var items = state.goals.daily;
+    if (!items.length) {
+      var em = document.createElement("div"); em.className = "empty";
+      em.textContent = "No daily goals to tick.";
+      list.appendChild(em);
+    }
+    items.forEach(function (goal) {
+      var on  = wasDoneOn(goal, dayKey);
+      var row = document.createElement("div");
+      row.className = "goal" + (on ? " done" : "");
+      row.setAttribute("role", "button");
+      row.setAttribute("tabindex", "0");
+      row.setAttribute("aria-pressed", on ? "true" : "false");
+      row.innerHTML =
+        '<span class="box"><svg viewBox="0 0 24 24" aria-hidden="true">' +
+          '<path class="lf" d="M5 19 C5 10 11 5 19 5 C19 13 13 19 5 19 Z"/>' +
+          '<path class="lv" d="M8.5 16.5 C11 12 14 9 17.5 7.5"/></svg></span>' +
+        '<span class="label"></span>';
+      row.querySelector(".label").textContent = goal.text;
+      function flip() {
+        if (!setDailyDoneOn(goal, dayKey, !wasDoneOn(goal, dayKey))) return;
+        repairDayStreak();
+        recomputeMarks();
+        scheduleSave();
+        renderDay();
+        /* Today's edits are also the live list, so keep the main screen true. */
+        if (dayKey === ymd(now)) { renderSection("daily"); updateProgress(); renderStreaks(); }
+        else renderStreaks();
+      }
+      row.addEventListener("click", flip);
+      row.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); flip(); }
+      });
+      list.appendChild(row);
+    });
+    var e = state.log[dayKey];
+    var done = e ? e.d : 0, total = Math.max(e ? e.dt : 0, items.length);
+    document.getElementById("day-sub").textContent =
+      done + " of " + total + " done" +
+      (isFullPeriod(done, total) ? " — a well-lived day 🌱" : "") +
+      (dayKey === ymd(now) ? "" : " · ticking here updates the calendar and your stats");
+  }
+  document.getElementById("day-close").addEventListener("click", closeDay);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && dayOv.classList.contains("open")) { e.stopPropagation(); closeDay(); }
+  }, true);
+
   document.getElementById("cal-open").addEventListener("click", openCalendar);
   document.getElementById("cal-close").addEventListener("click", closeCalendar);
   document.getElementById("cal-prev").addEventListener("click", function () {
