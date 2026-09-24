@@ -8916,6 +8916,9 @@ function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeBtn.innerHTML = theme === 'synthwave' ? sunsetSVG : theme === 'dark' ? sunSVG : '☾';
   localStorage.setItem('theme', theme);
+  /* Defined in the map module further down; absent until Map View has been
+     opened at least once, which is exactly when there's nothing to repoint. */
+  if (typeof window.refreshMapTiles === 'function') window.refreshMapTiles();
 }
 
 function showSynthToast() {
@@ -11198,7 +11201,15 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   const addrBtn   = document.getElementById('td-map-addr-btn');
   const addrClear = document.getElementById('td-map-addr-clear');
 
-  let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false;
+  let leafletMap = null, mapPinsData = [], userMarker = null, mapReady = false, tileLayer = null;
+
+  /* The layer was built once at init and never revisited, so toggling the
+     theme with the map open left the old basemap in place — light tiles on a
+     dark page. setTheme() calls this. */
+  function refreshMapTiles() {
+    if (tileLayer) tileLayer.setUrl(tileUrl());
+  }
+  window.refreshMapTiles = refreshMapTiles;
   let _lastListPins = [], _lastListWithDist = false, _userPos = null, routeLayer = null;
 
   function extractCoords(url) {
@@ -11241,18 +11252,29 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     return Array.from(seen.entries()).map(([name, pos]) => ({ name, ...pos }));
   }
 
+  /* CARTO began watermarking keyless basemap requests on 28 Aug 2026 — the
+     tiles themselves came back stamped "API KEY REQUIRED". This key is the
+     free non-commercial tier (5M tile requests a month, far beyond this
+     site). Basemap keys are designed to sit in client-side source; CARTO
+     documents putting it straight in the tile URL, so it is not a secret and
+     doesn't belong in the Worker. */
+  const CARTO_KEY = 'cb1_3vx1_1_d25c51c225c67ba785975a34';
+
+  /* terminal and synthwave are dark-background themes too, so they take the
+     dark basemap — previously only `dark` did and they got a glaring white
+     map. */
+  const DARK_THEMES = ['dark', 'terminal', 'synthwave'];
   function tileUrl() {
     const t = document.documentElement.dataset.theme || '';
-    return (t === 'dark')
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const style = DARK_THEMES.includes(t) ? 'dark_all' : 'light_all';
+    return 'https://{s}.basemaps.cartocdn.com/' + style + '/{z}/{x}/{y}{r}.png?key=' + CARTO_KEY;
   }
 
   function initLeaflet(pins) {
     if (mapReady) return;
     mapReady = true;
     leafletMap = L.map('td-map-el').setView([-37.88, 145.05], 10);
-    L.tileLayer(tileUrl(), {
+    tileLayer = L.tileLayer(tileUrl(), {
       attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(leafletMap);
