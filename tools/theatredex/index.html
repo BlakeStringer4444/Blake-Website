@@ -8093,9 +8093,10 @@ button.td-link { background: none; cursor: pointer; }
        what fixed the earlier Google "soft 404" issue on this URL). Not shown to
        visitors, per request. -->
   <p class="td-intro td-sr-only">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
-  <div class="td-mode-toggle" role="group" aria-label="Switch between plays and musicals">
+  <div class="td-mode-toggle" role="group" aria-label="Switch between plays, musicals and everything">
     <button type="button" id="td-mode-plays"    class="td-mode-btn active" aria-pressed="true"><span class="td-mode-emoji" aria-hidden="true">🎭</span>Plays</button>
     <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false"><span class="td-mode-emoji" aria-hidden="true">🎵</span>Musicals</button>
+    <button type="button" id="td-mode-all"      class="td-mode-btn"        aria-pressed="false"><span class="td-mode-emoji" aria-hidden="true">🎟️</span>All</button>
   </div>
   <div class="td-header-btns">
     <button id="td-map-btn" class="td-header-btn"><svg class="td-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6 2V6l6-2 6 2 6-2v16l-6 2-6-2z"/><path d="M9 4v16M15 6v16"/></svg><span>Map View</span></button>
@@ -9423,36 +9424,47 @@ document.getElementById('td-nowshowing').addEventListener('click', () => setActi
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
 
-/* ── PLAYS / MUSICALS MODE ──
-   Two independent signals in the data:
-     • type                   — per SHOW (Play / Musical / Variety / Pantomime)
-     • Musical_Theatre_Company — per COMPANY (1 = a musicals-only company)
-   Musicals mode lists actual musicals, keyed off the show's own type, so a
-   plays company's one-off musical (e.g. Malvern Theatre's "Dirty Rotten
-   Scoundrels") still appears; the company flag is OR'd in as a safety net so a
-   musicals-only company's whole slate shows even if a row's type is blank.
-   Plays mode shows everything EXCEPT musicals-only companies, so a mixed
-   company's full season (its plays AND its musicals) still appears there. */
+/* ── PLAYS / MUSICALS / ALL MODE ──
+   The show's own `type` column decides, and nothing else:
+     Plays    — Play, Pantomime
+     Musicals — Musical, Variety
+     All      — everything
+   The per-company Musical_Theatre_Company flag no longer takes part. It used
+   to pull a musicals-only company's whole slate into Musicals and keep it out
+   of Plays, which meant a row's own type could be overruled by its company.
+   One signal is easier to reason about and easier to fix — a show in the wrong
+   toggle is now always a wrong cell in column `type`.
+
+   Musicals is the closed set and Plays is the remainder, deliberately: a typo
+   or a type nobody has thought of yet ("Opera") lands in Plays rather than
+   vanishing from every toggle. The only rows that can be missing from Plays
+   are the ones explicitly typed Musical or Variety, which is what was asked
+   for. Blank types already display as "Play" on the cards, so they belong
+   there too. */
+const MUSICAL_TYPES = ['musical', 'variety'];
 function isMusicalShow(s) {
-  return (s.type || '').trim().toLowerCase() === 'musical' || s.Musical_Theatre_Company === '1';
+  return MUSICAL_TYPES.indexOf((s.type || '').trim().toLowerCase()) !== -1;
+}
+function inMode(s, m) {
+  if (m === 'all') return true;
+  return (m === 'musical') ? isMusicalShow(s) : !isMusicalShow(s);
 }
 function setModeData(m) {
-  mode = (m === 'musical') ? 'musical' : 'play';
+  mode = (m === 'musical' || m === 'all') ? m : 'play';
   document.documentElement.setAttribute('data-mode', mode);
-  allShows = allData.filter(s => mode === 'musical'
-    ? isMusicalShow(s)
-    : s.Musical_Theatre_Company !== '1');
+  allShows = allData.filter(s => inMode(s, mode));
   buildFilters(allShows);
   updateModeUI();
 }
 function updateModeUI() {
-  const musical  = mode === 'musical';
-  const playsBtn = document.getElementById('td-mode-plays');
-  const musBtn   = document.getElementById('td-mode-musicals');
-  playsBtn.classList.toggle('active', !musical);
-  playsBtn.setAttribute('aria-pressed', String(!musical));
-  musBtn.classList.toggle('active', musical);
-  musBtn.setAttribute('aria-pressed', String(musical));
+  const musical = mode === 'musical';
+  const all     = mode === 'all';
+  [['td-mode-plays', 'play'], ['td-mode-musicals', 'musical'], ['td-mode-all', 'all']]
+    .forEach(([id, m]) => {
+      const b = document.getElementById(id);
+      b.classList.toggle('active', mode === m);
+      b.setAttribute('aria-pressed', String(mode === m));
+    });
   /* Spreadsheet View is available in both modes now: it navigates to the
      standalone generated sheet for the active mode (plays / musicals) in the
      same tab, so the browser Back button returns here (standard link
@@ -9471,10 +9483,13 @@ function updateModeUI() {
      to Upcoming so the grid isn't left showing an empty VDL set. */
   document.getElementById('td-vdl').style.display = musical ? 'none' : '';
   if (musical && activeFilter === 'vdl') { activeFilter = 'upcoming'; setFilterButtons(activeFilter); }
-  /* Will It Clash rehearsal estimate differs by mode (see rehearsalMs). */
+  /* Will It Clash reads the estimate per show now (see rehearsalMs), so in All
+     mode a play and a musical each get their own lead-in rather than one
+     blanket figure. */
   const clashNote = document.getElementById('td-clash-note');
-  if (clashNote) clashNote.textContent =
-    'Rehearsal windows are estimated at ' + (musical ? '12' : '8') + ' weeks before opening night.';
+  if (clashNote) clashNote.textContent = all
+    ? 'Rehearsal windows are estimated at 8 weeks before opening night for plays, 12 for musicals.'
+    : 'Rehearsal windows are estimated at ' + (musical ? '12' : '8') + ' weeks before opening night.';
 }
 function switchMode(m) {
   if (m === mode) return;
@@ -9491,6 +9506,7 @@ function switchMode(m) {
 }
 document.getElementById('td-mode-plays').addEventListener('click',    () => switchMode('play'));
 document.getElementById('td-mode-musicals').addEventListener('click', () => switchMode('musical'));
+document.getElementById('td-mode-all').addEventListener('click',      () => switchMode('all'));
 
 /* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
    plays mode and opens this Facebook-groups modal in musical mode. */
@@ -11689,7 +11705,13 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   /* Rehearsal lead-in added ahead of opening night when working out clashes:
      musicals need longer to stage (music, choreography, band), so estimate
      12 weeks in musical mode vs 8 weeks for plays. */
-  function rehearsalMs() { return (mode === 'musical' ? 84 : 56) * 86400000; }
+  /* Per show rather than per mode, so All mode gives a play its 8 weeks and a
+     musical its 12 in the same comparison. Falls back to the mode when there's
+     no show to ask. */
+  function rehearsalMs(show) {
+    var musical = show ? isMusicalShow(show) : (mode === 'musical');
+    return (musical ? 84 : 56) * 86400000;
+  }
   var CAL_YEAR_LOCK = 2026;   /* Calendar View only covers this year — Jan–Dec, no prev/next past it. */
   function clampToLockYear(y, m) {
     if (y < CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 0];
@@ -11866,7 +11888,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     function activeInMonth(show, mi) {
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return false;
-      var rs = new Date(s.getTime() - rehearsalMs());
+      var rs = new Date(s.getTime() - rehearsalMs(show));
       var mS = new Date(YEAR, mi, 1), mE = new Date(YEAR, mi + 1, 0);
       return rs <= mE && e >= mS;
     }
@@ -11881,8 +11903,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var eB = parseDate(showB.date_end) || sB;
       if (eA < sA) eA = sA;               // guard against blank/reversed end dates
       if (eB < sB) eB = sB;
-      var startA = sA.getTime() - rehearsalMs();   // includes the rehearsal lead-in (8wk plays / 12wk musicals)
-      var startB = sB.getTime() - rehearsalMs();
+      var startA = sA.getTime() - rehearsalMs(showA);   // includes the rehearsal lead-in (8wk plays / 12wk musicals)
+      var startB = sB.getTime() - rehearsalMs(showB);
       var oStart = Math.max(startA, startB);
       var oEnd   = Math.min(eA.getTime(), eB.getTime());
       if (oStart > oEnd) return 0;
@@ -11903,7 +11925,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       '<div class="td-cal-legend-shows">' +
         '<div><span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) + '</div>' +
         '<div><span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) + '</div>' +
-        '<div style="opacity:0.5;font-size:10px">Solid = performance · Dashed = rehearsal (est. ' + (mode === 'musical' ? '12' : '8') + ' wk)</div>' +
+        '<div style="opacity:0.5;font-size:10px">Solid = performance · Dashed = rehearsal (est. ' +
+          (mode === 'all' ? '8 wk plays / 12 wk musicals' : (mode === 'musical' ? '12' : '8') + ' wk') + ')</div>' +
       '</div>' +
       '<div class="td-cal-clash-result">' + clashText + '</div>';
     calInfo.classList.add('visible');
@@ -11954,7 +11977,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return '';
       if (e < s) e = s;
-      var rs     = new Date(s.getTime() - rehearsalMs());
+      var rs     = new Date(s.getTime() - rehearsalMs(show));
       var rehEnd = new Date(s.getTime() - 86400000);  // day before perf starts
 
       var rehH  = (rs < s)

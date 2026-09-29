@@ -121,12 +121,13 @@ const HIDDEN_YEAR = 2027;
 const REVEAL_CODE = '2027blake';
 
 const params = new URLSearchParams(location.search);
-const mode = params.get('mode') === 'musical' ? 'musical' : 'play';
+const modeParam = params.get('mode');
+const mode = (modeParam === 'musical' || modeParam === 'all') ? modeParam : 'play';
 const revealHidden = params.get('reveal') === REVEAL_CODE;
 document.getElementById('ss-year').textContent = new Date().getFullYear();
-document.getElementById('ss-mode').textContent = '— ' + (mode === 'musical' ? 'Musicals' : 'Plays') +
-  (revealHidden ? ' + ' + HIDDEN_YEAR : '');
-document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + (mode === 'musical' ? 'Musicals' : 'Plays') + ' Spreadsheet';
+const MODE_LABEL = mode === 'musical' ? 'Musicals' : mode === 'all' ? 'Everything' : 'Plays';
+document.getElementById('ss-mode').textContent = '— ' + MODE_LABEL + (revealHidden ? ' + ' + HIDDEN_YEAR : '');
+document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + MODE_LABEL + ' Spreadsheet';
 
 /* ── CSV (identical parsing to the main tool) ── */
 function splitRow(line) {
@@ -163,10 +164,19 @@ function safeUrl(u) {
   return /^https?:\/\//i.test(u) ? u : '';
 }
 
-/* A show belongs to the musicals sheet if its own type is Musical, or its
-   company is flagged as a musical-theatre company (safety net). */
+/* Which toggle a show belongs to is decided by its own `type` and nothing
+   else — Musical and Variety are the musicals sheet, everything else is the
+   plays sheet. Kept identical to the same pair of functions in index.html;
+   update both together. The per-company Musical_Theatre_Company flag no
+   longer takes part, so a row in the wrong sheet is always a wrong cell in
+   column `type`. */
+const MUSICAL_TYPES = ['musical', 'variety'];
 function isMusicalShow(s) {
-  return (s.type || '').trim().toLowerCase() === 'musical' || s.Musical_Theatre_Company === '1';
+  return MUSICAL_TYPES.indexOf((s.type || '').trim().toLowerCase()) !== -1;
+}
+function inMode(s) {
+  if (mode === 'all') return true;
+  return (mode === 'musical') ? isMusicalShow(s) : !isMusicalShow(s);
 }
 
 /* Date range, collapsing a same-month span to "1 – 24 Oct". */
@@ -185,9 +195,13 @@ function fmtDates(row) {
    type — so in Plays mode a musical or pantomime shows e.g. "Sweeney Todd
    [Musical]" / "Rumpelstiltskin [Pantomime]", while a plain play is untagged
    (and in Musicals mode a plain musical is untagged). */
+/* Tag the type after the title whenever it isn't the sheet's primary type, so
+   a pantomime in the plays sheet reads "Rumpelstiltskin [Pantomime]". In All
+   mode every type is worth naming, since nothing is implied by the sheet. */
 function typeTag(row) {
   const t = (row.type || '').trim();
   if (!t) return '';
+  if (mode === 'all') return ' <span class="type">[' + esc(t) + ']</span>';
   const primary = mode === 'musical' ? 'musical' : 'play';
   return t.toLowerCase() !== primary ? ' <span class="type">[' + esc(t) + ']</span>' : '';
 }
@@ -251,7 +265,7 @@ function render(rows) {
     '<table class="ss"><thead><tr>' +
       '<th class="co-h">Company (A-Z)</th>' +
       '<th class="num-h"></th>' +
-      '<th>Play</th>' +
+      '<th>' + (mode === 'musical' ? 'Musical' : mode === 'all' ? 'Production' : 'Play') + '</th>' +
       '<th>Director(s)</th>' +
       '<th>Playwright(s)</th>' +
       '<th class="dates-h">Dates</th>' +
@@ -270,7 +284,7 @@ async function init() {
     const rows = parseCSV(text).filter(s => {
       const d = parseDate(s.date_start);
       if (!revealHidden && d && d.getFullYear() === HIDDEN_YEAR) return false;
-      return mode === 'musical' ? isMusicalShow(s) : s.Musical_Theatre_Company !== '1';
+      return inMode(s);
     });
     render(rows);
   } catch (e) {
