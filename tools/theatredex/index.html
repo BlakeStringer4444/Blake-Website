@@ -157,6 +157,21 @@
    variable recolours the whole active-mode view to neon magenta in a single stroke.
    Site chrome (title/subtitle) uses --lime and is intentionally untouched. */
 [data-mode="musical"] { --purple: var(--musical); }
+/* In All mode both kinds sit side by side, so each show keeps its own accent
+   rather than the whole page taking one. Re-scoping the custom property on
+   the element recolours everything inside it — title, badges, links, the
+   BlakeAI button, the calendar bar — from a single rule. */
+[data-mode="all"] .td-card.is-musical,
+[data-mode="all"] .td-cal-row.is-musical { --purple: var(--musical); }
+/* The chrome isn't about any one show, so in All it takes the midpoint of the
+   two accents rather than picking a side — the view buttons, the filter chips,
+   the selects and the search focus all read as a blend of the two modes they
+   cover. Resolved on the ancestor first so the per-element --purple below
+   isn't defined in terms of itself, which would be a cycle and drop the whole
+   declaration. The mode toggle keeps its own treatment and is excluded. */
+[data-mode="all"] { --mixed: color-mix(in srgb, var(--purple) 50%, var(--musical)); }
+[data-mode="all"] .td-header-btn,
+[data-mode="all"] .td-controls { --purple: var(--mixed); }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
@@ -328,6 +343,14 @@ body {
   box-shadow: 0 0 0 1px var(--purple),
               0 4px 20px color-mix(in srgb, var(--purple) 55%, transparent);
   transform: translateY(-1px);
+}
+/* All is both kinds at once, so its pill blends the two accents rather than
+   borrowing either. Built from the same two custom properties the other two
+   use, so it follows the palette wherever that changes — including Synthwave. */
+#td-mode-all.active {
+  background: linear-gradient(100deg, var(--purple) 0%, color-mix(in srgb, var(--purple) 45%, var(--musical)) 50%, var(--musical) 100%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--purple) 50%, var(--musical)),
+              0 4px 20px color-mix(in srgb, color-mix(in srgb, var(--purple) 50%, var(--musical)) 55%, transparent);
 }
 .td-mode-btn.active .td-mode-emoji { transform: scale(1.2); animation: td-mode-pop 0.4s ease; }
 @keyframes td-mode-pop {
@@ -9231,7 +9254,7 @@ function card(show) {
     progressBar = `<div class="td-progress-bar" title="${pct}% through the season"><div class="td-progress-fill" style="width:${pct}%"></div></div>`;
   }
 
-  return `<div class="td-card">
+  return `<div class="td-card${isMusicalShow(show) ? ' is-musical' : ''}">
     <div class="td-card-row1">
       <span class="td-badges">
         <span class="${badgeCls}">${type}</span>
@@ -11823,7 +11846,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
             ? barHTML('td-cal-bar' + (s.date_approximate === '1' ? ' td-cal-bar--approx' : ''), pS, pE,
                       esc(s.title) + ' · ' + esc(fmtRange(s)))
             : '';
-          return '<div class="td-cal-row" data-company="' + esc(s.company) + '" data-title="' + esc(s.title) + '">' +
+          return '<div class="td-cal-row' + (isMusicalShow(s) ? ' is-musical' : '') +
+            '" data-company="' + esc(s.company) + '" data-title="' + esc(s.title) + '">' +
             '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">' +
               '<div class="td-cal-row-company" title="' + esc(s.company) + '">' + esc(s.company) + '</div>' +
               '<div class="td-cal-row-show" title="' + esc(s.title) + '">' + esc(s.title) + '</div>' +
