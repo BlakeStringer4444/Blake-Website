@@ -99,28 +99,6 @@
     }
     .todo-foot button:hover { border-color: var(--purple); color: var(--purple); }
     .todo-empty { padding: 30px 16px; text-align: center; font-size: 11px; color: var(--muted); }
-    .todo-key { display: none; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
-    .todo-key.show { display: flex; }
-    .todo-key p { flex: 1 0 100%; font-size: 10.5px; line-height: 1.6; color: var(--muted); margin-bottom: 2px; }
-    .todo-key input {
-      flex: 1; min-width: 140px; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
-      font-family: var(--font); font-size: 12px; padding: 9px 12px; border-radius: 4px;
-    }
-    .todo-key input:focus { outline: none; border-color: var(--purple); }
-    .todo-key button {
-      background: var(--purple); color: #fff; border: none; border-radius: 4px; cursor: pointer;
-      font-family: var(--font); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 14px;
-    }
-    .todo-sync { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-    .todo-sync.err { color: #ef4444; }
-
-    .asak-toast {
-      position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 20px); z-index: 200;
-      background: linear-gradient(90deg, #FF2D95, var(--purple)); color: #fff;
-      font-family: var(--font); font-weight: 500; letter-spacing: 0.02em; font-size: 12px;
-      padding: 12px 20px; border-radius: 999px; box-shadow: 0 10px 32px -6px rgba(255,45,149,.6);
-      opacity: 0; transition: opacity 0.35s, transform 0.35s; pointer-events: none;
-    }
     .asak-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
@@ -715,11 +693,6 @@
         <button class="modal-close" data-close="modal-todo" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="todo-key" id="todo-key-bar">
-          <p id="todo-key-msg"></p>
-          <input type="password" id="todo-key-input" placeholder="Sync key&hellip;" aria-label="Sync key" autocomplete="off">
-          <button type="button" id="todo-key-save">Save</button>
-        </div>
         <div class="todo-add">
           <input type="text" id="todo-input" placeholder="Add something&hellip;" aria-label="Add a to-do item" autocomplete="off">
           <button type="button" id="todo-add-btn">Add</button>
@@ -806,17 +779,15 @@
    still opens instantly and survives a failed request. Leave TODO_API empty
    and everything below still works, just on this device only.
 
-   The Worker requires a key, deliberately NOT written in this file: the page
-   is public, so anything here is readable by anyone who views source. The app
-   asks for the key once and keeps it in localStorage instead. */
+   There is no key on the endpoint, by choice — see the Worker for what that
+   trades away. Each PUT there keeps the version it replaces, so a list lost
+   to a stray write can be read back from the Cloudflare KV browser. */
 (function () {
-  /* The Worker in workers/asak-todo-worker.js. The key it requires is NOT
-     here on purpose — the app asks for it once per device (see below). */
+  /* The Worker in workers/asak-todo-worker.js. */
   var TODO_API   = 'https://asak-todo.blakestringer.workers.dev';
 
   var UNLOCK_KEY = 'asak-todo-unlocked';
   var ITEMS_KEY  = 'asak-todo-v1';
-  var TOKEN_KEY  = 'asak-todo-key';
   var esc = escHtmlShared;
 
   var btn    = document.getElementById('todo-btn');
@@ -838,47 +809,33 @@
   function showButton(on) { btn.hidden = !on; }
 
   /* ── sync ── */
-  var keyBar  = document.getElementById('todo-key-bar');
-  var keyMsg  = document.getElementById('todo-key-msg');
-  var keyIn   = document.getElementById('todo-key-input');
-  var syncEl  = document.getElementById('todo-sync');
+  var syncEl = document.getElementById('todo-sync');
   var pushTimer = null, pulling = false;
 
-  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
   function syncOn() { return !!TODO_API; }
   function setSync(msg, isErr) {
     syncEl.textContent = msg ? '  ·  ' + msg : '';
     syncEl.classList.toggle('err', !!isErr);
   }
-  function askForKey(msg) { keyMsg.textContent = msg; keyBar.classList.add('show'); }
-  function hideKeyBar() { keyBar.classList.remove('show'); keyIn.value = ''; }
-  function rejectKey() {
-    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-    askForKey('That key was rejected. Try again.');
-    setSync('not synced', true);
-  }
 
   function pull() {
     if (!syncOn()) return;
-    if (!token()) { askForKey('Enter the sync key to use this list on this device.'); return; }
     pulling = true;
     setSync('syncing…');
-    fetch(TODO_API, { headers: { 'X-Todo-Key': token() }, cache: 'no-store' })
+    fetch(TODO_API, { cache: 'no-store' })
       .then(function (r) {
-        if (r.status === 401) throw new Error('401');
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (remote) {
         if (Array.isArray(remote)) { items = remote; save(); render(); }
-        hideKeyBar();
         setSync('synced');
       })
-      .catch(function (err) {
+      .catch(function () {
         /* Offline or the Worker is down — the local copy is still good, so
-           say so rather than blanking a list she can still read and edit. */
-        if (String(err.message) === '401') rejectKey();
-        else setSync('offline — saved here', true);
+           say so rather than blanking a list that's still readable and
+           editable. */
+        setSync('offline — saved here', true);
       })
       .then(function () { pulling = false; });
   }
@@ -887,37 +844,22 @@
      flight — otherwise the pre-pull list would be pushed back over the fresh
      one that just arrived. */
   function schedulePush() {
-    if (!syncOn() || !token() || pulling) return;
+    if (!syncOn() || pulling) return;
     clearTimeout(pushTimer);
     setSync('saving…');
     pushTimer = setTimeout(function () {
       fetch(TODO_API, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Todo-Key': token() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(items)
       })
         .then(function (r) {
-          if (r.status === 401) throw new Error('401');
           if (!r.ok) throw new Error('HTTP ' + r.status);
           setSync('synced');
         })
-        .catch(function (err) {
-          if (String(err.message) === '401') rejectKey();
-          else setSync('offline — saved here', true);
-        });
+        .catch(function () { setSync('offline — saved here', true); });
     }, 600);
   }
-
-  document.getElementById('todo-key-save').addEventListener('click', function () {
-    var v = keyIn.value.trim();
-    if (!v) return;
-    try { localStorage.setItem(TOKEN_KEY, v); } catch (e) {}
-    hideKeyBar();
-    pull();
-  });
-  keyIn.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('todo-key-save').click(); }
-  });
 
   function toast(msg) {
     var el = document.createElement('div');
@@ -1010,7 +952,7 @@
     openModalById('modal-todo');
     setSync(syncOn() ? '' : 'this device only');
     pull();
-    setTimeout(function () { if (!keyBar.classList.contains('show')) input.focus(); }, 60);
+    setTimeout(function () { input.focus(); }, 60);
   }
 
   /* Called by the theme script once the taps land. */
