@@ -99,6 +99,20 @@
     }
     .todo-foot button:hover { border-color: var(--purple); color: var(--purple); }
     .todo-empty { padding: 30px 16px; text-align: center; font-size: 11px; color: var(--muted); }
+    .todo-key { display: none; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+    .todo-key.show { display: flex; }
+    .todo-key p { flex: 1 0 100%; font-size: 10.5px; line-height: 1.6; color: var(--muted); margin-bottom: 2px; }
+    .todo-key input {
+      flex: 1; min-width: 140px; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 12px; padding: 9px 12px; border-radius: 4px;
+    }
+    .todo-key input:focus { outline: none; border-color: var(--purple); }
+    .todo-key button {
+      background: var(--purple); color: #fff; border: none; border-radius: 4px; cursor: pointer;
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 14px;
+    }
+    .todo-sync { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .todo-sync.err { color: #ef4444; }
 
     .asak-toast {
       position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 20px); z-index: 200;
@@ -701,13 +715,18 @@
         <button class="modal-close" data-close="modal-todo" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
+        <div class="todo-key" id="todo-key-bar">
+          <p id="todo-key-msg"></p>
+          <input type="password" id="todo-key-input" placeholder="Sync key&hellip;" aria-label="Sync key" autocomplete="off">
+          <button type="button" id="todo-key-save">Save</button>
+        </div>
         <div class="todo-add">
           <input type="text" id="todo-input" placeholder="Add something&hellip;" aria-label="Add a to-do item" autocomplete="off">
           <button type="button" id="todo-add-btn">Add</button>
         </div>
         <div id="todo-list"></div>
         <div class="todo-foot">
-          <span id="todo-count"></span>
+          <span><span id="todo-count"></span><span class="todo-sync" id="todo-sync"></span></span>
           <span>
             <button type="button" id="todo-clear">Clear done</button>
             <button type="button" id="todo-hide" title="Hide the to-do button again until you tap 20× once more">Re-hide</button>
@@ -780,11 +799,24 @@
    Unlocked by 20 taps on the theme button; the unlock persists so the list
    isn't re-earned every visit, and reveals a small button in the header to
    reopen it. "Re-hide" in the footer puts it away again without touching the
-   items. Stored in localStorage, so it lives on this device only — the page
-   has no write-capable backend. */
+   items.
+
+   Items sync through a Cloudflare Worker (see workers/asak-todo-worker.js)
+   when TODO_API is set, with localStorage as the offline cache so the list
+   still opens instantly and survives a failed request. Leave TODO_API empty
+   and everything below still works, just on this device only.
+
+   The Worker requires a key, deliberately NOT written in this file: the page
+   is public, so anything here is readable by anyone who views source. The app
+   asks for the key once and keeps it in localStorage instead. */
 (function () {
+  /* ← paste the Worker URL here once it's deployed, e.g.
+       'https://asak-todo.blakestringer.workers.dev' */
+  var TODO_API   = '';
+
   var UNLOCK_KEY = 'asak-todo-unlocked';
   var ITEMS_KEY  = 'asak-todo-v1';
+  var TOKEN_KEY  = 'asak-todo-key';
   var esc = escHtmlShared;
 
   var btn    = document.getElementById('todo-btn');
@@ -804,6 +836,88 @@
     try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { return false; }
   }
   function showButton(on) { btn.hidden = !on; }
+
+  /* ── sync ── */
+  var keyBar  = document.getElementById('todo-key-bar');
+  var keyMsg  = document.getElementById('todo-key-msg');
+  var keyIn   = document.getElementById('todo-key-input');
+  var syncEl  = document.getElementById('todo-sync');
+  var pushTimer = null, pulling = false;
+
+  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function syncOn() { return !!TODO_API; }
+  function setSync(msg, isErr) {
+    syncEl.textContent = msg ? '  ·  ' + msg : '';
+    syncEl.classList.toggle('err', !!isErr);
+  }
+  function askForKey(msg) { keyMsg.textContent = msg; keyBar.classList.add('show'); }
+  function hideKeyBar() { keyBar.classList.remove('show'); keyIn.value = ''; }
+  function rejectKey() {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    askForKey('That key was rejected. Try again.');
+    setSync('not synced', true);
+  }
+
+  function pull() {
+    if (!syncOn()) return;
+    if (!token()) { askForKey('Enter the sync key to use this list on this device.'); return; }
+    pulling = true;
+    setSync('syncing…');
+    fetch(TODO_API, { headers: { 'X-Todo-Key': token() }, cache: 'no-store' })
+      .then(function (r) {
+        if (r.status === 401) throw new Error('401');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (remote) {
+        if (Array.isArray(remote)) { items = remote; save(); render(); }
+        hideKeyBar();
+        setSync('synced');
+      })
+      .catch(function (err) {
+        /* Offline or the Worker is down — the local copy is still good, so
+           say so rather than blanking a list she can still read and edit. */
+        if (String(err.message) === '401') rejectKey();
+        else setSync('offline — saved here', true);
+      })
+      .then(function () { pulling = false; });
+  }
+
+  /* Debounced so a burst of ticks is one write, and skipped while a pull is in
+     flight — otherwise the pre-pull list would be pushed back over the fresh
+     one that just arrived. */
+  function schedulePush() {
+    if (!syncOn() || !token() || pulling) return;
+    clearTimeout(pushTimer);
+    setSync('saving…');
+    pushTimer = setTimeout(function () {
+      fetch(TODO_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Todo-Key': token() },
+        body: JSON.stringify(items)
+      })
+        .then(function (r) {
+          if (r.status === 401) throw new Error('401');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          setSync('synced');
+        })
+        .catch(function (err) {
+          if (String(err.message) === '401') rejectKey();
+          else setSync('offline — saved here', true);
+        });
+    }, 600);
+  }
+
+  document.getElementById('todo-key-save').addEventListener('click', function () {
+    var v = keyIn.value.trim();
+    if (!v) return;
+    try { localStorage.setItem(TOKEN_KEY, v); } catch (e) {}
+    hideKeyBar();
+    pull();
+  });
+  keyIn.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('todo-key-save').click(); }
+  });
 
   function toast(msg) {
     var el = document.createElement('div');
@@ -842,7 +956,7 @@
     if (!v) return;
     items.push({ text: v, done: false });
     input.value = '';
-    save(); render();
+    save(); render(); schedulePush();
     input.focus();
   }
 
@@ -856,8 +970,8 @@
     var i = +row.getAttribute('data-i');
     var act = e.target.closest('[data-act]');
     if (!act) return;
-    if (act.getAttribute('data-act') === 'tick') { items[i].done = !items[i].done; save(); render(); }
-    else if (act.getAttribute('data-act') === 'del') { items.splice(i, 1); save(); render(); }
+    if (act.getAttribute('data-act') === 'tick') { items[i].done = !items[i].done; save(); render(); schedulePush(); }
+    else if (act.getAttribute('data-act') === 'del') { items.splice(i, 1); save(); render(); schedulePush(); }
   });
 
   /* Edits commit on blur rather than per keystroke, so re-rendering can't
@@ -870,7 +984,7 @@
     var v = cell.textContent.trim();
     if (v === items[i].text) return;
     if (v) items[i].text = v; else items.splice(i, 1);
-    save(); render();
+    save(); render(); schedulePush();
   });
   listEl.addEventListener('keydown', function (e) {
     if (!e.target.closest('.todo-text')) return;
@@ -880,7 +994,7 @@
 
   document.getElementById('todo-clear').addEventListener('click', function () {
     items = items.filter(function (i) { return !i.done; });
-    save(); render();
+    save(); render(); schedulePush();
   });
   document.getElementById('todo-hide').addEventListener('click', function () {
     try { localStorage.removeItem(UNLOCK_KEY); } catch (e) {}
@@ -894,7 +1008,9 @@
   function openTodo() {
     load(); render();
     openModalById('modal-todo');
-    setTimeout(function () { input.focus(); }, 60);
+    setSync(syncOn() ? '' : 'this device only');
+    pull();
+    setTimeout(function () { if (!keyBar.classList.contains('show')) input.focus(); }, 60);
   }
 
   /* Called by the theme script once the taps land. */
