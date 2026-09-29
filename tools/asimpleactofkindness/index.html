@@ -113,9 +113,6 @@
     .asak-back-link { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(212,255,26,0.6); text-decoration: none; transition: color 0.15s; }
     .asak-back-link:hover { color: var(--lime); }
     .asak-header-actions { display: flex; gap: 8px; }
-    /* The class sets display:flex, which outranks the UA's [hidden] rule — so
-       without this the hidden to-do button would still show. */
-    .asak-icon-btn[hidden] { display: none; }
     .asak-icon-btn {
       background: none; border: 1px solid rgba(212,255,26,0.25);
       color: rgba(212,255,26,0.7); width: 44px; height: 44px; border-radius: 2px;
@@ -503,12 +500,6 @@
       <a class="asak-back-link" href="/">← blakestringer.com</a>
       <div class="asak-header-actions">
         <button class="asak-icon-btn" id="font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
-        <button class="asak-icon-btn" id="todo-btn" title="To-do" aria-label="Open to-do list" hidden>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="3 7 5 9 9 5"></polyline><polyline points="3 17 5 19 9 15"></polyline>
-            <line x1="13" y1="7" x2="21" y2="7"></line><line x1="13" y1="17" x2="21" y2="17"></line>
-          </svg>
-        </button>
         <button class="asak-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme">☾</button>
       </div>
     </div>
@@ -702,7 +693,7 @@
           <span><span id="todo-count"></span><span class="todo-sync" id="todo-sync"></span></span>
           <span>
             <button type="button" id="todo-clear">Clear done</button>
-            <button type="button" id="todo-hide" title="Hide the to-do button again until you tap 20× once more">Re-hide</button>
+            <button type="button" id="todo-hide" title="Lock the list again — 20 taps on the theme button to get back in">Lock</button>
           </span>
         </div>
       </div>
@@ -751,28 +742,50 @@
     btn.innerHTML = iconFor(t);
   }
 
-  /* The theme toggle is a plain two-state switch again — the old three-way
-     cycle returned early once Synthwave was unlocked, which would have meant
-     the taps below were never counted on a device that had unlocked it. */
+  /* Locked, this is a plain light/dark toggle that counts rapid taps: 20
+     within 30s unlocks the to-do list on this device.
+
+     Unlocked, it becomes a three-step cycle — light → dark → list → light …
+     — exactly the shape the old Synthwave easter egg had, so the list is
+     always at most three clicks away and never needs re-earning. The third
+     step opens the list rather than setting a theme, so the page stays dark
+     behind it. */
+  var UNLOCK_TAPS = 20, UNLOCK_WINDOW = 30000;
+  var STEP_LIGHT = 0, STEP_DARK = 1, STEP_LIST = 2;
+
+  /* Where the cycle resumes on load: dark is already one step in. */
+  var cyclePos = (saved === 'dark') ? STEP_DARK : STEP_LIGHT;
+
   var tapTimes = [];
   btn.addEventListener('click', function () {
+    if (window.todoUnlocked && window.todoUnlocked()) {
+      cyclePos = (cyclePos + 1) % 3;
+      if (cyclePos === STEP_LIGHT)     setTheme('light');
+      else if (cyclePos === STEP_DARK) setTheme('dark');
+      else                             window.openTodoList();
+      return;
+    }
+
     var cur = document.documentElement.getAttribute('data-theme') || 'light';
     setTheme(cur === 'dark' ? 'light' : 'dark');       /* normal toggle… */
     var t = Date.now();                                /* …while counting rapid taps */
     tapTimes.push(t);
-    tapTimes = tapTimes.filter(function (x) { return t - x <= 30000; });
-    if (tapTimes.length >= 20) {
+    tapTimes = tapTimes.filter(function (x) { return t - x <= UNLOCK_WINDOW; });
+    if (tapTimes.length >= UNLOCK_TAPS) {
       tapTimes = [];
+      /* Unlocking lands on dark and opens the list, i.e. the cycle's third
+         step — so the next click continues on to light. */
+      cyclePos = STEP_LIST;
       window.unlockTodo();
     }
   });
 })();
 
 /* ── SECRET TO-DO LIST ──
-   Unlocked by 20 taps on the theme button; the unlock persists so the list
-   isn't re-earned every visit, and reveals a small button in the header to
-   reopen it. "Re-hide" in the footer puts it away again without touching the
-   items.
+   Unlocked by 20 taps on the theme button. The unlock persists, and turns
+   that button into a light → dark → list cycle, so the list is three clicks
+   away rather than twenty and is never re-earned. "Lock" in the footer puts
+   it back to needing the twenty, without touching the items.
 
    Items sync through a Cloudflare Worker (see workers/asak-todo-worker.js)
    when TODO_API is set, with localStorage as the offline cache so the list
@@ -790,7 +803,6 @@
   var ITEMS_KEY  = 'asak-todo-v1';
   var esc = escHtmlShared;
 
-  var btn    = document.getElementById('todo-btn');
   var listEl = document.getElementById('todo-list');
   var input  = document.getElementById('todo-input');
   var countEl= document.getElementById('todo-count');
@@ -806,7 +818,6 @@
   function unlocked() {
     try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { return false; }
   }
-  function showButton(on) { btn.hidden = !on; }
 
   /* ── sync ── */
   var syncEl = document.getElementById('todo-sync');
@@ -940,12 +951,9 @@
   });
   document.getElementById('todo-hide').addEventListener('click', function () {
     try { localStorage.removeItem(UNLOCK_KEY); } catch (e) {}
-    showButton(false);
     closeModalById('modal-todo');
-    toast('Hidden — tap the theme button 20× to bring it back');
+    toast('Locked — tap the theme button 20× to get back in');
   });
-
-  btn.addEventListener('click', function () { openTodo(); });
 
   function openTodo() {
     load(); render();
@@ -955,16 +963,16 @@
     setTimeout(function () { input.focus(); }, 60);
   }
 
-  /* Called by the theme script once the taps land. */
-  window.unlockTodo = function () {
+  /* The theme button drives all of this — see the theme script above. */
+  window.todoUnlocked  = unlocked;
+  window.openTodoList  = openTodo;
+  window.unlockTodo    = function () {
     try { localStorage.setItem(UNLOCK_KEY, '1'); } catch (e) {}
-    showButton(true);
     openTodo();
-    toast('📝 To-do list unlocked');
+    toast('📝 To-do list unlocked — now 3 clicks away');
   };
 
   load();
-  showButton(unlocked());
 })();
 
 /* ── FONT ZOOM ── */
