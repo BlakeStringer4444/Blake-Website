@@ -163,6 +163,15 @@
    BlakeAI button, the calendar bar — from a single rule. */
 [data-mode="all"] .td-card.is-musical,
 [data-mode="all"] .td-cal-row.is-musical { --purple: var(--musical); }
+/* The chrome isn't about any one show, so in All it takes the midpoint of the
+   two accents rather than picking a side — the view buttons, the filter chips,
+   the selects and the search focus all read as a blend of the two modes they
+   cover. Resolved on the ancestor first so the per-element --purple below
+   isn't defined in terms of itself, which would be a cycle and drop the whole
+   declaration. The mode toggle keeps its own treatment and is excluded. */
+[data-mode="all"] { --mixed: color-mix(in srgb, var(--purple) 50%, var(--musical)); }
+[data-mode="all"] .td-header-btn,
+[data-mode="all"] .td-controls { --purple: var(--mixed); }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
