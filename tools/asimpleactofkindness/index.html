@@ -810,9 +810,9 @@
    is public, so anything here is readable by anyone who views source. The app
    asks for the key once and keeps it in localStorage instead. */
 (function () {
-  /* ← paste the Worker URL here once it's deployed, e.g.
-       'https://asak-todo.blakestringer.workers.dev' */
-  var TODO_API   = '';
+  /* The Worker in workers/asak-todo-worker.js. The key it requires is NOT
+     here on purpose — the app asks for it once per device (see below). */
+  var TODO_API   = 'https://asak-todo.blakestringer.workers.dev';
 
   var UNLOCK_KEY = 'asak-todo-unlocked';
   var ITEMS_KEY  = 'asak-todo-v1';
