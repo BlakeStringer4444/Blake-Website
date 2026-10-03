@@ -2330,25 +2330,31 @@ function loadMusic() {
      straight through follows the production. `file` must match the filename
      in audio/ exactly (the live server is case-sensitive even where a local
      filesystem isn't). */
+  /* `file` is the name on disk under audio/, encodeURI'd by trackSrc. The
+     "MUSIC - PGnn" files are the production's own edits, which replaced the
+     commercial releases that were here first; the page number in each filename
+     is the cue point and matches `page` below. */
   var TRACKS = [
     { title: "Sot-l'y-laisse", artist: 'Odezenne & Rone', act: 1, page: 1,
-      context: 'Start of Act 1', file: "01 Sot-l'y-laisse.mp3" },
+      context: 'Start of Act 1', file: "MUSIC - PG01 Sot-l'y-laisse.mp3" },
     { title: 'F L Y', artist: 'Spectrum', act: 1, page: 4,
-      context: 'End of Scene 1', file: '02 F L Y.mp3' },
+      context: 'End of Scene 1', file: 'MUSIC - PG04 F L Y - Spectrum.mp3' },
     { title: 'Martini', artist: 'The Presets', act: 1, page: 4,
-      context: 'In the background, start of Scene 2', file: '03 Martini.mp3' },
+      context: 'In the background, start of Scene 2', file: 'MUSIC - PG04 Martini.mp3' },
     { title: "I'm Still Standing", artist: 'Elton John', act: 1, page: 7,
-      context: 'End of Scene 2', file: "2-03 I'm Still Standing (Remastered).mp3" },
+      context: 'End of Scene 2', file: "MUSIC - PG07 I'm Still Standing.mp3" },
     { title: 'Sounds of Then (This is Australia)', artist: 'GANGgajang', act: 1, page: 32,
-      context: 'End of Act 1', file: '02 Sounds Of Then (This Is Australia).mp3' },
+      context: 'End of Act 1', file: 'MUSIC - PG32 Sounds of Then (This Is Australia).mp3' },
     { title: 'Love on my Mind', artist: 'Freemasons & Amanda Wilson', act: 2, page: 34,
-      context: 'Start of Act 2', file: '03 Love On My Mind (feat. Amanda Wilson) [Radio Edit].mp3' },
+      context: 'Start of Act 2', file: 'MUSIC - PG34 Love on my Mind - Freemasons & Amanda Wilson.mp3' },
     { title: 'Dirty Cash (Money Talks)', artist: 'The Adventures of Stevie V', act: 2, page: 55,
-      context: 'End of Scene 1', file: '01 Dirty Cash (Money Talks) [Sold Out 7 Inch Mix].mp3' },
+      context: 'End of Scene 1', file: 'MUSIC - PG55 Dirty Cash (Money Talks).mp3' },
     { title: 'House', artist: 'Charli XCX & John Cale', act: 2, page: 65,
-      context: 'JULIE ring sequence', file: '01 House featuring John Cale.mp3' },
+      context: 'JULIE ring sequence', file: 'MUSIC - PG65 House.mp3' },
     { title: 'Zoom', artist: "Fat Larry's Band", act: 2, page: 65,
-      context: 'After JULIE ring sequence', file: '03 Zoom.mp3' }
+      context: 'After JULIE ring sequence', file: "MUSIC - PG65 Zoom - Fat Larry's Band.mp3" },
+    { title: 'Walls Come Tumbling Down', artist: 'The Style Council', act: 2, page: 66,
+      context: 'Curtain call', file: "MUSIC - PG66 CURTAIN (Walls Come Tumbling Down + So-l'y-laisse).mp3" }
   ];
   var order = TRACKS.map(function (_, i) { return i; });
   var pos = 0, loadedPos = -1;
