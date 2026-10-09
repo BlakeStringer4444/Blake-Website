@@ -38,12 +38,6 @@
   --lime:   #D4FF1A;
   --purple: #9933FF;
   --musical:#FF17C3;
-  /* Titles of the next season. Deep teal rather than the obvious champagne
-     gold: gold looks handsome against the purple here, but in dark mode the
-     titles are fluro lime and a gold sits in the same yellow family — it
-     reads as a slightly duller lime, like a rendering fault, rather than a
-     different colour. Teal is unmistakable against both. */
-  --nextyear:#0E7C7B;
   --black:  #0a0a0a;
   --offwhite: #f5f5f0;
   --bg:         var(--offwhite);
@@ -55,7 +49,6 @@
   --input-border:rgba(0,0,0,0.15);
 }
 [data-theme="dark"] {
-  --nextyear:   #2DD4BF;
   --bg:         var(--black);
   --fg:         #f5f5f0;
   --card-bg:    #141414;
@@ -65,7 +58,6 @@
   --input-border:rgba(255,255,255,0.14);
 }
 [data-theme="terminal"] {
-  --nextyear:   #2DD4BF;
   --bg:         #0a0a0a;
   --fg:         #ffffff;
   --card-bg:    #111111;
@@ -88,7 +80,6 @@
   --input-border:rgba(255,45,149,0.45);
   --lime:       #43e8ff;   /* chrome accent → cyan  */
   --purple:     #ff2d95;   /* data accent  → hot pink */
-  --nextyear:   #ffd86b;   /* gold here — synthwave's accents are cyan and pink, so teal would vanish into the cyan */
 }
 [data-theme="synthwave"] body {
   background:
@@ -314,6 +305,57 @@ body {
    feature buttons it governs. A rounded pill; the active segment fills with
    the accent (--purple, which becomes neon magenta when data-mode="musical") plus a
    soft same-colour glow, so the lit side always matches — and pops. */
+/* A column so the password row drops underneath the year pill instead of
+   sitting beside it and shunting the mode slider up onto the same line. */
+.td-year-row { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* Same pill as the mode slider but smaller and quieter — the year is the
+   outer scope, chosen once, where the mode is flicked between constantly. */
+.td-year-toggle {
+  display: inline-flex; gap: 4px; margin-top: 16px; padding: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+}
+.td-year-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; font-weight: 500;
+  color: rgba(245,245,240,0.45);
+  background: none; border: none; cursor: pointer;
+  padding: 7px 16px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: color 0.25s, background 0.25s;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.td-year-btn:not(.active):hover { color: rgba(245,245,240,0.8); }
+.td-year-btn.active {
+  color: #fff; background: rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+}
+.td-year-btn--locked::after {
+  content: '🔒'; font-size: 9px; line-height: 1; opacity: 0.75;
+}
+.td-year-lock {
+  display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; padding: 10px 12px; max-width: 420px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+}
+.td-year-lock.on { display: inline-flex; }
+.td-year-lock input {
+  flex: 1; min-width: 150px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  background: rgba(0,0,0,0.35); color: #f5f5f0;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; padding: 8px 10px;
+}
+.td-year-lock input:focus { outline: none; border-color: var(--purple); }
+.td-year-lock button {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #fff; cursor: pointer;
+  background: var(--purple); border: none; border-radius: 6px; padding: 9px 14px;
+}
+.td-year-lock-msg { flex: 1 0 100%; font-family: 'DM Mono', monospace; font-size: 10px; color: #ff6b6b; }
+.td-year-lock-msg:empty { display: none; }
+
 .td-mode-toggle {
   display: inline-flex;
   gap: 4px;
@@ -593,8 +635,7 @@ body {
 }
 [data-theme="dark"]     .td-title-text { color: var(--lime); }
 [data-theme="terminal"] .td-title-text { color: #ffffff; }
-/* Last, so it beats every per-theme rule above and the musical-mode accent. */
-.td-title-text.td-next-year { color: var(--nextyear); }
+
 
 .td-dates {
   font-family: 'DM Mono', monospace;
@@ -8116,6 +8157,19 @@ button.td-link { background: none; cursor: pointer; }
        what fixed the earlier Google "soft 404" issue on this URL). Not shown to
        visitors, per request. -->
   <p class="td-intro td-sr-only">Theatredex is a searchable directory of Victorian community theatre productions for 2026, covering dozens of companies across Melbourne and regional Victoria. Browse by company, location, month or show type, check for schedule clashes between productions, and view everything on a calendar or map.</p>
+  <div class="td-year-row">
+    <div class="td-year-toggle" role="group" aria-label="Switch season">
+      <button type="button" id="td-year-2026" class="td-year-btn active" aria-pressed="true">2026</button>
+      <button type="button" id="td-year-2027" class="td-year-btn"        aria-pressed="false">2027</button>
+    </div>
+    <div class="td-year-lock" id="td-year-lock">
+      <label class="td-sr-only" for="td-year-lock-input">Password for the 2027 season</label>
+      <input type="password" id="td-year-lock-input" placeholder="Password for 2027&hellip;" autocomplete="off">
+      <button type="button" id="td-year-lock-go">Unlock</button>
+      <span class="td-year-lock-msg" id="td-year-lock-msg"></span>
+    </div>
+  </div>
+
   <div class="td-mode-toggle" role="group" aria-label="Switch between plays, musicals and everything">
     <button type="button" id="td-mode-plays"    class="td-mode-btn active" aria-pressed="true"><span class="td-mode-emoji" aria-hidden="true">🎭</span>Plays</button>
     <button type="button" id="td-mode-musicals" class="td-mode-btn"        aria-pressed="false"><span class="td-mode-emoji" aria-hidden="true">🎵</span>Musicals</button>
@@ -8150,10 +8204,6 @@ button.td-link { background: none; cursor: pointer; }
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
-    <span class="td-reveal-flag" id="td-reveal-flag">
-      <span id="td-reveal-label"></span>
-      <button type="button" id="td-reveal-off" title="Hide them again" aria-label="Hide the hidden season again">&times;</button>
-    </span>
   </div>
 </div>
 
@@ -9023,22 +9073,17 @@ const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste you
    THEATREDEX_CSV_URL secret. */
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
-   they're discovered, but shouldn't be public yet — see applyHiddenFilter(),
-   which sits between the fetched rows and `allData`, so everything that
-   derives from `allData` inherits the filter. The same filter also lives in
-   scripts/build-theatredex.mjs (the baked SEO/JSON-LD fallback) and
-   spreadsheet.html (the public spreadsheet view) — update all three together,
-   or just delete the filter once that season is ready to announce.
+/* The year slider picks a whole season; applyYearFilter() sits between the
+   fetched rows and `allData`, so everything downstream inherits it. 2027 is
+   behind REVEAL_CODE — see the YEAR block further down for how, and for why
+   that is obscurity rather than access control.
 
-   Typing REVEAL_CODE into the search box toggles them back on for whoever
-   knows it, and the same word passed as ?reveal= does it on the spreadsheet
-   view. This is obscurity, not security: the rows are in the CSV the Worker
-   serves, so anyone reading the network tab can see them. It's here to keep
-   an unannounced season out of the way of ordinary visitors and out of the
-   baked SEO section search engines read — not to withstand someone looking. */
-const HIDDEN_YEAR  = 2027;
-const REVEAL_CODE  = '2027blake';
+   scripts/build-theatredex.mjs (the baked SEO/JSON-LD) and spreadsheet.html
+   (the public spreadsheet view) carry their own copies of the year rule —
+   update all three together. */
+const YEARS        = [2026, 2027];
+const LOCKED_YEAR   = 2027;          /* the one behind the password */
+const REVEAL_CODE   = '2027blake';
 const REVEAL_KEY   = 'tdx-reveal-hidden';
 
 /* ── URL NORMALISER ── */
@@ -9127,52 +9172,92 @@ let allData = [], allShows = [], mode = 'play', activeCompany = '', activeMonth 
 /* The whole sheet as fetched, hidden rows and all; `allData` is the filtered
    view of it. Kept so revealing doesn't need a second network round trip. */
 let rawRows = [];
-let revealHidden = (function () {
-  try { return localStorage.getItem(REVEAL_KEY) === '1'; } catch (e) { return false; }
-})();
+let year = YEARS[0];                 /* the slider always starts on 2026 */
 
-function applyHiddenFilter() {
-  allData = revealHidden ? rawRows.slice() : rawRows.filter(s => {
+
+/* Strictly the selected year, both ways. A row whose date_start is blank or
+   malformed therefore belongs to neither year and appears nowhere — see
+   reportStrayRows(), which logs any such row to the console so a bad cell
+   shows up as a warning rather than as a show that quietly went missing. */
+function applyYearFilter() {
+  allData = rawRows.filter(s => {
     const d = parseDate(s.date_start);
-    return !d || d.getFullYear() !== HIDDEN_YEAR;
+    return !!d && d.getFullYear() === year;
   });
 }
 
-function updateRevealFlag() {
-  const flag = document.getElementById('td-reveal-flag');
-  if (!flag) return;
-  flag.classList.toggle('on', revealHidden);
-  const n = rawRows.filter(s => {
+function reportStrayRows() {
+  const stray = rawRows.filter(s => {
     const d = parseDate(s.date_start);
-    return d && d.getFullYear() === HIDDEN_YEAR;
-  }).length;
-  document.getElementById('td-reveal-label').textContent =
-    HIDDEN_YEAR + ' showing · ' + n + (n === 1 ? ' show' : ' shows');
+    return !d || YEARS.indexOf(d.getFullYear()) === -1;
+  });
+  if (stray.length) {
+    console.warn('Theatredex: ' + stray.length + ' row(s) have a date outside ' +
+      YEARS.join('/') + ' and appear under no year:',
+      stray.map(s => s.company + ' — ' + s.title + ' (' + (s.date_start || 'no date') + ')'));
+  }
+}
+
+/* ── YEAR ──
+   The slider's two sides are whole seasons, not a filter laid over one. 2027
+   sits behind REVEAL_CODE because that season is still being assembled and
+   isn't announced; the unlock persists per device, so the password is asked
+   once per phone or laptop rather than on every switch.
+
+   This is obscurity, not access control: the 2027 rows are in the CSV the
+   Worker serves, so anyone reading the network tab can see them. It keeps an
+   unannounced season out of the way of ordinary visitors and out of the baked
+   SEO section search engines read — scripts/build-theatredex.mjs still bakes
+   2026 only, deliberately, and has no equivalent unlock. */
+function yearUnlocked() {
+  try { return localStorage.getItem(REVEAL_KEY) === '1'; } catch (e) { return false; }
+}
+function unlockYear() {
+  try { localStorage.setItem(REVEAL_KEY, '1'); } catch (e) { /* private mode: this tab only */ }
+}
+
+function updateYearUI() {
+  YEARS.forEach(y => {
+    const b = document.getElementById('td-year-' + y);
+    if (!b) return;
+    b.classList.toggle('active', y === year);
+    b.setAttribute('aria-pressed', String(y === year));
+    b.classList.toggle('td-year-btn--locked', y === LOCKED_YEAR && !yearUnlocked());
+  });
+  document.getElementById('td-title').textContent = 'Theatredex ' + year;
+  document.title = 'Theatredex ' + year + ' — Victorian Community Theatre Directory';
+  const calTitle = document.getElementById('td-cal-modal-title');
+  if (calTitle) calTitle.textContent = 'Calendar View · ' + year;
 }
 
 /* Rebuilds `allData` and everything derived from it — the company and month
-   dropdowns included, so a company that only has hidden-season shows appears
-   and disappears with them. */
-function setRevealHidden(on) {
-  revealHidden = !!on;
-  try {
-    if (revealHidden) localStorage.setItem(REVEAL_KEY, '1');
-    else localStorage.removeItem(REVEAL_KEY);
-  } catch (e) { /* private mode — the toggle just won't outlive the tab */ }
-  applyHiddenFilter();
+   dropdowns included, so a company with shows in only one season appears and
+   disappears with it. */
+function setYear(y) {
+  if (y === year) return;
+  year = y;
+  applyYearFilter();
   setModeData(mode);
-  /* A company or month chosen while revealed may no longer exist once hidden. */
-  if (!revealHidden) {
-    const companies = new Set(allShows.map(s => s.company));
-    if (activeCompany && !companies.has(activeCompany)) activeCompany = '';
-    const monthSel = document.getElementById('td-month');
-    if (activeMonth && !Array.from(monthSel.options).some(o => o.value === activeMonth)) activeMonth = '';
-    document.getElementById('td-company').value = activeCompany;
-    monthSel.value = activeMonth;
-    syncSelectActive();
-  }
-  updateRevealFlag();
+  /* Filters scoped to the other season point at things that no longer exist. */
+  activeCompany = ''; activeMonth = ''; searchQ = '';
+  document.getElementById('td-search').value  = '';
+  document.getElementById('td-company').value = '';
+  document.getElementById('td-month').value   = '';
+  syncSelectActive();
+  updateYearUI();
   render();
+  modeChangeCallbacks.forEach(cb => cb());   /* rebuild cached panels (map, calendar) */
+}
+
+/* Clicking the locked year opens a password row rather than switching. */
+function requestYear(y) {
+  const bar = document.getElementById('td-year-lock');
+  if (y !== LOCKED_YEAR || yearUnlocked()) { bar.classList.remove('on'); setYear(y); return; }
+  bar.classList.add('on');
+  document.getElementById('td-year-lock-msg').textContent = '';
+  const input = document.getElementById('td-year-lock-input');
+  input.value = '';
+  input.focus();
 }
 
 /* ── MODE (Plays / Musicals) ── `allData` holds the full sheet; `allShows` is
@@ -9231,10 +9316,6 @@ function card(show) {
   const key       = showKey(show);
   const starred   = watchlist.has(key);
   const nowShowing = isNowShowing(show);
-  /* Only reachable while the season is revealed, so in normal use this is
-     always false and no card is ever gold to the public. */
-  const startDate = parseDate(show.date_start);
-  const nextYear  = !!startDate && startDate.getFullYear() === HIDDEN_YEAR;
 
   const links = [];
   if (show.url_map)       links.push(`<a class="td-link" href="${safeUrl(show.url_map)}" target="_blank" rel="noopener noreferrer" aria-label="Map (opens in new tab)">${iconMap} Map</a>`);
@@ -9266,7 +9347,7 @@ function card(show) {
         <button class="td-star-btn${starred ? ' active' : ''}" data-key="${key.replace(/"/g,'&quot;')}" aria-label="${starred ? 'Remove from watchlist' : 'Save to watchlist'}" title="${starred ? 'Remove from watchlist' : 'Save to watchlist'}">${iconStar}</button>
       </span>
     </div>
-    <div class="td-title-text${nextYear ? ' td-next-year' : ''}">${escapeHtml(show.title)}</div>
+    <div class="td-title-text">${escapeHtml(show.title)}</div>
     <div class="td-dates">${fmtRange(show)}</div>
     ${progressBar}
     <div class="td-company" title="${escapeHtml(show.company)}">${escapeHtml(show.company)}</div>
@@ -9386,12 +9467,13 @@ async function init() {
        refresh never remembers a Musicals selection. */
     rawRows = parseCSV(text)
       .sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-    applyHiddenFilter();
-    if (!allData.length) throw new Error('empty');
+    applyYearFilter();
+    if (!rawRows.length) throw new Error('empty');
+    reportStrayRows();
     setModeData('play');
     readUrlState();
     syncSelectActive();
-    updateRevealFlag();
+    updateYearUI();
     render();
     markDataReady();
   } catch (e) {
@@ -9417,19 +9499,9 @@ function revealStaticFallback() {
 
 /* ── EVENTS ── */
 document.getElementById('td-search').addEventListener('input', e => {
-  /* Typing the code word toggles the hidden season instead of searching for
-     it — and clears the box, so it isn't left sitting there for the next
-     person to read over your shoulder. */
-  if (e.target.value.trim().toLowerCase() === REVEAL_CODE) {
-    e.target.value = '';
-    searchQ = '';
-    setRevealHidden(!revealHidden);
-    return;
-  }
   searchQ = e.target.value;
   render();
 });
-document.getElementById('td-reveal-off').addEventListener('click', () => setRevealHidden(false));
 function syncSelectActive() {
   document.getElementById('td-company').classList.toggle('td-select--active', activeCompany !== '');
   document.getElementById('td-month').classList.toggle('td-select--active',   activeMonth   !== '');
@@ -9496,8 +9568,8 @@ function updateModeUI() {
   ssBtn.style.display = '';
   /* Carry the reveal across, or the hidden shows would silently vanish on a
      view the reader just unlocked here. */
-  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode +
-    (revealHidden ? '&reveal=' + encodeURIComponent(REVEAL_CODE) : '');
+  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode + '&year=' + year +
+    (year === LOCKED_YEAR ? '&reveal=' + encodeURIComponent(REVEAL_CODE) : '');
   /* Auditions stays in both modes: plays links straight to VDL; musical opens
      the Facebook-groups modal (see the audition-modal handler). The button keeps
      its icon + label in both modes; behaviour is handled by the click handler. */
@@ -9530,6 +9602,31 @@ function switchMode(m) {
 document.getElementById('td-mode-plays').addEventListener('click',    () => switchMode('play'));
 document.getElementById('td-mode-musicals').addEventListener('click', () => switchMode('musical'));
 document.getElementById('td-mode-all').addEventListener('click',      () => switchMode('all'));
+
+YEARS.forEach(y => {
+  document.getElementById('td-year-' + y).addEventListener('click', () => requestYear(y));
+});
+(function () {
+  const bar = document.getElementById('td-year-lock');
+  const input = document.getElementById('td-year-lock-input');
+  const msg = document.getElementById('td-year-lock-msg');
+  function submit() {
+    if (input.value.trim().toLowerCase() === REVEAL_CODE) {
+      unlockYear();
+      bar.classList.remove('on');
+      input.value = '';
+      msg.textContent = '';
+      setYear(LOCKED_YEAR);
+      updateYearUI();          /* drop the padlock from the button */
+    } else {
+      msg.textContent = 'Not that one.';
+      input.select();
+    }
+  }
+  document.getElementById('td-year-lock-go').addEventListener('click', submit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+  input.addEventListener('input', () => { msg.textContent = ''; });
+})();
 
 /* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
    plays mode and opens this Facebook-groups modal in musical mode. */
@@ -11735,10 +11832,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     var musical = show ? isMusicalShow(show) : (mode === 'musical');
     return (musical ? 84 : 56) * 86400000;
   }
-  var CAL_YEAR_LOCK = 2026;   /* Calendar View only covers this year — Jan–Dec, no prev/next past it. */
+  /* Calendar View covers the selected season only — Jan–Dec, no paging past
+     it. Reads the live `year` rather than a constant, or switching to 2027
+     would leave the calendar sat on an empty 2026. */
+  function calYearLock() { return year; }
   function clampToLockYear(y, m) {
-    if (y < CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 0];
-    if (y > CAL_YEAR_LOCK) return [CAL_YEAR_LOCK, 11];
+    var lock = calYearLock();
+    if (y < lock) return [lock, 0];
+    if (y > lock) return [lock, 11];
     return [y, m];
   }
 
@@ -11830,8 +11931,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     });
 
     calLabel.textContent = CAL_MONTHS[m] + ' ' + y;
-    calPrev.disabled = (y === CAL_YEAR_LOCK && m === 0);
-    calNext.disabled = (y === CAL_YEAR_LOCK && m === 11);
+    calPrev.disabled = (y === calYearLock() && m === 0);
+    calNext.disabled = (y === calYearLock() && m === 11);
 
     var dayHead = '';
     for (var d = 1; d <= numDays; d++) {
@@ -11896,7 +11997,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
 
   /* ── YEARLY CLASH VIEW ── */
   function renderYearly(showA, showB) {
-    var YEAR   = 2026;
+    var YEAR   = year;   /* the selected season, not a constant */
     var labelW = window.innerWidth < 640 ? 80 : 200;
     var gtc    = 'repeat(12,1fr)';
 
@@ -12040,7 +12141,8 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
      larger than the real screen and push the topbar off-screen. Same fix as
      the map modal above (openMap/closeMap). */
   function openCalendar() {
-    if (!calYear) {
+    /* Also re-clamps when the season changed while the calendar was closed. */
+    if (!calYear || calYear !== calYearLock()) {
       var now = new Date();
       var c = clampToLockYear(now.getFullYear(), now.getMonth());
       calYear = c[0]; calMonth = c[1];
@@ -12168,14 +12270,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   calClose.addEventListener('click', closeCalendar);
   calOverlay.addEventListener('click', function(e) { if (e.target === calOverlay) closeCalendar(); });
   calBack.addEventListener('click', function() { closeCalendar(); openPicker(); });
-  /* Calendar View is locked to CAL_YEAR_LOCK — PREV/NEXT can't step outside Jan–Dec of that year. */
+  /* Calendar View is locked to the selected season — PREV/NEXT can't step outside its Jan–Dec. */
   calPrev.addEventListener('click', function() {
-    if (calYear === CAL_YEAR_LOCK && calMonth === 0) return;
+    if (calYear === calYearLock() && calMonth === 0) return;
     calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
     renderCalendar();
   });
   calNext.addEventListener('click', function() {
-    if (calYear === CAL_YEAR_LOCK && calMonth === 11) return;
+    if (calYear === calYearLock() && calMonth === 11) return;
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
     renderCalendar();
   });
