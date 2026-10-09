@@ -107,27 +107,28 @@
 const WORKER_URL = 'https://blakeai.blakestringer.workers.dev';
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
-   they're discovered, but shouldn't be public yet — filtered out in init()
-   below. The same filter also lives in index.html (the live client-side
-   app) and scripts/build-theatredex.mjs (the baked SEO/JSON-LD fallback) —
-   update all three together, or just delete the filter once that season is
-   ready to announce.
-
-   ?reveal=<REVEAL_CODE> shows them anyway. The main tool appends it to its
-   Spreadsheet View link while the season is revealed there, so unlocking in
-   one place doesn't make them disappear in the other. */
-const HIDDEN_YEAR = 2027;
+/* This view shows one season, picked by ?year= (see below). The same year
+   rule lives in index.html (the live app) and scripts/build-theatredex.mjs
+   (the baked SEO/JSON-LD, which stays 2026-only on purpose) — update all
+   three together. */
+const YEARS       = [2026, 2027];
+const LOCKED_YEAR = 2027;
 const REVEAL_CODE = '2027blake';
 
 const params = new URLSearchParams(location.search);
 const modeParam = params.get('mode');
 const mode = (modeParam === 'musical' || modeParam === 'all') ? modeParam : 'play';
-const revealHidden = params.get('reveal') === REVEAL_CODE;
-document.getElementById('ss-year').textContent = new Date().getFullYear();
+/* ?year= picks the season, and 2027 additionally needs the code — the main
+   tool appends both to its Spreadsheet View link while that season is open,
+   so unlocking there doesn't send you to an empty sheet here. */
+const yearParam = parseInt(params.get('year'), 10);
+const year = (yearParam === LOCKED_YEAR && params.get('reveal') === REVEAL_CODE) ? LOCKED_YEAR
+           : (YEARS.indexOf(yearParam) !== -1 && yearParam !== LOCKED_YEAR) ? yearParam
+           : YEARS[0];
+document.getElementById('ss-year').textContent = year;
 const MODE_LABEL = mode === 'musical' ? 'Musicals' : mode === 'all' ? 'Everything' : 'Plays';
-document.getElementById('ss-mode').textContent = '— ' + MODE_LABEL + (revealHidden ? ' + ' + HIDDEN_YEAR : '');
-document.title = 'Theatredex ' + new Date().getFullYear() + ' — ' + MODE_LABEL + ' Spreadsheet';
+document.getElementById('ss-mode').textContent = '— ' + MODE_LABEL;
+document.title = 'Theatredex ' + year + ' — ' + MODE_LABEL + ' Spreadsheet';
 
 /* ── CSV (identical parsing to the main tool) ── */
 function splitRow(line) {
@@ -283,7 +284,7 @@ async function init() {
     const text = await res.text();
     const rows = parseCSV(text).filter(s => {
       const d = parseDate(s.date_start);
-      if (!revealHidden && d && d.getFullYear() === HIDDEN_YEAR) return false;
+      if (!d || d.getFullYear() !== year) return false;
       return inMode(s);
     });
     render(rows);
