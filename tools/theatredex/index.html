@@ -1672,12 +1672,45 @@ button.td-link { background: none; cursor: pointer; }
   letter-spacing: 0.3px; line-height: 1.6; margin: 0;
 }
 .td-clash-field { display: flex; flex-direction: column; gap: 6px; }
+/* The class sets display:flex, which outranks the UA stylesheet's [hidden]
+   rule — without this the C/D/E fields would show before they're added. */
+.td-clash-field[hidden] { display: none; }
 .td-clash-label {
   font-family: 'DM Mono', monospace; font-size: 9px;
   letter-spacing: 1.5px; text-transform: uppercase;
 }
-.td-clash-label-a { color: var(--purple); }
+/* Fixed hexes, not var(--purple): the series has to stay stable while the
+   mode accent flips to pink in Musicals, or Show A and Show C would be the
+   same colour. Chosen to avoid the red/amber/green that encode clash
+   severity further down. The row label also carries the letter, so the
+   colour is a convenience rather than the only way to tell rows apart. */
+.td-clash-label-a { color: #9933FF; }
 .td-clash-label-b { color: #22d3ee; }
+.td-clash-label-c { color: #FF17C3; }
+.td-clash-label-d { color: #3b82f6; }
+.td-clash-label-e { color: #f97316; }
+.td-clash-label { display: flex; align-items: center; gap: 8px; }
+.td-clash-remove {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px;
+  line-height: 1; padding: 2px 6px; border-radius: 4px;
+}
+.td-clash-remove:hover { color: #ef4444; background: rgba(239,68,68,0.12); }
+.td-clash-add {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted); cursor: pointer;
+  background: none; border: 1px dashed var(--input-border); border-radius: 8px;
+  padding: 10px 14px; transition: color 0.15s, border-color 0.15s;
+}
+.td-clash-add:hover { color: var(--purple); border-color: var(--purple); }
+.td-clash-add[hidden] { display: none; }
+/* The letter badge in the yearly chart's row labels. */
+.td-cal-row-letter {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 4px; margin-right: 6px;
+  font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+  color: #fff; flex-shrink: 0;
+}
 .td-clash-autocomplete { position: relative; }
 .td-clash-input {
   width: 100%; padding: 9px 12px; box-sizing: border-box;
@@ -8859,7 +8892,7 @@ button.td-link { background: none; cursor: pointer; }
       <button class="td-clash-close" id="td-clash-close">ESC<br>CLOSE</button>
     </div>
     <div class="td-clash-body">
-      <p class="td-clash-desc">Select two shows to compare their rehearsal and performance schedules side by side across the full year.</p>
+      <p class="td-clash-desc">Select two or more shows to compare their rehearsal and performance schedules side by side across the full year.</p>
       <div class="td-clash-field">
         <label class="td-clash-label td-clash-label-a" for="td-clash-a-input">■ Show A</label>
         <div class="td-clash-autocomplete">
@@ -8874,6 +8907,34 @@ button.td-link { background: none; cursor: pointer; }
           <div class="td-clash-suggestions" id="td-clash-b-sugg"></div>
         </div>
       </div>
+      <div class="td-clash-field" id="td-clash-field-c" hidden>
+        <label class="td-clash-label td-clash-label-c" for="td-clash-c-input">■ Show C
+          <button type="button" class="td-clash-remove" data-slot="2" aria-label="Remove Show C">&times;</button>
+        </label>
+        <div class="td-clash-autocomplete">
+          <input class="td-clash-input" id="td-clash-c-input" type="text" placeholder="Type a show title…" autocomplete="off" spellcheck="false">
+          <div class="td-clash-suggestions" id="td-clash-c-sugg"></div>
+        </div>
+      </div>
+      <div class="td-clash-field" id="td-clash-field-d" hidden>
+        <label class="td-clash-label td-clash-label-d" for="td-clash-d-input">■ Show D
+          <button type="button" class="td-clash-remove" data-slot="3" aria-label="Remove Show D">&times;</button>
+        </label>
+        <div class="td-clash-autocomplete">
+          <input class="td-clash-input" id="td-clash-d-input" type="text" placeholder="Type a show title…" autocomplete="off" spellcheck="false">
+          <div class="td-clash-suggestions" id="td-clash-d-sugg"></div>
+        </div>
+      </div>
+      <div class="td-clash-field" id="td-clash-field-e" hidden>
+        <label class="td-clash-label td-clash-label-e" for="td-clash-e-input">■ Show E
+          <button type="button" class="td-clash-remove" data-slot="4" aria-label="Remove Show E">&times;</button>
+        </label>
+        <div class="td-clash-autocomplete">
+          <input class="td-clash-input" id="td-clash-e-input" type="text" placeholder="Type a show title…" autocomplete="off" spellcheck="false">
+          <div class="td-clash-suggestions" id="td-clash-e-sugg"></div>
+        </div>
+      </div>
+      <button type="button" class="td-clash-add" id="td-clash-add">+ Add another show</button>
       <button class="td-clash-compare" id="td-clash-compare" disabled>Compare ◈</button>
       <p class="td-clash-note" id="td-clash-note">Rehearsal windows are estimated at 8 weeks before opening night.</p>
     </div>
@@ -11859,12 +11920,28 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   var clashBtn     = document.getElementById('td-clash-btn');
   var clashOverlay = document.getElementById('td-clash-overlay');
   var clashClose   = document.getElementById('td-clash-close');
-  var clashInputA  = document.getElementById('td-clash-a-input');
-  var clashSuggA   = document.getElementById('td-clash-a-sugg');
-  var clashInputB  = document.getElementById('td-clash-b-input');
-  var clashSuggB   = document.getElementById('td-clash-b-sugg');
   var clashCompare = document.getElementById('td-clash-compare');
-  var _selectedA = null, _selectedB = null;
+  var clashAdd     = document.getElementById('td-clash-add');
+
+  /* Up to five shows, A–E. A and B are always on screen; C, D and E are
+     revealed one at a time by the Add button. Each slot's colour is fixed
+     (see .td-clash-label-* in the stylesheet) so a row keeps its identity
+     however many are showing. */
+  var SLOTS = [
+    { id: 'a', letter: 'A', colour: '#9933FF' },
+    { id: 'b', letter: 'B', colour: '#22d3ee' },
+    { id: 'c', letter: 'C', colour: '#FF17C3' },
+    { id: 'd', letter: 'D', colour: '#3b82f6' },
+    { id: 'e', letter: 'E', colour: '#f97316' }
+  ];
+  var FIXED_SLOTS = 2;                 /* A and B can't be removed */
+  SLOTS.forEach(function (sl) {
+    sl.input = document.getElementById('td-clash-' + sl.id + '-input');
+    sl.sugg  = document.getElementById('td-clash-' + sl.id + '-sugg');
+    sl.field = document.getElementById('td-clash-field-' + sl.id);  /* null for a/b */
+  });
+  var _selected = [null, null, null, null, null];
+  var _shown    = FIXED_SLOTS;         /* how many fields are visible */
 
   var calYear = 0, calMonth = 0;
   var _calSavedZoom = '';
@@ -11996,7 +12073,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   }
 
   /* ── YEARLY CLASH VIEW ── */
-  function renderYearly(showA, showB) {
+  function renderYearly(shows) {
     var YEAR   = year;   /* the selected season, not a constant */
     var labelW = window.innerWidth < 640 ? 80 : 200;
     var gtc    = 'repeat(12,1fr)';
@@ -12009,74 +12086,104 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return date.getMonth();
     }
 
-    /* Is the show (incl. rehearsal window) active in month mi? */
-    function activeInMonth(show, mi) {
-      var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
-      if (!s) return false;
-      var rs = new Date(s.getTime() - rehearsalMs(show));
-      var mS = new Date(YEAR, mi, 1), mE = new Date(YEAR, mi + 1, 0);
-      return rs <= mE && e >= mS;
+    /* A show's full commitment window: rehearsal start → performance end. */
+    function windowOf(show) {
+      var st = parseDate(show.date_start);
+      if (!st) return null;
+      var en = parseDate(show.date_end) || st;
+      if (en < st) en = st;               // guard against blank/reversed end dates
+      return { start: st.getTime() - rehearsalMs(show), end: en.getTime() };
     }
 
-    /* Number of days ANYTHING overlaps between the two shows' full
-       commitment windows (rehearsal start → performance end). */
-    function totalOverlapDays() {
-      var sA = parseDate(showA.date_start);
-      var sB = parseDate(showB.date_start);
-      if (!sA || !sB) return 0;
-      var eA = parseDate(showA.date_end) || sA;
-      var eB = parseDate(showB.date_end) || sB;
-      if (eA < sA) eA = sA;               // guard against blank/reversed end dates
-      if (eB < sB) eB = sB;
-      var startA = sA.getTime() - rehearsalMs(showA);   // includes the rehearsal lead-in (8wk plays / 12wk musicals)
-      var startB = sB.getTime() - rehearsalMs(showB);
-      var oStart = Math.max(startA, startB);
-      var oEnd   = Math.min(eA.getTime(), eB.getTime());
-      if (oStart > oEnd) return 0;
-      return Math.floor((oEnd - oStart) / 86400000) + 1;  // inclusive day count
+    /* Inclusive day count where two commitment windows overlap, plus the
+       overlapping interval itself so a month can be tested against it. */
+    function overlapOf(x, y) {
+      var wx = windowOf(x), wy = windowOf(y);
+      if (!wx || !wy) return { days: 0 };
+      var oStart = Math.max(wx.start, wy.start);
+      var oEnd   = Math.min(wx.end,   wy.end);
+      if (oStart > oEnd) return { days: 0 };
+      return { days: Math.floor((oEnd - oStart) / 86400000) + 1, start: oStart, end: oEnd };
     }
 
-    var overlapDays = totalOverlapDays();
-    var dayWord     = overlapDays === 1 ? 'day' : 'days';
     /* 21+ days = major (red) · 1–20 days = minor (amber) · 0 = no clash (green) */
-    var clashLevel  = overlapDays === 0 ? 'none' : overlapDays >= 21 ? 'major' : 'minor';
-    var clashText   = clashLevel === 'major'
-      ? '<span style="color:#ef4444;font-weight:500">⚠ Major overlap · ' + overlapDays + ' ' + dayWord + '</span>'
-      : clashLevel === 'minor'
-        ? '<span style="color:#f59e0b;font-weight:500">⚠ Minor overlap · ' + overlapDays + ' ' + dayWord + '</span>'
-        : '<span style="color:#22c55e;font-weight:500">✓ No clash detected</span>';
+    function levelOf(days) { return days === 0 ? 'none' : days >= 21 ? 'major' : 'minor'; }
+
+    /* Every pair, so three or more shows report which ones actually collide
+       rather than one blended verdict. Two shows yields exactly one pair, so
+       the familiar single line is unchanged. */
+    var pairs = [];
+    for (var i = 0; i < shows.length; i++) {
+      for (var j = i + 1; j < shows.length; j++) {
+        var ov = overlapOf(shows[i], shows[j]);
+        pairs.push({ a: i, b: j, days: ov.days, start: ov.start, end: ov.end, level: levelOf(ov.days) });
+      }
+    }
+    var clashing = pairs.filter(function (pr) { return pr.days > 0; })
+                        .sort(function (x, y) { return y.days - x.days; });
+    var worst = clashing.length ? clashing[0].level : 'none';
+
+    function dayWordFor(n) { return n === 1 ? 'day' : 'days'; }
+    function pairLine(pr) {
+      var col = pr.level === 'major' ? '#ef4444' : '#f59e0b';
+      return '<div style="color:' + col + '">⚠ ' +
+        SLOTS[pr.a].letter + ' ↔ ' + SLOTS[pr.b].letter + ' · ' +
+        esc(shows[pr.a].title) + ' / ' + esc(shows[pr.b].title) +
+        ' · ' + pr.days + ' ' + dayWordFor(pr.days) + '</div>';
+    }
+    var clashText = clashing.length === 0
+      ? '<span style="color:#22c55e;font-weight:500">✓ No clash detected</span>'
+      : (shows.length === 2
+          ? '<span style="color:' + (worst === 'major' ? '#ef4444' : '#f59e0b') + ';font-weight:500">⚠ ' +
+            (worst === 'major' ? 'Major' : 'Minor') + ' overlap · ' + clashing[0].days + ' ' +
+            dayWordFor(clashing[0].days) + '</span>'
+          : '<span style="color:' + (worst === 'major' ? '#ef4444' : '#f59e0b') + ';font-weight:500">⚠ ' +
+            clashing.length + ' clash' + (clashing.length === 1 ? '' : 'es') + ' found</span>' +
+            '<div style="font-size:10px;line-height:1.7;margin-top:4px">' +
+            clashing.map(pairLine).join('') + '</div>');
 
     calInfo.innerHTML =
       '<div class="td-cal-legend-shows">' +
-        '<div><span style="color:var(--purple)">■</span> ' + esc(showA.title) + ' · ' + esc(showA.company) + '</div>' +
-        '<div><span style="color:#22d3ee">■</span> ' + esc(showB.title) + ' · ' + esc(showB.company) + '</div>' +
+        shows.map(function (sh, k) {
+          return '<div><span style="color:' + SLOTS[k].colour + '">■</span> ' +
+            SLOTS[k].letter + ' · ' + esc(sh.title) + ' · ' + esc(sh.company) + '</div>';
+        }).join('') +
         '<div style="opacity:0.5;font-size:10px">Solid = performance · Dashed = rehearsal (est. ' +
           (mode === 'all' ? '8 wk plays / 12 wk musicals' : (mode === 'musical' ? '12' : '8') + ' wk') + ')</div>' +
       '</div>' +
       '<div class="td-cal-clash-result">' + clashText + '</div>';
     calInfo.classList.add('visible');
 
-    /* Month column headers — coloured by clash level where both shows are active */
+    /* Month headers flag the months a real overlap actually falls in, rather
+       than any month two shows happen to both be busy in — two shows can run
+       in the same month without their windows touching. */
     var monthHead = '';
     for (var mi = 0; mi < 12; mi++) {
-      var active = activeInMonth(showA, mi) && activeInMonth(showB, mi);
-      var colCls = active ? (clashLevel === 'major' ? ' has-clash-major' : clashLevel === 'minor' ? ' has-clash' : '') : '';
+      var mS = new Date(YEAR, mi, 1).getTime();
+      var mE = new Date(YEAR, mi + 1, 0, 23, 59, 59).getTime();
+      var inMonth = clashing.filter(function (pr) { return pr.start <= mE && pr.end >= mS; });
+      var lvl = inMonth.some(function (pr) { return pr.level === 'major'; }) ? 'major'
+              : inMonth.length ? 'minor' : 'none';
+      var colCls = lvl === 'major' ? ' has-clash-major' : lvl === 'minor' ? ' has-clash' : '';
       monthHead += '<div class="td-cal-month-col' + colCls + '">' +
-        CAL_MONTHS_SHORT[mi] + (active && clashLevel !== 'none' ? '<br>⚠' : '') + '</div>';
+        CAL_MONTHS_SHORT[mi] + (lvl !== 'none' ? '<br>⚠' : '') + '</div>';
     }
 
     /* Render proportional bar segments — one div per month column, gradient-clipped
        to the exact start/end day within that column so bars are day-accurate. */
-    function partialBar(isReh, rowCls, startDate, endDate, tip) {
+    /* #rrggbb → rgba(), so a rehearsal bar is the slot's own colour faded
+       rather than a second hardcoded constant per slot. */
+    function hexA(hex, a) {
+      var n = parseInt(hex.slice(1), 16);
+      return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+    function partialBar(isReh, slot, startDate, endDate, tip) {
       /* Clamp both dates to 2026 */
       var y0 = new Date(YEAR, 0, 1), y1 = new Date(YEAR, 11, 31);
       var sC = new Date(Math.max(startDate.getTime(), y0.getTime()));
       var eC = new Date(Math.min(endDate.getTime(),   y1.getTime()));
       if (sC > eC) return '';
-      var isB       = rowCls === 'td-cal-row-b';
-      var fillColor = isReh
-        ? (isB ? 'rgba(34,211,238,0.22)' : 'rgba(100,74,228,0.22)')
-        : (isB ? '#22d3ee' : 'var(--purple)');
+      var fillColor = isReh ? hexA(slot.colour, 0.22) : slot.colour;
       var h    = isReh ? 13 : 22;
       var base = 'height:' + h + 'px;align-self:center;border-radius:2px;'
                + 'margin:0 1px;pointer-events:none;'
@@ -12098,7 +12205,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     }
 
     /* Build a row for one show */
-    function makeRow(show, rowCls) {
+    function makeRow(show, slot) {
       var s = parseDate(show.date_start), e = parseDate(show.date_end) || s;
       if (!s) return '';
       if (e < s) e = s;
@@ -12106,15 +12213,17 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       var rehEnd = new Date(s.getTime() - 86400000);  // day before perf starts
 
       var rehH  = (rs < s)
-        ? partialBar(true,  rowCls, rs, rehEnd,
+        ? partialBar(true,  slot, rs, rehEnd,
             'Rehearsals est. from ' + fmtShort(rs))
         : '';
-      var perfH = partialBar(false, rowCls, s, e,
+      var perfH = partialBar(false, slot, s, e,
             esc(show.title) + ' · ' + esc(fmtRange(show)));
 
-      return '<div class="td-cal-row ' + rowCls + '" style="cursor:default;min-height:52px">' +
+      return '<div class="td-cal-row" style="cursor:default;min-height:52px">' +
         '<div class="td-cal-row-label" style="width:' + labelW + 'px;min-width:' + labelW + 'px">' +
-          '<div class="td-cal-row-company" title="' + esc(show.company) + '">' + esc(show.company) + '</div>' +
+          '<div class="td-cal-row-company" title="' + esc(show.company) + '">' +
+            '<span class="td-cal-row-letter" style="background:' + slot.colour + '">' + slot.letter + '</span>' +
+            esc(show.company) + '</div>' +
           '<div class="td-cal-row-show" title="' + esc(show.title) + '">' + esc(show.title) + '</div>' +
         '</div>' +
         '<div class="td-cal-row-grid" style="grid-template-columns:' + gtc + '">' +
@@ -12129,8 +12238,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
         '<div class="td-cal-head-days" style="grid-template-columns:' + gtc + '">' + monthHead + '</div>' +
       '</div>' +
       '<div class="td-cal-rows">' +
-        makeRow(showA, 'td-cal-row-a') +
-        makeRow(showB, 'td-cal-row-b') +
+        shows.map(function (sh, k) { return makeRow(sh, SLOTS[k]); }).join('') +
       '</div>';
   }
 
@@ -12155,11 +12263,11 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     calBtn.classList.add('td-header-btn--active');
   }
 
-  function openCalendarYearly(showA, showB) {
+  function openCalendarYearly(shows) {
     _calSavedZoom = document.documentElement.style.zoom || '';
     document.documentElement.style.zoom = '';
     setYearlyMode();
-    renderYearly(showA, showB);
+    renderYearly(shows);
     calOverlay.classList.add('open');
   }
 
@@ -12240,24 +12348,80 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     });
   }
 
+  /* Only the filled slots count, so adding a row and leaving it blank still
+     compares the ones that are filled rather than blocking Compare. */
+  function chosenShows() {
+    return _selected.slice(0, _shown).filter(Boolean);
+  }
+  function sameShow(x, y) { return x.title === y.title && x.company === y.company; }
+
   function validatePicker() {
-    clashCompare.disabled = !_selectedA || !_selectedB ||
-      (_selectedA.title === _selectedB.title && _selectedA.company === _selectedB.company);
+    var picked = chosenShows();
+    var distinct = picked.filter(function (sh, i) {
+      return picked.findIndex(function (o) { return sameShow(o, sh); }) === i;
+    });
+    clashCompare.disabled = distinct.length < 2;
   }
 
-  makeAutocomplete(clashInputA, clashSuggA, function(s) { _selectedA = s; validatePicker(); });
-  makeAutocomplete(clashInputB, clashSuggB, function(s) { _selectedB = s; validatePicker(); });
+  function clearSlot(i) {
+    _selected[i] = null;
+    SLOTS[i].input.value = '';
+    SLOTS[i].input.classList.remove('chosen');
+    SLOTS[i].sugg.classList.remove('open');
+    SLOTS[i].sugg.innerHTML = '';
+  }
+
+  function syncSlotVisibility() {
+    SLOTS.forEach(function (sl, i) {
+      if (sl.field) sl.field.hidden = i >= _shown;
+    });
+    clashAdd.hidden = _shown >= SLOTS.length;
+  }
+
+  SLOTS.forEach(function (sl, i) {
+    makeAutocomplete(sl.input, sl.sugg, function (sh) { _selected[i] = sh; validatePicker(); });
+    /* Typing over a chosen show clears the selection until one is picked
+       again, so a half-edited field can't silently compare the old pick. */
+    sl.input.addEventListener('input', function () {
+      if (_selected[i] && sl.input.value !== (_selected[i].title || '')) {
+        _selected[i] = null; validatePicker();
+      }
+    });
+  });
+
+  clashAdd.addEventListener('click', function () {
+    if (_shown >= SLOTS.length) return;
+    _shown++;
+    syncSlotVisibility();
+    SLOTS[_shown - 1].input.focus();
+  });
+
+  /* Removing a middle row shuffles the ones below it up, so the visible
+     fields stay A, B, C… with no gap. */
+  document.querySelectorAll('.td-clash-remove').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.getAttribute('data-slot'), 10);
+      if (i < FIXED_SLOTS || _shown <= FIXED_SLOTS) return;
+      for (var j = i; j < _shown - 1; j++) {
+        _selected[j] = _selected[j + 1];
+        SLOTS[j].input.value = SLOTS[j + 1].input.value;
+        SLOTS[j].input.classList.toggle('chosen', SLOTS[j + 1].input.classList.contains('chosen'));
+      }
+      clearSlot(_shown - 1);
+      _shown--;
+      syncSlotVisibility();
+      validatePicker();
+    });
+  });
 
   function openPicker() {
-    _selectedA = null; _selectedB = null;
-    clashInputA.value = ''; clashInputA.classList.remove('chosen');
-    clashInputB.value = ''; clashInputB.classList.remove('chosen');
-    clashSuggA.classList.remove('open'); clashSuggA.innerHTML = '';
-    clashSuggB.classList.remove('open'); clashSuggB.innerHTML = '';
+    _shown = FIXED_SLOTS;
+    SLOTS.forEach(function (sl, i) { clearSlot(i); });
+    syncSlotVisibility();
     clashCompare.disabled = true;
     clashOverlay.classList.add('open');
     clashBtn.classList.add('td-header-btn--active');
-    setTimeout(function() { clashInputA.focus(); }, 50);
+    setTimeout(function() { SLOTS[0].input.focus(); }, 50);
   }
 
   function closePicker() {
@@ -12292,9 +12456,12 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
   clashClose.addEventListener('click', closePicker);
   clashOverlay.addEventListener('click', function(e) { if (e.target === clashOverlay) closePicker(); });
   clashCompare.addEventListener('click', function() {
-    if (!_selectedA || !_selectedB) return;
+    var picked = chosenShows().filter(function (sh, i, arr) {
+      return arr.findIndex(function (o) { return sameShow(o, sh); }) === i;
+    });
+    if (picked.length < 2) return;
     closePicker();
-    openCalendarYearly(_selectedA, _selectedB);
+    openCalendarYearly(picked);
   });
 
   document.addEventListener('keydown', function(e) {
