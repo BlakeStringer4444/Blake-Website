@@ -1551,25 +1551,46 @@ body[data-theme="terminal"] .music-progress-fill.playing { animation: music-glow
   to   { transform: scale(1);    opacity: 1; }
 }
 
-/* ── DIRECTING BANNER + LIGHTBOX ── */
+/* ── DIRECTING POSTERS + LIGHTBOX ── */
+.dir-posters {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  margin: 26px 0 6px; align-items: start;
+}
+/* One per row below this: two 3:4 portraits side by side get too narrow to
+   read on a phone. */
+@media (max-width: 560px) { .dir-posters { grid-template-columns: 1fr; } }
 .dir-banner {
-  display: block; width: 100%; margin: 26px 0 6px;
+  display: block; width: 100%;
   border-radius: 6px; overflow: hidden; cursor: zoom-in;
   border: 1px solid rgba(0,0,0,0.12); line-height: 0;
   transition: box-shadow 0.2s, transform 0.2s;
 }
-.dir-banner:hover { box-shadow: 0 8px 26px rgba(0,0,0,0.18); }
-.dir-banner img { display: block; width: 100%; height: auto; }
+.dir-banner:hover { box-shadow: 0 8px 26px rgba(0,0,0,0.18); transform: translateY(-2px); }
+/* Both posters are 3:4, so nothing is cropped today. The fixed box is here
+   so a future poster at another ratio still lines up with its neighbour
+   rather than leaving one card taller than the other. */
+.dir-banner img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
 body[data-theme="dark"] .dir-banner,
 body[data-theme="terminal"] .dir-banner { border-color: rgba(255,255,255,0.14); }
+.dir-lightbox-cap {
+  flex: 0 0 auto; text-align: center; color: rgba(255,255,255,0.9);
+  font-size: 13px; letter-spacing: 0.3px; line-height: 1.4;
+  pointer-events: none; padding: 0 16px; max-width: min(96vw, 1400px);
+}
+.dir-lightbox-cap em { font-style: italic; }
 .dir-lightbox {
   display: none; position: fixed; inset: 0; z-index: 9000;
   background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
   cursor: zoom-out; padding: 20px;
+  /* Column, so the caption sits under the poster. Overlaid on the image it
+     landed on the artwork — a portrait poster fills the height and leaves no
+     letterbox to sit in, unlike the landscape banner this replaced. */
+  flex-direction: column; gap: 14px;
 }
 .dir-lightbox.open { display: flex; animation: act-lb-fade 0.18s ease; }
 .dir-lightbox img {
-  max-width: min(96vw, 1400px); max-height: 90vh; width: auto; height: auto;
+  max-width: min(96vw, 1400px); max-height: 80vh; width: auto; height: auto;
+  min-height: 0;
   object-fit: contain; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   cursor: default; animation: act-lb-zoom 0.2s ease;
 }
@@ -3333,9 +3354,18 @@ body[data-theme="terminal"] :focus-visible {
         <a class="jump-btn" href="#dir-software">Software</a>
       </div>
 
-      <a class="dir-banner" id="dir-banner" href="Images/ASimpleActOfKindnessBanner-full.jpg" aria-label="Expand poster: A Simple Act of Kindness">
-        <img loading="lazy" decoding="async" src="Images/ASimpleActOfKindnessBanner.jpg" alt="A Simple Act of Kindness by Ross Mueller, directed by Blake Stringer — Brighton Theatre Company, 6–21 November 2026">
-      </a>
+      <div class="dir-posters">
+        <a class="dir-banner" href="Images/ASimpleActOfKindnessPoster.webp"
+           data-cap="&lt;em&gt;A Simple Act of Kindness&lt;/em&gt; — dir. Blake Stringer (6 – 21 Nov, 2026)"
+           aria-label="Expand poster: A Simple Act of Kindness">
+          <img loading="lazy" decoding="async" src="Images/ASimpleActOfKindnessPoster.webp" alt="A Simple Act of Kindness by Ross Mueller, directed by Blake Stringer — Brighton Theatre Company, 6–21 November 2026">
+        </a>
+        <a class="dir-banner" href="Images/ScenesFromTheClimateEraPoster.jpg"
+           data-cap="&lt;em&gt;Scenes From the Climate Era&lt;/em&gt; — dir. Blake Stringer (24 Jun – 4 Jul, 2027)"
+           aria-label="Expand poster: Scenes From the Climate Era">
+          <img loading="lazy" decoding="async" src="Images/ScenesFromTheClimateEraPoster.jpg" alt="Scenes From the Climate Era by David Finnigan, directed by Blake Stringer — Malvern Theatre, 24 June – 4 July 2027">
+        </a>
+      </div>
 
       <div class="section-sublabel" id="dir-theatre">Theatre</div>
       <div class="cv-table-wrap">
@@ -6008,33 +6038,50 @@ if (siteName) {
   });
 })();
 
-/* ── DIRECTING BANNER LIGHTBOX ── */
+/* ── DIRECTING POSTER LIGHTBOX ──
+   One lightbox shared by however many posters are on the page; each <a>
+   carries its own full-size href and a data-cap caption. */
 (function () {
-  const banner = document.getElementById('dir-banner');
-  if (!banner) return;
-  /* If the banner image isn't there yet, hide the block rather than show a
-     broken-image icon (safe to ship before the file is added). */
-  const bimg = banner.querySelector('img');
-  function hideIfBroken() { if (bimg.complete && bimg.naturalWidth === 0) banner.style.display = 'none'; }
-  bimg.addEventListener('error', function () { banner.style.display = 'none'; });
-  hideIfBroken();
-  const src = banner.getAttribute('href');
+  const posters = [...document.querySelectorAll('.dir-banner')];
+  if (!posters.length) return;
+
+  /* A poster whose image is missing hides itself rather than showing a
+     broken-image icon, so the row still reads if a file hasn't landed yet. */
+  posters.forEach(function (a) {
+    const im = a.querySelector('img');
+    if (!im) return;
+    const hide = function () { a.style.display = 'none'; };
+    im.addEventListener('error', hide);
+    if (im.complete && im.naturalWidth === 0) hide();
+  });
+
   const lb = document.createElement('div');
   lb.className = 'dir-lightbox';
   const img = document.createElement('img');
-  img.alt = banner.querySelector('img') ? banner.querySelector('img').alt : '';
+  const cap = document.createElement('div');
+  cap.className = 'dir-lightbox-cap';
   const close = document.createElement('button');
   close.className = 'dir-lightbox-close';
   close.type = 'button';
   close.textContent = '✕ CLOSE';
   close.setAttribute('aria-label', 'Close');
   lb.appendChild(img);
+  lb.appendChild(cap);
   lb.appendChild(close);
   document.body.appendChild(lb);
 
-  function open() { if (!img.src) img.src = src; lb.classList.add('open'); }
+  function open(a) {
+    const thumb = a.querySelector('img');
+    img.src = a.getAttribute('href');
+    img.alt = thumb ? thumb.alt : '';
+    cap.innerHTML = a.getAttribute('data-cap') || '';
+    lb.classList.add('open');
+  }
   function shut() { lb.classList.remove('open'); }
-  banner.addEventListener('click', function (e) { e.preventDefault(); open(); });
+
+  posters.forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); open(a); });
+  });
   lb.addEventListener('click', function (e) { if (e.target !== img) shut(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lb.classList.contains('open')) shut(); });
 })();
