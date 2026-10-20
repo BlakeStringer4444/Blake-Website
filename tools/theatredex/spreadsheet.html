@@ -107,24 +107,20 @@
 const WORKER_URL = 'https://blakeai.blakestringer.workers.dev';
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-/* This view shows one season, picked by ?year= (see below). The same year
-   rule lives in index.html (the live app) and scripts/build-theatredex.mjs
-   (the baked SEO/JSON-LD, which stays 2026-only on purpose) — update all
-   three together. */
+/* This view shows one season, picked by ?year= (see below). Both seasons are
+   public; 2027 used to need a code here and no longer does. The same year rule
+   lives in index.html (the live app) and scripts/build-theatredex.mjs (the
+   baked SEO/JSON-LD, which stays 2026-only on purpose) — update all three
+   together. */
 const YEARS       = [2026, 2027];
-const LOCKED_YEAR = 2027;
-const REVEAL_CODE = '2027blake';
 
 const params = new URLSearchParams(location.search);
 const modeParam = params.get('mode');
 const mode = (modeParam === 'musical' || modeParam === 'all') ? modeParam : 'play';
-/* ?year= picks the season, and 2027 additionally needs the code — the main
-   tool appends both to its Spreadsheet View link while that season is open,
-   so unlocking there doesn't send you to an empty sheet here. */
+/* ?year= picks the season — the main tool appends the year it's showing to its
+   Spreadsheet View link. Anything else falls back to 2026. */
 const yearParam = parseInt(params.get('year'), 10);
-const year = (yearParam === LOCKED_YEAR && params.get('reveal') === REVEAL_CODE) ? LOCKED_YEAR
-           : (YEARS.indexOf(yearParam) !== -1 && yearParam !== LOCKED_YEAR) ? yearParam
-           : YEARS[0];
+const year = YEARS.indexOf(yearParam) !== -1 ? yearParam : YEARS[0];
 document.getElementById('ss-year').textContent = year;
 const MODE_LABEL = mode === 'musical' ? 'Musicals' : mode === 'all' ? 'Everything' : 'Plays';
 document.getElementById('ss-mode').textContent = '— ' + MODE_LABEL;
