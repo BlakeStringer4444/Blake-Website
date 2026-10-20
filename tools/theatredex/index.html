@@ -305,8 +305,7 @@ body {
    feature buttons it governs. A rounded pill; the active segment fills with
    the accent (--purple, which becomes neon magenta when data-mode="musical") plus a
    soft same-colour glow, so the lit side always matches — and pops. */
-/* A column so the password row drops underneath the year pill instead of
-   sitting beside it and shunting the mode slider up onto the same line. */
+/* Keeps the year pill on its own line, above the mode slider. */
 .td-year-row { display: flex; flex-direction: column; align-items: flex-start; }
 
 /* Same pill as the mode slider but smaller and quieter — the year is the
@@ -331,30 +330,6 @@ body {
   color: #fff; background: rgba(255,255,255,0.14);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
 }
-.td-year-btn--locked::after {
-  content: '🔒'; font-size: 9px; line-height: 1; opacity: 0.75;
-}
-.td-year-lock {
-  display: none; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-top: 10px; padding: 10px 12px; max-width: 420px;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 10px;
-}
-.td-year-lock.on { display: inline-flex; }
-.td-year-lock input {
-  flex: 1; min-width: 150px;
-  font-family: 'DM Mono', monospace; font-size: 12px;
-  background: rgba(0,0,0,0.35); color: #f5f5f0;
-  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; padding: 8px 10px;
-}
-.td-year-lock input:focus { outline: none; border-color: var(--purple); }
-.td-year-lock button {
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
-  text-transform: uppercase; color: #fff; cursor: pointer;
-  background: var(--purple); border: none; border-radius: 6px; padding: 9px 14px;
-}
-.td-year-lock-msg { flex: 1 0 100%; font-family: 'DM Mono', monospace; font-size: 10px; color: #ff6b6b; }
-.td-year-lock-msg:empty { display: none; }
 
 .td-mode-toggle {
   display: inline-flex;
@@ -514,23 +489,6 @@ body {
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--muted);
 }
-/* Shown only while the hidden season is revealed. Deliberately visible
-   rather than silent: without it there's no way to tell an unlocked tab
-   from a locked one, and the whole point is that these shows aren't
-   public yet. */
-.td-reveal-flag {
-  display: none; align-items: center; gap: 7px;
-  font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--purple); border: 1px solid var(--purple);
-  border-radius: 999px; padding: 4px 6px 4px 11px;
-}
-.td-reveal-flag.on { display: inline-flex; }
-.td-reveal-flag button {
-  background: none; border: 0; cursor: pointer; color: inherit;
-  font: inherit; line-height: 1; padding: 3px 5px; border-radius: 50%;
-}
-.td-reveal-flag button:hover { background: var(--purple); color: #fff; }
 
 /* ── MAIN ── */
 .td-main { padding: 28px 48px 72px; }
@@ -8195,12 +8153,6 @@ button.td-link { background: none; cursor: pointer; }
       <button type="button" id="td-year-2026" class="td-year-btn active" aria-pressed="true">2026</button>
       <button type="button" id="td-year-2027" class="td-year-btn"        aria-pressed="false">2027</button>
     </div>
-    <div class="td-year-lock" id="td-year-lock">
-      <label class="td-sr-only" for="td-year-lock-input">Password for the 2027 season</label>
-      <input type="password" id="td-year-lock-input" placeholder="Password for 2027&hellip;" autocomplete="off">
-      <button type="button" id="td-year-lock-go">Unlock</button>
-      <span class="td-year-lock-msg" id="td-year-lock-msg"></span>
-    </div>
   </div>
 
   <div class="td-mode-toggle" role="group" aria-label="Switch between plays, musicals and everything">
@@ -9135,17 +9087,14 @@ const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste you
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* The year slider picks a whole season; applyYearFilter() sits between the
-   fetched rows and `allData`, so everything downstream inherits it. 2027 is
-   behind REVEAL_CODE — see the YEAR block further down for how, and for why
-   that is obscurity rather than access control.
+   fetched rows and `allData`, so everything downstream inherits it. Both
+   seasons are public — 2027 used to sit behind a password and no longer does.
 
    scripts/build-theatredex.mjs (the baked SEO/JSON-LD) and spreadsheet.html
    (the public spreadsheet view) carry their own copies of the year rule —
-   update all three together. */
+   update all three together. The build script still bakes 2026 only, so 2027
+   is browsable but not in the crawlable fallback text. */
 const YEARS        = [2026, 2027];
-const LOCKED_YEAR   = 2027;          /* the one behind the password */
-const REVEAL_CODE   = '2027blake';
-const REVEAL_KEY   = 'tdx-reveal-hidden';
 
 /* ── URL NORMALISER ── */
 function safeUrl(url) {
@@ -9230,8 +9179,8 @@ function isNowShowing(row) {
 
 /* ── STATE ── */
 let allData = [], allShows = [], mode = 'play', activeCompany = '', activeMonth = '', activeFilter = 'upcoming', searchQ = '';
-/* The whole sheet as fetched, hidden rows and all; `allData` is the filtered
-   view of it. Kept so revealing doesn't need a second network round trip. */
+/* The whole sheet as fetched, every season in it; `allData` is the one-year
+   view of it. Kept so switching year needs no second network round trip. */
 let rawRows = [];
 let year = YEARS[0];                 /* the slider always starts on 2026 */
 
@@ -9260,30 +9209,17 @@ function reportStrayRows() {
 }
 
 /* ── YEAR ──
-   The slider's two sides are whole seasons, not a filter laid over one. 2027
-   sits behind REVEAL_CODE because that season is still being assembled and
-   isn't announced; the unlock persists per device, so the password is asked
-   once per phone or laptop rather than on every switch.
+   The slider's two sides are whole seasons, not a filter laid over one. Both
+   are open to everyone; 2026 is simply the one the page opens on.
 
-   This is obscurity, not access control: the 2027 rows are in the CSV the
-   Worker serves, so anyone reading the network tab can see them. It keeps an
-   unannounced season out of the way of ordinary visitors and out of the baked
-   SEO section search engines read — scripts/build-theatredex.mjs still bakes
-   2026 only, deliberately, and has no equivalent unlock. */
-function yearUnlocked() {
-  try { return localStorage.getItem(REVEAL_KEY) === '1'; } catch (e) { return false; }
-}
-function unlockYear() {
-  try { localStorage.setItem(REVEAL_KEY, '1'); } catch (e) { /* private mode: this tab only */ }
-}
-
+   scripts/build-theatredex.mjs still bakes 2026 only, so the crawlable
+   fallback text and JSON-LD cover this season alone. */
 function updateYearUI() {
   YEARS.forEach(y => {
     const b = document.getElementById('td-year-' + y);
     if (!b) return;
     b.classList.toggle('active', y === year);
     b.setAttribute('aria-pressed', String(y === year));
-    b.classList.toggle('td-year-btn--locked', y === LOCKED_YEAR && !yearUnlocked());
   });
   document.getElementById('td-title').textContent = 'Theatredex ' + year;
   document.title = 'Theatredex ' + year + ' — Victorian Community Theatre Directory';
@@ -9308,17 +9244,6 @@ function setYear(y) {
   updateYearUI();
   render();
   modeChangeCallbacks.forEach(cb => cb());   /* rebuild cached panels (map, calendar) */
-}
-
-/* Clicking the locked year opens a password row rather than switching. */
-function requestYear(y) {
-  const bar = document.getElementById('td-year-lock');
-  if (y !== LOCKED_YEAR || yearUnlocked()) { bar.classList.remove('on'); setYear(y); return; }
-  bar.classList.add('on');
-  document.getElementById('td-year-lock-msg').textContent = '';
-  const input = document.getElementById('td-year-lock-input');
-  input.value = '';
-  input.focus();
 }
 
 /* ── MODE (Plays / Musicals) ── `allData` holds the full sheet; `allShows` is
@@ -9627,10 +9552,8 @@ function updateModeUI() {
      behaviour, no target=_blank). */
   const ssBtn = document.getElementById('td-spreadsheet-btn');
   ssBtn.style.display = '';
-  /* Carry the reveal across, or the hidden shows would silently vanish on a
-     view the reader just unlocked here. */
-  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode + '&year=' + year +
-    (year === LOCKED_YEAR ? '&reveal=' + encodeURIComponent(REVEAL_CODE) : '');
+  /* Carry the season across, so the sheet opens on the year being browsed. */
+  ssBtn.href = '/tools/theatredex/spreadsheet.html?mode=' + mode + '&year=' + year;
   /* Auditions stays in both modes: plays links straight to VDL; musical opens
      the Facebook-groups modal (see the audition-modal handler). The button keeps
      its icon + label in both modes; behaviour is handled by the click handler. */
@@ -9665,29 +9588,8 @@ document.getElementById('td-mode-musicals').addEventListener('click', () => swit
 document.getElementById('td-mode-all').addEventListener('click',      () => switchMode('all'));
 
 YEARS.forEach(y => {
-  document.getElementById('td-year-' + y).addEventListener('click', () => requestYear(y));
+  document.getElementById('td-year-' + y).addEventListener('click', () => setYear(y));
 });
-(function () {
-  const bar = document.getElementById('td-year-lock');
-  const input = document.getElementById('td-year-lock-input');
-  const msg = document.getElementById('td-year-lock-msg');
-  function submit() {
-    if (input.value.trim().toLowerCase() === REVEAL_CODE) {
-      unlockYear();
-      bar.classList.remove('on');
-      input.value = '';
-      msg.textContent = '';
-      setYear(LOCKED_YEAR);
-      updateYearUI();          /* drop the padlock from the button */
-    } else {
-      msg.textContent = 'Not that one.';
-      input.select();
-    }
-  }
-  document.getElementById('td-year-lock-go').addEventListener('click', submit);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
-  input.addEventListener('input', () => { msg.textContent = ''; });
-})();
 
 /* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
    plays mode and opens this Facebook-groups modal in musical mode. */

@@ -36,19 +36,16 @@ const PAGE_PATH = join(REPO_ROOT, 'tools', 'theatredex', 'index.html');
 const CANONICAL = 'https://www.blakestringer.com/tools/theatredex';
 const YEAR      = 2026;
 
-/* Shows for HIDDEN_YEAR are being added to the Sheet ahead of time as
-   they're discovered, but shouldn't be public yet — filtered out here so
-   they never reach the baked SEO/JSON-LD content search engines see. The
-   exact same filter also lives in tools/theatredex/index.html and
-   spreadsheet.html (the live client-side app and its public spreadsheet
-   view), since this script only covers the crawlable fallback content —
-   update all three together, or just delete the filter once that season
-   is ready to announce.
+/* HIDDEN_YEAR is left out of the baked SEO/JSON-LD content search engines
+   see, so what gets indexed is the current season only.
 
-   Those two now have a year slider, with 2027 behind a password (and
-   ?year=2027&reveal= on the spreadsheet view). This script deliberately has
-   no equivalent: its output is what search engines index, and an unannounced
-   season should not be in it under any circumstances. */
+   The year rule also lives in tools/theatredex/index.html and
+   spreadsheet.html (the live client-side app and its public spreadsheet
+   view) — update all three together. Those two let anyone switch to 2027
+   now; the password that used to guard it is gone. This script stays
+   2026-only on purpose: it covers the crawlable fallback text, where a
+   second season would compete with the current one in search results.
+   Change YEAR/HIDDEN_YEAR here when 2027 becomes the season to surface. */
 const HIDDEN_YEAR = 2027;
 
 const DEFAULT_CSV_URL =
