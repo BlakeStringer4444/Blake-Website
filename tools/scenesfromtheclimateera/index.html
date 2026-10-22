@@ -94,19 +94,7 @@
     .sfce-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 7.4vw, 86px); letter-spacing: 6px; color: var(--ice-on-black); line-height: 1; }
     .sfce-subtitle { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: color-mix(in srgb, var(--ice-on-black) 45%, transparent); margin-top: 6px; }
 
-    /* Shown while SHEET_IS_SAMPLE is true, so a schedule from another show
-       can't quietly pass for this one's. */
-    .sample-note {
-      max-width: 1080px; margin: 0 auto; padding: 10px 48px 0;
-      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
-      display: flex; align-items: center; gap: 9px;
-    }
-    .sample-note::before {
-      content: ''; width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%;
-      background: var(--ice);
-    }
-
-    /* Stands in for a viewer that has nothing to show yet. */
+    /* Stands in for a section that has nothing behind it yet. */
     .not-yet { padding: 64px 24px; text-align: center; }
     .not-yet-t {
       font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 4px; color: var(--muted);
@@ -493,8 +481,6 @@
     <p class="sfce-subtitle">Malvern Theatre · 24 Jun – 4 Jul 2027</p>
   </header>
 
-  <p class="sample-note" id="sample-note" hidden>Showing sample data &mdash; the real schedule isn&rsquo;t connected yet</p>
-
   <div class="page-body">
 
     <div class="btn-row">
@@ -683,14 +669,27 @@
 
 <script>
 /* ══ CONFIG ═══════════════════════════════════════════════════════════════
-   The three things that change as the production comes together. Nothing
-   else in this file needs touching.
+   What changes as the production comes together. Nothing else in this file
+   needs touching.
 
-   1. THE SHEET. SHEET_KEY is currently A Simple Act of Kindness's published
-      sheet, standing in as test data so the page has something real to draw.
-      Publish the Scenes sheet (File → Share → Publish to web → CSV), paste
-      its key below, set the three tab gids, and flip SHEET_IS_SAMPLE to
-      false — that also removes the "sample data" notice under the header.
+   1. THE SHEET. Each tab is published separately — in Google Sheets,
+      File → Share → Publish to web, choose the tab, choose CSV, then paste
+      the whole URL below. A tab left as '' makes its section say it isn't
+      connected yet, rather than show an error.
+
+      Note that a published URL with no &gid= always serves the FIRST tab,
+      whatever else the document holds, so three tabs need three URLs from
+      that dialog — not one URL with the gid swapped by hand.
+
+      Columns each tab needs (headers are matched by name, case-insensitive):
+        Schedule   datetime · act · scene · pages · characters · context ·
+                   performance
+                   — single-word headers on this tab; datetime is
+                     hyphen-separated throughout, e.g. 2027-04-20-19-00
+                   — performance holds the performance's NAME, and any value
+                     marks the row as a show rather than a rehearsal
+        Creatives  Role Cast · Role Crew · Name · Email
+        Glossary   Term · Definition · Page   (Page optional)
 
    2. THE PDFS. Drop script.pdf / design.pdf beside this file and name them
       here. While either is empty its button still works and the modal
@@ -699,32 +698,19 @@
    3. THE MUSIC. Put the mp3s in audio/ and list them in TRACKS (search for
       "var TRACKS"). An empty list gives the player its own waiting state. */
 
-var SHEET_KEY = '2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV';
-var SHEET_IS_SAMPLE = true;
-var GID_SCHEDULE  = 0;
-var GID_CREATIVES = 43169221;
-var GID_GLOSSARY  = 1037864490;
-function sheetCsv(gid) {
-  return 'https://docs.google.com/spreadsheets/d/e/' + SHEET_KEY +
-         '/pub?gid=' + gid + '&single=true&output=csv';
-}
+var CSV_SCHEDULE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAcK3YRfjcu9O3OdjhnHkud2jfSsyhDZXhUfnMiQPssxvyQZyx10PnYyE2IrC1Nne4pXyWP-lftHo9/pub?output=csv';
+var CSV_CREATIVES = '';
+var CSV_GLOSSARY  = '';
 
 var SCRIPT_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/script.pdf' */
 var DESIGN_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/design.pdf' */
 
-/* Shown in a modal body in place of a viewer, while there is nothing to view. */
-function showNotYet(bodyId, what) {
+/* Stands in for a section that has nothing behind it yet. Deliberately not
+   the error state: nothing has gone wrong, the thing just isn't here. */
+function showNotYet(bodyId, what, heading) {
   document.getElementById(bodyId).innerHTML =
-    '<div class="not-yet"><div class="not-yet-t">Not up yet</div>' +
+    '<div class="not-yet"><div class="not-yet-t">' + (heading || 'Not up yet') + '</div>' +
     '<div class="not-yet-s">' + what + '</div></div>';
-}
-
-/* The notice is opt-out rather than opt-in: it shows itself whenever the
-   sheet is still the stand-in, so nobody has to remember to remove it. */
-if (SHEET_IS_SAMPLE) {
-  document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('sample-note').hidden = false;
-  });
 }
 
 /* ── THEME ── */
@@ -977,8 +963,13 @@ var scheduleLoaded = false;
 function loadSchedule() {
   if (scheduleLoaded) return;
 
-  var CSV_URL = sheetCsv(GID_SCHEDULE);
+  var CSV_URL = CSV_SCHEDULE;
   var body    = document.getElementById('sched-body');
+
+  if (!CSV_URL) {
+    scheduleLoaded = true;
+    return showNotYet('sched-body', 'The rehearsal schedule will appear here once the sheet is connected.');
+  }
 
   function toRows(txt) {
     var matrix  = parseCSV(txt);
@@ -1086,8 +1077,13 @@ var castLoaded = false;
 function loadCast() {
   if (castLoaded) return;
 
-  var CC_URL = sheetCsv(GID_CREATIVES);
+  var CC_URL = CSV_CREATIVES;
   var body   = document.getElementById('cast-body');
+
+  if (!CC_URL) {
+    castLoaded = true;
+    return showNotYet('cast-body', 'Cast &amp; crew will appear here once that tab is published.');
+  }
 
   var esc = escHtmlShared;
 
@@ -1154,10 +1150,19 @@ var glossaryLoaded = false;
 function loadGlossary() {
   if (glossaryLoaded) return;
 
-  var GLOSS_URL = sheetCsv(GID_GLOSSARY);
+  var GLOSS_URL = CSV_GLOSSARY;
   var listEl    = document.getElementById('gloss-list');
   var jumpEl    = document.getElementById('gloss-jump');
   var countEl   = document.getElementById('gloss-count');
+
+  if (!GLOSS_URL) {
+    glossaryLoaded = true;
+    /* The search box and A–Z jump have nothing to act on, so take the whole
+       toolbar away rather than leave a dead control above the message. */
+    var tb = document.querySelector('#gloss-modal-body .gloss-toolbar');
+    if (tb) tb.hidden = true;
+    return showNotYet('gloss-list', 'The glossary will appear here once that tab is published.');
+  }
   var findInput = document.getElementById('gloss-find-input');
   var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
