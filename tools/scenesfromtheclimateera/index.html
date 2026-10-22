@@ -708,8 +708,14 @@ var TAB   = '&single=true&output=csv';
 
 var CSV_SCHEDULE   = SHEET + '0' + TAB;
 var CSV_CREATIVES  = SHEET + '43169221' + TAB;
-var CSV_SOUNDTRACK = SHEET + '161640640' + TAB;
 var CSV_GLOSSARY   = SHEET + '1037864490' + TAB;
+
+/* No soundtrack tab in the sheet yet. The player reads one as soon as there
+   is: make the tab, publish it, and put its URL here. Pointing this at a gid
+   that doesn't exist is worse than leaving it empty — Google answers with an
+   error page rather than a 404, which would reach the parser as nonsense
+   headers instead of a clean "nothing here yet". */
+var CSV_SOUNDTRACK = '';
 
 var SCRIPT_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/script.pdf' */
 var DESIGN_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/design.pdf' */
@@ -2434,7 +2440,7 @@ function loadMusic() {
   draw(); /* start idle animation immediately */
 
   if (!CSV_SOUNDTRACK) {
-    startPlayer('Not connected yet — the soundtrack tab will appear here');
+    startPlayer('Soundtrack isn’t up yet — it’ll appear here');
     return;
   }
 
