@@ -678,29 +678,38 @@
       connected yet, rather than show an error.
 
       Note that a published URL with no &gid= always serves the FIRST tab,
-      whatever else the document holds, so three tabs need three URLs from
-      that dialog — not one URL with the gid swapped by hand.
+      whatever else the document holds, so each tab needs its own URL from
+      that dialog.
 
       Columns each tab needs (headers are matched by name, case-insensitive):
-        Schedule   datetime · act · scene · pages · characters · context ·
-                   performance
-                   — single-word headers on this tab; datetime is
-                     hyphen-separated throughout, e.g. 2027-04-20-19-00
-                   — performance holds the performance's NAME, and any value
-                     marks the row as a show rather than a rehearsal
-        Creatives  Role Cast · Role Crew · Name · Email
-        Glossary   Term · Definition · Page   (Page optional)
+        Schedule    datetime · act · scene · pages · characters · context ·
+                    performance
+                    — single-word headers on this tab; datetime is
+                      hyphen-separated throughout, e.g. 2027-04-20-19-00
+                    — performance holds the performance's NAME, and any value
+                      marks the row as a show rather than a rehearsal
+        Creatives   Role Cast · Role Crew · Name · Email
+        Soundtrack  Title · Artist · Act · Page · Context · File
+                    — File is the name on disk under audio/, matched exactly;
+                      the rest are labelling and may be left blank
+                    — rows play in the sheet's own order
+        Glossary    Term · Definition · Page   (Page optional)
 
    2. THE PDFS. Drop script.pdf / design.pdf beside this file and name them
       here. While either is empty its button still works and the modal
       explains that it isn't up yet.
 
-   3. THE MUSIC. Put the mp3s in audio/ and list them in TRACKS (search for
-      "var TRACKS"). An empty list gives the player its own waiting state. */
+   3. THE AUDIO. The soundtrack tab names the files; the files themselves go
+      in audio/ beside this page. Until one is uploaded its row still shows
+      in the playlist and says so when played. */
 
-var CSV_SCHEDULE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAcK3YRfjcu9O3OdjhnHkud2jfSsyhDZXhUfnMiQPssxvyQZyx10PnYyE2IrC1Nne4pXyWP-lftHo9/pub?output=csv';
-var CSV_CREATIVES = '';
-var CSV_GLOSSARY  = '';
+var SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAcK3YRfjcu9O3OdjhnHkud2jfSsyhDZXhUfnMiQPssxvyQZyx10PnYyE2IrC1Nne4pXyWP-lftHo9/pub?gid=';
+var TAB   = '&single=true&output=csv';
+
+var CSV_SCHEDULE   = SHEET + '0' + TAB;
+var CSV_CREATIVES  = SHEET + '43169221' + TAB;
+var CSV_SOUNDTRACK = SHEET + '161640640' + TAB;
+var CSV_GLOSSARY   = SHEET + '1037864490' + TAB;
 
 var SCRIPT_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/script.pdf' */
 var DESIGN_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/design.pdf' */
@@ -2048,13 +2057,13 @@ function loadMusic() {
      "MUSIC - PGnn" files are the production's own edits, which replaced the
      commercial releases that were here first; the page number in each filename
      is the cue point and matches `page` below. */
-  /* Empty until the cues are chosen. Each entry is:
-       { title, artist, act, page, context, file }
-     where `file` is the exact name on disk under audio/ — the live server is
+  /* Filled from the soundtrack tab (see CSV_SOUNDTRACK at the top of the
+     file), in the sheet's own row order — what Blake sees there is what
+     plays through. Each entry is { title, artist, act, page, context, file },
+     where `file` is the exact name on disk under audio/; the live server is
      case-sensitive even where a local preview isn't. */
-  var TRACKS = [
-  ];
-  var order = TRACKS.map(function (_, i) { return i; });
+  var TRACKS = [];
+  var order = [];
   var pos = 0, loadedPos = -1;
 
   function track()      { return TRACKS[order[pos]]; }
@@ -2063,8 +2072,20 @@ function loadMusic() {
   /* cueLabel includes the artist (stands alone, next to just the title up
      top); showCue doesn't (used in the playlist rows, where the artist is
      already shown right next to the title). */
-  function showCue(t)  { return 'Act ' + t.act + ', p.' + t.page + ' — ' + t.context; }
-  function cueLabel(t) { return t.artist + ' · ' + showCue(t); }
+  /* Every field but the filename is optional in the sheet, so these are built
+     from whichever parts are actually there — a blank act and page would
+     otherwise read "Act , p. — ". */
+  function showCue(t) {
+    var where = [];
+    if (t.act)  where.push('Act ' + t.act);
+    if (t.page) where.push('p.' + t.page);
+    var left = where.join(', ');
+    return left && t.context ? left + ' — ' + t.context : (left || t.context || '');
+  }
+  function cueLabel(t) {
+    var cue = showCue(t);
+    return t.artist && cue ? t.artist + ' · ' + cue : (t.artist || cue || '');
+  }
 
   function setControlsEnabled(on) {
     playBtn.disabled = prevBtn.disabled = nextBtn.disabled = queueBtn.disabled = !on;
@@ -2297,6 +2318,16 @@ function loadMusic() {
        wrapping back to the start once the whole list has played through. */
     switchTrack(pos + 1, true);
   });
+
+  /* The sheet can name a file before it has been uploaded, and a failed load
+     otherwise just leaves the play button doing nothing. Name the file, so
+     it's obvious whether the upload is missing or the name doesn't match. */
+  audio.addEventListener('error', function () {
+    var t = track();
+    if (!t) return;
+    nameEl.textContent = 'Can’t play ' + t.file;
+    cueEl.textContent  = 'That file isn’t in audio/ yet, or the name doesn’t match.';
+  });
   audio.addEventListener('timeupdate', function () {
     /* audio.seeking guards a race on an unbuffered scrub: currentTime is set
        immediately in seekFromEvent, but actually landing there needs a
@@ -2344,17 +2375,91 @@ function loadMusic() {
   document.addEventListener('mouseup',  endDrag);
   document.addEventListener('touchend', endDrag);
 
-  /* ── Init ── */
-  if (!TRACKS.length) {
-    playerEl.classList.add('empty');
-    setControlsEnabled(false);
-    nameEl.textContent = 'No tracks yet — they\'ll appear here';
-  } else {
+  /* ── Init ──
+     The visualiser starts straight away so the modal isn't dead while the
+     playlist is still in flight; the controls only come alive once there is
+     something to play. */
+  function startPlayer(msg) {
+    if (!TRACKS.length) {
+      playerEl.classList.add('empty');
+      setControlsEnabled(false);
+      nameEl.textContent = msg || 'No tracks yet — they\'ll appear here';
+      return;
+    }
+    playerEl.classList.remove('empty');
+    setControlsEnabled(true);
+    order = TRACKS.map(function (_, i) { return i; });
+    pos = 0; loadedPos = -1;
     updateTrackDisplay();
     updateMediaSessionMetadata();
   }
 
+  /* Header aliases, so a tab headed "Song" or "Filename" still works rather
+     than silently producing an empty playlist. */
+  var MUSIC_COLS = {
+    title:   ['title', 'track', 'song', 'name'],
+    artist:  ['artist', 'by', 'performer'],
+    act:     ['act'],
+    page:    ['page', 'pg', 'pages'],
+    context: ['context', 'cue', 'notes', 'note', 'description'],
+    file:    ['file', 'filename', 'file_name', 'audio', 'mp3'],
+  };
+
+  function toTracks(txt) {
+    var matrix = parseCSV(txt);
+    if (!matrix.length) return { rows: [], headers: [] };
+    var headers = matrix[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g, '_'); });
+    var idx = {};
+    Object.keys(MUSIC_COLS).forEach(function (key) {
+      idx[key] = -1;
+      MUSIC_COLS[key].some(function (alias) {
+        var i = headers.indexOf(alias);
+        if (i !== -1) { idx[key] = i; return true; }
+        return false;
+      });
+    });
+    var rows = [];
+    for (var i = 1; i < matrix.length; i++) {
+      var cols = matrix[i];
+      var get = function (key) { return idx[key] === -1 ? '' : (cols[idx[key]] || '').trim(); };
+      var t = { title: get('title'), artist: get('artist'), act: get('act'),
+                page: get('page'), context: get('context'), file: get('file') };
+      /* A row with no audio file has nothing to play, and a row with no title
+         has nothing to show, so both are needed before it counts. */
+      if (t.file && t.title) rows.push(t);
+    }
+    return { rows: rows, headers: headers, named: idx.title !== -1 && idx.file !== -1 };
+  }
+
   draw(); /* start idle animation immediately */
+
+  if (!CSV_SOUNDTRACK) {
+    startPlayer('Not connected yet — the soundtrack tab will appear here');
+    return;
+  }
+
+  /* The markup ships with the controls enabled, so they have to be turned off
+     for the length of the fetch: pressing play before the playlist lands
+     would read off the end of an empty TRACKS. */
+  setControlsEnabled(false);
+  nameEl.textContent = 'Loading…';
+
+  fetch(CSV_SOUNDTRACK)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) {
+      var parsed = toTracks(txt);
+      TRACKS = parsed.rows;
+      /* Only blame the columns when the columns are actually the problem. A
+         tab with the right headers and no rows yet is just waiting, and
+         telling Blake to rename columns he got right would send him hunting
+         for a fault that isn't there. */
+      startPlayer(parsed.headers.length && !parsed.named
+        ? 'Needs Title and File columns — found: ' + parsed.headers.join(', ')
+        : 'No tracks yet — they\'ll appear here');
+    })
+    .catch(function (err) {
+      startPlayer('Could not load the soundtrack — ' + err.message);
+    });
 }
 </script>
 </body>
