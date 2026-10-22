@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scenes From the Climate Era | Blake Stringer</title>
+  <meta name="description" content="Rehearsal schedule, cast & crew, and glossary for Scenes From the Climate Era — Malvern Theatre, June 2027.">
+  <link rel="canonical" href="https://www.blakestringer.com/tools/scenesfromtheclimateera">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Scenes From the Climate Era | Blake Stringer">
+  <meta property="og:description" content="Rehearsal schedule, cast & crew, and glossary for Scenes From the Climate Era — Malvern Theatre, June 2027.">
+  <meta property="og:url" content="https://www.blakestringer.com/tools/scenesfromtheclimateera">
+  <meta property="og:site_name" content="Blake Stringer">
+  <meta property="og:locale" content="en_AU">
+  <meta property="og:image" content="https://www.blakestringer.com/Images/meta-og.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Blake Stringer | Actor · Musician">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Scenes From the Climate Era | Blake Stringer">
+  <meta name="twitter:description" content="Rehearsal schedule, cast & crew, and glossary for Scenes From the Climate Era — Malvern Theatre, June 2027.">
+  <meta name="twitter:image" content="https://www.blakestringer.com/Images/meta-og.jpg">
+  <link rel="icon" type="image/png" href="/Images/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── PALETTE ──
+       Two accents, each carrying a meaning:
+         --ice  chrome — buttons, links, focus, downloads, what's next
+         --grn  live   — today's call, a performance, the playing track
+       Both are darker in light mode and bright in dark mode, so accent-on-
+       background contrast holds either way. --onacc is the text colour to use
+       ON an accent fill, which flips with them: white on light mode's deep
+       teal, near-black on dark mode's bright ice.
+
+       The header sits on --black in both themes, so it can't use those — it
+       takes the -on-black pair, which never changes. */
+    :root {
+      --ice-on-black: #86E3F5;
+      --grn-on-black: #45D189;
+
+      --ice:     #0B6C84;
+      --grn:     #126B40;
+      --onacc:   #ffffff;
+      --black:   #04121A;
+      --bg:      #F1F6F7;
+      --card-bg: #ffffff;
+      --fg:      #0A1A20;
+      --muted:   rgba(10,26,32,0.48);
+      --border:  rgba(10,26,32,0.12);
+      --font:    'DM Mono', monospace;
+    }
+    [data-theme="dark"] {
+      --ice:     #86E3F5;
+      --grn:     #45D189;
+      --onacc:   #04121A;
+      --bg:      #06131A;
+      --card-bg: #0C1E27;
+      --fg:      rgba(233,247,251,0.88);
+      --muted:   rgba(200,230,240,0.45);
+      --border:  rgba(150,215,235,0.13);
+    }
+
+    :focus-visible { outline: 2px solid var(--grn); outline-offset: 2px; }
+    [data-theme="dark"] :focus-visible,
+    [data-theme="terminal"] :focus-visible { outline-color: var(--ice); }
+
+    html, body { min-height: 100%; font-family: var(--font); background: var(--bg); color: var(--fg); font-size: 13px; transition: background 0.2s, color 0.2s; }
+
+    /* ── HEADER ── */
+    .sfce-header { background: var(--black); padding: 28px 48px 24px; }
+    .sfce-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .sfce-back-link { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: color-mix(in srgb, var(--ice-on-black) 62%, transparent); text-decoration: none; transition: color 0.15s; }
+    .sfce-back-link:hover { color: var(--ice); }
+    .sfce-header-actions { display: flex; gap: 8px; }
+    .sfce-icon-btn {
+      background: none; border: 1px solid color-mix(in srgb, var(--ice-on-black) 26%, transparent);
+      color: color-mix(in srgb, var(--ice-on-black) 72%, transparent); width: 44px; height: 44px; border-radius: 2px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0; line-height: 1;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .sfce-icon-btn:hover { border-color: var(--ice-on-black); color: var(--ice-on-black); }
+    #font-btn { font-size: 13px; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+    #font-btn.active { background: color-mix(in srgb, var(--ice-on-black) 16%, transparent); border-color: var(--ice-on-black); color: var(--ice-on-black); }
+    #theme-btn { font-size: 16px; }
+    .sfce-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 7.4vw, 86px); letter-spacing: 6px; color: var(--ice-on-black); line-height: 1; }
+    .sfce-subtitle { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: color-mix(in srgb, var(--ice-on-black) 45%, transparent); margin-top: 6px; }
+
+    /* Shown while SHEET_IS_SAMPLE is true, so a schedule from another show
+       can't quietly pass for this one's. */
+    .sample-note {
+      max-width: 1080px; margin: 0 auto; padding: 10px 48px 0;
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 9px;
+    }
+    .sample-note::before {
+      content: ''; width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%;
+      background: var(--ice);
+    }
+
+    /* Stands in for a viewer that has nothing to show yet. */
+    .not-yet { padding: 64px 24px; text-align: center; }
+    .not-yet-t {
+      font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 4px; color: var(--muted);
+    }
+    .not-yet-s { font-size: 11px; line-height: 1.8; color: var(--muted); margin-top: 6px; }
+
+    /* ── MAIN LAYOUT ── */
+    .page-body { max-width: 1080px; margin: 0 auto; padding: 48px; display: flex; flex-direction: column; gap: 0; }
+
+    /* ── BIG BUTTONS ── */
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+    /* Two across at every size above the phone breakpoint, however many
+       buttons a row holds — four of them simply wrap to 2x2. Three or four
+       across was tried and doesn't work: .big-btn's font is sized in vw, so
+       the type grows faster than the column does and "Soundtrack" never fits,
+       at any viewport width. Equal-sized buttons beat a row of shrunken ones. */
+    .big-btn {
+      background: var(--card-bg); border: 1px solid var(--border);
+      color: var(--fg); font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(28px, 3.5vw, 52px); letter-spacing: 4px;
+      padding: 52px 24px; cursor: pointer; text-align: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      line-height: 1;
+    }
+    .big-btn:hover { background: var(--ice); color: var(--onacc); border-color: var(--ice); }
+
+    /* The row under the countdown needs to clear it. */
+    .btn-row-below-cd { margin-top: 24px; }
+
+    /* ── MOBILE SCROLL CUE ──
+       The button rows collapse to a single column on a phone, so the row
+       under the countdown can sit entirely below the fold with nothing to
+       suggest it's there. Phone-only, never interactive (pointer-events
+       none, aria-hidden), and sits under the modal layer's z-index so it
+       can't float over an open modal. The bob is killed by the global
+       prefers-reduced-motion rule at the end of this stylesheet. */
+    .scroll-cue {
+      position: fixed; left: 50%; bottom: 16px; z-index: 90;
+      display: none; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--card-bg); border: 1px solid var(--border);
+      color: var(--muted); pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+      opacity: 0; transform: translate(-50%, 6px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .scroll-cue.show { opacity: 1; transform: translate(-50%, 0); }
+    .scroll-cue svg { animation: cue-bob 1.9s ease-in-out infinite; }
+    @keyframes cue-bob { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(2px); } }
+
+    /* ── COUNTDOWN ── */
+    .cd-wrap { display: flex; justify-content: center; align-items: center; padding: 56px 24px; }
+    .cd-nums { display: flex; align-items: flex-end; gap: 4px; }
+    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 7vw, 88px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
+    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 72px); color: var(--ice); line-height: 1; padding-bottom: 18px; opacity: 0.4; }
+    .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 72px); color: var(--ice); letter-spacing: 4px; }
+
+    /* ── MUSIC PLAYER ── */
+    /* Sole content of the Soundtrack modal body, which brings no padding of
+       its own — .music-player supplies it instead of nesting another card
+       inside the modal. */
+    .music-player { padding: 18px 20px; }
+    .music-player-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .music-play-btn {
+      background: var(--ice); color: var(--onacc); border: none;
+      width: 34px; height: 34px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .music-play-btn:hover { opacity: 0.82; }
+    .music-play-btn:disabled { opacity: 0.3; cursor: default; }
+    .music-skip-btn {
+      background: none; border: none; color: var(--fg); opacity: 0.55;
+      width: 24px; height: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .music-skip-btn:hover { opacity: 1; }
+    .music-skip-btn:disabled { opacity: 0.2; cursor: default; }
+    .music-track-name {
+      font-family: var(--font); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--fg); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .music-time { font-family: var(--font); font-size: 9px; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+    .music-cue {
+      font-family: var(--font); font-size: 9px; letter-spacing: 0.5px; font-style: italic;
+      color: var(--muted); margin: -4px 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .music-vis { display: block; width: 100%; height: 56px; margin: 4px 0 10px; transition: opacity 0.2s; }
+    .music-progress { height: 24px; cursor: pointer; overflow: visible; position: relative; display: flex; align-items: center; transition: opacity 0.2s; }
+    .music-progress::before {
+      content: ''; position: absolute; left: 0; right: 0; height: 3px;
+      background: var(--border); top: 50%; transform: translateY(-50%);
+    }
+    /* Green, because the scrubber is tracking something playing, and green is
+       this page's live colour. */
+    .music-progress-fill { height: 3px; background: var(--grn); width: 0%; pointer-events: none; transition: width 0.1s linear; position: relative; z-index: 1; }
+    .music-progress-thumb {
+      position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%);
+      width: 11px; height: 11px; border-radius: 50%; background: var(--grn); pointer-events: none; z-index: 2;
+    }
+    .music-progress-fill.playing { animation: music-glow 2s ease-in-out infinite; }
+    @keyframes music-glow {
+      0%, 100% { box-shadow: 0 0 4px 2px color-mix(in srgb, var(--grn) 32%, transparent); }
+      50%       { box-shadow: 0 0 12px 4px color-mix(in srgb, var(--grn) 72%, transparent); }
+    }
+    .music-player.empty .music-progress,
+    .music-player.empty .music-vis { pointer-events: none; opacity: 0.4; }
+    .music-queue-btn.active { opacity: 1; }
+    .music-queue { border-top: 1px solid var(--border); margin: 10px 0 2px; padding-top: 8px; max-height: 200px; overflow-y: auto; }
+    .music-queue-list { display: flex; flex-direction: column; gap: 2px; }
+    .music-queue-item {
+      display: flex; align-items: flex-start; gap: 8px; width: 100%;
+      background: none; border: none; text-align: left; padding: 7px 6px;
+      cursor: pointer; font-family: var(--font); font-size: 10px; letter-spacing: 0.5px;
+      color: var(--muted); border-radius: 2px;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .music-queue-item:hover { background: color-mix(in srgb, var(--ice) 11%, transparent); color: var(--fg); }
+    .music-queue-item .music-queue-num { flex-shrink: 0; opacity: 0.5; width: 14px; padding-top: 1px; }
+    .music-queue-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .music-queue-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .music-queue-cue { font-size: 9px; opacity: 0.7; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .music-queue-item[aria-current="true"] { color: var(--fg); font-weight: 700; }
+    .music-queue-item[aria-current="true"] .music-queue-num::after { content: '♪'; }
+
+    /* ── GLOSSARY ── */
+    .gloss-toolbar {
+      position: sticky; top: 0; z-index: 1; background: var(--bg);
+      padding: 14px 20px 10px; border-bottom: 1px solid var(--border);
+    }
+    .gloss-find-input {
+      width: 100%; background: var(--card-bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 12px; padding: 8px 12px; border-radius: 2px;
+    }
+    .gloss-find-input:focus { outline: none; border-color: var(--grn); }
+    .gloss-jump { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+    .gloss-jump button {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font); font-size: 9px; width: 22px; height: 22px; line-height: 1;
+      cursor: pointer; border-radius: 2px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .gloss-jump button:hover { border-color: var(--grn); color: var(--grn); }
+    .gloss-count { font-size: 9px; letter-spacing: 1px; color: var(--muted); margin-top: 8px; }
+    .gloss-list { padding: 4px 20px 20px; }
+    /* scroll-margin-top keeps the jump-nav target clear of the sticky
+       toolbar above it once scrolled into view. */
+    .gloss-section-head {
+      font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--grn);
+      padding-top: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+      scroll-margin-top: 110px;
+    }
+    .gloss-entry { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .gloss-entry:last-child { border-bottom: 0; }
+    .gloss-term-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+    .gloss-term { font-weight: 700; font-size: 12px; color: var(--fg); }
+    .gloss-page { font-size: 9px; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+    .gloss-def { font-size: 11px; line-height: 1.6; color: var(--fg); opacity: 0.85; }
+    .gloss-def mark { background: color-mix(in srgb, var(--ice) 38%, transparent); color: inherit; border-radius: 1px; }
+
+    /* ── MODALS ── */
+    /* inset:0 already tracks the real viewport under `zoom` (and under a mobile
+       browser's expanded layout viewport), so the overlay is the reliable
+       reference for sizing the modal — see .modal's max-height below. */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.72);
+      /* flex-start, not center: centering split any leftover height evenly
+         above and below the modal, so a modal shorter than the viewport
+         (e.g. the script at a low starting zoom) floated with a big gap on
+         top. Anchoring top makes that gap a fixed, small amount instead. */
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 56px 24px 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--bg); border: 1px solid var(--border);
+      width: 100%; max-width: 860px;
+      /* Percentage of the overlay's content box, NOT vh: `zoom` on <html> scales
+         the modal but leaves vh reporting the unzoomed viewport, so a vh-based
+         height rendered 1.25× too tall and overflowed the window. */
+      max-height: 100%;
+      display: flex; flex-direction: column;
+      transform: scale(0.97); transition: transform 0.22s;
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+
+    .modal-header {
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .modal-header-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); flex: 1; }
+    .modal-close {
+      background: none; border: none; color: var(--muted); font-size: 20px; line-height: 1;
+      cursor: pointer; padding: 2px 6px; transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--fg); }
+    .modal-body { flex: 1; overflow-y: auto; }
+    .modal-body::-webkit-scrollbar { width: 4px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    #sched-body { zoom: 1.2; }
+
+    /* ── SCHEDULE MODAL CONTENT ── */
+    .sched-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .sched-table thead th {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 10px 14px; text-align: left; font-weight: 400;
+      border-bottom: 1px solid var(--border); background: var(--bg);
+      position: sticky; top: 0; z-index: 1; white-space: nowrap;
+    }
+    .sched-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--fg); }
+    .sched-date { font-weight: 500; }
+    .sched-tr.past td { opacity: 0.35; text-decoration: line-through; color: var(--muted); }
+    /* Green is "live": today's call and the performances. Ice is "what's
+       coming": the next call up. */
+    .sched-tr.today { background: color-mix(in srgb, var(--grn) 10%, transparent); }
+    .sched-tr.today td:first-child { border-left: 3px solid var(--grn); padding-left: 11px; }
+    .sched-tr.next-up { background: color-mix(in srgb, var(--ice) 8%, transparent); }
+    .sched-tr.next-up td:first-child { border-left: 3px solid var(--ice); padding-left: 11px; }
+    .sched-tr.performance { background: color-mix(in srgb, var(--grn) 4%, transparent); }
+    .sched-tr.performance.today { background: color-mix(in srgb, var(--grn) 15%, transparent); }
+    .week-sep-row td {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 14px 6px; background: var(--bg); font-weight: 400;
+    }
+    .sched-badge { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; white-space: nowrap; }
+    .badge-show { background: var(--grn); color: var(--onacc); }
+    .badge-today { background: var(--grn); color: var(--onacc); }
+    .badge-next { background: var(--ice); color: var(--onacc); }
+    .sched-loading { padding: 32px 24px; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-align: center; }
+    .sched-error { padding: 32px 24px; font-size: 10px; color: #ef4444; text-align: center; line-height: 1.8; }
+
+    /* ── CAST & CREW MODAL CONTENT ── */
+    .cc-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+    .cc-table thead th {
+      font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 10px 10px; text-align: left; font-weight: 400;
+      border-bottom: 2px solid var(--border); background: var(--bg);
+      position: sticky; top: 0; z-index: 1;
+    }
+    .cc-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--fg); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cc-table td.tbc { color: var(--muted); font-style: italic; }
+    .cc-table td a { font-size: 9px; color: var(--muted); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
+    .cc-table td a:hover { color: var(--grn); }
+    /* A step up from the 8px column headers, so Cast/Crew read as dividers
+       within the table rather than as another header row. */
+    .cc-section-row td {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 14px 10px 6px; background: var(--bg); font-weight: 400;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── PDF MODAL CONTENT ── */
+    .pdf-toolbar {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
+      padding: 8px 16px; flex-shrink: 0;
+    }
+    .pdf-nav-btn {
+      background: rgba(125,125,125,0.08); border: 1px solid var(--border);
+      color: var(--fg); font-family: var(--font); font-size: 12px;
+      padding: 3px 10px; cursor: pointer; transition: opacity 0.15s, background 0.15s; line-height: 1;
+      text-decoration: none; display: inline-flex; align-items: center; border-radius: 2px;
+    }
+    .pdf-nav-btn:hover { background: rgba(125,125,125,0.16); }
+    .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .pdf-download-btn { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 11px; background: var(--ice); color: var(--onacc); border-color: var(--ice); }
+    .pdf-download-btn:hover { opacity: 0.82; background: var(--ice); }
+    /* The schedule's copy isn't crowded by a toolbar the way the viewers'
+       are, so it can afford to be a proper button. */
+    #sched-dl-btn { font-size: 10px; padding: 9px 16px; letter-spacing: 2px; }
+    .pdf-page-input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; width: 42px; text-align: center;
+      padding: 3px 4px; -moz-appearance: textfield;
+    }
+    .pdf-page-input::-webkit-inner-spin-button,
+    .pdf-page-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .pdf-page-sep { font-size: 9px; color: var(--muted); white-space: nowrap; }
+    .pdf-zoom-divider { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
+    .pdf-zoom-label { font-size: 9px; color: var(--muted); min-width: 38px; text-align: center; }
+    .pdf-find-input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 11px; width: 120px;
+      padding: 4px 8px; border-radius: 2px;
+    }
+    .pdf-find-input:focus { outline: none; border-color: var(--ice); }
+    .pdf-find-count { font-size: 9px; color: var(--muted); min-width: 36px; text-align: center; white-space: nowrap; }
+
+    /* pan-x pan-y = one finger still scrolls natively, but the browser hands
+       two-finger gestures to us so pinch zooms the script, not the whole page. */
+    /* Both viewer instances (script and design) share these. */
+    #pdf-body, #design-body { overflow: auto; touch-action: pan-x pan-y; }
+    #pdf-canvas-wrap, #design-canvas-wrap { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; padding: 16px; gap: 16px; }
+
+    /* --pw/--ph are each page's committed (sharply rendered) CSS size; --pz is a
+       transient pinch multiplier. Setting --pz on the wrapper rescales all pages
+       in one style write — the canvases stretch for instant feedback, then get
+       re-rendered at full resolution when the gesture ends. */
+    .pdf-page {
+      position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.12); flex-shrink: 0;
+      width:  calc(var(--pw) * var(--pz, 1));
+      height: calc(var(--ph) * var(--pz, 1));
+    }
+    .pdf-page canvas { display: block; width: 100%; height: 100%; }
+
+    /* PDF.js text layer (for find/highlight) */
+    .textLayer {
+      position: absolute; top: 0; left: 0;
+      width: var(--pw); height: var(--ph);
+      transform: scale(var(--pz, 1));
+      overflow: hidden; line-height: 1;
+      text-align: initial; transform-origin: 0 0; z-index: 2;
+      forced-color-adjust: none;
+    }
+    .textLayer span, .textLayer br {
+      color: transparent; position: absolute; white-space: pre;
+      cursor: text; transform-origin: 0 0;
+    }
+    /* The text layer is transparent — visible glyphs come from the canvas
+       underneath — so an opaque highlight (the old solid #ffb700) blots the
+       word out entirely instead of marking it. Both states stay translucent;
+       the active one is just more saturated/opaque than the rest. */
+    .textLayer mark.hl { background: color-mix(in srgb, var(--ice) 38%, transparent); color: transparent; border-radius: 1px; }
+    .textLayer mark.hl.active { background: rgba(255,183,0,0.55); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 720px) {
+      .sfce-header { padding: 18px 20px 14px; }
+      .sfce-title { font-size: clamp(34px, 11vw, 56px); }
+      .page-body { padding: 24px 16px; }
+      .btn-row { grid-template-columns: 1fr; gap: 2px; }
+      .scroll-cue { display: flex; }
+      .big-btn { padding: 36px 24px; font-size: clamp(28px, 8vw, 42px); }
+      .cd-wrap { padding: 36px 16px; }
+      /* Top-anchored, like desktop, rather than the old bottom-sheet (flush
+         bottom, floating top) — that left a big empty gap above the modal
+         whenever its content didn't reach the max-height. Flush-top with all
+         four corners rounded reads as a card near the top of the screen. */
+      .modal-overlay { padding: 16px 12px; align-items: flex-start; }
+      .modal { max-height: 100%; max-width: 100%; border-radius: 8px; }
+      .modal-close { font-size: 24px; padding: 6px 10px; min-width: 40px; min-height: 40px; }
+      .modal-header { padding: 10px 14px; }
+      .modal-body { -webkit-overflow-scrolling: touch; }
+      #sched-body, #cast-body { zoom: 1; }
+      #modal-cast .modal { min-height: 72vh; }
+      .cc-table thead th, .cc-table td { padding: 9px 7px; }
+      /* Comes after the rule above, which would otherwise flatten the
+         divider's deliberate lead-in spacing to a uniform 9px. */
+      .cc-section-row td { padding: 13px 7px 5px; }
+      .cc-table td { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+      .cc-table td a { white-space: normal; overflow: visible; text-overflow: clip; }
+      .pdf-toolbar { padding: 6px 10px; gap: 4px; }
+      .pdf-find-input { width: 80px; font-size: 10px; }
+      .pdf-download-btn { font-size: 8px; padding: 4px 8px; letter-spacing: 1px; }
+      .pdf-zoom-label { min-width: 28px; font-size: 8px; }
+      .music-player { padding: 12px 14px; }
+      .music-vis { height: 44px; }
+    }
+
+    @media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+
+  <header class="sfce-header">
+    <div class="sfce-header-top">
+      <a class="sfce-back-link" href="/">← blakestringer.com</a>
+      <div class="sfce-header-actions">
+        <button class="sfce-icon-btn" id="font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
+        <button class="sfce-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme">☾</button>
+      </div>
+    </div>
+    <h1 class="sfce-title">Scenes From the Climate Era</h1>
+    <p class="sfce-subtitle">Malvern Theatre · 24 Jun – 4 Jul 2027</p>
+  </header>
+
+  <p class="sample-note" id="sample-note" hidden>Showing sample data &mdash; the real schedule isn&rsquo;t connected yet</p>
+
+  <div class="page-body">
+
+    <div class="btn-row">
+      <button class="big-btn" id="open-schedule">Schedule</button>
+      <button class="big-btn" id="open-cast">Creatives</button>
+    </div>
+
+    <div class="cd-wrap">
+      <div class="cd-nums" id="cd-blocks">
+        <div class="cd-block"><div class="cd-num" id="cd-days">--</div><div class="cd-unit">days</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-hours">--</div><div class="cd-unit">hrs</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-mins">--</div><div class="cd-unit">min</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-unit">sec</div></div>
+      </div>
+    </div>
+
+    <div class="btn-row btn-row-below-cd">
+      <button class="big-btn" id="open-script">Script</button>
+      <button class="big-btn" id="open-soundtrack">Soundtrack</button>
+      <button class="big-btn" id="open-glossary">Glossary</button>
+      <button class="big-btn" id="open-design">Design</button>
+    </div>
+
+  </div>
+
+  <!-- Sits above the fold on a phone only; see the scroll-cue script. -->
+  <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+
+  <!-- ── MODAL: Schedule ── -->
+  <div class="modal-overlay" id="modal-schedule" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Rehearsal Schedule</span>
+        <button id="sched-dl-btn" class="pdf-nav-btn pdf-download-btn" style="display:none" onclick="downloadSchedulePDF()">Download PDF</button>
+        <button class="modal-close" data-close="modal-schedule" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="sched-body">
+        <div class="sched-loading">Loading schedule…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Creatives ── -->
+  <div class="modal-overlay" id="modal-cast" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Creatives</span>
+        <button class="modal-close" data-close="modal-cast" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="cast-body">
+        <div class="sched-loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Script ── -->
+  <div class="modal-overlay" id="modal-script" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">The Script — Scenes From the Climate Era</span>
+        <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
+      </div>
+      <div class="pdf-toolbar" id="pdf-nav" style="display:none;">
+        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="#" download="Scenes From the Climate Era — David Finnigan.pdf">Download</a>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="pdf-prev" aria-label="Previous page" disabled>‹</button>
+        <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" aria-label="Page number" disabled>
+        <span class="pdf-page-sep" id="pdf-page-sep">/ --</span>
+        <button class="pdf-nav-btn" id="pdf-next" aria-label="Next page" disabled>›</button>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="pdf-zoom-out" aria-label="Zoom out" disabled>−</button>
+        <span class="pdf-zoom-label" id="pdf-zoom-label">200%</span>
+        <button class="pdf-nav-btn" id="pdf-zoom-in" aria-label="Zoom in" disabled>+</button>
+        <div class="pdf-zoom-divider"></div>
+        <input class="pdf-find-input" id="pdf-find-input" type="text" placeholder="Find in script…" aria-label="Find in script" disabled>
+        <span class="pdf-find-count" id="pdf-find-count"></span>
+        <button class="pdf-nav-btn" id="pdf-find-prev" aria-label="Previous match" disabled>‹</button>
+        <button class="pdf-nav-btn" id="pdf-find-next" aria-label="Next match" disabled>›</button>
+      </div>
+      <div class="modal-body" id="pdf-body">
+        <div id="pdf-canvas-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Design ──
+       Same toolbar/body shape as the script modal above, with a "design-"
+       id stem; loadPDF() takes that stem so both run the same viewer. -->
+  <div class="modal-overlay" id="modal-design" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Design — Production Meeting</span>
+        <button class="modal-close" data-close="modal-design" aria-label="Close">&times;</button>
+      </div>
+      <div class="pdf-toolbar" id="design-nav" style="display:none;">
+        <a class="pdf-nav-btn pdf-download-btn" id="design-download" href="#" download="Scenes From the Climate Era - Design.pdf">Download</a>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="design-prev" aria-label="Previous page" disabled>&lsaquo;</button>
+        <input class="pdf-page-input" id="design-page-input" type="number" min="1" value="1" aria-label="Page number" disabled>
+        <span class="pdf-page-sep" id="design-page-sep">/ --</span>
+        <button class="pdf-nav-btn" id="design-next" aria-label="Next page" disabled>&rsaquo;</button>
+        <div class="pdf-zoom-divider"></div>
+        <button class="pdf-nav-btn" id="design-zoom-out" aria-label="Zoom out" disabled>&minus;</button>
+        <span class="pdf-zoom-label" id="design-zoom-label">100%</span>
+        <button class="pdf-nav-btn" id="design-zoom-in" aria-label="Zoom in" disabled>+</button>
+        <div class="pdf-zoom-divider"></div>
+        <input class="pdf-find-input" id="design-find-input" type="text" placeholder="Find&hellip;" aria-label="Find in the design deck" disabled>
+        <span class="pdf-find-count" id="design-find-count"></span>
+        <button class="pdf-nav-btn" id="design-find-prev" aria-label="Previous match" disabled>&lsaquo;</button>
+        <button class="pdf-nav-btn" id="design-find-next" aria-label="Next match" disabled>&rsaquo;</button>
+      </div>
+      <div class="modal-body" id="design-body">
+        <div id="design-canvas-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Soundtrack ── -->
+  <div class="modal-overlay" id="modal-soundtrack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Soundtrack</span>
+        <button class="modal-close" data-close="modal-soundtrack" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="music-player" id="music-player">
+          <div class="music-player-row">
+            <button class="music-skip-btn" id="music-prev-btn" aria-label="Previous track">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="3" width="3" height="18"/><polygon points="20,3 20,21 8,12"/></svg>
+            </button>
+            <button class="music-play-btn" id="music-play-btn" aria-label="Play">
+              <svg class="music-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+              <svg class="music-icon-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <button class="music-skip-btn" id="music-next-btn" aria-label="Next track">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="17" y="3" width="3" height="18"/><polygon points="4,3 4,21 16,12"/></svg>
+            </button>
+            <span class="music-track-name" id="music-track-name">Loading…</span>
+            <span class="music-time" id="music-time">0:00</span>
+            <button class="music-skip-btn music-queue-btn" id="music-queue-btn" aria-label="Playlist" aria-haspopup="listbox" aria-expanded="false">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="music-cue" id="music-cue"></div>
+          <div class="music-queue" id="music-queue" hidden>
+            <div class="music-queue-list" id="music-queue-list" role="listbox" aria-label="Up next"></div>
+          </div>
+          <canvas class="music-vis" id="music-vis" aria-hidden="true"></canvas>
+          <div class="music-progress" id="music-progress" title="Seek">
+            <div class="music-progress-fill" id="music-progress-fill"></div>
+            <div class="music-progress-thumb" id="music-progress-thumb"></div>
+          </div>
+          <audio id="music-audio" preload="none"></audio>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Glossary ── -->
+  <div class="modal-overlay" id="modal-glossary" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">Glossary — Reference A to Z</span>
+        <button class="modal-close" data-close="modal-glossary" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="gloss-modal-body">
+        <div class="gloss-toolbar">
+          <input class="gloss-find-input" id="gloss-find-input" type="text" placeholder="Search the glossary…" aria-label="Search the glossary" disabled>
+          <div class="gloss-jump" id="gloss-jump"></div>
+          <div class="gloss-count" id="gloss-count"></div>
+        </div>
+        <div class="gloss-list" id="gloss-list">
+          <div class="sched-loading">Loading glossary…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ══ CONFIG ═══════════════════════════════════════════════════════════════
+   The three things that change as the production comes together. Nothing
+   else in this file needs touching.
+
+   1. THE SHEET. SHEET_KEY is currently A Simple Act of Kindness's published
+      sheet, standing in as test data so the page has something real to draw.
+      Publish the Scenes sheet (File → Share → Publish to web → CSV), paste
+      its key below, set the three tab gids, and flip SHEET_IS_SAMPLE to
+      false — that also removes the "sample data" notice under the header.
+
+   2. THE PDFS. Drop script.pdf / design.pdf beside this file and name them
+      here. While either is empty its button still works and the modal
+      explains that it isn't up yet.
+
+   3. THE MUSIC. Put the mp3s in audio/ and list them in TRACKS (search for
+      "var TRACKS"). An empty list gives the player its own waiting state. */
+
+var SHEET_KEY = '2PACX-1vQir7qILS7kW7vkbl7FkYSLiDoKFKE2yNOaque6STmHbyz4yj2dzZIGV2JtAzL7Pfh219tGlivT69fV';
+var SHEET_IS_SAMPLE = true;
+var GID_SCHEDULE  = 0;
+var GID_CREATIVES = 43169221;
+var GID_GLOSSARY  = 1037864490;
+function sheetCsv(gid) {
+  return 'https://docs.google.com/spreadsheets/d/e/' + SHEET_KEY +
+         '/pub?gid=' + gid + '&single=true&output=csv';
+}
+
+var SCRIPT_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/script.pdf' */
+var DESIGN_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/design.pdf' */
+
+/* Shown in a modal body in place of a viewer, while there is nothing to view. */
+function showNotYet(bodyId, what) {
+  document.getElementById(bodyId).innerHTML =
+    '<div class="not-yet"><div class="not-yet-t">Not up yet</div>' +
+    '<div class="not-yet-s">' + what + '</div></div>';
+}
+
+/* The notice is opt-out rather than opt-in: it shows itself whenever the
+   sheet is still the stand-in, so nobody has to remember to remove it. */
+if (SHEET_IS_SAMPLE) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('sample-note').hidden = false;
+  });
+}
+
+/* ── THEME ── */
+(function () {
+  var sunSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.93" y2="5.93"/><line x1="18.07" y1="18.07" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.93" y2="18.07"/><line x1="18.07" y1="5.93" x2="19.78" y2="4.22"/></svg>`;
+  /* Icon shows what the NEXT click switches to: moon = going dark, sun = going light. */
+  function iconFor(theme) { return theme === 'dark' ? sunSVG : '☾'; }
+
+  /* Terminal and Synthwave have both been removed; fold either leftover
+     preference into dark so a saved theme can't leave the page unstyled. */
+  var saved = localStorage.getItem('theme') || 'light';
+  if (saved === 'terminal' || saved === 'synthwave') saved = 'dark';
+  localStorage.setItem('theme', saved);
+  document.documentElement.setAttribute('data-theme', saved);
+
+  var btn = document.getElementById('theme-btn');
+  btn.innerHTML = iconFor(saved);
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    btn.innerHTML = iconFor(t);
+  }
+
+  btn.addEventListener('click', function () {
+    var cur = document.documentElement.getAttribute('data-theme') || 'light';
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+})();
+
+/* ── FONT ZOOM ── */
+(function () {
+  var desktop = window.innerWidth >= 720;
+  var levels  = desktop ? [1.25, 1.5] : ['', 1.25];
+  var idx     = parseInt(localStorage.getItem('sfce-zoom') || '0', 10);
+  if (idx >= levels.length) idx = 0;
+  var fontBtn = document.getElementById('font-btn');
+  function apply(i) {
+    document.documentElement.style.zoom = levels[i];
+    fontBtn.classList.toggle('active', i > 0);
+    localStorage.setItem('sfce-zoom', i);
+  }
+  apply(idx);
+  fontBtn.addEventListener('click', function () {
+    apply((parseInt(localStorage.getItem('sfce-zoom') || '0', 10) + 1) % levels.length);
+  });
+})();
+
+/* ── COUNTDOWN ── */
+(function () {
+  var target = new Date('2027-06-24T20:00:00+10:00'); /* AEST — Melbourne; June, so no daylight saving */
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function tick() {
+    var diff = target - Date.now();
+    if (diff <= 0) {
+      document.getElementById('cd-blocks').innerHTML = '<div class="cd-live">CURTAIN UP</div>';
+      return;
+    }
+    document.getElementById('cd-days').textContent  = Math.floor(diff / 86400000);
+    document.getElementById('cd-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
+    document.getElementById('cd-mins').textContent  = pad(Math.floor((diff % 3600000) / 60000));
+    document.getElementById('cd-secs').textContent  = pad(Math.floor((diff % 60000) / 1000));
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+/* ── MOBILE SCROLL CUE ──
+   Shown while there's still page below the fold, so the buttons under the
+   countdown aren't missed on a phone; it fades out on reaching the bottom.
+   Visibility is CSS-gated to the phone breakpoint, so this runs harmlessly
+   on desktop. A modal open is detected via the overflow lock openModal()
+   sets on <body> — that's exactly the state where the page behind can't be
+   scrolled, so the cue would be both wrong and floating under the backdrop. */
+(function () {
+  var cue = document.getElementById('scroll-cue');
+  if (!cue) return;
+  var pending = false;
+  function update() {
+    pending = false;
+    var doc     = document.documentElement;
+    var atEnd   = window.innerHeight + window.scrollY >= doc.scrollHeight - 24;
+    var locked  = document.body.style.overflow === 'hidden';
+    cue.classList.toggle('show', !atEnd && !locked);
+  }
+  /* Scroll fires far faster than paint; coalesce to one check per frame. */
+  function schedule() {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(update);
+  }
+  addEventListener('scroll', schedule, { passive: true });
+  addEventListener('resize', schedule);
+  /* Late webfont and image loads change the page height after first paint. */
+  addEventListener('load', schedule);
+  /* Bubble-phase, so a modal's own handler has already set/cleared the lock
+     by the time this runs. Escape-to-close needs the key listener. */
+  document.addEventListener('click', schedule);
+  document.addEventListener('keyup', schedule);
+  update();
+})();
+
+/* ── MODALS ── */
+(function () {
+  var lastFocus = null;
+  function openModal(id) {
+    lastFocus = document.activeElement;
+    var modal = document.getElementById(id);
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    /* Move focus into the modal (its close button) */
+    var closeBtn = modal.querySelector('.modal-close');
+    if (closeBtn) closeBtn.focus();
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+    /* Return focus to the element that opened the modal */
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    lastFocus = null;
+  }
+  document.getElementById('open-schedule').addEventListener('click', function () {
+    openModal('modal-schedule');
+    loadSchedule();
+  });
+  document.getElementById('open-cast').addEventListener('click', function () {
+    openModal('modal-cast');
+    loadCast();
+  });
+  document.getElementById('open-script').addEventListener('click', function () {
+    openModal('modal-script');
+    if (!SCRIPT_PDF) return showNotYet('pdf-body', 'The script will appear here once it&rsquo;s uploaded.');
+    var dl = document.getElementById('pdf-download');
+    dl.href = SCRIPT_PDF;
+    loadPDF('pdf', SCRIPT_PDF);
+  });
+  document.getElementById('open-soundtrack').addEventListener('click', function () {
+    openModal('modal-soundtrack');
+    loadMusic();
+  });
+  document.getElementById('open-glossary').addEventListener('click', function () {
+    openModal('modal-glossary');
+    loadGlossary();
+  });
+  document.getElementById('open-design').addEventListener('click', function () {
+    openModal('modal-design');
+    if (!DESIGN_PDF) return showNotYet('design-body', 'The design deck will appear here once it&rsquo;s uploaded.');
+    var dl = document.getElementById('design-download');
+    dl.href = DESIGN_PDF;
+    loadPDF('design', DESIGN_PDF, { fitWidth: true });
+  });
+
+  /* Close buttons */
+  document.querySelectorAll('[data-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () { closeModal(btn.getAttribute('data-close')); });
+  });
+
+  /* Click outside modal */
+  document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal(overlay.id);
+    });
+  });
+
+  /* Escape key */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(function (el) { closeModal(el.id); });
+    }
+  });
+
+  /* Swipe-down-to-close on mobile (handle + top 48px of header only) */
+  document.querySelectorAll('.modal').forEach(function (modal) {
+    var startY = 0, startOnHandle = false;
+    modal.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      var rect = modal.getBoundingClientRect();
+      startY = t.clientY;
+      startOnHandle = (t.clientY - rect.top) < 56; /* handle + header zone */
+    }, { passive: true });
+    modal.addEventListener('touchend', function (e) {
+      if (!startOnHandle) return;
+      var dy = e.changedTouches[0].clientY - startY;
+      if (dy > 60) {
+        var overlay = modal.closest('.modal-overlay');
+        if (overlay) closeModal(overlay.id);
+      }
+    }, { passive: true });
+  });
+})();
+
+/* ── CSV PARSER (shared) ── */
+/* Parses CSV text into an array of row-arrays. Honours double-quoted fields,
+   which may contain commas and newlines; "" is an escaped quote. */
+function parseCSV(text) {
+  var rows = [], row = [], cell = '', q = false;
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (q) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; }
+        else { q = false; }
+      } else { cell += ch; }
+    } else {
+      if (ch === '"') { q = true; }
+      else if (ch === ',') { row.push(cell); cell = ''; }
+      else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+      else { cell += ch; }
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  /* Drop a single trailing empty row produced by a final newline */
+  if (rows.length && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === '') {
+    rows.pop();
+  }
+  return rows;
+}
+
+/* ── SHARED ESCAPE ── */
+function escHtmlShared(s) {
+  if (s == null) return '';   /* a column the sheet doesn't have, not the text "undefined" */
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── SCHEDULE HELPERS (shared with PDF generator) ── */
+function parseDT(s) {
+  if (!s) return null;
+  var p = s.split('-');
+  if (p.length < 3) return null;
+  var yr = +p[0], mo = +p[1] - 1, dy = +p[2];
+  var hr = p[3] != null ? +p[3] : 0, mn = p[4] != null ? +p[4] : 0;
+  return (isNaN(yr) || isNaN(mo) || isNaN(dy)) ? null : new Date(yr, mo, dy, hr, mn);
+}
+var DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d) { return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+function fmtTime(d) {
+  var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return h + (m ? ':' + String(m).padStart(2,'0') : '') + ap;
+}
+function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+var schedPdfRows = null;
+var schedPdfHas  = null;
+
+/* ── SCHEDULE ── */
+var scheduleLoaded = false;
+function loadSchedule() {
+  if (scheduleLoaded) return;
+
+  var CSV_URL = sheetCsv(GID_SCHEDULE);
+  var body    = document.getElementById('sched-body');
+
+  function toRows(txt) {
+    var matrix  = parseCSV(txt);
+    if (!matrix.length) return [];
+    var headers = matrix[0].map(function (h) { return h.trim().toLowerCase(); });
+    var rows    = [];
+    for (var i = 1; i < matrix.length; i++) {
+      var cols = matrix[i], obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.datetime) rows.push(obj);
+    }
+    return rows;
+  }
+
+  var esc = escHtmlShared;
+
+  function render(rows) {
+    var now   = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    var nextIdx = -1;
+    for (var i = 0; i < rows.length; i++) {
+      var d = parseDT(rows[i].datetime);
+      if (d && d > now) { nextIdx = i; break; }
+    }
+
+    /* Detect which optional columns have any data */
+    var has = { pages: false, act: false, scene: false, characters: false, context: false };
+    rows.forEach(function (r) {
+      if (r.pages)      has.pages = true;
+      if (r.act)        has.act = true;
+      if (r.scene)      has.scene = true;
+      if (r.characters) has.characters = true;
+      if (r.context)    has.context = true;
+    });
+
+    /* Colspan = date + time + optional cols + badge */
+    var colCount = 2 + (has.pages?1:0) + (has.act?1:0) + (has.scene?1:0) + (has.characters?1:0) + (has.context?1:0) + 1;
+
+    var html = '<table class="sched-table"><thead><tr>'
+             + '<th>Date</th><th>Time</th>'
+             + (has.pages      ? '<th>Pages</th>'      : '')
+             + (has.act        ? '<th>Act</th>'        : '')
+             + (has.scene      ? '<th>Scene</th>'      : '')
+             + (has.characters ? '<th>Characters</th>' : '')
+             + (has.context    ? '<th>Notes</th>'      : '')
+             + '<th></th></tr></thead><tbody>';
+
+    /* Group by week */
+    var groups = [], gmap = {};
+    rows.forEach(function (row, idx) {
+      var wk = row.week || 'Schedule';
+      if (!gmap[wk]) { gmap[wk] = []; groups.push({ label: wk, items: gmap[wk] }); }
+      gmap[wk].push({ row: row, idx: idx });
+    });
+
+    groups.forEach(function (g) {
+      html += '<tr class="week-sep-row"><td colspan="' + colCount + '">' + esc(g.label) + '</td></tr>';
+      g.items.forEach(function (entry) {
+        var row = entry.row, d = parseDT(row.datetime);
+        if (!d) return;
+        var isToday = sameDay(d, today);
+        var isPast  = !isToday && d < now;
+        var isNext  = entry.idx === nextIdx && !isToday;
+        var isPerf  = !!row.performance;
+        var cls = 'sched-tr' + (isPast?' past':'') + (isToday?' today':'') + (isNext?' next-up':'') + (isPerf?' performance':'');
+        var badge = isToday ? '<span class="sched-badge badge-today">today</span>'
+                  : isNext  ? '<span class="sched-badge badge-next">next</span>'
+                  : (isPerf && !isPast) ? '<span class="sched-badge badge-show">' + esc(row.performance) + '</span>'
+                  : '';
+        var anchor = isToday ? ' id="sched-today"' : (isNext ? ' id="sched-next"' : '');
+        html += '<tr class="' + cls + '"' + anchor + '>'
+              + '<td class="sched-date">' + fmtDate(d) + '</td>'
+              + '<td>' + fmtTime(d) + '</td>'
+              + (has.pages      ? '<td>' + esc(row.pages      || '') + '</td>' : '')
+              + (has.act        ? '<td>' + esc(row.act        || '') + '</td>' : '')
+              + (has.scene      ? '<td>' + esc(row.scene      || '') + '</td>' : '')
+              + (has.characters ? '<td>' + esc(row.characters || '') + '</td>' : '')
+              + (has.context    ? '<td>' + esc(row.context    || '') + '</td>' : '')
+              + '<td>' + badge + '</td></tr>';
+      });
+    });
+
+    html += '</tbody></table>';
+    body.innerHTML = html;
+    scheduleLoaded = true;
+    schedPdfRows = rows;
+    schedPdfHas  = has;
+    document.getElementById('sched-dl-btn').style.display = '';
+
+    setTimeout(function () {
+      var el = document.getElementById('sched-today') || document.getElementById('sched-next');
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 120);
+  }
+
+  fetch(CSV_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) { var rows = toRows(txt); if (!rows.length) throw new Error('empty'); render(rows); })
+    .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load schedule.<br>' + esc(err.message) + '</div>'; });
+}
+
+/* ── CAST & CREW ── */
+var castLoaded = false;
+function loadCast() {
+  if (castLoaded) return;
+
+  var CC_URL = sheetCsv(GID_CREATIVES);
+  var body   = document.getElementById('cast-body');
+
+  var esc = escHtmlShared;
+
+  function render(rows) {
+    var cast = rows.filter(function (r) { return r.role_cast; });
+    var crew = rows.filter(function (r) { return r.role_crew; });
+
+    function attr(v) { return esc(v).replace(/"/g, '&quot;'); }
+    function emailCell(email) {
+      return '<td>' + (email ? '<a href="mailto:' + attr(email) + '">' + esc(email) + '</a>' : '') + '</td>';
+    }
+
+    var html = '<table class="cc-table"><colgroup>'
+             + '<col style="width:31%"><col style="width:28%"><col style="width:41%">'
+             + '</colgroup><thead><tr><th>Role</th><th>Name</th><th>Email</th></tr></thead><tbody>';
+
+    if (cast.length) {
+      html += '<tr class="cc-section-row"><td colspan="3">Cast</td></tr>';
+      cast.forEach(function (r) {
+        html += '<tr>'
+              + '<td>' + esc(r.role_cast) + '</td>'
+              + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
+              + emailCell(r.email) + '</tr>';
+      });
+    }
+
+    if (crew.length) {
+      html += '<tr class="cc-section-row"><td colspan="3">Crew</td></tr>';
+      crew.forEach(function (r) {
+        html += '<tr>'
+              + '<td>' + esc(r.role_crew) + '</td>'
+              + '<td' + (!r.name ? ' class="tbc"' : '') + '>' + esc(r.name || 'TBC') + '</td>'
+              + emailCell(r.email)
+              + '</tr>';
+      });
+    }
+
+    html += '</tbody></table>';
+    body.innerHTML = (cast.length || crew.length) ? html : '<div class="sched-loading">No entries found.</div>';
+    castLoaded = true;
+  }
+
+  function toRows(txt) {
+    var matrix  = parseCSV(txt);
+    if (!matrix.length) return [];
+    var headers = matrix[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+    var rows    = [];
+    for (var i = 1; i < matrix.length; i++) {
+      var cols = matrix[i], obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.role_cast || obj.role_crew || obj.name) rows.push(obj);
+    }
+    return rows;
+  }
+
+  fetch(CC_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) { render(toRows(txt)); })
+    .catch(function (err) { body.innerHTML = '<div class="sched-error">Could not load cast &amp; crew.<br>' + esc(err.message) + '</div>'; });
+}
+
+/* ── GLOSSARY ── */
+var glossaryLoaded = false;
+function loadGlossary() {
+  if (glossaryLoaded) return;
+
+  var GLOSS_URL = sheetCsv(GID_GLOSSARY);
+  var listEl    = document.getElementById('gloss-list');
+  var jumpEl    = document.getElementById('gloss-jump');
+  var countEl   = document.getElementById('gloss-count');
+  var findInput = document.getElementById('gloss-find-input');
+  var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var esc = escHtmlShared;
+  var ENTRIES = [];   /* {letter, term, definition, page} in sheet order */
+
+  function toRows(txt) {
+    var matrix = parseCSV(txt);
+    if (!matrix.length) return [];
+    var headers = matrix[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+    var rows = [];
+    for (var i = 1; i < matrix.length; i++) {
+      var cols = matrix[i], obj = {};
+      headers.forEach(function (h, j) { obj[h] = (cols[j] || '').trim(); });
+      if (obj.term) rows.push(obj);
+    }
+    return rows;
+  }
+
+  /* Escapes first, then marks matches — marking on raw text and escaping
+     afterwards would let a match that happens to land on a literal &/</>
+     char corrupt the tag it's wrapped in. Marker bytes (\x01 \x02) survive
+     escHtmlShared untouched (it only rewrites &, < and >), so they're safe
+     to swap for real <mark> tags once escaping is done. */
+  function markedEscape(raw, qLower) {
+    if (!qLower) return esc(raw);
+    var lower = raw.toLowerCase(), out = '', i = 0, idx;
+    while ((idx = lower.indexOf(qLower, i)) !== -1) {
+      out += raw.slice(i, idx) + '\x01' + raw.slice(idx, idx + qLower.length) + '\x02';
+      i = idx + qLower.length;
+    }
+    out += raw.slice(i);
+    return esc(out).split('\x01').join('<mark>').split('\x02').join('</mark>');
+  }
+
+  function renderJump(letters) {
+    jumpEl.innerHTML = letters.map(function (L) {
+      return '<button type="button" data-jump="' + esc(L) + '">' + esc(L) + '</button>';
+    }).join('');
+  }
+
+  /* Rebuilt on every keystroke (cheap — <100 entries) rather than hiding
+     rows with CSS, so section headers with zero matching entries just don't
+     get emitted instead of needing their own show/hide bookkeeping. */
+  function renderList(query) {
+    var qLower = query.trim().toLowerCase();
+    var letters = [];
+    ENTRIES.forEach(function (e) { if (letters.indexOf(e.letter) === -1) letters.push(e.letter); });
+
+    var shown = 0, html = '';
+    letters.forEach(function (L) {
+      var group = ENTRIES.filter(function (e) {
+        return e.letter === L && (!qLower || (e.term + ' ' + e.definition).toLowerCase().indexOf(qLower) !== -1);
+      });
+      if (!group.length) return;
+      shown += group.length;
+      html += '<div class="gloss-section-head" id="gloss-letter-' + esc(L) + '">' + esc(L) + '</div>';
+      group.forEach(function (e) {
+        html += '<div class="gloss-entry">'
+              + '<div class="gloss-term-row"><span class="gloss-term">' + markedEscape(e.term, qLower) + '</span>'
+              + '<span class="gloss-page">' + esc(e.page) + '</span></div>'
+              + '<div class="gloss-def">' + markedEscape(e.definition, qLower) + '</div></div>';
+      });
+    });
+
+    listEl.innerHTML = html || '<div class="sched-loading">No matches found.</div>';
+    countEl.textContent = shown + (shown === 1 ? ' term' : ' terms') + (qLower ? ' matching “' + query.trim() + '”' : ' total');
+  }
+
+  var findTimer = null;
+  findInput.addEventListener('input', function () {
+    clearTimeout(findTimer);
+    var v = this.value;
+    findTimer = setTimeout(function () { renderList(v); }, 120);
+  });
+
+  jumpEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-jump]');
+    if (!btn) return;
+    if (findInput.value) { findInput.value = ''; renderList(''); }
+    var target = document.getElementById('gloss-letter-' + btn.getAttribute('data-jump'));
+    if (target) target.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+
+  fetch(GLOSS_URL)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (txt) {
+      ENTRIES = toRows(txt);
+      glossaryLoaded = true;
+      if (!ENTRIES.length) { listEl.innerHTML = '<div class="sched-loading">No entries found.</div>'; return; }
+      var letters = [];
+      ENTRIES.forEach(function (e) { if (letters.indexOf(e.letter) === -1) letters.push(e.letter); });
+      renderJump(letters);
+      renderList('');
+      findInput.disabled = false;
+    })
+    .catch(function (err) {
+      listEl.innerHTML = '<div class="sched-error">Could not load the glossary.<br>' + esc(err.message) + '</div>';
+    });
+}
+
+/* ── PDF VIEWER (continuous scroll + find) ──
+   One instance per modal. `prefix` is the id stem that modal's toolbar and
+   body markup use ('pdf' for the script, 'design' for the design deck), so
+   the Script and Design viewers each get their own state, zoom and search
+   rather than fighting over one set of elements. The .pdf-* CSS classes are
+   shared between them; only the ids are per-instance.
+
+   `opts.fitWidth` opens the document scaled to the modal instead of at the
+   default 200% of natural size. The script wants that 200% — a page of A4
+   dialogue shrunk to the modal is unreadable — but a landscape slide is
+   already wider than the modal at natural size, so a deck opening at 200%
+   shows the blank top-left corner of slide one. */
+var pdfViewersLoaded = {};
+function loadPDF(prefix, path, opts) {
+  opts = opts || {};
+  if (pdfViewersLoaded[prefix]) return;
+  pdfViewersLoaded[prefix] = true;
+
+  var PDF_PATH = path;
+  if (typeof pdfjsLib === 'undefined') return;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  function elById(suffix) { return document.getElementById(prefix + suffix); }
+  var wrap      = elById('-canvas-wrap');
+  var pdfBody   = elById('-body');
+  var nav       = elById('-nav');
+  var prevBtn   = elById('-prev');
+  var nextBtn   = elById('-next');
+  var pageInput = elById('-page-input');
+  var pageSep   = elById('-page-sep');
+  var zoomInBtn = elById('-zoom-in');
+  var zoomOutBtn= elById('-zoom-out');
+  var zoomLabel = elById('-zoom-label');
+  var findInput = elById('-find-input');
+  var findCount = elById('-find-count');
+  var findPrev  = elById('-find-prev');
+  var findNext  = elById('-find-next');
+
+  var pdfDoc = null, numPages = 0, curPage = 1;
+  var zoomMult = (window.innerWidth >= 720) ? 2.0 : 0.75;
+  var ZOOM_MIN = 0.25, ZOOM_MAX = 4.0;
+
+  var renderToken = 0; /* invalidates an in-flight render pass when zoom changes */
+  var pageObjs = {};   /* pdf page objects */
+  var pageTexts = {};  /* textContent objects */
+  var pageEls = [];    /* .pdf-page wrapper elements */
+  var pageDivs = {};   /* text-layer span arrays per page */
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
+    pdfDoc   = pdf;
+    numPages = pdf.numPages;
+    nav.style.display = 'flex';
+    pageSep.textContent = '/ ' + numPages;
+    pageInput.max = numPages;
+    [prevBtn, nextBtn, pageInput, zoomInBtn, zoomOutBtn, findInput, findPrev, findNext]
+      .forEach(function (el) { el.disabled = false; });
+
+    /* Fetch all pages + their text, then build & render */
+    var jobs = [];
+    for (var n = 1; n <= numPages; n++) jobs.push(n);
+    return jobs.reduce(function (chain, n) {
+      return chain.then(function () {
+        return pdfDoc.getPage(n).then(function (page) {
+          pageObjs[n] = page;
+          return page.getTextContent().then(function (tc) { pageTexts[n] = tc; });
+        });
+      });
+    }, Promise.resolve());
+  }).then(function () {
+    if (opts.fitWidth) {
+      /* Exact fit, not the 25%-rounded figure the mobile branch uses below:
+         rounding can go up, which leaves the page overflowing by a few
+         percent and puts a sideways scrollbar on a deck that should just
+         sit in the frame. The label rounds for display only. */
+      var vpF = pageObjs[1].getViewport({ scale: 1 });
+      zoomMult = Math.max(ZOOM_MIN, Math.max(pdfBody.clientWidth - 36, 200) / vpF.width);
+    } else if (window.innerWidth < 720) {
+      /* On mobile, default to fit-to-width expressed as a real percentage */
+      var vp1   = pageObjs[1].getViewport({ scale: 1 });
+      var avail = Math.max(pdfBody.clientWidth - 32, 200);
+      zoomMult  = Math.round((avail / vp1.width) * 4) / 4; /* round to nearest 25% */
+      zoomMult  = Math.min(1.0, Math.max(ZOOM_MIN, zoomMult));
+    }
+    buildSkeleton();
+    return renderAll();
+  }).then(function () {
+    updateZoomLabel();
+    /* Rendering 92 pages takes a moment; if the reader has already started
+       scrolling by the time it finishes, don't yank them back to the top. */
+    if (pdfBody.scrollTop < 8) scrollToPage(1);
+  }).catch(function () {
+    wrap.innerHTML = '<div class="sched-loading">Could not load PDF.</div>';
+  });
+
+  function buildSkeleton() {
+    wrap.innerHTML = '';
+    pageEls = [];
+    for (var n = 1; n <= numPages; n++) {
+      var el = document.createElement('div');
+      el.className = 'pdf-page';
+      el.setAttribute('data-page', n);
+      wrap.appendChild(el);
+      pageEls.push(el);
+    }
+  }
+
+  function renderAll(anchor) {
+    /* zoomMult IS the scale: 1.0 = 100% real size, 2.0 = 200%, etc. */
+    var scale = zoomMult;
+    /* Repainting 92 pages takes a while, so a second zoom can easily start
+       before the first finishes. Stamp each pass and let stale ones bail out,
+       otherwise the old pass keeps re-sizing pages at the superseded scale. */
+    var token = ++renderToken;
+    pageDivs = {};
+
+    /* Size every page up front so the scroll height is final immediately. The
+       existing canvases stay on screen, CSS-stretched into their new boxes, and
+       sharpen as they repaint — rather than the document growing under the
+       reader while 92 pages re-render one by one. */
+    for (var n = 1; n <= numPages; n++) {
+      var vp = pageObjs[n].getViewport({ scale: scale });
+      pageEls[n - 1].style.setProperty('--pw', vp.width  + 'px');
+      pageEls[n - 1].style.setProperty('--ph', vp.height + 'px');
+    }
+    if (anchor) restoreAnchor(anchor);
+
+    /* Repaint outward from whatever is on screen, so the page being read comes
+       back into focus first and distant pages catch up in the background. */
+    var centre = anchor ? anchor.page + 1 : curPage;
+    var order  = [];
+    for (var i = 1; i <= numPages; i++) order.push(i);
+    order.sort(function (a, b) { return Math.abs(a - centre) - Math.abs(b - centre); });
+
+    var chain = Promise.resolve();
+    order.forEach(function (n) {
+      chain = chain.then(function () {
+        if (token !== renderToken) return;
+        return renderOne(n, scale);
+      });
+    });
+    return chain.then(function () {
+      if (token !== renderToken) return;
+      if (findInput.value.trim()) runSearch(findInput.value.trim());
+    });
+  }
+
+  function renderOne(n, scale) {
+    var page  = pageObjs[n];
+    var dpr   = Math.min(window.devicePixelRatio || 1, 3); /* cap at 3× for perf */
+    var vpCss = page.getViewport({ scale: scale });         /* CSS dimensions */
+    var vpHi  = page.getViewport({ scale: scale * dpr });  /* physical pixel dimensions */
+    var el    = pageEls[n - 1];
+
+    /* Page box is driven by these two custom properties (see .pdf-page CSS) so a
+       pinch can rescale every page without touching each element individually. */
+    el.style.setProperty('--pw', vpCss.width  + 'px');
+    el.style.setProperty('--ph', vpCss.height + 'px');
+    el.innerHTML = '';
+
+    /* Canvas rendered at physical resolution, displayed at CSS size = sharp on retina */
+    var canvas = document.createElement('canvas');
+    canvas.width  = vpHi.width;
+    canvas.height = vpHi.height;
+    el.appendChild(canvas);
+
+    /* Text layer uses CSS viewport for correct hit-test positioning */
+    var tl = document.createElement('div');
+    tl.className = 'textLayer';
+    /* pdf.js ≥3 positions its spans with calc() against this variable; without it
+       the layer collapses and find-highlights land in the wrong place. */
+    tl.style.setProperty('--scale-factor', scale);
+    el.appendChild(tl);
+
+    var divs = [];
+    var renderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport: vpHi });
+    var textTask   = pdfjsLib.renderTextLayer({
+      textContentSource: pageTexts[n],
+      container: tl,
+      viewport: vpCss,
+      textDivs: divs
+    });
+    pageDivs[n] = divs;
+
+    return Promise.all([renderTask.promise, textTask.promise]).catch(function () {});
+  }
+
+  /* ── Navigation ──
+     The Aa button applies CSS `zoom` to <html> (desktop defaults to 1.25× —
+     there's no 1.0 level), which scales getBoundingClientRect() into physical
+     screen pixels but leaves scrollTop in the element's own unzoomed pixels.
+     A delta measured via rects has to be divided back down before it's added
+     to scrollTop, or the scroll overshoots by exactly the zoom factor — small
+     jumps land close enough to look fine, but paging across several pages (or
+     jumping to a distant find-match) lands increasingly far off target. */
+  function currentZoom() {
+    return parseFloat(document.documentElement.style.zoom) || 1;
+  }
+  function scrollByPhysicalPx(px) {
+    pdfBody.scrollTop += px / currentZoom();
+  }
+
+  function scrollToPage(n) {
+    var el = pageEls[n - 1];
+    if (!el) return;
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var elRect   = el.getBoundingClientRect();
+    scrollByPhysicalPx((elRect.top - bodyRect.top) - 12);
+  }
+
+  /* Remember which point of the script is under a given screen position, so a
+     zoom change can put that same point back rather than jumping to a page top.
+     Expressed as (page, fraction down that page) so it survives re-rendering. */
+  function captureAnchor(clientY) {
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var y = (clientY == null) ? bodyRect.top + bodyRect.height / 2 : clientY;
+    for (var i = 0; i < pageEls.length; i++) {
+      var r = pageEls[i].getBoundingClientRect();
+      if (r.bottom >= y || i === pageEls.length - 1) {
+        return { page: i, frac: r.height ? (y - r.top) / r.height : 0, screenY: y - bodyRect.top };
+      }
+    }
+    return null;
+  }
+
+  function restoreAnchor(a) {
+    if (!a) return;
+    var el = pageEls[a.page];
+    if (!el) return;
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    scrollByPhysicalPx((r.top - bodyRect.top) - (a.screenY - a.frac * r.height));
+  }
+
+  function updateCurrentPage() {
+    var bodyRect = pdfBody.getBoundingClientRect();
+    var mark = bodyRect.top + bodyRect.height * 0.35;
+    var best = 1;
+    for (var i = 0; i < pageEls.length; i++) {
+      if (pageEls[i].getBoundingClientRect().top <= mark) best = i + 1; else break;
+    }
+    curPage = best;
+    if (document.activeElement !== pageInput) pageInput.value = best;
+    prevBtn.disabled = best <= 1;
+    nextBtn.disabled = best >= numPages;
+  }
+
+  var scrollTick = false;
+  pdfBody.addEventListener('scroll', function () {
+    if (scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(function () { updateCurrentPage(); scrollTick = false; });
+  });
+
+  prevBtn.addEventListener('click', function () { if (curPage > 1) scrollToPage(curPage - 1); });
+  nextBtn.addEventListener('click', function () { if (curPage < numPages) scrollToPage(curPage + 1); });
+
+  pageInput.addEventListener('change', function () {
+    var n = parseInt(this.value, 10);
+    if (!isNaN(n) && n >= 1 && n <= numPages) scrollToPage(n);
+    else this.value = curPage;
+  });
+  pageInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
+
+  /* ── Zoom ── */
+  function updateZoomLabel() {
+    zoomLabel.textContent = Math.round(zoomMult * 100) + '%';
+    zoomOutBtn.disabled = zoomMult <= ZOOM_MIN + 0.001;
+    zoomInBtn.disabled  = zoomMult >= ZOOM_MAX - 0.001;
+  }
+  function applyZoom() {
+    var anchor = captureAnchor(null);
+    updateZoomLabel();
+    renderAll(anchor).then(updateCurrentPage);
+  }
+  zoomInBtn.addEventListener('click', function () {
+    zoomMult = Math.min(ZOOM_MAX, parseFloat((zoomMult + 0.25).toFixed(2)));
+    applyZoom();
+  });
+  zoomOutBtn.addEventListener('click', function () {
+    zoomMult = Math.max(ZOOM_MIN, parseFloat((zoomMult - 0.25).toFixed(2)));
+    applyZoom();
+  });
+
+  /* ── Find ── */
+  var matches = [], matchIdx = -1;
+
+  function clearHighlights() {
+    for (var n = 1; n <= numPages; n++) {
+      var divs = pageDivs[n];
+      if (!divs) continue;
+      for (var i = 0; i < divs.length; i++) {
+        if (divs[i] && divs[i]._hl) { divs[i].textContent = divs[i]._orig; divs[i]._hl = false; }
+      }
+    }
+    matches = []; matchIdx = -1;
+  }
+
+  function updateFindCount() {
+    findCount.textContent = matches.length ? (matchIdx + 1) + ' / ' + matches.length : (findInput.value.trim() ? '0 / 0' : '');
+    findPrev.disabled = matches.length < 2;
+    findNext.disabled = matches.length < 2;
+  }
+
+  function activateMatch(i, scroll) {
+    if (!matches.length) return;
+    if (matches[matchIdx]) matches[matchIdx].classList.remove('active');
+    matchIdx = (i + matches.length) % matches.length;
+    var m = matches[matchIdx];
+    m.classList.add('active');
+    if (scroll) {
+      var bodyRect = pdfBody.getBoundingClientRect();
+      var r = m.getBoundingClientRect();
+      scrollByPhysicalPx((r.top - bodyRect.top) - bodyRect.height * 0.3);
+    }
+    updateFindCount();
+  }
+
+  function runSearch(q) {
+    clearHighlights();
+    if (!q) { updateFindCount(); return; }
+    var ql = q.toLowerCase();
+    for (var n = 1; n <= numPages; n++) {
+      var divs = pageDivs[n];
+      if (!divs) continue;
+      for (var d = 0; d < divs.length; d++) {
+        var sp = divs[d];
+        if (!sp) continue;
+        if (sp._orig == null) sp._orig = sp.textContent;
+        var txt = sp._orig, low = txt.toLowerCase();
+        if (low.indexOf(ql) === -1) continue;
+        var html = '', i = 0, idx;
+        while ((idx = low.indexOf(ql, i)) !== -1) {
+          html += escHtml(txt.slice(i, idx)) + '<mark class="hl">' + escHtml(txt.slice(idx, idx + ql.length)) + '</mark>';
+          i = idx + ql.length;
+        }
+        html += escHtml(txt.slice(i));
+        sp.innerHTML = html;
+        sp._hl = true;
+        var ms = sp.getElementsByClassName('hl');
+        for (var k = 0; k < ms.length; k++) matches.push(ms[k]);
+      }
+    }
+    if (matches.length) { matchIdx = -1; activateMatch(0, true); }
+    else updateFindCount();
+  }
+
+  var findTimer = null;
+  findInput.addEventListener('input', function () {
+    clearTimeout(findTimer);
+    var v = this.value.trim();
+    findTimer = setTimeout(function () { runSearch(v); }, 200);
+  });
+  findInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (matches.length) activateMatch(matchIdx + (e.shiftKey ? -1 : 1), true);
+    }
+  });
+  findPrev.addEventListener('click', function () { activateMatch(matchIdx - 1, true); });
+  findNext.addEventListener('click', function () { activateMatch(matchIdx + 1, true); });
+
+  /* ── Arrow keys (page nav when not typing) ── */
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('modal-script').classList.contains('open')) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault(); if (curPage < numPages) scrollToPage(curPage + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (curPage > 1) scrollToPage(curPage - 1);
+    }
+  });
+
+  /* ── Pinch to zoom ──
+     Horizontal-swipe page flipping used to live here, but a pinch drags each
+     finger sideways too, so zooming would randomly jump pages mid-gesture.
+     Paging is now the toolbar/arrow keys only; touch is free for zooming and
+     ordinary vertical scrolling through the continuous page stack. */
+  var pinch = null;
+
+  function touchDist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  }
+
+  function endPinch() {
+    if (!pinch) return;
+    if (pinch.raf) cancelAnimationFrame(pinch.raf);
+    var anchor  = pinch.anchor;
+    var target  = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, parseFloat((pinch.z0 * pinch.f).toFixed(3))));
+    var changed = Math.abs(target - zoomMult) > 0.005;
+    pinch = null;
+    wrap.style.setProperty('--pz', 1);          /* drop the stretched preview */
+    if (!changed) { updateZoomLabel(); return; }
+    zoomMult = target;
+    updateZoomLabel();
+    renderAll(anchor).then(updateCurrentPage);
+  }
+
+  pdfBody.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 2) return;
+    e.preventDefault();                          /* stop the browser zooming the page */
+    var d0 = touchDist(e.touches);
+    if (!d0) return;
+    pinch = {
+      d0: d0, z0: zoomMult, f: 1, raf: 0,
+      anchor: captureAnchor((e.touches[0].clientY + e.touches[1].clientY) / 2)
+    };
+  }, { passive: false });
+
+  pdfBody.addEventListener('touchmove', function (e) {
+    if (!pinch || e.touches.length !== 2) return;
+    e.preventDefault();
+    var next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinch.z0 * (touchDist(e.touches) / pinch.d0)));
+    pinch.f = next / pinch.z0;
+    if (pinch.raf) return;
+    pinch.raf = requestAnimationFrame(function () {
+      if (!pinch) return;
+      pinch.raf = 0;
+      wrap.style.setProperty('--pz', pinch.f);
+      zoomLabel.textContent = Math.round(pinch.z0 * pinch.f * 100) + '%';
+      restoreAnchor(pinch.anchor);               /* keep the pinch point under the fingers */
+    });
+  }, { passive: false });
+
+  pdfBody.addEventListener('touchend', function (e) {
+    if (pinch && e.touches.length < 2) endPinch();
+  }, { passive: true });
+  pdfBody.addEventListener('touchcancel', endPinch, { passive: true });
+}
+
+/* ── SCHEDULE PDF DOWNLOAD ──
+   Hand-laid rather than run through autoTable, because we need control over
+   two things a table plugin won't give us: the rehearsal schedule has to land
+   on exactly one page, and the season on exactly one more.
+
+   Both sections therefore measure themselves first and pick a scale factor
+   that makes them fit (see fitScale below) instead of using fixed type sizes.
+   Rows are single-line wherever the text allows, no vertical rules, no zebra
+   and no boxed cells — hairlines and whitespace do the separating.
+
+   Both print accents are the light-mode values, since paper is white and the
+   bright screen pair would all but vanish on it. Nothing is coloured by
+   today/past either — this gets printed and pinned up, so baking the download
+   date into the rows would make it look stale the next morning. */
+function downloadSchedulePDF() {
+  if (!schedPdfRows || !schedPdfRows.length) return;
+  var J = window.jspdf;
+  if (!J) return;
+
+  var doc = new J.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var W = doc.internal.pageSize.getWidth();    /* 210 */
+  var H = doc.internal.pageSize.getHeight();   /* 297 */
+
+  var INK    = [17, 17, 17];
+  var BODY   = [58, 58, 58];
+  var META   = [112, 112, 112];
+  var MUTED  = [145, 145, 145];
+  var HAIR   = [232, 232, 228];
+  var RULE   = [196, 196, 190];
+  /* Print equivalents of the on-screen palette: ice for the chrome, green
+     for the live/performance marks. Both are the darker light-mode values,
+     since paper is white. */
+  var GRN    = [18, 107, 64];     /* forest — performances, matinee marks */
+  var DEEP   = [13, 82, 49];
+  var WASH   = [232, 245, 237];   /* matinee row tint */
+  var ICE    = [11, 108, 132];    /* ice — rules and chrome */
+
+  var ML = 16, MR = 16;
+  var PAGENUM_Y = H - 14;      /* baseline the page number hangs off */
+  var BOTTOM    = PAGENUM_Y - 6;   /* last y content may occupy */
+
+  var CALL_ON = !!(schedPdfHas && schedPdfHas.characters);
+
+  /* Rehearsal columns. The "what" column takes the slack when there are no
+     characters to list. */
+  var C = CALL_ON ? {
+    date: { x: ML, w: 24 }, time: { x: 40, w: 13 }, what: { x: 53, w: 67 },
+    ref:  { x: 125, w: 32 }, call: { x: 160, w: 34 },
+  } : {
+    date: { x: ML, w: 24 }, time: { x: 40, w: 13 }, what: { x: 53, w: 101 },
+    ref:  { x: 158, w: 36 }, call: { x: 0, w: 0 },
+  };
+
+  var now = new Date();
+  var dateStr = now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+
+  var rehearsals  = schedPdfRows.filter(function (r) { return !r.performance && parseDT(r.datetime); });
+  var productions = schedPdfRows.filter(function (r) { return !!r.performance && parseDT(r.datetime); });
+
+  function font(style, size, color) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(color[0], color[1], color[2]);
+  }
+  function hline(x1, x2, yy, color, wt) {
+    doc.setDrawColor(color[0], color[1], color[2]);
+    doc.setLineWidth(wt);
+    doc.line(x1, yy, x2, yy);
+  }
+  function wrap(text, width, style, size) {
+    if (!text) return [];
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    return doc.splitTextToSize(String(text), width);
+  }
+  /* Shrink a section until it fits the height it's been given. Wrapping
+     depends on type size and type size depends on the fit, so this iterates
+     to a fixed point rather than solving in one step. Floors at 0.75 — below
+     that the type stops being readable, so an over-long schedule spills to a
+     second page (see newContentPage) instead of shrinking into illegibility. */
+  function fitScale(avail, measure) {
+    var s = 1;
+    for (var i = 0; i < 10; i++) {
+      var need = measure(s);
+      if (need <= avail) break;
+      s = Math.max(0.75, s * (avail / need) * 0.995);
+      if (s === 0.75) break;
+    }
+    return s;
+  }
+
+  /* Compact enough to sit in a 33mm column: "Act 1, Sc 3  ·  pp. 16–24". */
+  function refLine(row) {
+    var act = (row.act || '').trim(), scene = (row.scene || '').trim(), pages = (row.pages || '').trim();
+    var allAct = /^all$/i.test(act), allSc = /^all$/i.test(scene);
+    var ap = act ? (allAct ? 'All acts' : 'Act ' + act) : '';
+    var sp = scene ? (allSc ? (allAct ? '' : (ap ? 'all sc.' : 'All scenes')) : 'Sc ' + scene) : '';
+    var bits = [];
+    var as = [ap, sp].filter(Boolean).join(', ');
+    if (as) bits.push(as);
+    if (pages) bits.push((/[-–—]/.test(pages) ? 'pp. ' : 'p. ') + pages.replace(/\s*-\s*/g, '–'));
+    return bits.join('  ·  ');
+  }
+
+  /* ── masthead ── */
+  function drawMasthead(kicker) {
+    font('bold', 21, INK);
+    doc.text('SCENES FROM THE CLIMATE ERA', ML, 24, { charSpace: 0.2 });
+    font('bold', 7.6, DEEP);
+    doc.text(kicker, ML, 30, { charSpace: 1.5 });
+
+    font('bold', 7.4, INK);
+    doc.text('dir. by Blake Stringer', W - MR, 13.4, { align: 'right' });
+    font('normal', 7.4, BODY);
+    doc.text('Malvern Theatre', W - MR, 17.5, { align: 'right' });
+    doc.text('24 June – 4 July 2027', W - MR, 21.6, { align: 'right' });
+    font('normal', 6.6, MUTED);
+    doc.text('Generated ' + dateStr, W - MR, 25.7, { align: 'right' });
+
+    doc.setLineWidth(1.1);
+    doc.setDrawColor(ICE[0], ICE[1], ICE[2]);
+    doc.line(ML, 34, ML + 15, 34);
+    doc.setDrawColor(GRN[0], GRN[1], GRN[2]);
+    doc.line(ML + 15, 34, W - MR, 34);
+  }
+  function newContentPage(kicker, labels) {
+    doc.addPage();
+    font('bold', 6.8, DEEP);
+    doc.text('SCENES FROM THE CLIMATE ERA', ML, 13.5, { charSpace: 0.5 });
+    font('normal', 6.8, MUTED);
+    doc.text(kicker, W - MR, 13.5, { align: 'right' });
+    hline(ML, W - MR, 16.6, HAIR, 0.2);
+    labels(21);
+    return 27;
+  }
+  function colLabel(text, x, yy, align) {
+    font('normal', 6, MUTED);
+    doc.text(text, x, yy, align ? { charSpace: 0.6, align: align } : { charSpace: 0.6 });
+  }
+
+  /* ══ REHEARSAL SCHEDULE — one page ══ */
+  drawMasthead('REHEARSAL SCHEDULE');
+
+  var LABEL_Y = 41;
+  function rehearsalLabels(ly) {
+    colLabel('DATE', C.date.x, ly);
+    colLabel('TIME', C.time.x, ly);
+    colLabel('REHEARSAL', C.what.x, ly);
+    colLabel('REFERENCE', C.ref.x, ly);
+    if (CALL_ON) colLabel('CALLED', C.call.x, ly);
+    hline(ML, W - MR, ly + 2.6, RULE, 0.35);
+  }
+  rehearsalLabels(LABEL_Y);
+
+  var TOP = LABEL_Y + 7;
+
+  var groups = [], gmap = {};
+  rehearsals.forEach(function (r) {
+    var wk = r.week || 'Schedule';
+    if (!gmap[wk]) { gmap[wk] = []; groups.push({ label: wk, rows: gmap[wk] }); }
+    gmap[wk].push(r);
+  });
+
+  /* Blocks are measured once per candidate scale, then drawn from the winning
+     set — so what gets measured is exactly what gets drawn. */
+  function buildRehearsalBlocks(s) {
+    var out = [];
+    groups.forEach(function (g, gi) {
+      out.push({ type: 'week', label: g.label, first: gi === 0, h: (gi === 0 ? 7.2 : 9.6) * s });
+      g.rows.forEach(function (row) {
+        var d = parseDT(row.datetime);
+        if (!d) return;
+        var whatLines = wrap(row.context || 'Rehearsal', C.what.w, 'bold', 8.6 * s);
+        var refLines  = wrap(refLine(row), C.ref.w, 'normal', 7.6 * s);
+        var callLines = CALL_ON ? wrap(row.characters || '', C.call.w, 'normal', 7.6 * s) : [];
+        var lines = Math.max(whatLines.length, refLines.length, callLines.length, 1);
+        out.push({
+          type: 'row', d: d, whatLines: whatLines, refLines: refLines, callLines: callLines,
+          h: (lines === 1 ? 8.2 : 5.2 + lines * 4.5) * s,
+        });
+      });
+    });
+    return out;
+  }
+
+  var rBlocks = null;
+  var rScale = fitScale(BOTTOM - TOP, function (s) {
+    rBlocks = buildRehearsalBlocks(s);
+    return rBlocks.reduce(function (a, b) { return a + b.h; }, 0);
+  });
+  rBlocks = buildRehearsalBlocks(rScale);
+
+  var y = TOP;
+  rBlocks.forEach(function (b) {
+    var needs = b.h + (b.type === 'week' ? 12 * rScale : 0);
+    if (y + needs > BOTTOM) y = newContentPage('Rehearsal Schedule', rehearsalLabels);
+    if (b.type === 'week') {
+      var ly = y + b.h - 2.4 * rScale;
+      if (!b.first) hline(ML, W - MR, y + b.h - 7.4 * rScale, RULE, 0.35);
+      font('bold', 7.6 * rScale, DEEP);
+      doc.text(String(b.label).toUpperCase(), ML, ly, { charSpace: 0.7 });
+      y += b.h;
+      return;
+    }
+    var base = y + 5.2 * rScale, step = 4.5 * rScale;
+    font('bold', 8.6 * rScale, INK);
+    doc.text(DAYS[b.d.getDay()] + ' ' + b.d.getDate() + ' ' + MONTHS[b.d.getMonth()], C.date.x, base);
+    font('bold', 8.6 * rScale, DEEP);
+    doc.text(fmtTime(b.d), C.time.x, base);
+    font('bold', 8.6 * rScale, INK);
+    b.whatLines.forEach(function (ln, i) { doc.text(ln, C.what.x, base + i * step); });
+    font('normal', 7.6 * rScale, META);
+    b.refLines.forEach(function (ln, i) { doc.text(ln, C.ref.x, base + i * step); });
+    font('normal', 7.6 * rScale, BODY);
+    b.callLines.forEach(function (ln, i) { doc.text(ln, C.call.x, base + i * step); });
+    y += b.h;
+    hline(ML, W - MR, y - 2 * rScale, HAIR, 0.2);
+  });
+
+  /* ══ THE SEASON — its own single page ══ */
+  if (productions.length) {
+    doc.addPage();
+    drawMasthead('THE SEASON');
+
+    var S = {
+      num:  { x: ML,  w: 10 },
+      date: { x: 28,  w: 34 },
+      time: { x: 64,  w: 22 },
+      name: { x: 90,  w: W - MR - 90 },
+    };
+    function seasonLabels(ly) {
+      colLabel('#', S.num.x, ly);
+      colLabel('DATE', S.date.x, ly);
+      colLabel('TIME', S.time.x, ly);
+      colLabel('PERFORMANCE', S.name.x, ly);
+      hline(ML, W - MR, ly + 2.6, RULE, 0.35);
+    }
+    seasonLabels(LABEL_Y);
+
+    /* A matinee is anything the sheet calls one, or anything starting before
+       5pm — so an afternoon show still stands out if it's named otherwise. */
+    var perfs = productions.map(function (row, i) {
+      var d = parseDT(row.datetime);
+      return {
+        n: i + 1, d: d, name: row.performance || '',
+        matinee: /matinee|mat\b/i.test(row.performance || '') || d.getHours() < 17,
+      };
+    });
+
+    /* Same type size as the rehearsal page unless the season needs to be
+       smaller still to hold one page (it won't, at any realistic count). */
+    var sScale = Math.min(rScale, fitScale(BOTTOM - TOP, function (s) {
+      return perfs.reduce(function (a, p) {
+        return a + Math.max(9.8, 5.2 + wrap(p.name, S.name.w, 'bold', 8.6 * s).length * 4.5) * s;
+      }, 0);
+    }));
+
+    y = TOP;
+    perfs.forEach(function (p) {
+      var nameLines = wrap(p.name, S.name.w, 'bold', 8.6 * sScale);
+      var h = Math.max(9.8, 5.2 + nameLines.length * 4.5) * sScale;
+      if (y + h > BOTTOM) y = newContentPage('The Season', seasonLabels);
+
+      if (p.matinee) {
+        doc.setFillColor(WASH[0], WASH[1], WASH[2]);
+        doc.rect(ML, y - 1.2 * sScale, W - ML - MR, h - 0.6 * sScale, 'F');
+      }
+      var base = y + 6.0 * sScale, step = 4.5 * sScale;
+
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : MUTED);
+      doc.text(String(p.n), S.num.x, base);
+      font('bold', 8.6 * sScale, INK);
+      doc.text(DAYS[p.d.getDay()] + ' ' + p.d.getDate() + ' ' + MONTHS[p.d.getMonth()], S.date.x, base);
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : BODY);
+      doc.text(fmtTime(p.d), S.time.x, base);
+      font('bold', 8.6 * sScale, p.matinee ? DEEP : INK);
+      nameLines.forEach(function (ln, i) { doc.text(ln, S.name.x, base + i * step); });
+
+      /* Only tag an afternoon show the sheet hasn't already named as one. */
+      if (p.matinee && !/matinee|mat\b/i.test(p.name)) {
+        var last = nameLines.length - 1;
+        var nameW = doc.getTextWidth(nameLines[last]);   /* still the 8.6pt face */
+        var pill = 'MATINEE', cs = 0.3;
+        font('bold', 5.8 * sScale, [255, 255, 255]);
+        var pw = doc.getTextWidth(pill) + cs * (pill.length - 1) + 3.2 * sScale;
+        var ph = 4.0 * sScale;
+        var px = S.name.x + nameW + 3 * sScale;
+        var py = base + last * step;
+        doc.setFillColor(GRN[0], GRN[1], GRN[2]);
+        doc.roundedRect(px, py - ph + 1.0 * sScale, pw, ph, 0.7, 0.7, 'F');
+        doc.text(pill, px + 1.6 * sScale, py - 0.6 * sScale, { charSpace: cs });
+      }
+
+      y += h;
+      hline(ML, W - MR, y - 2 * sScale, HAIR, 0.2);
+    });
+  }
+
+  var totalPages = doc.internal.getNumberOfPages();
+  for (var pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    font('normal', 6.8, MUTED);
+    doc.text('Page ' + pg + ' of ' + totalPages, W - MR, PAGENUM_Y + 4.4, { align: 'right' });
+  }
+
+  doc.save('Scenes From the Climate Era - Rehearsal Schedule.pdf');
+}
+
+/* ── MUSIC PLAYER ──
+   Only set up the first time the Soundtrack modal is opened (mirrors
+   loadPDF() below) — no point wiring up an AudioContext and a running
+   requestAnimationFrame loop for visitors who never open it.
+   Plays straight from /tools/scenesfromtheclimateera/audio/. Tracks are lazy —
+   audio.src is only set (and therefore only fetched, since preload="none")
+   at the moment a track actually starts playing, whether via Play, Next/
+   Previous, or auto-advance at the end of a track. Modelled on the player at
+   blakestringer.com's Music section, trimmed to what this page needs (no
+   shuffle — just a straight playlist in the order below). */
+var musicLoaded = false;
+function loadMusic() {
+  if (musicLoaded) return;
+  musicLoaded = true;
+
+  var audio      = document.getElementById('music-audio');
+  var playerEl   = document.getElementById('music-player');
+  var playBtn    = document.getElementById('music-play-btn');
+  var prevBtn    = document.getElementById('music-prev-btn');
+  var nextBtn    = document.getElementById('music-next-btn');
+  var nameEl     = document.getElementById('music-track-name');
+  var timeEl     = document.getElementById('music-time');
+  var cueEl      = document.getElementById('music-cue');
+  var queueBtn   = document.getElementById('music-queue-btn');
+  var queuePanel = document.getElementById('music-queue');
+  var queueList  = document.getElementById('music-queue-list');
+  var progBar    = document.getElementById('music-progress');
+  var progFill   = document.getElementById('music-progress-fill');
+  var thumb      = document.getElementById('music-progress-thumb');
+  var canvas     = document.getElementById('music-vis');
+  var iconPlay   = playBtn.querySelector('.music-icon-play');
+  var iconPause  = playBtn.querySelector('.music-icon-pause');
+  var audioCtx, analyser, source, dragging = false;
+
+  /* ── Playlist ──
+     In show order (Act, then page) — matches the cue sheet, so playing
+     straight through follows the production. `file` must match the filename
+     in audio/ exactly (the live server is case-sensitive even where a local
+     filesystem isn't). */
+  /* `file` is the name on disk under audio/, encodeURI'd by trackSrc. The
+     "MUSIC - PGnn" files are the production's own edits, which replaced the
+     commercial releases that were here first; the page number in each filename
+     is the cue point and matches `page` below. */
+  /* Empty until the cues are chosen. Each entry is:
+       { title, artist, act, page, context, file }
+     where `file` is the exact name on disk under audio/ — the live server is
+     case-sensitive even where a local preview isn't. */
+  var TRACKS = [
+  ];
+  var order = TRACKS.map(function (_, i) { return i; });
+  var pos = 0, loadedPos = -1;
+
+  function track()      { return TRACKS[order[pos]]; }
+  function trackSrc(t)  { return encodeURI('/tools/scenesfromtheclimateera/audio/' + t.file); }
+  function trackLabel(t) { return t.title; }
+  /* cueLabel includes the artist (stands alone, next to just the title up
+     top); showCue doesn't (used in the playlist rows, where the artist is
+     already shown right next to the title). */
+  function showCue(t)  { return 'Act ' + t.act + ', p.' + t.page + ' — ' + t.context; }
+  function cueLabel(t) { return t.artist + ' · ' + showCue(t); }
+
+  function setControlsEnabled(on) {
+    playBtn.disabled = prevBtn.disabled = nextBtn.disabled = queueBtn.disabled = !on;
+  }
+
+  function updateTrackDisplay() {
+    var t = track();
+    nameEl.textContent = trackLabel(t);
+    cueEl.textContent = cueLabel(t);
+    playBtn.setAttribute('aria-label', (audio.paused ? 'Play ' : 'Pause ') + trackLabel(t));
+    renderQueue();
+  }
+
+  /* ── Playlist dropdown ── rebuilt on every track change so the highlighted
+     "now playing" row always matches. Each row shows the song + artist and,
+     underneath, where it lands in the show — the whole reason this playlist
+     is ordered by Act/page rather than the order the mp3s were dropped in. */
+  function renderQueue() {
+    queueList.innerHTML = order.map(function (trackIdx, i) {
+      var t = TRACKS[trackIdx], current = i === pos;
+      return '<button type="button" class="music-queue-item" role="option" aria-current="' + current + '" data-pos="' + i + '">' +
+        '<span class="music-queue-num">' + (i + 1) + '</span>' +
+        '<span class="music-queue-info">' +
+          '<span class="music-queue-title">' + escHtmlShared(trackLabel(t)) + ' — ' + escHtmlShared(t.artist) + '</span>' +
+          '<span class="music-queue-cue">' + escHtmlShared(showCue(t)) + '</span>' +
+        '</span></button>';
+    }).join('');
+  }
+  function openQueue() {
+    queuePanel.hidden = false;
+    queueBtn.setAttribute('aria-expanded', 'true');
+    queueBtn.classList.add('active');
+  }
+  function closeQueue() {
+    queuePanel.hidden = true;
+    queueBtn.setAttribute('aria-expanded', 'false');
+    queueBtn.classList.remove('active');
+  }
+  queueBtn.addEventListener('click', function () { queuePanel.hidden ? openQueue() : closeQueue(); });
+  queueList.addEventListener('click', function (e) {
+    var item = e.target.closest('.music-queue-item');
+    if (!item) return;
+    switchTrack(parseInt(item.dataset.pos, 10));
+    closeQueue();
+  });
+  document.addEventListener('click', function (e) {
+    if (queuePanel.hidden) return;
+    if (queueBtn.contains(e.target) || queuePanel.contains(e.target)) return;
+    closeQueue();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !queuePanel.hidden) closeQueue(); });
+
+  /* Switch to `newPos`. If audio was already playing, the new track keeps
+     playing (skip-while-listening); if paused, it's just cued.
+     `forcePlay` overrides this — used when a track finishes naturally (the
+     "ended" event fires with audio already paused, but the playlist should
+     keep going). */
+  function switchTrack(newPos, forcePlay) {
+    if (!TRACKS.length) return;
+    var wasPlaying = forcePlay || !audio.paused;
+    audio.pause();
+    pos = ((newPos % order.length) + order.length) % order.length;
+    audio.src = trackSrc(track());
+    loadedPos = pos;
+    setProgress(0);
+    timeEl.textContent = '0:00';
+    updateTrackDisplay();
+    updateMediaSessionMetadata();
+    if (wasPlaying) {
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audio.play().catch(function () {});
+    }
+  }
+
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  }
+
+  function setProgress(pct) {
+    progFill.style.width = pct + '%';
+    thumb.style.left     = pct + '%';
+  }
+
+  /* ── Visualiser ── green: these bars move with the playing track, which is
+     the live colour's job. The fallback matters — getPropertyValue returns ''
+     for an unknown property, and an empty fillStyle silently keeps the
+     previous colour rather than throwing. */
+  function barColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--grn').trim() || '#45D189';
+  }
+
+  function resizeCanvas() {
+    var dpr  = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var w    = Math.round(rect.width  * dpr);
+    var h    = Math.round(rect.height * dpr);
+    if (w === 0 || h === 0 || (canvas.width === w && canvas.height === h)) return;
+    canvas.width  = w;
+    canvas.height = h;
+  }
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.82;
+    source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    /* Mobile OSes suspend the AudioContext far more readily than a plain
+       <audio> element (backgrounding the tab, locking the phone) — since the
+       visualiser routes playback THROUGH this context, sound cuts out the
+       moment that happens even though `audio` itself is still "playing". Put
+       it straight back the instant it's suspended while we expect to be
+       audible, so background/lock-screen playback keeps going. */
+    audioCtx.addEventListener('statechange', function () {
+      if (audioCtx.state === 'suspended' && !audio.paused) audioCtx.resume().catch(function () {});
+    });
+  }
+
+  function draw() {
+    requestAnimationFrame(draw);
+    resizeCanvas();
+    var dpr = window.devicePixelRatio || 1;
+    var W = canvas.width / dpr, H = canvas.height / dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    var color = barColor();
+    var nBars = 20, gap = 3;
+    var barW = (W - gap * (nBars - 1)) / nBars;
+    var vals = new Float32Array(nBars);
+
+    if (analyser && !audio.paused) {
+      var bins = analyser.frequencyBinCount;
+      var data = new Uint8Array(bins);
+      analyser.getByteFrequencyData(data);
+      var maxBin = Math.floor(bins * 0.40); /* cap at ~8.8kHz so all bars land on musically active frequencies */
+      for (var i = 0; i < nBars; i++) {
+        var t = i / (nBars - 1);
+        var b = Math.min(bins - 1, Math.round(Math.pow(maxBin, t)));
+        var sum = 0, cnt = 0;
+        for (var d = -1; d <= 1; d++) { var idx = Math.max(0, Math.min(bins - 1, b + d)); sum += data[idx]; cnt++; }
+        vals[i] = sum / cnt / 255;
+      }
+    } else {
+      var tt = performance.now() / 1000;
+      for (var j = 0; j < nBars; j++) {
+        var x = j / (nBars - 1);
+        vals[j] = (Math.sin(x * Math.PI * 2 + tt * 0.6) * 0.5 + 0.5) * 0.18;
+      }
+    }
+
+    ctx.fillStyle = color;
+    for (var k = 0; k < nBars; k++) {
+      var xx = k * (barW + gap);
+      var barH = Math.max(3, vals[k] * H * 0.92);
+      ctx.globalAlpha = 0.3 + vals[k] * 0.7;
+      ctx.fillRect(xx, H - barH, barW, barH);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ── Media Session (lock screen / control centre / background playback) ──
+     Registering a session is what tells mobile OSes this page is playing
+     real media, which is what makes them willing to keep audio going once
+     the tab is backgrounded or the phone is locked. It also drives the
+     native title/prev/play-pause/next widget on the lock screen. */
+  var hasMediaSession = 'mediaSession' in navigator;
+  function updateMediaSessionMetadata() {
+    if (!hasMediaSession || !TRACKS.length) return;
+    var t = track();
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: trackLabel(t),
+      artist: t.artist,
+      album: 'Scenes From the Climate Era',
+      artwork: [{ src: '/Images/favicon.png', sizes: '180x180', type: 'image/png' }]
+    });
+  }
+  if (hasMediaSession) {
+    navigator.mediaSession.setActionHandler('play',         function () { doPlay(); });
+    navigator.mediaSession.setActionHandler('pause',        function () { doPause(); });
+    navigator.mediaSession.setActionHandler('previoustrack', function () { switchTrack(pos - 1, true); });
+    navigator.mediaSession.setActionHandler('nexttrack',     function () { switchTrack(pos + 1, true); });
+  }
+
+  /* ── Play / Pause ── */
+  function doPlay() {
+    if (!TRACKS.length) return;
+    if (loadedPos === -1) { audio.src = trackSrc(track()); loadedPos = pos; } /* lazy: first load happens here */
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio.play().catch(function () {});
+  }
+  function doPause() { audio.pause(); }
+
+  playBtn.addEventListener('click', function () { audio.paused ? doPlay() : doPause(); });
+  prevBtn.addEventListener('click', function () { switchTrack(pos - 1); });
+  nextBtn.addEventListener('click', function () { switchTrack(pos + 1); });
+
+  /* Safety net: if the AudioContext got suspended while backgrounded (some
+     browsers only allow resuming once the page is genuinely foregrounded
+     again, rather than on the statechange listener in initAudio() alone). */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && audioCtx && audioCtx.state === 'suspended' && !audio.paused) {
+      audioCtx.resume().catch(function () {});
+    }
+  });
+
+  audio.addEventListener('play', function () {
+    iconPlay.style.display  = 'none';
+    iconPause.style.display = '';
+    playBtn.setAttribute('aria-label', 'Pause ' + trackLabel(track()));
+    progFill.classList.add('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'playing';
+  });
+  audio.addEventListener('pause', function () {
+    iconPlay.style.display  = '';
+    iconPause.style.display = 'none';
+    playBtn.setAttribute('aria-label', 'Play ' + trackLabel(track()));
+    progFill.classList.remove('playing');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'paused';
+  });
+  audio.addEventListener('ended', function () {
+    /* Keep the playlist going — advance to the next track and play it,
+       wrapping back to the start once the whole list has played through. */
+    switchTrack(pos + 1, true);
+  });
+  audio.addEventListener('timeupdate', function () {
+    /* audio.seeking guards a race on an unbuffered scrub: currentTime is set
+       immediately in seekFromEvent, but actually landing there needs a
+       network fetch (preload="none" + un-downloaded range) that takes a
+       moment. A timeupdate firing in that gap still reports the OLD
+       position, which would otherwise snap the just-set progress bar back
+       until the seek actually completes. */
+    if (!audio.duration || dragging || audio.seeking) return;
+    setProgress(audio.currentTime / audio.duration * 100);
+    timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+  });
+
+  /* ── Scrubber (click + drag) ── */
+  function seekFromEvent(e) {
+    if (!TRACKS.length) return;
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var r = progBar.getBoundingClientRect();
+    var pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    setProgress(pct * 100);
+    if (audio.duration) {
+      audio.currentTime = pct * audio.duration;
+      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+    }
+  }
+  progBar.addEventListener('mousedown', function (e) {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  });
+  progBar.addEventListener('touchstart', function (e) {
+    dragging = true;
+    progBar.classList.add('dragging');
+    progFill.style.transition = 'none';
+    seekFromEvent(e);
+  }, { passive: true });
+  document.addEventListener('mousemove', function (e) { if (dragging) seekFromEvent(e); });
+  document.addEventListener('touchmove', function (e) { if (dragging) seekFromEvent(e); }, { passive: true });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    progBar.classList.remove('dragging');
+    progFill.style.transition = '';
+  }
+  document.addEventListener('mouseup',  endDrag);
+  document.addEventListener('touchend', endDrag);
+
+  /* ── Init ── */
+  if (!TRACKS.length) {
+    playerEl.classList.add('empty');
+    setControlsEnabled(false);
+    nameEl.textContent = 'No tracks yet — they\'ll appear here';
+  } else {
+    updateTrackDisplay();
+    updateMediaSessionMetadata();
+  }
+
+  draw(); /* start idle animation immediately */
+}
+</script>
+</body>
+</html>
