@@ -1071,7 +1071,7 @@
 
 /* ── COUNTDOWN ── */
 (function () {
-  var target = new Date('2026-11-06T20:00:00+10:30'); /* ACDT — Adelaide */
+  var target = new Date('2026-11-06T20:00:00+11:00'); /* AEDT — Melbourne; November, so daylight saving is on */
   function pad(n) { return String(n).padStart(2, '0'); }
   function tick() {
     var diff = target - Date.now();
