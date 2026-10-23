@@ -590,7 +590,10 @@
         <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
       </div>
       <div class="pdf-toolbar" id="pdf-nav" style="display:none;">
-        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="/tools/asimpleactofkindness/script.pdf" download="A Simple Act of Kindness — Ross Mueller.pdf">Download</a>
+        <!-- Plain hyphen, not an em dash: Chrome discards a download name
+             containing any non-ASCII character and saves the file as
+             "download", with no extension. -->
+        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="/tools/asimpleactofkindness/script.pdf" download="A Simple Act of Kindness - Ross Mueller.pdf">Download</a>
         <div class="pdf-zoom-divider"></div>
         <button class="pdf-nav-btn" id="pdf-prev" aria-label="Previous page" disabled>‹</button>
         <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" aria-label="Page number" disabled>
