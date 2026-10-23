@@ -68,6 +68,71 @@
       --border:  rgba(150,215,235,0.13);
     }
 
+    /* ── secret to-do list ──
+       All of it is chrome — input, focus, the tick — so all of it is ice.
+       Green is reserved for what's live in the production, and a list of
+       Blake's own jobs has nothing live about it. */
+    .todo-add { display: flex; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); }
+    .todo-add input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+      font-family: var(--font); font-size: 12px; padding: 10px 12px; border-radius: 4px;
+    }
+    .todo-add input:focus { outline: none; border-color: var(--ice); }
+    .todo-add button {
+      background: var(--ice); color: var(--onacc); border: none; border-radius: 4px; cursor: pointer;
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 0 16px;
+    }
+    .todo-add button:hover { opacity: 0.85; }
+    .todo-item { display: flex; align-items: flex-start; gap: 11px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--card-bg); }
+    /* touch-action:none so a drag on the grip doesn't scroll the modal
+       instead. Only the grip takes it — the rest of the row still scrolls. */
+    .todo-grip {
+      flex: 0 0 auto; margin-top: 1px; background: none; border: none; padding: 0 1px;
+      color: var(--border); cursor: grab; touch-action: none; line-height: 0;
+    }
+    .todo-grip:hover { color: var(--ice); }
+    .todo-grip:active { cursor: grabbing; }
+    .todo-item.dragging { opacity: 0.85; box-shadow: 0 6px 18px rgba(0,0,0,0.25); position: relative; z-index: 2; }
+    .todo-box {
+      flex: 0 0 auto; width: 17px; height: 17px; margin-top: 1px; border: 1.5px solid var(--border);
+      border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      background: none; color: transparent; font-size: 11px; line-height: 1;
+    }
+    .todo-box:hover { border-color: var(--ice); }
+    .todo-item.done .todo-box { background: var(--ice); border-color: var(--ice); color: var(--onacc); }
+    .todo-text {
+      flex: 1; font-size: 12.5px; line-height: 1.5; cursor: text; word-break: break-word;
+      border: 1px solid transparent; border-radius: 3px; padding: 1px 4px; margin: -1px -4px;
+    }
+    .todo-text:focus { outline: none; border-color: var(--ice); background: var(--bg); }
+    .todo-item.done .todo-text { color: var(--muted); text-decoration: line-through; }
+    .todo-del {
+      flex: 0 0 auto; background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 15px; line-height: 1; padding: 0 2px;
+    }
+    .todo-del:hover { color: #ef4444; }
+    .todo-foot {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 14px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+    }
+    .todo-sync.err { color: #ef4444; }
+    .todo-empty { padding: 30px 16px; text-align: center; font-size: 11px; color: var(--muted); }
+
+    /* The unlock confirmation. ASAK has only the .show half of this pair, so
+       its toast lands as unstyled text at the foot of the page; this is the
+       base rule that makes it a toast. */
+    .sfce-toast {
+      position: fixed; left: 50%; bottom: 28px; z-index: 300;
+      transform: translate(-50%, 10px); opacity: 0;
+      background: var(--card-bg); color: var(--fg);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 11px 18px; font-size: 11px; letter-spacing: 0.5px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+      pointer-events: none; max-width: calc(100vw - 32px); text-align: center;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .sfce-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
     :focus-visible { outline: 2px solid var(--grn); outline-offset: 2px; }
     [data-theme="dark"] :focus-visible,
     [data-theme="terminal"] :focus-visible { outline-color: var(--ice); }
@@ -80,6 +145,9 @@
     .sfce-back-link { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: color-mix(in srgb, var(--ice-on-black) 62%, transparent); text-decoration: none; transition: color 0.15s; }
     .sfce-back-link:hover { color: var(--ice); }
     .sfce-header-actions { display: flex; gap: 8px; }
+    /* The class sets display:flex, which outranks the UA's [hidden] rule — so
+       without this the locked-away to-do button would still show. */
+    .sfce-icon-btn[hidden] { display: none; }
     .sfce-icon-btn {
       background: none; border: 1px solid color-mix(in srgb, var(--ice-on-black) 26%, transparent);
       color: color-mix(in srgb, var(--ice-on-black) 72%, transparent); width: 44px; height: 44px; border-radius: 2px;
@@ -473,6 +541,12 @@
     <div class="sfce-header-top">
       <a class="sfce-back-link" href="/">← blakestringer.com</a>
       <div class="sfce-header-actions">
+        <button class="sfce-icon-btn" id="todo-btn" title="To-do" aria-label="Open to-do list" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+          </svg>
+        </button>
         <button class="sfce-icon-btn" id="font-btn" title="Adjust text size" aria-label="Adjust text size">Aa</button>
         <button class="sfce-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme">☾</button>
       </div>
@@ -647,6 +721,28 @@
     </div>
   </div>
 
+  <!-- ── MODAL: To-do ── reached by tapping the theme button 20× (see the
+       theme script); the button that opens it afterwards only appears once
+       that's been done. -->
+  <div class="modal-overlay" id="modal-todo" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-header-title">To-do</span>
+        <button class="modal-close" data-close="modal-todo" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="todo-add">
+          <input type="text" id="todo-input" placeholder="Add something&hellip;" aria-label="Add a to-do item" autocomplete="off">
+          <button type="button" id="todo-add-btn">Add</button>
+        </div>
+        <div id="todo-list"></div>
+        <div class="todo-foot">
+          <span><span id="todo-count"></span><span class="todo-sync" id="todo-sync"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── MODAL: Glossary ── -->
   <div class="modal-overlay" id="modal-glossary" role="dialog" aria-modal="true">
     <div class="modal">
@@ -750,10 +846,309 @@ function showNotYet(bodyId, what, heading) {
     btn.innerHTML = iconFor(t);
   }
 
+  /* A plain light/dark toggle that also counts rapid taps: 20 within 30s
+     unlocks the to-do list on this device, which reveals the padlock button
+     in the header. Counting happens whether or not the list is unlocked, so
+     the toggle behaves identically either way. */
+  var UNLOCK_TAPS = 20, UNLOCK_WINDOW = 30000;
+
+  var tapTimes = [];
   btn.addEventListener('click', function () {
     var cur = document.documentElement.getAttribute('data-theme') || 'light';
-    setTheme(cur === 'dark' ? 'light' : 'dark');
+    setTheme(cur === 'dark' ? 'light' : 'dark');       /* normal toggle… */
+    var t = Date.now();                                /* …while counting rapid taps */
+    tapTimes.push(t);
+    tapTimes = tapTimes.filter(function (x) { return t - x <= UNLOCK_WINDOW; });
+    if (tapTimes.length >= UNLOCK_TAPS && window.todoUnlocked && !window.todoUnlocked()) {
+      tapTimes = [];
+      window.unlockTodo();
+    }
   });
+})();
+
+/* ── SECRET TO-DO LIST ──
+   Unlocked by 20 taps on the theme button. The unlock persists on the device
+   and reveals a padlock button in the header, left of Aa, which opens the
+   list from then on — so it is never re-earned.
+
+   Items sync through a Cloudflare Worker (see workers/sftce-todo-worker.js)
+   when TODO_API is set, with localStorage as the offline cache so the list
+   still opens instantly and survives a failed request. Leave TODO_API empty
+   and everything below still works, just on this device only.
+
+   Its own Worker and its own KV namespace, separate from A Simple Act of
+   Kindness's. Different production, different list — and one store holding
+   both would let a stray write take out the wrong show's notes.
+
+   There is no key on the endpoint, by choice — see the Worker for what that
+   trades away. Each PUT there keeps the version it replaces, so a list lost
+   to a stray write can be read back from the Cloudflare KV browser. */
+(function () {
+  /* The Worker in workers/sftce-todo-worker.js. */
+  var TODO_API   = 'https://sftce-todo.blakestringer.workers.dev';
+
+  var UNLOCK_KEY = 'sftce-todo-unlocked';
+  var ITEMS_KEY  = 'sftce-todo-v1';
+  var esc = escHtmlShared;
+
+  var btn    = document.getElementById('todo-btn');
+  var listEl = document.getElementById('todo-list');
+  var input  = document.getElementById('todo-input');
+  var countEl= document.getElementById('todo-count');
+  var items  = [];
+
+  function load() {
+    try { items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || []; } catch (e) { items = []; }
+    if (!Array.isArray(items)) items = [];
+  }
+  function save() {
+    try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch (e) {}
+  }
+  function unlocked() {
+    try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { return false; }
+  }
+  function showButton(on) { btn.hidden = !on; }
+  btn.addEventListener('click', function () { openTodo(); });
+
+  /* ── sync ── */
+  var syncEl = document.getElementById('todo-sync');
+  var pushTimer = null, pulling = false;
+
+  function syncOn() { return !!TODO_API; }
+  function setSync(msg, isErr) {
+    syncEl.textContent = msg ? '  ·  ' + msg : '';
+    syncEl.classList.toggle('err', !!isErr);
+  }
+
+  function pull() {
+    if (!syncOn()) return;
+    pulling = true;
+    setSync('syncing…');
+    fetch(TODO_API, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (remote) {
+        if (Array.isArray(remote)) { items = remote; save(); render(); }
+        setSync('synced');
+      })
+      .catch(function () {
+        /* Offline, or the Worker isn't deployed yet — the local copy is still
+           good, so say so rather than blanking a list that's still readable
+           and editable. */
+        setSync('offline — saved here', true);
+      })
+      .then(function () { pulling = false; });
+  }
+
+  /* Debounced so a burst of ticks is one write, and skipped while a pull is in
+     flight — otherwise the pre-pull list would be pushed back over the fresh
+     one that just arrived. */
+  function schedulePush() {
+    if (!syncOn() || pulling) return;
+    clearTimeout(pushTimer);
+    setSync('saving…');
+    pushTimer = setTimeout(function () {
+      fetch(TODO_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          setSync('synced');
+        })
+        .catch(function () { setSync('offline — saved here', true); });
+    }, 600);
+  }
+
+  function toast(msg) {
+    var el = document.createElement('div');
+    el.className = 'sfce-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    setTimeout(function () {
+      el.classList.remove('show');
+      setTimeout(function () { el.remove(); }, 400);
+    }, 3200);
+  }
+
+  function render() {
+    if (!items.length) {
+      listEl.innerHTML = '<div class="todo-empty">Nothing on the list.</div>';
+    } else {
+      listEl.innerHTML = items.map(function (it, i) {
+        return '<div class="todo-item' + (it.done ? ' done' : '') + '" data-i="' + i + '">' +
+          '<button class="todo-grip" type="button" aria-label="Reorder — drag, or use the arrow keys" title="Drag to reorder">' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+              '<circle cx="9" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/>' +
+              '<circle cx="15" cy="6" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="15" cy="18" r="1.7"/>' +
+            '</svg></button>' +
+          '<button class="todo-box" type="button" data-act="tick" aria-label="' +
+            (it.done ? 'Mark as not done' : 'Mark as done') + '" aria-pressed="' + (it.done ? 'true' : 'false') + '">✓</button>' +
+          '<div class="todo-text" contenteditable="plaintext-only" role="textbox" aria-label="Edit item" spellcheck="true">' +
+            esc(it.text) + '</div>' +
+          '<button class="todo-del" type="button" data-act="del" aria-label="Delete item">&times;</button>' +
+        '</div>';
+      }).join('');
+    }
+    var done = items.filter(function (i) { return i.done; }).length;
+    countEl.textContent = items.length
+      ? done + ' of ' + items.length + ' done'
+      : '';
+  }
+
+  function add() {
+    var v = input.value.trim();
+    if (!v) return;
+    items.push({ text: v, done: false });
+    input.value = '';
+    save(); render(); schedulePush();
+    input.focus();
+  }
+
+  document.getElementById('todo-add-btn').addEventListener('click', add);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); add(); }
+  });
+
+  listEl.addEventListener('click', function (e) {
+    var row = e.target.closest('.todo-item'); if (!row) return;
+    var i = +row.getAttribute('data-i');
+    var act = e.target.closest('[data-act]');
+    if (!act) return;
+    if (act.getAttribute('data-act') === 'tick') { items[i].done = !items[i].done; save(); render(); schedulePush(); }
+    else if (act.getAttribute('data-act') === 'del') { items.splice(i, 1); save(); render(); schedulePush(); }
+  });
+
+  /* ── reordering ──
+     Pointer events rather than HTML5 drag-and-drop, which doesn't fire on
+     touch at all and this list is mostly used on a phone. The drag lives on
+     its own grip so it can't fight the tick button, the delete button, or
+     text selection inside the contenteditable row.
+
+     Rows are moved in the DOM during the drag and the array is rebuilt from
+     that order once on drop — re-rendering mid-drag would destroy the very
+     element the pointer is captured on. */
+  var dragEl = null, dragScroller = null, autoScrollTimer = null;
+
+  function rowAfterPoint(y) {
+    var rows = Array.prototype.slice.call(listEl.querySelectorAll('.todo-item'));
+    var after = null;
+    rows.forEach(function (r) {
+      if (r === dragEl) return;
+      var box = r.getBoundingClientRect();
+      if (y > box.top + box.height / 2) after = r;
+    });
+    return after;
+  }
+
+  /* Dragging to the edge of a list taller than the modal needs the modal to
+     follow, or the far end is simply unreachable. */
+  function autoScroll(y) {
+    clearInterval(autoScrollTimer);
+    if (!dragScroller) return;
+    var box = dragScroller.getBoundingClientRect(), EDGE = 44, step = 0;
+    if (y < box.top + EDGE)         step = -8;
+    else if (y > box.bottom - EDGE) step = 8;
+    if (!step) return;
+    autoScrollTimer = setInterval(function () { dragScroller.scrollTop += step; }, 16);
+  }
+
+  function commitOrder() {
+    var order = Array.prototype.slice.call(listEl.querySelectorAll('.todo-item'))
+      .map(function (r) { return items[+r.getAttribute('data-i')]; })
+      .filter(Boolean);
+    if (order.length !== items.length) { render(); return; }   /* paranoia: never drop an item */
+    var changed = order.some(function (it, i) { return it !== items[i]; });
+    items = order;
+    render();
+    if (changed) { save(); schedulePush(); }
+  }
+
+  listEl.addEventListener('pointerdown', function (e) {
+    var grip = e.target.closest('.todo-grip'); if (!grip) return;
+    dragEl = grip.closest('.todo-item'); if (!dragEl) return;
+    e.preventDefault();
+    dragScroller = listEl.closest('.modal-body');
+    dragEl.classList.add('dragging');
+    grip.setPointerCapture(e.pointerId);
+  });
+
+  listEl.addEventListener('pointermove', function (e) {
+    if (!dragEl) return;
+    e.preventDefault();
+    var after = rowAfterPoint(e.clientY);
+    if (after) { if (after.nextSibling !== dragEl) after.after(dragEl); }
+    else if (listEl.firstChild !== dragEl) listEl.prepend(dragEl);
+    autoScroll(e.clientY);
+  });
+
+  function endDrag() {
+    if (!dragEl) return;
+    clearInterval(autoScrollTimer);
+    dragEl.classList.remove('dragging');
+    dragEl = null; dragScroller = null;
+    commitOrder();
+  }
+  listEl.addEventListener('pointerup', endDrag);
+  listEl.addEventListener('pointercancel', endDrag);
+
+  /* Same reordering without a pointer, for anyone on a keyboard. */
+  listEl.addEventListener('keydown', function (e) {
+    var grip = e.target.closest('.todo-grip'); if (!grip) return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    var i = +grip.closest('.todo-item').getAttribute('data-i');
+    var j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    if (j < 0 || j >= items.length) return;
+    e.preventDefault();
+    var moved = items.splice(i, 1)[0];
+    items.splice(j, 0, moved);
+    save(); render(); schedulePush();
+    var again = listEl.querySelector('.todo-item[data-i="' + j + '"] .todo-grip');
+    if (again) again.focus();
+  });
+
+  /* Edits commit on blur rather than per keystroke, so re-rendering can't
+     yank the caret mid-word. An emptied item is deleted. */
+  listEl.addEventListener('focusout', function (e) {
+    var cell = e.target.closest('.todo-text'); if (!cell) return;
+    var row = cell.closest('.todo-item'); if (!row) return;
+    var i = +row.getAttribute('data-i');
+    if (!items[i]) return;
+    var v = cell.textContent.trim();
+    if (v === items[i].text) return;
+    if (v) items[i].text = v; else items.splice(i, 1);
+    save(); render(); schedulePush();
+  });
+  listEl.addEventListener('keydown', function (e) {
+    if (!e.target.closest('.todo-text')) return;
+    if (e.key === 'Enter')  { e.preventDefault(); e.target.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); render(); }
+  });
+
+  function openTodo() {
+    load(); render();
+    openModalById('modal-todo');
+    setSync(syncOn() ? '' : 'this device only');
+    pull();
+    setTimeout(function () { input.focus(); }, 60);
+  }
+
+  /* The theme button's tap counter calls these — see the theme script above. */
+  window.todoUnlocked = unlocked;
+  window.openTodoList = openTodo;
+  window.unlockTodo   = function () {
+    try { localStorage.setItem(UNLOCK_KEY, '1'); } catch (e) {}
+    showButton(true);
+    openTodo();
+    toast('🔓 To-do list unlocked');
+  };
+
+  load();
+  showButton(unlocked());
 })();
 
 /* ── FONT ZOOM ── */
@@ -847,6 +1242,12 @@ function showNotYet(bodyId, what, heading) {
     if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
     lastFocus = null;
   }
+  /* The to-do list lives in its own module below and needs these, so that its
+     modal behaves like every other one (overflow lock, focus handling,
+     Escape and backdrop close all come from the handlers below). */
+  window.openModalById  = openModal;
+  window.closeModalById = closeModal;
+
   document.getElementById('open-schedule').addEventListener('click', function () {
     openModal('modal-schedule');
     loadSchedule();
