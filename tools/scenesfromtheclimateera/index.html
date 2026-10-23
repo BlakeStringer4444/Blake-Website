@@ -626,7 +626,16 @@
         <button class="modal-close" data-close="modal-script" aria-label="Close">×</button>
       </div>
       <div class="pdf-toolbar" id="pdf-nav" style="display:none;">
-        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="#" download="Scenes From the Climate Era — David Finnigan.pdf">Download</a>
+        <!-- href is filled from SCRIPT_PDF when the modal opens, so the path
+             lives in one place. The toolbar is hidden until the PDF loads, so
+             the placeholder is never clickable.
+
+             Keep the download name pure ASCII. Chrome discards the whole
+             attribute if it contains any non-ASCII character and saves the
+             file as "download", with no extension — measured, not assumed:
+             an em dash, an en dash and a curly apostrophe all do it. Hence
+             the plain hyphen. -->
+        <a class="pdf-nav-btn pdf-download-btn" id="pdf-download" href="#" download="Scenes From the Climate Era - David Finnigan.pdf">Download</a>
         <div class="pdf-zoom-divider"></div>
         <button class="pdf-nav-btn" id="pdf-prev" aria-label="Previous page" disabled>‹</button>
         <input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" aria-label="Page number" disabled>
@@ -813,7 +822,7 @@ var CSV_GLOSSARY   = SHEET + '1037864490' + TAB;
    headers instead of a clean "nothing here yet". */
 var CSV_SOUNDTRACK = '';
 
-var SCRIPT_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/script.pdf' */
+var SCRIPT_PDF = '/tools/scenesfromtheclimateera/script.pdf';
 var DESIGN_PDF = '';   /* e.g. '/tools/scenesfromtheclimateera/design.pdf' */
 
 /* Stands in for a section that has nothing behind it yet. Deliberately not
