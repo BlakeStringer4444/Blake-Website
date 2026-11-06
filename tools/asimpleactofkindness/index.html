@@ -184,7 +184,36 @@
     .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 7vw, 88px); color: var(--fg); line-height: 1; min-width: 2ch; text-align: center; }
     .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 72px); color: var(--lime); line-height: 1; padding-bottom: 18px; opacity: 0.4; }
     .cd-unit { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    .cd-live { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 72px); color: var(--lime); letter-spacing: 4px; }
+    /* What replaces the countdown once it runs out. A filled band rather than
+       lime text: lime on the light theme's cream background measures 1.06:1,
+       which is why this was so hard to read in daylight — black on a lime
+       fill is 17:1, and identical in both themes since --lime and --black are
+       never redefined per theme. */
+    .cd-live { display: flex; flex-direction: column; align-items: center; gap: 13px; }
+    .cd-live-band {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(38px, 6vw, 72px); letter-spacing: 6px; line-height: 1;
+      color: var(--black); background: var(--lime);
+      /* Right padding trimmed by the letter-spacing, which otherwise adds a
+         gap after the final letter and pushes the word off centre. */
+      padding: 16px 24px 12px 30px;
+      animation: cd-live-pulse 2.6s ease-in-out infinite;
+    }
+    @keyframes cd-live-pulse {
+      0%, 100% { box-shadow: 0 6px 22px rgba(212,255,26,0.20); }
+      50%      { box-shadow: 0 10px 42px rgba(212,255,26,0.46); }
+    }
+    .cd-live-sub {
+      font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); text-align: center;
+    }
+
+    /* Sits above the page but below the modal layer (100), like the scroll
+       cue. Never interactive. */
+    .confetti-canvas {
+      position: fixed; inset: 0; z-index: 95;
+      pointer-events: none;
+    }
 
     /* ── MUSIC PLAYER ── */
     /* Sole content of the Soundtrack modal body, which brings no padding of
@@ -1072,14 +1101,27 @@
   });
 })();
 
+/* The season, in Melbourne time (AEDT in November, so +11:00). The countdown
+   runs to the first and the confetti stops after the last. */
+var SHOW_OPENS  = new Date('2026-11-06T20:00:00+11:00');
+var SHOW_CLOSES = new Date('2026-11-21T23:59:00+11:00');
+
 /* ── COUNTDOWN ── */
 (function () {
-  var target = new Date('2026-11-06T20:00:00+11:00'); /* AEDT — Melbourne; November, so daylight saving is on */
+  var timer = null;
   function pad(n) { return String(n).padStart(2, '0'); }
   function tick() {
-    var diff = target - Date.now();
+    var diff = SHOW_OPENS - Date.now();
     if (diff <= 0) {
-      document.getElementById('cd-blocks').innerHTML = '<div class="cd-live">CURTAIN UP</div>';
+      /* Stop the clock. Left running, this rewrote the same markup once a
+         second forever, which also restarted the band's pulse every tick so
+         it never got past the first frame. */
+      clearInterval(timer);
+      document.getElementById('cd-blocks').innerHTML =
+        '<div class="cd-live">' +
+          '<div class="cd-live-band">Curtain Up</div>' +
+          '<div class="cd-live-sub">Now playing &middot; 6 &ndash; 21 Nov 2026</div>' +
+        '</div>';
       return;
     }
     document.getElementById('cd-days').textContent  = Math.floor(diff / 86400000);
@@ -1088,7 +1130,94 @@
     document.getElementById('cd-secs').textContent  = pad(Math.floor((diff % 60000) / 1000));
   }
   tick();
-  setInterval(tick, 1000);
+  timer = setInterval(tick, 1000);
+})();
+
+/* ── OPENING NIGHT CONFETTI ──
+   A short burst on arrival, for the run of the season only — it starts at
+   curtain up and stops itself the day after closing, so the page doesn't go
+   on celebrating into next year. Canvas rather than DOM nodes, and the whole
+   thing removes itself when the last piece falls off the bottom, so nothing
+   keeps animating behind the page afterwards.
+
+   Colours come from the stylesheet rather than being hard-coded: --fg flips
+   with the theme, so there is always something in the mix that shows against
+   the background. */
+(function () {
+  var now = Date.now();
+  if (now < SHOW_OPENS || now > SHOW_CLOSES) return;
+  /* Honour the same preference the stylesheet does — this one is JS-driven,
+     so the global reduced-motion rule can't reach it. */
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var css    = getComputedStyle(document.documentElement);
+  var COLOURS = ['--lime', '--purple', '--fg'].map(function (v) {
+    return css.getPropertyValue(v).trim() || '#D4FF1A';
+  }).concat('#FF4FA3');
+
+  var canvas = document.createElement('canvas');
+  canvas.className = 'confetti-canvas';
+  canvas.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(canvas);
+  var ctx = canvas.getContext('2d');
+
+  var W, H, dpr;
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  size();
+  window.addEventListener('resize', size);
+
+  var COUNT = W < 720 ? 70 : 120;
+  var bits = [];
+  for (var i = 0; i < COUNT; i++) {
+    bits.push({
+      x: Math.random() * W,
+      /* Staggered above the fold so they arrive as a shower, not a wall. */
+      y: -20 - Math.random() * H * 0.9,
+      w: 5 + Math.random() * 6,
+      h: 9 + Math.random() * 8,
+      vy: 1.6 + Math.random() * 2.4,
+      sway: 0.6 + Math.random() * 1.5,        /* horizontal drift, px */
+      phase: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.22,
+      rot: Math.random() * Math.PI,
+      colour: COLOURS[(Math.random() * COLOURS.length) | 0]
+    });
+  }
+
+  var t = 0, raf = null;
+  function frame() {
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+    var alive = 0;
+    for (var i = 0; i < bits.length; i++) {
+      var b = bits[i];
+      if (b.y > H + 40) continue;
+      alive++;
+      b.y += b.vy;
+      b.x += Math.sin(t * 1.7 + b.phase) * b.sway;
+      b.rot += b.spin;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.fillStyle = b.colour;
+      ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.restore();
+    }
+    if (!alive) { stop(); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    window.removeEventListener('resize', size);
+    canvas.remove();
+  }
+  raf = requestAnimationFrame(frame);
 })();
 
 /* ── MOBILE SCROLL CUE ──
