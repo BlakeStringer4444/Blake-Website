@@ -424,6 +424,9 @@ body {
 .td-search:focus { border-color: var(--purple); }
 .td-search::placeholder { color: var(--muted); }
 
+/* Exists only to give the phone layout one swipeable strip; everywhere else
+   it steps aside and the chips sit in the filter row as direct flex items. */
+.td-chip-scroll { display: contents; }
 .td-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -435,7 +438,7 @@ body {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
   padding: 0 12px;
-  height: 24px;
+  height: 27px;   /* matches the year pill */
   display: inline-flex; align-items: center; gap: 4px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
@@ -455,7 +458,8 @@ body {
 .td-select {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-  padding: 5px 10px;
+  height: 27px;   /* same as the chips and the year pill, so the row lines up */
+  padding: 0 10px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
   background: var(--input-bg);
@@ -833,9 +837,39 @@ button.td-link { background: none; cursor: pointer; }
   .td-main     { padding: 20px 20px 56px; }
   .td-grid     { grid-template-columns: 1fr; }
   .td-footer   { padding: 20px; }
-  .td-title    { font-size: clamp(48px, 14vw, 80px); }
   .td-jump-top { bottom: 16px; right: 16px; }
   .blakeai-modal { max-height: 94vh; max-height: 94dvh; }
+
+  /* ── Get a show onto the first screen ──
+     The header and controls used to fill an 844px phone screen, with the
+     first show starting at 764px. These three bring it up to ~610px, enough
+     to read its title, dates and company before scrolling. */
+
+  /* The title on one line. Bebas Neue at 3px spacing runs ~5.57px wide per
+     px of font size plus 45px of spacing, so 12vw fits inside the header's
+     20px gutters on every phone from 320px up, with room to spare. */
+  .td-title { font-size: clamp(30px, 12vw, 64px); letter-spacing: 3px; }
+
+  /* Feature buttons two-up rather than each long label taking a row;
+     Auditions, the odd one out, spans both columns. */
+  .td-header-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .td-header-btn  { padding: 11px 6px; letter-spacing: 1px; font-size: 9.5px; gap: 6px; min-width: 0; }
+  .td-header-btn:last-child { grid-column: 1 / -1; }
+
+  /* Filter chips in one swipeable strip under the dropdowns, instead of
+     wrapping onto two rows. The right edge fades while there's more to
+     reach, and the fade lifts at the end so the last chip doesn't look
+     disabled (.at-end, set by the script that watches the strip). */
+  .td-filter-row .td-select { flex: 1 1 0; min-width: 0; }
+  .td-chip-scroll {
+    display: flex; flex: 1 0 100%; gap: 8px;
+    overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent);
+            mask-image: linear-gradient(to right, #000 82%, transparent);
+  }
+  .td-chip-scroll::-webkit-scrollbar { display: none; }
+  .td-chip-scroll.at-end { -webkit-mask-image: none; mask-image: none; }
+  .td-chip-scroll > * { flex: 0 0 auto; }
 }
 
 /* ── BLAKE INVADERS ── */
@@ -8181,11 +8215,15 @@ button.td-link { background: none; cursor: pointer; }
     <select class="td-select" id="td-month">
       <option value="">All Months</option>
     </select>
-    <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
-    <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
-    <button class="td-upcoming-toggle" id="td-vdl"      aria-pressed="false" title="Show VDL Entrants only">VDL Entrant</button>
-    <button class="td-upcoming-toggle" id="td-lyrebird" aria-pressed="false" title="Show Lyrebird Eligible shows only">Lyrebird Eligible</button>
-    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
+    <!-- On a phone this becomes one swipeable row; on wider screens it's
+         display:contents, so the chips flow in the filter row exactly as before. -->
+    <div class="td-chip-scroll" id="td-chip-scroll">
+      <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
+      <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
+      <button class="td-upcoming-toggle" id="td-vdl"      aria-pressed="false" title="Show VDL Entrants only">VDL Entrant</button>
+      <button class="td-upcoming-toggle" id="td-lyrebird" aria-pressed="false" title="Show Lyrebird Eligible shows only">Lyrebird Eligible</button>
+      <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
+    </div>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
@@ -9110,34 +9148,84 @@ const iconIG  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" str
 const iconWeb = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
 const iconStar = `<svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg>`;
 
-/* ── CSV PARSER ── */
+/* ── CSV PARSER ──
+   Identical in spreadsheet.html and scripts/build-theatredex.mjs — change all
+   three together.
+
+   Google Sheets exports RFC 4180: a quoted field may hold commas, doubled
+   quotes ("") and line breaks. This used to split the text on newlines before
+   looking at quotes, so any row with a line break inside a cell (Alt+Enter in
+   Sheets — typically a list of writers or directors) was cut in two, the half
+   without dates fell out of every view, and the only trace was a console
+   warning. It also dropped the quote marks out of any title that had them. */
+function parseRows(text) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c !== '"') cur += c;
+      else if (text[i + 1] === '"') { cur += '"'; i++; }   /* "" is a literal quote */
+      else q = false;
+    }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur); rows.push(row); row = []; cur = '';
+    }
+    else cur += c;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+/* A line break inside a cell is a list more often than not, so it becomes a
+   comma — unless the line already ends in punctuation, where a comma would
+   double up ("Emergence:" + newline + "One Act Plays" stays one title). */
+function cleanCell(v) {
+  return v.trim().replace(/[ \t]*\n\s*/g, (m, at, s) =>
+    /[:;,.\-–—\/&(]$/.test(s.slice(0, at)) ? ' ' : ', ');
+}
+
+/* The sheet's dates are ISO. One typed in by hand the Australian way
+   (D/M/YYYY) is converted rather than lost; anything else is left as it is,
+   fails parseDate, and is named by reportStrayRows. Converted here, at the
+   source, because shows are sorted by comparing these strings. */
+function isoDate(v) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);
+  return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : v;
+}
+
+/* Rows with no company or no title can't be shown; they're kept aside so
+   reportStrayRows can name them instead of them vanishing silently. */
+let unnamedRows = [];
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, '').split('\n');
-  const headers = splitRow(lines[0]);
-  return lines.slice(1).reduce((acc, line) => {
-    if (!line.trim()) return acc;
-    const vals = splitRow(line);
-    const row  = {};
-    headers.forEach((h, i) => { row[h.trim()] = (vals[i] || '').trim(); });
-    if (row.company && row.title) acc.push(row);
+  const rows = parseRows(text);
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  unnamedRows = [];
+  return rows.slice(1).reduce((acc, vals) => {
+    if (vals.every(v => !v.trim())) return acc;
+    const row = {};
+    headers.forEach((h, i) => { row[h] = cleanCell(vals[i] || ''); });
+    row.date_start = isoDate(row.date_start || '');
+    row.date_end   = isoDate(row.date_end || '');
+    if (row.company && row.title) acc.push(row); else unnamedRows.push(row);
     return acc;
   }, []);
 }
 
-function splitRow(line) {
-  const out = []; let cur = '', q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { q = !q; }
-    else if (c === ',' && !q) { out.push(cur); cur = ''; }
-    else { cur += c; }
-  }
-  out.push(cur);
-  return out;
-}
-
 /* ── DATE HELPERS ── */
-function parseDate(iso) { return iso ? new Date(iso + 'T00:00:00') : null; }
+/* Strict, and null for anything that isn't a real ISO date. An Invalid Date
+   object is truthy, so the old one-liner let a cell like "TBC" through every
+   `if (d)` below and onto a card as "NaN undefined". Also rejects dates that
+   roll over (2027-02-31 isn't quietly 3 March). */
+function parseDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return null;
+  const d = new Date(+m[1], m[2] - 1, +m[3]);
+  return d.getMonth() === m[2] - 1 && d.getDate() === +m[3] ? d : null;
+}
 
 function fmtDate(iso) {
   const d = parseDate(iso);
@@ -9147,7 +9235,9 @@ function fmtDate(iso) {
 function fmtRange(row) {
   if (row.date_approximate === 'Yes') {
     const d = parseDate(row.date_start);
-    return d ? MONTHS[d.getMonth()] + ' 2026' : '';
+    /* The show's own year — this was a literal ' 2026', so every approximate
+       date on the 2027 tab claimed to be a year early. */
+    return d ? MONTHS[d.getMonth()] + ' ' + d.getFullYear() : '';
   }
   const s = fmtDate(row.date_start), e = fmtDate(row.date_end);
   if (s && e && s !== e) return s + ' – ' + e;
@@ -9183,7 +9273,16 @@ let allData = [], allShows = [], mode = 'play', activeCompany = '', activeMonth 
 /* The whole sheet as fetched, every season in it; `allData` is the one-year
    view of it. Kept so switching year needs no second network round trip. */
 let rawRows = [];
-let year = YEARS[0];                 /* the slider always starts on 2026 */
+/* Opens on the season we're in: this calendar year if it's one of YEARS,
+   otherwise the nearest end. It used to be pinned to 2026, which from
+   1 January would have opened every visitor on a finished season with
+   Upcoming switched on — an empty grid saying nothing matches. */
+function defaultYear() {
+  const y = new Date().getFullYear();
+  if (YEARS.indexOf(y) !== -1) return y;
+  return y < YEARS[0] ? YEARS[0] : YEARS[YEARS.length - 1];
+}
+let year = defaultYear();
 
 
 /* Strictly the selected year, both ways. A row whose date_start is blank or
@@ -9206,6 +9305,10 @@ function reportStrayRows() {
     console.warn('Theatredex: ' + stray.length + ' row(s) have a date outside ' +
       YEARS.join('/') + ' and appear under no year:',
       stray.map(s => s.company + ' — ' + s.title + ' (' + (s.date_start || 'no date') + ')'));
+  }
+  if (unnamedRows.length) {
+    console.warn('Theatredex: ' + unnamedRows.length + ' row(s) have no company or no title and ' +
+      'are not shown:', unnamedRows.map(s => (s.company || '(no company)') + ' — ' + (s.title || '(no title)')));
   }
 }
 
@@ -9263,10 +9366,25 @@ function onDataReady(cb) { dataReady ? cb() : dataReadyCallbacks.push(cb); }
 function markDataReady() { dataReady = true; dataReadyCallbacks.splice(0).forEach(cb => cb()); }
 
 /* ── WATCHLIST ── */
+/* The storage name still says 2026 because renaming it would empty everyone's
+   saved list; it holds both seasons. */
 const WL_KEY  = 'theatredex-watchlist-2026';
-let watchlist = new Set(JSON.parse(localStorage.getItem(WL_KEY) || '[]'));
-function showKey(show) { return show.title + '|||' + show.company; }
-function saveWatchlist() { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); }
+/* Guarded: this runs at the top level, so a corrupt saved value (or storage
+   that throws, as in some private-browsing modes) used to stop the whole page
+   loading, not just the watchlist. */
+let watchlist = new Set((() => {
+  try { const v = JSON.parse(localStorage.getItem(WL_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch (e) { return []; }
+})());
+/* Keyed by title, company AND season, so a festival that recurs every year
+   can be saved for one season without the other — before, starring the 2027
+   run starred the 2026 one too. Keys saved before the season was added have
+   two parts; they still match their show in any season, so nobody's existing
+   list changes underneath them. */
+function showKey(show)   { return show.title + '|||' + show.company + '|||' + (show.date_start || '').slice(0, 4); }
+function legacyKey(key)  { return key.split('|||').slice(0, 2).join('|||'); }
+function isSaved(key)    { return watchlist.has(key) || watchlist.has(legacyKey(key)); }
+function saveWatchlist() { try { localStorage.setItem(WL_KEY, JSON.stringify([...watchlist])); } catch (e) {} }
 
 /* ── URL STATE ── */
 /* Theatredex always stays on its bare URL (/tools/theatredex/). No mode, search,
@@ -9301,7 +9419,7 @@ function card(show) {
   const type      = show.type || 'Play';
   const badgeCls  = 'td-badge td-badge-' + type.toLowerCase();
   const key       = showKey(show);
-  const starred   = watchlist.has(key);
+  const starred   = isSaved(key);
   const nowShowing = isNowShowing(show);
 
   const links = [];
@@ -9362,7 +9480,7 @@ function render() {
       const hay = [s.title, s.company, s.playwright, s.director, s.suburb].join(' ').toLowerCase();
       return hay.includes(q);
     }
-    if (activeFilter === 'watchlist'  && !watchlist.has(showKey(s))) return false;
+    if (activeFilter === 'watchlist'  && !isSaved(showKey(s))) return false;
     if (activeFilter === 'nowshowing' && !isNowShowing(s))           return false;
     if (activeFilter === 'upcoming'   && !isUpcoming(s))             return false;
     if (activeFilter === 'vdl'        && s.VDL !== '1')              return false;
@@ -9395,9 +9513,11 @@ function render() {
   grid.querySelectorAll('.td-star-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key   = btn.dataset.key;
-      const isNow = watchlist.has(key);
+      const isNow = isSaved(key);
       if (isNow) {
+        /* Both forms: an old two-part key is what's keeping it starred. */
         watchlist.delete(key);
+        watchlist.delete(legacyKey(key));
         btn.classList.remove('active');
         btn.title = 'Save to watchlist';
         btn.setAttribute('aria-label', 'Save to watchlist');
@@ -9505,6 +9625,20 @@ document.getElementById('td-upcoming').addEventListener('click',   () => setActi
 document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
+
+/* The phone chip strip fades at its right edge to say there's more to swipe
+   to; this lifts the fade once you're at the end (or when nothing overflows),
+   so the last chip doesn't sit there looking disabled. On wider screens the
+   strip is display:contents and measures zero, so it's simply marked at-end. */
+(function () {
+  const strip = document.getElementById('td-chip-scroll');
+  if (!strip) return;
+  const update = () => strip.classList.toggle('at-end',
+    strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 2);
+  strip.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
 
 /* ── PLAYS / MUSICALS / ALL MODE ──
    The show's own `type` column decides, and nothing else:
@@ -11883,14 +12017,14 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
     _yearlyMode = false;
     calBack.classList.remove('visible');
     calNav.style.display = '';
-    calModalTitle.textContent = 'Calendar View · 2026';
+    calModalTitle.textContent = 'Calendar View · ' + year;   /* was a literal 2026 on both tabs */
     calInfo.classList.remove('visible');
   }
   function setYearlyMode() {
     _yearlyMode = true;
     calBack.classList.add('visible');
     calNav.style.display = 'none';
-    calModalTitle.textContent = 'Yearly Clash View · 2026';
+    calModalTitle.textContent = 'Yearly Clash View · ' + year;
   }
 
   /* ── MONTHLY CALENDAR ── */
@@ -12081,7 +12215,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
       return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
     }
     function partialBar(isReh, slot, startDate, endDate, tip) {
-      /* Clamp both dates to 2026 */
+      /* Clamp both dates to the selected season */
       var y0 = new Date(YEAR, 0, 1), y1 = new Date(YEAR, 11, 31);
       var sC = new Date(Math.max(startDate.getTime(), y0.getTime()));
       var eC = new Date(Math.min(endDate.getTime(),   y1.getTime()));
