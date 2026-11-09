@@ -424,6 +424,9 @@ body {
 .td-search:focus { border-color: var(--purple); }
 .td-search::placeholder { color: var(--muted); }
 
+/* Exists only to give the phone layout one swipeable strip; everywhere else
+   it steps aside and the chips sit in the filter row as direct flex items. */
+.td-chip-scroll { display: contents; }
 .td-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -455,7 +458,8 @@ body {
 .td-select {
   font-family: 'DM Mono', monospace;
   font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-  padding: 5px 10px;
+  height: 27px;   /* same as the chips and the year pill, so the row lines up */
+  padding: 0 10px;
   border: 1px solid var(--input-border);
   border-radius: 2px;
   background: var(--input-bg);
@@ -833,9 +837,39 @@ button.td-link { background: none; cursor: pointer; }
   .td-main     { padding: 20px 20px 56px; }
   .td-grid     { grid-template-columns: 1fr; }
   .td-footer   { padding: 20px; }
-  .td-title    { font-size: clamp(48px, 14vw, 80px); }
   .td-jump-top { bottom: 16px; right: 16px; }
   .blakeai-modal { max-height: 94vh; max-height: 94dvh; }
+
+  /* ── Get a show onto the first screen ──
+     The header and controls used to fill an 844px phone screen, with the
+     first show starting at 764px. These three bring it up to ~610px, enough
+     to read its title, dates and company before scrolling. */
+
+  /* The title on one line. Bebas Neue at 3px spacing runs ~5.57px wide per
+     px of font size plus 45px of spacing, so 12vw fits inside the header's
+     20px gutters on every phone from 320px up, with room to spare. */
+  .td-title { font-size: clamp(30px, 12vw, 64px); letter-spacing: 3px; }
+
+  /* Feature buttons two-up rather than each long label taking a row;
+     Auditions, the odd one out, spans both columns. */
+  .td-header-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .td-header-btn  { padding: 11px 6px; letter-spacing: 1px; font-size: 9.5px; gap: 6px; min-width: 0; }
+  .td-header-btn:last-child { grid-column: 1 / -1; }
+
+  /* Filter chips in one swipeable strip under the dropdowns, instead of
+     wrapping onto two rows. The right edge fades while there's more to
+     reach, and the fade lifts at the end so the last chip doesn't look
+     disabled (.at-end, set by the script that watches the strip). */
+  .td-filter-row .td-select { flex: 1 1 0; min-width: 0; }
+  .td-chip-scroll {
+    display: flex; flex: 1 0 100%; gap: 8px;
+    overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent);
+            mask-image: linear-gradient(to right, #000 82%, transparent);
+  }
+  .td-chip-scroll::-webkit-scrollbar { display: none; }
+  .td-chip-scroll.at-end { -webkit-mask-image: none; mask-image: none; }
+  .td-chip-scroll > * { flex: 0 0 auto; }
 }
 
 /* ── BLAKE INVADERS ── */
@@ -8181,11 +8215,15 @@ button.td-link { background: none; cursor: pointer; }
     <select class="td-select" id="td-month">
       <option value="">All Months</option>
     </select>
-    <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
-    <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
-    <button class="td-upcoming-toggle" id="td-vdl"      aria-pressed="false" title="Show VDL Entrants only">VDL Entrant</button>
-    <button class="td-upcoming-toggle" id="td-lyrebird" aria-pressed="false" title="Show Lyrebird Eligible shows only">Lyrebird Eligible</button>
-    <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
+    <!-- On a phone this becomes one swipeable row; on wider screens it's
+         display:contents, so the chips flow in the filter row exactly as before. -->
+    <div class="td-chip-scroll" id="td-chip-scroll">
+      <button class="td-upcoming-toggle active" id="td-upcoming" aria-pressed="true" title="Show only current &amp; future productions">Upcoming</button>
+      <button class="td-upcoming-toggle" id="td-nowshowing" aria-pressed="false" title="Show only currently running productions">Now Showing</button>
+      <button class="td-upcoming-toggle" id="td-vdl"      aria-pressed="false" title="Show VDL Entrants only">VDL Entrant</button>
+      <button class="td-upcoming-toggle" id="td-lyrebird" aria-pressed="false" title="Show Lyrebird Eligible shows only">Lyrebird Eligible</button>
+      <button class="td-upcoming-toggle" id="td-watchlist" aria-pressed="false" title="Show saved shows only">Watchlist <svg class="td-star-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.007z"/></svg></button>
+    </div>
   </div>
   <div class="td-controls-bottom">
     <div class="td-count" id="td-count" aria-live="polite" aria-atomic="true"></div>
@@ -9587,6 +9625,20 @@ document.getElementById('td-upcoming').addEventListener('click',   () => setActi
 document.getElementById('td-nowshowing').addEventListener('click', () => setActiveFilter('nowshowing'));
 document.getElementById('td-watchlist').addEventListener('click',  () => setActiveFilter('watchlist'));
 document.getElementById('td-lyrebird').addEventListener('click',   () => setActiveFilter('lyrebird'));
+
+/* The phone chip strip fades at its right edge to say there's more to swipe
+   to; this lifts the fade once you're at the end (or when nothing overflows),
+   so the last chip doesn't sit there looking disabled. On wider screens the
+   strip is display:contents and measures zero, so it's simply marked at-end. */
+(function () {
+  const strip = document.getElementById('td-chip-scroll');
+  if (!strip) return;
+  const update = () => strip.classList.toggle('at-end',
+    strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 2);
+  strip.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
 
 /* ── PLAYS / MUSICALS / ALL MODE ──
    The show's own `type` column decides, and nothing else:
