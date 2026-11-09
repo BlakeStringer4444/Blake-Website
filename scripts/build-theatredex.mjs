@@ -54,31 +54,57 @@ const DEFAULT_CSV_URL =
 const MONTHS = ['January','February','March','April','May','June','July',
                 'August','September','October','November','December'];
 
-/* ── CSV parsing (mirrors the parser in index.html) ── */
-function splitRow(line) {
-  const out = []; let cur = '', q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') q = !q;
-    else if (c === ',' && !q) { out.push(cur); cur = ''; }
+/* ── CSV parsing ──
+   Identical to the parser in tools/theatredex/index.html and spreadsheet.html
+   — change all three together. RFC 4180, which is what Google Sheets exports:
+   a quoted field may hold commas, doubled quotes ("") and line breaks. The
+   old version split on newlines first, so a row with a line break inside a
+   cell was cut in two and the dated half dropped out of the bake. */
+function parseRows(text) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c !== '"') cur += c;
+      else if (text[i + 1] === '"') { cur += '"'; i++; }
+      else q = false;
+    }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur); rows.push(row); row = []; cur = '';
+    }
     else cur += c;
   }
-  out.push(cur);
-  return out;
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function cleanCell(v) {
+  return v.trim().replace(/[ \t]*\n\s*/g, (m, at, s) =>
+    /[:;,.\-–—\/&(]$/.test(s.slice(0, at)) ? ' ' : ', ');
+}
+
+function isoDate(v) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);
+  return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : v;
 }
 
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, '').split('\n');
-  const headers = splitRow(lines[0]).map(h => h.trim());
-  const rows = [];
-  for (const line of lines.slice(1)) {
-    if (!line.trim()) continue;
-    const vals = splitRow(line);
+  const rows = parseRows(text);
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  const out = [];
+  for (const vals of rows.slice(1)) {
+    if (vals.every(v => !v.trim())) continue;
     const row = {};
-    headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
-    if (row.company && row.title) rows.push(row);
+    headers.forEach((h, i) => { row[h] = cleanCell(vals[i] || ''); });
+    row.date_start = isoDate(row.date_start || '');
+    row.date_end   = isoDate(row.date_end || '');
+    if (row.company && row.title) out.push(row);
   }
-  return rows;
+  return out;
 }
 
 /* ── helpers ── */
