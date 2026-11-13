@@ -643,7 +643,7 @@
         <button class="pdf-nav-btn" id="pdf-next" aria-label="Next page" disabled>›</button>
         <div class="pdf-zoom-divider"></div>
         <button class="pdf-nav-btn" id="pdf-zoom-out" aria-label="Zoom out" disabled>−</button>
-        <span class="pdf-zoom-label" id="pdf-zoom-label">200%</span>
+        <span class="pdf-zoom-label" id="pdf-zoom-label">100%</span>
         <button class="pdf-nav-btn" id="pdf-zoom-in" aria-label="Zoom in" disabled>+</button>
         <div class="pdf-zoom-divider"></div>
         <input class="pdf-find-input" id="pdf-find-input" type="text" placeholder="Find in script…" aria-label="Find in script" disabled>
@@ -1730,7 +1730,11 @@ function loadPDF(prefix, path, opts) {
   var findNext  = elById('-find-next');
 
   var pdfDoc = null, numPages = 0, curPage = 1;
-  var zoomMult = (window.innerWidth >= 720) ? 2.0 : 0.75;
+  /* 100% on desktop. The 200% this page inherited suited ASAK's script, whose
+     pages are 430pt wide (860px at 200%); Finnigan's are A4, 595pt, so 200%
+     made each page 1190px — wider than the viewer, and far too close.
+     Phones fit to width below and never use this figure. */
+  var zoomMult = (window.innerWidth >= 720) ? 1.0 : 0.75;
   var ZOOM_MIN = 0.25, ZOOM_MAX = 4.0;
 
   var renderToken = 0; /* invalidates an in-flight render pass when zoom changes */
@@ -1776,6 +1780,11 @@ function loadPDF(prefix, path, opts) {
       zoomMult  = Math.round((avail / vp1.width) * 4) / 4; /* round to nearest 25% */
       zoomMult  = Math.min(1.0, Math.max(ZOOM_MIN, zoomMult));
     }
+    /* Label the zoom now it's settled, not after rendering every page: until
+       then the toolbar showed the placeholder in the markup, which for a
+       75-page script was wrong for several seconds (and on phones, which fit
+       to width, it was never the real figure until the render finished). */
+    updateZoomLabel();
     buildSkeleton();
     return renderAll();
   }).then(function () {
