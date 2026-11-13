@@ -307,6 +307,10 @@ body {
    soft same-colour glow, so the lit side always matches — and pops. */
 /* Keeps the year pill on its own line, above the mode slider. */
 .td-year-row { display: flex; flex-direction: column; align-items: flex-start; }
+/* Both set display themselves, which outranks the browser's [hidden] rule, so
+   a retired season's tab (and the switch, once one season is left) would
+   still show without these. */
+.td-year-row[hidden], .td-year-btn[hidden] { display: none; }
 
 /* Same pill as the mode slider but smaller and quieter — the year is the
    outer scope, chosen once, where the mode is flicked between constantly. */
@@ -9129,10 +9133,17 @@ const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','No
    seasons are public — 2027 used to sit behind a password and no longer does.
 
    scripts/build-theatredex.mjs (the baked SEO/JSON-LD) and spreadsheet.html
-   (the public spreadsheet view) carry their own copies of the year rule —
-   update all three together. The build script still bakes 2026 only, so 2027
-   is browsable but not in the crawlable fallback text. */
-const YEARS        = [2026, 2027];
+   (the public spreadsheet view) carry their own copies of the season rule
+   below — update all three together.
+
+   A season's tab retires the morning after its last show (Melbourne time),
+   and the site moves on: its rows stop showing, the tab disappears, and the
+   next season becomes the default everywhere, the nightly bake included. With
+   a single season left the year switch hides altogether. To add a season,
+   add it to ALL_YEARS; to retire one, give it a RETIRES date. */
+const ALL_YEARS = [2026, 2027];
+const RETIRES   = { 2026: '2026-12-21T00:00:00+11:00' };   /* last 2026 show: 20 Dec */
+const YEARS     = ALL_YEARS.filter(y => !(RETIRES[y] && Date.now() >= Date.parse(RETIRES[y])));
 
 /* ── URL NORMALISER ── */
 function safeUrl(url) {
@@ -9298,11 +9309,11 @@ function applyYearFilter() {
 function reportStrayRows() {
   const stray = rawRows.filter(s => {
     const d = parseDate(s.date_start);
-    return !d || YEARS.indexOf(d.getFullYear()) === -1;
+    return !d || ALL_YEARS.indexOf(d.getFullYear()) === -1;   /* a retired season's rows aren't strays */
   });
   if (stray.length) {
     console.warn('Theatredex: ' + stray.length + ' row(s) have a date outside ' +
-      YEARS.join('/') + ' and appear under no year:',
+      ALL_YEARS.join('/') + ' and appear under no year:',
       stray.map(s => s.company + ' — ' + s.title + ' (' + (s.date_start || 'no date') + ')'));
   }
   if (unnamedRows.length) {
@@ -9312,11 +9323,9 @@ function reportStrayRows() {
 }
 
 /* ── YEAR ──
-   The slider's two sides are whole seasons, not a filter laid over one. Both
-   are open to everyone; 2026 is simply the one the page opens on.
-
-   scripts/build-theatredex.mjs still bakes 2026 only, so the crawlable
-   fallback text and JSON-LD cover this season alone. */
+   The slider's sides are whole seasons, not a filter laid over one — only the
+   seasons still running (YEARS), so a retired one has no tab. The nightly bake
+   covers the season the page opens on. */
 function updateYearUI() {
   YEARS.forEach(y => {
     const b = document.getElementById('td-year-' + y);
@@ -9588,7 +9597,7 @@ async function init() {
        the full directory as plain text instead of just an error. */
     revealStaticFallback();
     document.getElementById('td-grid').innerHTML =
-      '<div class="td-empty">Live search is unavailable right now — the full 2026 directory is shown below.</div>';
+      '<div class="td-empty">Live search is unavailable right now — the full directory is shown below.</div>';
     countEl.textContent = '';
     markDataReady();   /* unblock anything waiting (e.g. Map View) rather than leave it loading forever */
   }
@@ -9724,6 +9733,10 @@ document.getElementById('td-mode-all').addEventListener('click',      () => swit
 YEARS.forEach(y => {
   document.getElementById('td-year-' + y).addEventListener('click', () => setYear(y));
 });
+/* Done at start-up rather than with the data, so a retired tab never flashes
+   up while the sheet loads. */
+ALL_YEARS.forEach(y => { document.getElementById('td-year-' + y).hidden = YEARS.indexOf(y) === -1; });
+document.querySelector('.td-year-row').hidden = YEARS.length < 2;
 
 /* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
    plays mode and opens this Facebook-groups modal in musical mode. */

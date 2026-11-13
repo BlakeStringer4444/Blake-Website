@@ -34,19 +34,25 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..');
 const PAGE_PATH = join(REPO_ROOT, 'tools', 'theatredex', 'index.html');
 const CANONICAL = 'https://www.blakestringer.com/tools/theatredex';
-const YEAR      = 2026;
+/* The season rule, identical to tools/theatredex/index.html and
+   spreadsheet.html — update all three together. A season retires the morning
+   after its last show (Melbourne time). Retirement is an absolute instant, so
+   it lands the same whatever timezone CI runs in.
 
-/* HIDDEN_YEAR is left out of the baked SEO/JSON-LD content search engines
-   see, so what gets indexed is the current season only.
-
-   The year rule also lives in tools/theatredex/index.html and
-   spreadsheet.html (the live client-side app and its public spreadsheet
-   view) — update all three together. Those two let anyone switch to 2027
-   now; the password that used to guard it is gone. This script stays
-   2026-only on purpose: it covers the crawlable fallback text, where a
-   second season would compete with the current one in search results.
-   Change YEAR/HIDDEN_YEAR here when 2027 becomes the season to surface. */
-const HIDDEN_YEAR = 2027;
+   The bake covers one season — the one the page opens on — so what search
+   engines index (and what the page falls back to if the live data can't
+   load) is the current season, never two competing ones. CI bakes every six
+   hours, so it moves on by itself within six hours of a retirement. */
+const ALL_YEARS = [2026, 2027];
+const RETIRES   = { 2026: '2026-12-21T00:00:00+11:00' };   /* last 2026 show: 20 Dec */
+const YEARS     = ALL_YEARS.filter(y => !(RETIRES[y] && Date.now() >= Date.parse(RETIRES[y])));
+/* Same choice as defaultYear() in the page: this year if it's still running,
+   otherwise the nearest running season. */
+const YEAR = (() => {
+  const y = new Date().getFullYear();
+  if (YEARS.indexOf(y) !== -1) return y;
+  return y < YEARS[0] ? YEARS[0] : YEARS[YEARS.length - 1];
+})();
 
 const DEFAULT_CSV_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vShrAdd1Wbvx9DPxhtZpcXmsT7k8yDUPUqX-oNBCMjQn6jsDaTKfDWiGPe-v08g_AEEc5VRG_GrLr-z/pub?output=csv';
@@ -267,25 +273,47 @@ async function loadCsv() {
   return res.text();
 }
 
+/* The page's own season wording, outside the generated regions: the meta
+   descriptions, the heading and intro, and the loading line. Kept in step so
+   the source never names one season while baking another. Matched by their
+   wording, so an edit to one of these sentences is reported in the CI log
+   rather than failing the bake. */
+const SEASON_TEXT = [
+  [/(productions for )\d{4}(\. Search by location)/g, 3, 'meta descriptions'],
+  [/(<h1 class="td-title" id="td-title">Theatredex )\d{4}(<\/h1>)/g, 1, 'heading'],
+  [/(theatre productions for )\d{4}(, covering dozens)/g, 1, 'intro'],
+  [/(Loading )\d{4}( Victorian community theatre productions)/g, 1, 'loading line'],
+];
+function stampSeason(html) {
+  for (const [re, want, what] of SEASON_TEXT) {
+    const n = (html.match(re) || []).length;
+    if (n !== want) console.warn(`stampSeason: expected ${want} ${what}, found ${n} — check the wording in index.html.`);
+    html = html.replace(re, `$1${YEAR}$2`);
+  }
+  return html;
+}
+
 /* ── main ── */
 async function main() {
   const csv     = await loadCsv();
   const allRows = parseCSV(csv);
   if (!allRows.length) throw new Error('No rows parsed from CSV — refusing to overwrite with empty content.');
 
+  /* Exactly this season's rows — the same rows the live page shows for it. */
   const rows = allRows.filter(r => {
     const d = parseDate(r.date_start);
-    return !d || d.getFullYear() !== HIDDEN_YEAR;
+    return d && d.getFullYear() === YEAR;
   });
   if (!rows.length) {
-    throw new Error(`All ${allRows.length} rows were for ${HIDDEN_YEAR} (hidden) — refusing to overwrite with empty content.`);
+    throw new Error(`None of the ${allRows.length} rows are in ${YEAR} — refusing to overwrite with empty content.`);
   }
   rows.sort((a, b) => (a.date_start || '').localeCompare(b.date_start || ''));
-  console.log(`Parsed ${allRows.length} productions (${rows.length} after hiding ${HIDDEN_YEAR}).`);
+  console.log(`Parsed ${allRows.length} productions; baking the ${rows.length} in ${YEAR}.`);
 
   let html = await readFile(PAGE_PATH, 'utf8');
   html = replaceRegion(html, 'TDX:SEO',    buildSeoSection(rows));
   html = replaceRegion(html, 'TDX:JSONLD', buildJsonLd(rows));
+  html = stampSeason(html);
   await writeFile(PAGE_PATH, html);
   console.log(`Baked ${rows.length} productions into ${PAGE_PATH.replace(REPO_ROOT + '/', '')}.`);
 }
