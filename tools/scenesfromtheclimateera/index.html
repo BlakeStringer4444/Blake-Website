@@ -1850,7 +1850,12 @@ function loadPDF(prefix, path, opts) {
 
   function renderOne(n, scale) {
     var page  = pageObjs[n];
-    var dpr   = Math.min(window.devicePixelRatio || 1, 3); /* cap at 3× for perf */
+    /* Pixels per CSS px, including the page's own Aa zoom (125% by default on
+       desktop, set on <html>), which scales this viewer too. Without it every
+       page was drawn with 1/1.25 of the pixels it was shown at and stretched
+       to fit — soft text, most noticeable at 100% where the type is smallest.
+       currentZoom() is the same figure the scroll maths below corrects for. */
+    var dpr   = Math.min((window.devicePixelRatio || 1) * currentZoom(), 3); /* cap at 3× for perf */
     var vpCss = page.getViewport({ scale: scale });         /* CSS dimensions */
     var vpHi  = page.getViewport({ scale: scale * dpr });  /* physical pixel dimensions */
     var el    = pageEls[n - 1];
