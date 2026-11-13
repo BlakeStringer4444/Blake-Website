@@ -112,7 +112,12 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
    lives in index.html (the live app) and scripts/build-theatredex.mjs (the
    baked SEO/JSON-LD, which stays 2026-only on purpose) — update all three
    together. */
-const YEARS       = [2026, 2027];
+/* The season rule, identical to index.html's: a season retires the morning
+   after its last show (Melbourne time) and is no longer offered, so an old
+   ?year=2026 link lands on the current season instead. */
+const ALL_YEARS = [2026, 2027];
+const RETIRES   = { 2026: '2026-12-21T00:00:00+11:00' };   /* last 2026 show: 20 Dec */
+const YEARS     = ALL_YEARS.filter(y => !(RETIRES[y] && Date.now() >= Date.parse(RETIRES[y])));
 
 const params = new URLSearchParams(location.search);
 const modeParam = params.get('mode');
