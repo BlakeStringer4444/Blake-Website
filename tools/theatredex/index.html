@@ -9128,6 +9128,7 @@ const WORKER_URL = 'https://blakeai.blakestringer.workers.dev'; /* ← paste you
    THEATREDEX_CSV_URL secret. */
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 /* The year slider picks a whole season; applyYearFilter() sits between the
    fetched rows and `allData`, so everything downstream inherits it. Both
    seasons are public — 2027 used to sit behind a password and no longer does.
@@ -9206,6 +9207,32 @@ function isoDate(v) {
   return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : v;
 }
 
+/* Dates not known yet. A show whose month is known but not its dates is
+   entered with the same start and end date on the 1st (1/3/2027–1/3/2027)
+   and reads "March (dates TBC)". Decided here, once: the row's range is
+   widened to the whole month, so everything that works with ranges —
+   Upcoming, the calendar, Will It Clash — treats it as "some time in March",
+   not as a one-night show on the 1st that drops out of Upcoming on the 2nd.
+
+   Only the 1st counts, because a genuine one-night show also has matching
+   dates (2026 had two, neither on the 1st). date_approximate overrides the
+   guess either way: Yes for month-only from any date, No for a real
+   one-night show that happens to fall on the 1st. That column used to be
+   read as "Yes" in some places and "1" in others; it's read once, here. */
+function markMonthOnly(row) {
+  const flag  = (row.date_approximate || '').trim().toLowerCase();
+  const guess = !!row.date_start && row.date_start === row.date_end && row.date_start.slice(8) === '01';
+  const want  = ['yes', '1', 'true'].includes(flag) ? true
+              : ['no', '0', 'false'].includes(flag) ? false : guess;
+  const m = want && /^(\d{4})-(\d{2})-\d{2}$/.exec(row.date_start);
+  row.monthOnly = !!m;
+  if (m) {
+    row.date_start = m[1] + '-' + m[2] + '-01';
+    row.date_end   = m[1] + '-' + m[2] + '-' + String(new Date(+m[1], +m[2], 0).getDate()).padStart(2, '0');
+  }
+  return row;
+}
+
 /* Rows with no company or no title can't be shown; they're kept aside so
    reportStrayRows can name them instead of them vanishing silently. */
 let unnamedRows = [];
@@ -9220,6 +9247,7 @@ function parseCSV(text) {
     headers.forEach((h, i) => { row[h] = cleanCell(vals[i] || ''); });
     row.date_start = isoDate(row.date_start || '');
     row.date_end   = isoDate(row.date_end || '');
+    markMonthOnly(row);
     if (row.company && row.title) acc.push(row); else unnamedRows.push(row);
     return acc;
   }, []);
@@ -9243,12 +9271,8 @@ function fmtDate(iso) {
 }
 
 function fmtRange(row) {
-  if (row.date_approximate === 'Yes') {
-    const d = parseDate(row.date_start);
-    /* The show's own year — this was a literal ' 2026', so every approximate
-       date on the 2027 tab claimed to be a year early. */
-    return d ? MONTHS[d.getMonth()] + ' ' + d.getFullYear() : '';
-  }
+  /* No year: the season tab already says which. */
+  if (row.monthOnly) return MONTHS_LONG[parseDate(row.date_start).getMonth()] + ' (dates TBC)';
   const s = fmtDate(row.date_start), e = fmtDate(row.date_end);
   if (s && e && s !== e) return s + ' – ' + e;
   return s || e || '';
@@ -9272,6 +9296,7 @@ function isUpcoming(row) {
 }
 
 function isNowShowing(row) {
+  if (row.monthOnly) return false;   /* "some time in March" can't claim tonight */
   const start = parseDate(row.date_start);
   const end   = parseDate(row.date_end) || start;
   if (!start) return false;
@@ -12070,7 +12095,7 @@ jumpTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smo
           var start = parseDate(s.date_start), end = parseDate(s.date_end) || start;
           var pS = clampS(start, y, m), pE = clampE(end, y, m, numDays);
           var perf = (pS && pE && pS <= pE)
-            ? barHTML('td-cal-bar' + (s.date_approximate === '1' ? ' td-cal-bar--approx' : ''), pS, pE,
+            ? barHTML('td-cal-bar' + (s.monthOnly ? ' td-cal-bar--approx' : ''), pS, pE,
                       esc(s.title) + ' · ' + esc(fmtRange(s)))
             : '';
           return '<div class="td-cal-row' + (isMusicalShow(s) ? ' is-musical' : '') +

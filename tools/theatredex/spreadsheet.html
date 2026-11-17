@@ -40,8 +40,17 @@
     font-weight: 400;
   }
 
+  /* ── FROZEN BANNER AND HEADER ROW ──
+     The page itself doesn't scroll. The banner sits above, and the table
+     scrolls inside .ss-scroll in both directions, which gives the header
+     row (sticky at top: 0, below) a vertical scroller to stick to. Before,
+     .ss-scroll only scrolled sideways, so the sticky header had nothing to
+     stick to and simply rode up with the page. */
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .ss-banner { flex: 0 0 auto; }
+
   /* ── TABLE ── */
-  .ss-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ss-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
   table.ss { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 15px; }
 
   .ss thead th {
@@ -51,7 +60,7 @@
     position: sticky; top: 0; z-index: 2;
   }
   .ss thead th.co-h    { text-align: center; }
-  .ss thead th.num-h   { width: 34px; padding: 12px 4px; }
+  .ss thead th.num-h   { width: 34px; padding: 12px 4px; text-align: center; }   /* over its centred numbers */
   .ss thead th.dates-h { text-align: center; }
   .ss thead th.link-h  { background: #4a4a4a; text-align: center; width: 58px; font-size: 13px; }
 
@@ -89,6 +98,12 @@
     padding: 60px 24px; text-align: center; color: #555; font-size: 15px;
   }
 
+  /* Printing gets the whole table, not one screen's worth of the scroller. */
+  @media print {
+    body { display: block; height: auto; }
+    .ss-scroll { overflow: visible; }
+  }
+
   @media (max-width: 639px) {
     .ss { font-size: 13px; }
     .ss thead th, .ss td { padding: 8px 9px; }
@@ -107,6 +122,7 @@
 const WORKER_URL = 'https://blakeai.blakestringer.workers.dev';
 const DATA_URL   = WORKER_URL + '/theatredex.csv';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 /* This view shows one season, picked by ?year= (see below). Both seasons are
    public; 2027 used to need a code here and no longer does. The same year rule
    lives in index.html (the live app) and scripts/build-theatredex.mjs (the
@@ -169,6 +185,23 @@ function isoDate(v) {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);
   return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : v;
 }
+/* Month-only dates ("March (dates TBC)"): same start and end on the 1st, or
+   date_approximate Yes/No to force it either way. Identical to index.html's
+   markMonthOnly — see the full explanation there. */
+function markMonthOnly(row) {
+  const flag  = (row.date_approximate || '').trim().toLowerCase();
+  const guess = !!row.date_start && row.date_start === row.date_end && row.date_start.slice(8) === '01';
+  const want  = ['yes', '1', 'true'].includes(flag) ? true
+              : ['no', '0', 'false'].includes(flag) ? false : guess;
+  const m = want && /^(\d{4})-(\d{2})-\d{2}$/.exec(row.date_start);
+  row.monthOnly = !!m;
+  if (m) {
+    row.date_start = m[1] + '-' + m[2] + '-01';
+    row.date_end   = m[1] + '-' + m[2] + '-' + String(new Date(+m[1], +m[2], 0).getDate()).padStart(2, '0');
+  }
+  return row;
+}
+
 function parseCSV(text) {
   const rows = parseRows(text);
   if (!rows.length) return [];
@@ -179,6 +212,7 @@ function parseCSV(text) {
     headers.forEach((h, i) => { row[h] = cleanCell(vals[i] || ''); });
     row.date_start = isoDate(row.date_start || '');
     row.date_end   = isoDate(row.date_end || '');
+    markMonthOnly(row);
     if (row.company && row.title) acc.push(row);
     return acc;
   }, []);
@@ -219,8 +253,7 @@ function inMode(s) {
 function fmtDates(row) {
   const s = parseDate(row.date_start), e = parseDate(row.date_end) || s;
   if (!s) return '';
-  const ap = (row.date_approximate || '').toLowerCase();
-  if (ap === 'yes' || ap === '1') return MONTHS[s.getMonth()] + ' ' + s.getFullYear();
+  if (row.monthOnly) return MONTHS_LONG[s.getMonth()] + ' (dates TBC)';
   if (!e || e.getTime() === s.getTime()) return s.getDate() + ' ' + MONTHS[s.getMonth()];
   if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear())
     return s.getDate() + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()];
@@ -300,7 +333,7 @@ function render(rows) {
   scroll.innerHTML =
     '<table class="ss"><thead><tr>' +
       '<th class="co-h">Company (A-Z)</th>' +
-      '<th class="num-h"></th>' +
+      '<th class="num-h">#</th>' +
       '<th>' + (mode === 'musical' ? 'Musical' : mode === 'all' ? 'Production' : 'Play') + '</th>' +
       '<th>Director(s)</th>' +
       '<th>Playwright(s)</th>' +
