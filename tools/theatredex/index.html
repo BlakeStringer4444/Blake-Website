@@ -856,6 +856,13 @@ button.td-link { background: none; cursor: pointer; }
 
   /* Feature buttons two-up rather than each long label taking a row;
      Auditions, the odd one out, spans both columns. */
+  /* The Plays / Musicals / All slider was 362px wide whatever the screen, so
+     on any phone narrower than ~382px (iPhone SE and mini at 375, most
+     Androids at 360) it pushed the whole page wider than the screen and the
+     phone zoomed out to fit. Full width here, three equal parts. */
+  .td-mode-toggle { display: flex; width: 100%; }
+  .td-mode-btn    { flex: 1 1 0; min-width: 0; justify-content: center; padding: 9px 4px; gap: 6px; letter-spacing: 1px; }
+
   .td-header-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .td-header-btn  { padding: 11px 6px; letter-spacing: 1px; font-size: 9.5px; gap: 6px; min-width: 0; }
   .td-header-btn:last-child { grid-column: 1 / -1; }
@@ -1784,9 +1791,26 @@ button.td-link { background: none; cursor: pointer; }
 .td-aud-modal {
   background: var(--bg); border: 1px solid var(--lime);
   width: 100%; max-width: 420px;
+  /* Never taller than the screen: on a short phone the All version (plays and
+     musicals) is, and its top — title and close button — went off-screen with
+     nothing to scroll. Now the list scrolls under a fixed title bar. */
+  max-height: 100%;
   display: flex; flex-direction: column;
 }
-.td-aud-body { padding: 20px; display: flex; flex-direction: column; gap: 11px; }
+.td-aud-body { padding: 20px; display: flex; flex-direction: column; gap: 11px; min-height: 0; overflow-y: auto; }
+/* All mode shows two groups. Each takes its own show colour, as the cards do:
+   plays purple, musicals pink (--purple is re-pointed at the musical accent,
+   the same trick .td-card.is-musical uses). */
+.td-aud-group { display: flex; flex-direction: column; gap: 11px; }
+.td-aud-group[hidden], .td-aud-head[hidden] { display: none; }
+/* :not([hidden]) — a hidden section is still a sibling, so without it the
+   musicals-only view would get this divider too. */
+.td-aud-group--plays:not([hidden]) + .td-aud-group { margin-top: 10px; padding-top: 18px; border-top: 1px solid var(--card-border); }
+[data-mode="all"] .td-aud-group--musicals { --purple: var(--musical); }
+.td-aud-head {
+  margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400;
+  font-size: 22px; letter-spacing: 2px; color: var(--purple);
+}
 .td-aud-link {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px;
@@ -8975,14 +8999,25 @@ button.td-link { background: none; cursor: pointer; }
 <div class="td-aud-overlay" id="td-aud-overlay">
   <div class="td-aud-modal">
     <div class="td-clash-topbar">
-      <span class="td-clash-topbar-title">Musical Auditions</span>
+      <span class="td-clash-topbar-title" id="td-aud-title">Musical Auditions</span>
       <button class="td-clash-close" id="td-aud-close" aria-label="Close">ESC<br>CLOSE</button>
     </div>
     <div class="td-aud-body">
-      <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted, as currently there is no universal auditions page for musicals</p>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/1F4A8i6eBN" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Positive Theatre Vibes</span><span class="td-aud-arrow">↗</span></a>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/14iJbaSMHvP" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Musical Theatre</span><span class="td-aud-arrow">↗</span></a>
-      <a class="td-aud-link" href="https://www.facebook.com/share/g/1BVRQU2mLE" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Auditions</span><span class="td-aud-arrow">↗</span></a>
+      <!-- All mode only: plays above musicals, each with a heading. In
+           Musicals mode this section and the Musicals heading stay hidden, so
+           that view is exactly as it was. -->
+      <section class="td-aud-group td-aud-group--plays" id="td-aud-plays" hidden>
+        <h3 class="td-aud-head">Plays</h3>
+        <p class="td-clash-desc">The Victorian Drama League lists play auditions from across the state in one place</p>
+        <a class="td-aud-link" href="https://vdl.org.au/auditions/" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>VDL Auditions</span><span class="td-aud-arrow">↗</span></a>
+      </section>
+      <section class="td-aud-group td-aud-group--musicals">
+        <h3 class="td-aud-head" id="td-aud-musicals-head" hidden>Musicals</h3>
+        <p class="td-clash-desc">Community Facebook groups where Victorian musical auditions are posted, as currently there is no universal auditions page for musicals</p>
+        <a class="td-aud-link" href="https://www.facebook.com/share/g/1F4A8i6eBN" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Positive Theatre Vibes</span><span class="td-aud-arrow">↗</span></a>
+        <a class="td-aud-link" href="https://www.facebook.com/share/g/14iJbaSMHvP" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Musical Theatre</span><span class="td-aud-arrow">↗</span></a>
+        <a class="td-aud-link" href="https://www.facebook.com/share/g/1BVRQU2mLE" target="_blank" rel="noopener noreferrer"><span class="td-aud-name"><span class="td-aud-fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>Melbourne Auditions</span><span class="td-aud-arrow">↗</span></a>
+      </section>
     </div>
   </div>
 </div>
@@ -9763,16 +9798,23 @@ YEARS.forEach(y => {
 ALL_YEARS.forEach(y => { document.getElementById('td-year-' + y).hidden = YEARS.indexOf(y) === -1; });
 document.querySelector('.td-year-row').hidden = YEARS.length < 2;
 
-/* ── MUSICAL AUDITIONS MODAL ── the Current Auditions button links to VDL in
-   plays mode and opens this Facebook-groups modal in musical mode. */
+/* ── AUDITIONS MODAL ── the Current Auditions button links straight to VDL in
+   plays mode. In musical mode it opens the Facebook-groups list; in All mode
+   it opens the same modal with VDL for plays above the groups for musicals,
+   since All covers both. */
 (function () {
   const audBtn   = document.getElementById('td-auditions-btn');
   const audOv    = document.getElementById('td-aud-overlay');
   const audClose = document.getElementById('td-aud-close');
   function closeAud() { audOv.classList.remove('open'); }
+  const both = () => mode === 'all';
   audBtn.addEventListener('click', e => {
-    if (mode === 'musical') { e.preventDefault(); audOv.classList.add('open'); }
-    /* plays mode: fall through so the anchor navigates to VDL as normal */
+    if (mode === 'play') return;   /* the anchor navigates to VDL as normal */
+    e.preventDefault();
+    document.getElementById('td-aud-title').textContent = both() ? 'Auditions' : 'Musical Auditions';
+    document.getElementById('td-aud-plays').hidden = !both();
+    document.getElementById('td-aud-musicals-head').hidden = !both();
+    audOv.classList.add('open');
   });
   audClose.addEventListener('click', closeAud);
   audOv.addEventListener('click', e => { if (e.target === audOv) closeAud(); });
