@@ -97,6 +97,23 @@ function isoDate(v) {
   return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : v;
 }
 
+/* Month-only dates ("March (dates TBC)"): same start and end on the 1st, or
+   date_approximate Yes/No to force it either way. Identical to index.html's
+   markMonthOnly — see the full explanation there. */
+function markMonthOnly(row) {
+  const flag  = (row.date_approximate || '').trim().toLowerCase();
+  const guess = !!row.date_start && row.date_start === row.date_end && row.date_start.slice(8) === '01';
+  const want  = ['yes', '1', 'true'].includes(flag) ? true
+              : ['no', '0', 'false'].includes(flag) ? false : guess;
+  const m = want && /^(\d{4})-(\d{2})-\d{2}$/.exec(row.date_start);
+  row.monthOnly = !!m;
+  if (m) {
+    row.date_start = m[1] + '-' + m[2] + '-01';
+    row.date_end   = m[1] + '-' + m[2] + '-' + String(new Date(+m[1], +m[2], 0).getDate()).padStart(2, '0');
+  }
+  return row;
+}
+
 function parseCSV(text) {
   const rows = parseRows(text);
   if (!rows.length) return [];
@@ -108,6 +125,7 @@ function parseCSV(text) {
     headers.forEach((h, i) => { row[h] = cleanCell(vals[i] || ''); });
     row.date_start = isoDate(row.date_start || '');
     row.date_end   = isoDate(row.date_end || '');
+    markMonthOnly(row);
     if (row.company && row.title) out.push(row);
   }
   return out;
@@ -137,9 +155,9 @@ function fmtDate(iso) {
 }
 
 function fmtRange(row) {
-  if (row.date_approximate === 'Yes') {
+  if (row.monthOnly) {
     const d = parseDate(row.date_start);
-    return d ? MONTHS[d.getMonth()] + ' ' + d.getFullYear() : '';
+    return MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ' (dates TBC)';
   }
   const s = fmtDate(row.date_start), e = fmtDate(row.date_end);
   if (s && e && s !== e) return s + ' – ' + e;
@@ -195,6 +213,10 @@ function buildJsonLd(rows) {
   let pos = 0;
   for (const r of rows) {
     if (!parseDate(r.date_start)) continue;   // Event requires a valid startDate
+    /* A month-only show is left out rather than given the 1st as its date —
+       an Event needs an exact startDate, and an invented one is worse than
+       none. It still appears in the readable list as "March 2027 (dates TBC)". */
+    if (r.monthOnly) continue;
     pos++;
     const event = {
       '@type': 'TheaterEvent',
